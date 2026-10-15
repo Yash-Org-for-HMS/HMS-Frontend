@@ -64,7 +64,7 @@ export default function TransferDialog({ open, onClose, onDone, admission }: Pro
       <DialogContent dividers>
         <Stack spacing={2.5} sx={{ pt: 0.5 }}>
           <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            Currently in: <strong>{admission?.bed?.label || "—"}</strong>
+            Currently in: <strong>{admission?.bed?.label || "-"}</strong>
           </Typography>
           <SearchableSelect
             label="Move to bed" name="toBedId" required

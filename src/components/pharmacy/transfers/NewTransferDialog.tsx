@@ -26,7 +26,7 @@ export default function NewTransferDialog({ open, onClose, onCreated, branches, 
   /** The branch the user is working at, if they picked one. */
   here: string | null;
   medicines: { medicineId: string; medicineName: string; genericName?: string }[];
-  /** Lines to start with — the medicines low at this branch. */
+  /** Lines to start with - the medicines low at this branch. */
   prefill?: Line[];
 }) {
   const toast = useToast();

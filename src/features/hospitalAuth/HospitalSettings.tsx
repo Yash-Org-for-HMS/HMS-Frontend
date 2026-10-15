@@ -131,7 +131,7 @@ export default function HospitalSettings() {
       setSaving(true);
       // The threshold is held as a string so the field can be emptied while
       // typing. Sending "" would arrive as Number("") === 0, which means
-      // "every refund needs approval" — a blank box must not silently do that,
+      // "every refund needs approval" - a blank box must not silently do that,
       // so an empty value leaves the setting untouched.
       const raw = formData.refundApprovalThreshold;
       const payload: Record<string, unknown> = { ...formData };
@@ -489,7 +489,7 @@ export default function HospitalSettings() {
             </Box>
           </CustomTabPanel>
 
-          {/* Messaging — gateway credentials and the DLT-approved message text. */}
+          {/* Messaging - gateway credentials and the DLT-approved message text. */}
           <CustomTabPanel value={tabValue} index={4}>
             <MessagingSettings />
           </CustomTabPanel>

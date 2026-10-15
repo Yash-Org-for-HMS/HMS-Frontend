@@ -17,7 +17,7 @@ import { apiErrorText, getApiErrorMessage } from "@/utils/apiError";
 import IndentCard, { type Indent } from "./IndentCard";
 
 /**
- * Indents — the in-charge's (15_System_Roles NURSE_INCHARGE "indents"): ask
+ * Indents - the in-charge's (15_System_Roles NURSE_INCHARGE "indents"): ask
  * the pharmacy for stock for a ward they run. What the store issues lands in
  * the ward's cupboard (Ward Stock). Below-par items come first, already filled in.
  */
@@ -87,7 +87,7 @@ function NewIndentDialog({ ward, onClose, onDone }: { ward: WardChoice; onClose:
                         {i.suggest > 0 && <Typography component="span" variant="caption" sx={{ color: SEMANTIC.warningDark, fontWeight: 700 }}> · below par</Typography>}
                       </TableCell>
                       <TableCell align="right" sx={{ fontVariantNumeric: "tabular-nums" }}>{i.onHand}{i.unit ? ` ${i.unit}` : ""}</TableCell>
-                      <TableCell align="right" sx={{ fontVariantNumeric: "tabular-nums", color: "text.secondary" }}>{i.parLevel ?? "—"}</TableCell>
+                      <TableCell align="right" sx={{ fontVariantNumeric: "tabular-nums", color: "text.secondary" }}>{i.parLevel ?? "-"}</TableCell>
                       <TableCell align="right">
                         <TextField
                           size="small" value={quantities[i.stockItemId] ?? ""} onChange={(e) => set(i.stockItemId, e.target.value)}

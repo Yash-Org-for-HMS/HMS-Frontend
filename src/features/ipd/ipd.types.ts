@@ -5,7 +5,7 @@ import type { Money } from "@/types";
  * backend/src/modules/ipd/admissions.service.ts.
  *
  * Money is `Money` (decimal string | number) wherever a Prisma Decimal passes
- * through — Number() it before arithmetic.
+ * through - Number() it before arithmetic.
  */
 
 /** Bed, room and ward resolved into one label for display. */
@@ -15,7 +15,7 @@ export interface BedRef {
   dailyCharge?: Money | null;
   roomNumber?: string | null;
   wardName?: string | null;
-  /** "Ward · Room · Bed 3" — what the list and the bill both print. */
+  /** "Ward · Room · Bed 3" - what the list and the bill both print. */
   label?: string | null;
 }
 
@@ -46,7 +46,7 @@ export interface AdmissionRow {
   status: string;
   patientName: string;
   uhid: string;
-  /** CASH | INSURANCE | CORPORATE | GOVT_SCHEME — which bed tariff prices the stay. */
+  /** CASH | INSURANCE | CORPORATE | GOVT_SCHEME - which bed tariff prices the stay. */
   payerType?: string | null;
   /** Set when the room is above the policy's room-rent limit on the stay's claim. */
   roomOverLimit?: { limit: number; rent: number; over: number; roomClassName: string | null } | null;
@@ -60,7 +60,7 @@ export interface AdmissionRow {
   depositBalance: Money;
 }
 
-/** One bed the patient occupied, and what it costs — the discharge bill's basis. */
+/** One bed the patient occupied, and what it costs - the discharge bill's basis. */
 export interface BedSegment {
   bedId?: string | null;
   label: string;
@@ -71,7 +71,7 @@ export interface BedSegment {
   amount: Money;
   /** Nursing charge for this bed's days, from the bed tariff (0 without one). */
   nursingAmount?: Money;
-  /** Runs of days at one rate — more than one when a tariff changed mid-stay. */
+  /** Runs of days at one rate - more than one when a tariff changed mid-stay. */
   runs?: { rent: Money; nursing: Money; days: number; from: string }[];
 }
 
@@ -89,7 +89,7 @@ export interface PendingCharge {
   itemDate?: string | null;
 }
 
-/** GET /ipd/admissions/:id — the row above plus everything discharge needs. */
+/** GET /ipd/admissions/:id - the row above plus everything discharge needs. */
 export interface AdmissionDetail extends AdmissionRow {
   bedSegments: BedSegment[];
   /** Bed charge for the whole stay, summed across segments. */
@@ -100,7 +100,7 @@ export interface AdmissionDetail extends AdmissionRow {
   pendingChargesTotal: Money;
   /**
    * Medicines the ward requested that the pharmacy has not confirmed. NOT in
-   * the charges above and not in the total — nothing has been dispensed — but
+   * the charges above and not in the total - nothing has been dispensed - but
    * shown so that "no medicines" and "medicines still waiting" do not look
    * identical on the discharge screen.
    */
@@ -112,7 +112,7 @@ export interface AdmissionDetail extends AdmissionRow {
 }
 
 /**
- * The slice of a claim the discharge dialog reads — enough to show what the
+ * The slice of a claim the discharge dialog reads - enough to show what the
  * payer has approved against this admission before the bill is raised.
  */
 export interface AdmissionClaimRef {
@@ -139,7 +139,7 @@ export interface RoomClassRef {
  * A hospital-defined observation column, on top of the fixed vitals.
  *
  * `dataType` decides how a reading is stored and whether the normal range
- * applies at all — only NUMBER fields can fall outside normalLow/normalHigh.
+ * applies at all - only NUMBER fields can fall outside normalLow/normalHigh.
  */
 export interface ObservationFieldDef {
   observationFieldId: string;
@@ -236,7 +236,7 @@ export interface NursingNoteRow {
   noteText: string;
   author?: string | null;
   createdAt: string;
-  /** True when the signed-in nurse wrote it — gates the edit affordance. */
+  /** True when the signed-in nurse wrote it - gates the edit affordance. */
   mine?: boolean;
 }
 

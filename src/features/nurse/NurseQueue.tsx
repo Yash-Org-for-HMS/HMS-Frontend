@@ -65,7 +65,7 @@ export default function NurseQueue() {
     }
   }, [location.state]);
 
-  // Memoized on `tokens` — this page re-renders on unrelated local state (view
+  // Memoized on `tokens` - this page re-renders on unrelated local state (view
   // toggle, vitals dialog open/close), which would otherwise re-run all 6 of
   // these full-array passes for no reason.
   const { waiting, inProgress, completed, vitalsRecordedCount, pending, done } = useMemo(() => ({
@@ -73,7 +73,7 @@ export default function NurseQueue() {
     inProgress: tokens.filter(isInConsultation).length,
     completed: tokens.filter((t: any) => t.statusCode === QUEUE_STATUS.COMPLETED).length,
     vitalsRecordedCount: tokens.filter((t: any) => t.vitalsRecorded).length,
-    // Station view buckets — shared with the Nursing Station dashboard so the
+    // Station view buckets - shared with the Nursing Station dashboard so the
     // count there can never disagree with the list here.
     pending: tokens.filter(needsVitals),
     done: tokens.filter(hasVitals),
@@ -219,7 +219,7 @@ export default function NurseQueue() {
                         {/* Vitals Status */}
                         <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
                           {hasVitals ? (
-                            <Tooltip title="Vitals recorded — click to update">
+                            <Tooltip title="Vitals recorded - click to update">
                               <Chip
                                 icon={<MonitorHeartRounded sx={{ fontSize: "14px !important" }} />}
                                 label="Recorded ✓"
@@ -471,7 +471,7 @@ export default function NurseQueue() {
       )}
 
       {/* The order carries the doctor this patient is queued for, so the record
-          says whose authority it is under — not just which nurse raised it. */}
+          says whose authority it is under - not just which nurse raised it. */}
       {orderFor && (
         <WalkInOrderDialog
           open

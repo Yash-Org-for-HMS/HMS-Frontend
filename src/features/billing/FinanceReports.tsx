@@ -45,8 +45,8 @@ export function DayBook() {
     queryFn: () => apiGet<DayBookResponse>("/reception/reports/day-book", { params: { from: range.from, to: range.to, ...paging.params } }),
     placeholderData: (prev) => prev,
   });
-  // Every figure above the ledger — money in, out, net, the per-mode
-  // reconciliation — is computed over the whole period server-side, so they
+  // Every figure above the ledger - money in, out, net, the per-mode
+  // reconciliation - is computed over the whole period server-side, so they
   // stay whole while the ledger below shows one page.
   const allLedgerRows = async () =>
     ((await apiGet<DayBookResponse>("/reception/reports/day-book", { params: { from: range.from, to: range.to } })).rows ?? []) as unknown as Record<string, unknown>[];
@@ -71,7 +71,7 @@ export function DayBook() {
 
           {/* In against out per day. The series was fetched and never drawn,
               so a range wider than one day could only be read as one net
-              figure — a heavy refund day and a quiet one looked identical. */}
+              figure - a heavy refund day and a quiet one looked identical. */}
           {hasPlottableData(trend, ["in", "out"]) && (
             <Box sx={{ mb: 2.5 }}>
               <TrendChart
@@ -145,7 +145,7 @@ export function DayBook() {
             title="Cash book ledger"
             filename={`daybook_ledger_${range.from}_${range.to}`}
             columns={[
-              { key: "at", label: "Date / time", format: (v) => (v ? dayjs(v).format("DD MMM YY HH:mm") : "—"), value: (r) => ts(r.at) },
+              { key: "at", label: "Date / time", format: (v) => (v ? dayjs(v).format("DD MMM YY HH:mm") : "-"), value: (r) => ts(r.at) },
               { key: "type", label: "Type" },
               { key: "patientName", label: "Patient" },
               { key: "ref", label: "Reference" },
@@ -198,7 +198,7 @@ export function RevenueAnalytics() {
 
           {/* The daily series came back with every request and nothing drew it,
               so the report showed what revenue was made of but never how it
-              moved — the one question a range invites. */}
+              moved - the one question a range invites. */}
           {hasPlottableData(trend, ["net"]) && (
             <Box sx={{ mb: 2.5 }}>
               <TrendChart
@@ -263,7 +263,7 @@ export function RefundRegister() {
             title="Refund register"
             filename={`refund_register_${range.from}_${range.to}`}
             columns={[
-              { key: "date", label: "Date", format: (v) => (v ? dayjs(v).format("DD MMM YY HH:mm") : "—"), value: (r) => ts(r.date) },
+              { key: "date", label: "Date", format: (v) => (v ? dayjs(v).format("DD MMM YY HH:mm") : "-"), value: (r) => ts(r.date) },
               { key: "patientName", label: "Patient" },
               { key: "uhid", label: "UHID" },
               { key: "invoiceNumber", label: "Invoice" },
@@ -313,7 +313,7 @@ export function DiscountRegister() {
             title="Discount / concession register"
             filename={`discount_register_${range.from}_${range.to}`}
             columns={[
-              { key: "date", label: "Date", format: (v) => (v ? dayjs(v).format("DD MMM YYYY") : "—"), value: (r) => ts(r.date) },
+              { key: "date", label: "Date", format: (v) => (v ? dayjs(v).format("DD MMM YYYY") : "-"), value: (r) => ts(r.date) },
               { key: "invoiceNumber", label: "Invoice" },
               { key: "patientName", label: "Patient" },
               money("gross", "Gross"),
@@ -363,8 +363,8 @@ export function CancelledInvoices() {
               { key: "invoiceNumber", label: "Invoice" },
               { key: "patientName", label: "Patient" },
               { key: "uhid", label: "UHID" },
-              { key: "invoiceDate", label: "Invoice date", format: (v) => (v ? dayjs(v).format("DD MMM YYYY") : "—"), value: (r) => ts(r.invoiceDate) },
-              { key: "cancelledOn", label: "Cancelled on", format: (v) => (v ? dayjs(v).format("DD MMM YY HH:mm") : "—"), value: (r) => ts(r.cancelledOn) },
+              { key: "invoiceDate", label: "Invoice date", format: (v) => (v ? dayjs(v).format("DD MMM YYYY") : "-"), value: (r) => ts(r.invoiceDate) },
+              { key: "cancelledOn", label: "Cancelled on", format: (v) => (v ? dayjs(v).format("DD MMM YY HH:mm") : "-"), value: (r) => ts(r.cancelledOn) },
               money("amount", "Value"),
               { key: "cancelledBy", label: "Cancelled by" },
               { key: "reason", label: "Reason" },

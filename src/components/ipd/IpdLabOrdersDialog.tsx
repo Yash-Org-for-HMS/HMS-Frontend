@@ -121,14 +121,14 @@ export default function IpdLabOrdersDialog({ open, onClose, admission, orderOnly
       </Tabs>
       <DialogContent dividers>
         <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
-          {admission?.patientName} — ordering labs sends the request to the lab queue; once the sample is collected and results entered, the charge rolls onto the discharge bill.
+          {admission?.patientName} - ordering labs sends the request to the lab queue; once the sample is collected and results entered, the charge rolls onto the discharge bill.
         </Typography>
 
         {tab === "order" ? (
           <Stack spacing={2}>
             <Box>
               <Button variant="outlined" startIcon={<ScienceRounded />} onClick={() => setPickerOpen(true)} sx={{ textTransform: "none" }}>
-                {basket.length ? `${basket.length} test${basket.length === 1 ? "" : "s"} selected — add / change` : "Select lab tests"}
+                {basket.length ? `${basket.length} test${basket.length === 1 ? "" : "s"} selected - add / change` : "Select lab tests"}
               </Button>
             </Box>
 
@@ -164,7 +164,7 @@ export default function IpdLabOrdersDialog({ open, onClose, admission, orderOnly
                         {o.reports?.length || 0} parameter{(o.reports?.length || 0) === 1 ? "" : "s"} · <span style={{ fontFamily: "monospace" }}>{o.sampleBarcode}</span>
                       </Typography>
                       <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                        {o.createdAt ? dayjs(o.createdAt).format("DD MMM YYYY, h:mm A") : "—"}
+                        {o.createdAt ? dayjs(o.createdAt).format("DD MMM YYYY, h:mm A") : "-"}
                       </Typography>
                     </Box>
                     <SoftChip {...sc} />
@@ -192,11 +192,11 @@ export default function IpdLabOrdersDialog({ open, onClose, admission, orderOnly
                             const pending = !r.resultValue || r.resultValue === "PENDING";
                             return (
                               <TableRow key={r.labReportId}>
-                                <TableCell>{r.testName || r.testCode || "—"}</TableCell>
+                                <TableCell>{r.testName || r.testCode || "-"}</TableCell>
                                 <TableCell sx={{ fontWeight: 600, color: r.isCritical ? SEMANTIC.danger : pending ? "text.disabled" : "text.primary" }}>
                                   {pending ? "Pending" : r.resultValue}{r.isCritical ? " ⚠" : ""}
                                 </TableCell>
-                                <TableCell sx={{ color: "text.secondary" }}>{r.normalRange || "—"}</TableCell>
+                                <TableCell sx={{ color: "text.secondary" }}>{r.normalRange || "-"}</TableCell>
                               </TableRow>
                             );
                           })}

@@ -1,4 +1,4 @@
-/** Shapes of GET /hospital/branches — a branch's own details and settings, and the hospital's they fall back to. */
+/** Shapes of GET /hospital/branches - a branch's own details and settings, and the hospital's they fall back to. */
 
 export interface BranchSettings {
   vitalsCollector: "RECEPTIONIST" | "NURSE" | null;

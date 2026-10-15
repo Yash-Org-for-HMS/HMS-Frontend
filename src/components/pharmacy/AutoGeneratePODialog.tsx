@@ -24,14 +24,14 @@ interface Props {
 // Suggested order qty / cost mirror the server's auto-generate formulas so the
 // pre-filled numbers match what one-click generation would have produced.
 // Nets out stock already on a pending PO, and stock on its way from another
-// branch — otherwise this would suggest ordering the full gap again on top of
+// branch - otherwise this would suggest ordering the full gap again on top of
 // a delivery that's already in motion.
 const suggestedQty = (minStock: number, currentStock: number, pendingStock: number) =>
   Math.max((minStock || 0) * 2 - (currentStock || 0) - (pendingStock || 0), 0);
 /**
  * What to order a line at.
  *
- * `resolvedCost` is the server's answer — the latest supplier-confirmed price,
+ * `resolvedCost` is the server's answer - the latest supplier-confirmed price,
  * then one typed on the medicine. Falling back to a fraction of the SELLING
  * price is a last resort for a medicine nobody has ever costed; it was the
  * default here, so this screen offered 22.75 for a drug the same payload said
@@ -51,7 +51,7 @@ const rowFromMedicine = (med: any, currentStock: number | null, pendingStock: nu
   inTransit: Number(med.inTransit ?? 0),
   minStockLevel: med.minStockLevel ?? 0,
   // A low-stock row can legitimately suggest 0 (a pending PO already covers
-  // the gap) — that row gets filtered out before it ever reaches here. A
+  // the gap) - that row gets filtered out before it ever reaches here. A
   // hand-added row has no such "already covered" reading, so it always gets
   // at least 1.
   orderedQuantity: low
@@ -76,7 +76,7 @@ export default function AutoGeneratePODialog({ open, onClose, lowStockAlerts, me
   const [rows, setRows] = useState<any[]>([]);
   const [generating, setGenerating] = useState(false);
 
-  // Pre-fill one row per low-stock alert whenever the dialog opens — except
+  // Pre-fill one row per low-stock alert whenever the dialog opens - except
   // one already fully covered by a pending PO (suggested qty nets to 0),
   // which has nothing left to order.
   useEffect(() => {
@@ -135,7 +135,7 @@ export default function AutoGeneratePODialog({ open, onClose, lowStockAlerts, me
       await onGenerated();
     } catch (err) {
       toast.error(getApiErrorMessage(err, "Failed to generate purchase orders"));
-      // Some POs may have been created before the failure — refresh so the list is honest.
+      // Some POs may have been created before the failure - refresh so the list is honest.
       await onGenerated();
     } finally {
       setGenerating(false);
@@ -166,7 +166,7 @@ export default function AutoGeneratePODialog({ open, onClose, lowStockAlerts, me
                 Naming the reason turns it into a finished answer. */}
             <Typography variant="body2" sx={{ color: 'text.secondary' }}>
               {coveredByPending > 0
-                ? `Nothing to order — a purchase order already on the way covers ${coveredByPending === 1 ? "the low-stock medicine" : `all ${coveredByPending} low-stock medicines`}.`
+                ? `Nothing to order - a purchase order already on the way covers ${coveredByPending === 1 ? "the low-stock medicine" : `all ${coveredByPending} low-stock medicines`}.`
                 : "Nothing is below its reorder level right now."}
             </Typography>
             <Typography variant="caption" sx={{ color: 'text.secondary' }}>
@@ -197,7 +197,7 @@ export default function AutoGeneratePODialog({ open, onClose, lowStockAlerts, me
                       {r.genericName && <Typography variant="caption" sx={{ color: 'text.secondary' }}>{r.genericName}</Typography>}
                     </TableCell>
                     <TableCell align="center" sx={{ color: 'text.secondary' }}>
-                      {r.currentStock == null ? "—" : r.currentStock} / {r.minStockLevel}
+                      {r.currentStock == null ? "-" : r.currentStock} / {r.minStockLevel}
                       {r.pendingStock > 0 && (
                         <Typography variant="caption" sx={{ display: 'block', color: SEMANTIC.warning }}>
                           +{r.pendingStock} already on order
@@ -211,7 +211,7 @@ export default function AutoGeneratePODialog({ open, onClose, lowStockAlerts, me
                     </TableCell>
                     <TableCell>
                       <Select size="small" value={r.supplierId} displayEmpty onChange={(e) => updateRow(idx, { supplierId: e.target.value })} sx={{ minWidth: 150 }}>
-                        <MenuItem value=""><em>— No supplier —</em></MenuItem>
+                        <MenuItem value=""><em>- No supplier -</em></MenuItem>
                         {suppliers.map((sup) => <MenuItem key={sup.supplierId} value={sup.supplierId}>{sup.supplierName}</MenuItem>)}
                       </Select>
                     </TableCell>

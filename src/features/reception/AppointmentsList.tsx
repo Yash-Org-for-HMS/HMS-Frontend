@@ -45,7 +45,7 @@ const getAppointmentType = (reason: string | null | undefined) => {
 function MiniCalendar({ selectedDate, onDateChange }: { selectedDate: Dayjs | null, onDateChange: (d: Dayjs) => void }) {
   const [currentMonth, setCurrentMonth] = useState(dayjs().startOf('month'));
 
-  // Days with appointments in the shown month — asked of the server, since the
+  // Days with appointments in the shown month - asked of the server, since the
   // list page now holds only one page of rows.
   const { data: highlightedDays = [] } = useQuery<string[]>({
     queryKey: ["reception-appointment-days", currentMonth.format("YYYY-MM")],
@@ -150,7 +150,7 @@ export default function AppointmentsList({ readOnly = false }: { readOnly?: bool
   // disable another row's button, and a reminder in flight doesn't block a
   // visit confirmation on the same appointment. Without this a double-click,
   // or clicking again because the request felt slow, queued and sent the SAME
-  // message twice — each click hits the backend with nothing to say "one for
+  // message twice - each click hits the backend with nothing to say "one for
   // this appointment is already on its way", so two real, separately-charged
   // SMS went out for one click's worth of intent.
   const [sendingNotification, setSendingNotification] = useState<string | null>(null);
@@ -210,7 +210,7 @@ export default function AppointmentsList({ readOnly = false }: { readOnly?: bool
 
   const handleSendNotification = async (apptId: string, type: 'reminder' | 'visit-confirmation') => {
     const key = `${apptId}:${type}`;
-    if (sendingNotification === key) return; // already in flight — the disabled button should prevent this, but a queued click can still land
+    if (sendingNotification === key) return; // already in flight - the disabled button should prevent this, but a queued click can still land
     try {
       setSendingNotification(key);
       setSuccessMsg(null);
@@ -419,7 +419,7 @@ export default function AppointmentsList({ readOnly = false }: { readOnly?: bool
                                 <CheckCircleRounded fontSize="small" />
                               </IconButton>
                             </Tooltip>
-                            <Tooltip title="Reschedule — change the time, date or doctor">
+                            <Tooltip title="Reschedule - change the time, date or doctor">
                               <IconButton size="small" onClick={() => navigate(`/reception/appointments/${appt.appointmentId}/edit`)} sx={{ color: "text.secondary", "&:hover": { color: SEMANTIC.info, bgcolor: "rgba(59,130,246,0.08)" } }}>
                                 <EditCalendarRounded fontSize="small" />
                               </IconButton>
@@ -454,7 +454,7 @@ export default function AppointmentsList({ readOnly = false }: { readOnly?: bool
                             check-in ticked by mistake, had no way out: this cell
                             handled only Scheduled and Completed, so every other
                             status rendered an empty Actions column. The row sat
-                            there permanently — the API has always supported
+                            there permanently - the API has always supported
                             cancelling it and the handler below was already
                             wired, the button was simply never offered.
 

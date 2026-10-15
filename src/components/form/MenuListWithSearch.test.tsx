@@ -12,8 +12,8 @@ import { DROPDOWN_MAX_HEIGHT } from "./dropdown";
 
 /**
  * Every dropdown in the app, through the theme every panel uses: a plain
- * <TextField select> — the kind on most screens, in a dialog as often as on a
- * page — scrolls instead of covering the page, and a long one can be searched.
+ * <TextField select> - the kind on most screens, in a dialog as often as on a
+ * page - scrolls instead of covering the page, and a long one can be searched.
  * Nothing at the call site asks for it, which is the point: a select added
  * tomorrow behaves the same.
  */

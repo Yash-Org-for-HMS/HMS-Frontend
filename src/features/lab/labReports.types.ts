@@ -160,7 +160,7 @@ export interface AgingRow {
 }
 
 export interface PendingResponse extends Truncatable {
-  /** A live snapshot, not a date range — the UI says so. */
+  /** A live snapshot, not a date range - the UI says so. */
   asOf: string;
   lookbackDays: number;
   totals: {
@@ -186,7 +186,7 @@ export interface CriticalRow {
   result: string;
   normalRange: string;
   doctor: string;
-  /** "Verified" | "Unverified" — a display string, not a boolean. */
+  /** "Verified" | "Unverified" - a display string, not a boolean. */
   verified: string;
   /** "Acknowledged" | "Unacknowledged". */
   acknowledged: string;
@@ -211,7 +211,7 @@ export interface CriticalResponse extends Truncatable {
  * `scan` is radiology-only, so those are optional rather than split into two
  * near-identical interfaces the table would have to branch on.
  *
- * `tatHours` is null when the order has not been reported yet — that is the
+ * `tatHours` is null when the order has not been reported yet - that is the
  * distinction between "fast" and "never came back", so it must not collapse to 0.
  */
 export interface RegisterRow {

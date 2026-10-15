@@ -32,7 +32,7 @@ function open(path: string) {
   );
 }
 
-describe("HospitalProtectedRoute — pages within a panel", () => {
+describe("HospitalProtectedRoute - pages within a panel", () => {
   it("a Billing login typing the claims address lands on its dashboard", () => {
     auth.user = { role: "BILLING", roles: [role("BILLING", pages)] };
     open("/reception/claims");

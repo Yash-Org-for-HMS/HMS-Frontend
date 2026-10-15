@@ -48,7 +48,7 @@ const STATUS_META: Record<string, { label: string; color: string }> = {
  *
  * "To return" is not a status but the closed admissions the hospital still
  * holds money for. Its filter is server-side (see listAdmissions) because the
- * balance is summed from deposit entries rather than stored — narrowing the
+ * balance is summed from deposit entries rather than stored - narrowing the
  * page in the browser would drop rows and report the wrong total.
  */
 const TABS: { label: string; params: Record<string, string> }[] = [
@@ -63,7 +63,7 @@ const TABS: { label: string; params: Record<string, string> }[] = [
  *
  * On a live admission it is a running balance; once closed it is the patient's
  * money the hospital still has. Shows the same three states the reconciliation
- * check reports — running · held for a stated reason · unexplained — so the
+ * check reports - running · held for a stated reason · unexplained - so the
  * check and the ward cannot drift apart.
  */
 function DepositChip({ admission }: {
@@ -79,7 +79,7 @@ function DepositChip({ admission }: {
   const tone = reason ? SEMANTIC.warning : SEMANTIC.danger;
   return (
     <Tooltip title={reason
-      ? `Held after discharge — ${reason}`
+      ? `Held after discharge - ${reason}`
       : "Held after discharge with no reason recorded. Refund it to the patient, or record why it stays."}>
       <Chip
         label={`${amount} held`}
@@ -136,7 +136,7 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
     placeholderData: keepPreviousData,
   });
 
-  // How much is waiting to go back, and to how many people — read once for the
+  // How much is waiting to go back, and to how many people - read once for the
   // tab's badge so the number is visible without opening it.
   const { data: owedResp } = useQuery({
     queryKey: ["ipd-admissions-to-return"],
@@ -209,7 +209,7 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
               key={t.label}
               label={
                 // The count rides on the tab so money waiting to go back is
-                // visible without opening it — the whole failure this fixes was
+                // visible without opening it - the whole failure this fixes was
                 // that nobody had a reason to look.
                 t.params.pendingDeposit && owedRows.length ? (
                   <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
@@ -317,7 +317,7 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
                             </Typography>
                           )}
                         </>
-                      ) : <Typography variant="body2" sx={{ color: "text.disabled" }}>—</Typography>}
+                      ) : <Typography variant="body2" sx={{ color: "text.disabled" }}>-</Typography>}
                       {/* An insured stay in a room above its policy's room-rent limit. */}
                       {a.roomOverLimit && (
                         <Tooltip title={`The policy pays up to ${inr(a.roomOverLimit.limit)} a day for the room. The insurer may cut the claim.`}>
@@ -328,13 +328,13 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
                       )}
                     </TableCell>
                     <TableCell sx={{ maxWidth: 200 }}>
-                      <Typography variant="body2" sx={{ color: "text.primary" }}>{a.doctorName || "—"}</Typography>
+                      <Typography variant="body2" sx={{ color: "text.primary" }}>{a.doctorName || "-"}</Typography>
                       <Tooltip title={a.admittingDiagnosis || ""}>
                         <Typography variant="caption" sx={{ color: "text.secondary", display: "block", overflow: "hidden", textOverflow: "ellipsis" }}>{a.admittingDiagnosis || "No diagnosis recorded"}</Typography>
                       </Tooltip>
                     </TableCell>
                     <TableCell>
-                      <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 600 }}>{a.days != null ? `Day ${a.days}` : "—"}</Typography>
+                      <Typography variant="body2" sx={{ color: "text.primary", fontWeight: 600 }}>{a.days != null ? `Day ${a.days}` : "-"}</Typography>
                       {a.admissionDate && (
                         <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>
                           since {new Date(a.admissionDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
@@ -344,7 +344,7 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
                     <TableCell align="right">
                       {Number(a.depositBalance) > 0
                         ? <DepositChip admission={a} />
-                        : <Typography variant="caption" sx={{ color: "text.disabled" }}>—</Typography>}
+                        : <Typography variant="caption" sx={{ color: "text.disabled" }}>-</Typography>}
                     </TableCell>
                     <TableCell align="right" sx={{ position: "sticky", right: 0, bgcolor: "background.paper", zIndex: 1, boxShadow: (t) => `-8px 0 8px -8px ${t.palette.divider}` }}>
                       {/* Not gated on readOnly: reading a history is not an
@@ -392,7 +392,7 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
             "discharge initiated" so the desk can plan the next patient, while
             billing and paperwork are finished. */}
         {movesPatients && menu.row?.status === "ADMITTED" && !menu.row.dischargeInitiatedAt && (
-          <MenuItem onClick={() => { if (menu.row) act(menu.row, "initiate-discharge", "Discharge started — the bed shows as freeing up"); }}>
+          <MenuItem onClick={() => { if (menu.row) act(menu.row, "initiate-discharge", "Discharge started - the bed shows as freeing up"); }}>
             <LogoutRounded fontSize="small" sx={{ mr: 1, color: SEMANTIC.warning }} /> Start discharge
           </MenuItem>
         )}

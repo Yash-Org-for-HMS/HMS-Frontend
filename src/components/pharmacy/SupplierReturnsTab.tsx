@@ -48,7 +48,7 @@ function Stat({ label, value, color }: { label: string; value: string; color: st
  *
  * Claimed and recovered are shown apart on purpose: a supplier can credit less
  * than was asked for, or refuse, and a single "returns" figure would hide the
- * difference — which is the money the hospital actually lost.
+ * difference - which is the money the hospital actually lost.
  */
 export default function SupplierReturnsTab() {
   const toast = useToast();
@@ -131,8 +131,8 @@ export default function SupplierReturnsTab() {
                     </TableCell>
                     <TableCell>{r.supplierName}</TableCell>
                     <TableCell>
-                      <Tooltip title={r.items.map((i) => `${i.quantity} × ${i.medicineName ?? "Medicine"} (${i.batchNumber}) — ${i.reason}`).join("; ")}>
-                        <span>{r.items[0]?.medicineName ?? "—"}{r.itemCount > 1 ? ` +${r.itemCount - 1}` : ""}</span>
+                      <Tooltip title={r.items.map((i) => `${i.quantity} × ${i.medicineName ?? "Medicine"} (${i.batchNumber}) - ${i.reason}`).join("; ")}>
+                        <span>{r.items[0]?.medicineName ?? "-"}{r.itemCount > 1 ? ` +${r.itemCount - 1}` : ""}</span>
                       </Tooltip>
                       <Typography variant="caption" sx={{ display: "block", color: "text.secondary" }}>{r.items[0]?.reason}</Typography>
                     </TableCell>
@@ -184,7 +184,7 @@ export default function SupplierReturnsTab() {
               <TextField fullWidth size="small" type="number" label="Amount credited" value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 inputProps={{ min: 0, step: "0.01" }}
-                helperText="Can be less than claimed — the difference is what the hospital lost"
+                helperText="Can be less than claimed - the difference is what the hospital lost"
                 sx={{ mb: 2 }} />
             )}
             <TextField fullWidth size="small" label="Their credit note ref (optional)" value={creditNoteRef}
@@ -192,7 +192,7 @@ export default function SupplierReturnsTab() {
             {/* Said plainly, because it is the one thing that looks reversible
                 and is not: the goods went back when the return was raised. */}
             <Typography variant="caption" sx={{ display: "block", color: "text.secondary", mt: 2 }}>
-              The stock does not come back either way — it left when the return was raised.
+              The stock does not come back either way - it left when the return was raised.
             </Typography>
           </DialogContent>
           <DialogActions sx={{ p: 2 }}>

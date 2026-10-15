@@ -23,18 +23,18 @@ import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 
 // Standard frequency codes drive the MAR dose schedule (see backend
 // buildDoseSchedule) AND how many units the stay will need in total.
-// SOS/PRN and blank have no fixed schedule — quantity stays a manual entry.
+// SOS/PRN and blank have no fixed schedule - quantity stays a manual entry.
 const FREQUENCY_OPTIONS = [
-  { value: "", label: "—" },
-  { value: "OD", label: "OD — once daily" },
-  { value: "BD", label: "BD — twice daily" },
-  { value: "TDS", label: "TDS — thrice daily" },
-  { value: "QID", label: "QID — four times daily" },
-  { value: "HS", label: "HS — at bedtime" },
-  { value: "STAT", label: "STAT — immediately (once)" },
-  { value: "SOS", label: "SOS — as needed" },
+  { value: "", label: "-" },
+  { value: "OD", label: "OD - once daily" },
+  { value: "BD", label: "BD - twice daily" },
+  { value: "TDS", label: "TDS - thrice daily" },
+  { value: "QID", label: "QID - four times daily" },
+  { value: "HS", label: "HS - at bedtime" },
+  { value: "STAT", label: "STAT - immediately (once)" },
+  { value: "SOS", label: "SOS - as needed" },
 ];
-// Doses per day per frequency — mirrors the backend's buildDoseSchedule times.
+// Doses per day per frequency - mirrors the backend's buildDoseSchedule times.
 const TIMES_PER_DAY: Record<string, number> = { OD: 1, BD: 2, TDS: 3, QID: 4, HS: 1 };
 const isScheduledFrequency = (f: string) => !!f && f !== "SOS";
 
@@ -66,7 +66,7 @@ export default function IpdMedicinesDialog({ open, onClose, admission, orderOnly
   });
   const meds = data?.medications || [];
 
-  // The request waits until typing pauses — it fired on every keystroke.
+  // The request waits until typing pauses - it fired on every keystroke.
   const debouncedSearch = useDebouncedValue(search);
   const { data: catalog = [], isFetching: catLoading } = useQuery<any[]>({
     queryKey: ["ipd-medicine-catalog", debouncedSearch],
@@ -75,7 +75,7 @@ export default function IpdMedicinesDialog({ open, onClose, admission, orderOnly
   });
 
   // For a standard frequency (OD/BD/TDS/QID/HS/STAT), the total quantity needed
-  // for the stay is computable — no need to make anyone type it by hand.
+  // for the stay is computable - no need to make anyone type it by hand.
   // SOS/as-needed has no fixed schedule, so it stays a manual entry.
   const scheduled = isScheduledFrequency(form.frequency);
   const computedQty = (() => {
@@ -156,7 +156,7 @@ export default function IpdMedicinesDialog({ open, onClose, admission, orderOnly
       </Tabs>
       <DialogContent dividers>
         <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
-          {admission?.patientName} — assigning a medicine sends a request to the pharmacy; once they confirm it (dispensed from stock), it's added to the discharge bill.
+          {admission?.patientName} - assigning a medicine sends a request to the pharmacy; once they confirm it (dispensed from stock), it's added to the discharge bill.
         </Typography>
 
         {view === "chart" ? (
@@ -181,16 +181,16 @@ export default function IpdMedicinesDialog({ open, onClose, admission, orderOnly
                 {meds.map((m) => (
                   <TableRow key={m.ipMedOrderId}>
                     <TableCell>
-                      <Typography variant="body2" sx={{ fontWeight: 600 }}>{m.medicineName || "—"}</Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 600 }}>{m.medicineName || "-"}</Typography>
                       {m.route && <Typography variant="caption" sx={{ color: "text.secondary" }}>{m.route}</Typography>}
                     </TableCell>
                     <TableCell>
-                      <Typography variant="caption" sx={{ display: "block" }}>{[m.dosage, m.frequency].filter(Boolean).join(" · ") || "—"}</Typography>
+                      <Typography variant="caption" sx={{ display: "block" }}>{[m.dosage, m.frequency].filter(Boolean).join(" · ") || "-"}</Typography>
                       {m.durationDays ? <Typography variant="caption" sx={{ color: "text.secondary" }}>{m.durationDays} day(s)</Typography> : null}
                     </TableCell>
                     <TableCell align="center">{m.quantity}</TableCell>
                     <TableCell align="right">{formatINR(m.totalPrice)}</TableCell>
-                    <TableCell>{m.orderedAt ? dayjs(m.orderedAt).format("DD MMM") : "—"}</TableCell>
+                    <TableCell>{m.orderedAt ? dayjs(m.orderedAt).format("DD MMM") : "-"}</TableCell>
                     <TableCell>
                       {m.status === "REQUESTED" && (
                         <SoftChip icon={<HourglassTopRounded sx={{ fontSize: 14 }} />} label="Awaiting pharmacy" bg="rgba(245,158,11,0.12)" color="#b45309" />
@@ -273,8 +273,8 @@ export default function IpdMedicinesDialog({ open, onClose, admission, orderOnly
               disabled={scheduled}
               inputProps={{ min: 1, step: 1 }}
               helperText={
-                !scheduled ? "As-needed — enter the total manually"
-                : form.frequency === "STAT" ? "STAT — a single dose"
+                !scheduled ? "As-needed - enter the total manually"
+                : form.frequency === "STAT" ? "STAT - a single dose"
                 : `= ${TIMES_PER_DAY[form.frequency] ?? 1}/day × ${Number(form.durationDays) > 0 ? form.durationDays : 1} day(s) × ${form.unitsPerDose || 0}/dose`
               }
             />

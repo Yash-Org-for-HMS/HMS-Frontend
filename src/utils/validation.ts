@@ -33,11 +33,11 @@ export const required =
   (v) =>
     isBlank(v) ? `${label} is required` : "";
 
-/** Valid email format. Empty passes — combine with `required` when mandatory. */
+/** Valid email format. Empty passes - combine with `required` when mandatory. */
 export const isEmail: Rule = (v) =>
   isBlank(v) || EMAIL_REGEX.test(String(v).trim()) ? "" : "Enter a valid email address";
 
-/** Valid phone format. Empty passes — combine with `required` when mandatory. */
+/** Valid phone format. Empty passes - combine with `required` when mandatory. */
 export const isPhone: Rule = (v) => {
   if (isBlank(v)) return "";
   const s = String(v).trim();
@@ -62,7 +62,7 @@ export const isNonNegativeNumber: Rule = (v) => {
 };
 
 /** Strictly greater than zero. For prices where 0 means "never configured"
- *  rather than "free" — a 0 there bills nothing but still has to be settled. */
+ *  rather than "free" - a 0 there bills nothing but still has to be settled. */
 export const isPositiveNumber: Rule = (v) => {
   if (isBlank(v)) return "";
   const n = Number(v);

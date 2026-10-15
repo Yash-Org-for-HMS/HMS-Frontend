@@ -30,7 +30,7 @@ const PAGE_SIZE = 20;
 
 // `scope="mine"` (default) is this doctor's own caseload (patients they've had
 // appointments with). `scope="all"` is the whole hospital register, for
-// looking up any patient (e.g. a colleague's, for continuity of care) — both
+// looking up any patient (e.g. a colleague's, for continuity of care) - both
 // hit the same read-only clinical profile at /doctor/patients/:id, which is
 // already hospital-scoped rather than caseload-scoped.
 export default function DoctorPatients({ scope = "mine" }: { scope?: "mine" | "all" } = {}) {
@@ -67,8 +67,8 @@ export default function DoctorPatients({ scope = "mine" }: { scope?: "mine" | "a
       <PageHeader
         title={scope === "all" ? "All Patients" : "My Patients"}
         subtitle={scope === "all"
-          ? "Every patient registered at this hospital — search and open a read-only clinical record."
-          : "Patients you've consulted with — search and open a read-only clinical record."}
+          ? "Every patient registered at this hospital - search and open a read-only clinical record."
+          : "Patients you've consulted with - search and open a read-only clinical record."}
       />
 
       <TextField
@@ -139,7 +139,7 @@ export default function DoctorPatients({ scope = "mine" }: { scope?: "mine" | "a
                       {p.uhidNumber}
                     </TableCell>
                     <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}>
-                      {p.age != null ? `${p.age} yrs` : "—"} • {p.genderLabel}
+                      {p.age != null ? `${p.age} yrs` : "-"} • {p.genderLabel}
                     </TableCell>
                     <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
                       <Chip
@@ -150,7 +150,7 @@ export default function DoctorPatients({ scope = "mine" }: { scope?: "mine" | "a
                       />
                     </TableCell>
                     <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}>
-                      {p.phone || "—"}
+                      {p.phone || "-"}
                     </TableCell>
                     <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}>
                       {formatDate(p.lastVisit)}

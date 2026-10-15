@@ -36,13 +36,13 @@ const COMPLETED_HEAD_SX = {
 const COMPLETED_CELL_SX = { borderBottom: "1px solid", borderColor: "rgba(16,185,129,0.1)" } as const;
 
 const fmtTime = (iso?: string | null) =>
-  iso ? new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "—";
+  iso ? new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "-";
 
 // How long the doctor actually spent with the patient. Only meaningful when both
-// ends were stamped — a token completed without a recorded start shows "—"
+// ends were stamped - a token completed without a recorded start shows "-"
 // rather than a misleading 0m.
 const consultDuration = (t: QueueTokenRow) => {
-  if (!t.consultationStartedAt || !t.consultationEndedAt) return "—";
+  if (!t.consultationStartedAt || !t.consultationEndedAt) return "-";
   const mins = Math.max(0, Math.round(
     (new Date(t.consultationEndedAt).getTime() - new Date(t.consultationStartedAt).getTime()) / 60000
   ));
@@ -129,14 +129,14 @@ export default function QueueDashboard({ readOnly = false }: { readOnly?: boolea
    *
    * A shared desk runs several doctors' queues at once, and "who is next for
    * Dr Rao" meant reading past everyone else's patients. Applied HERE, to the
-   * raw list, so every derived view below narrows with it — waiting, skipped,
+   * raw list, so every derived view below narrows with it - waiting, skipped,
    * completed, the counts and the wait-time monitor. Filtering each list
    * separately is how a filter ends up honoured in three places out of six.
    */
   const [doctorFilter, setDoctorFilter] = useState<string>("");
 
   // Built from the queue itself, so it only ever offers doctors who actually
-  // have someone in today — a list of every doctor in the hospital would be
+  // have someone in today - a list of every doctor in the hospital would be
   // mostly dead options at a desk.
   const doctorsInQueue = useMemo(() => {
     const seen = new Map<string, string>();
@@ -153,7 +153,7 @@ export default function QueueDashboard({ readOnly = false }: { readOnly?: boolea
    * nothing.
    *
    * Derived rather than corrected in an effect. Resetting the state from a
-   * useEffect would render one frame of an empty board and then re-render —
+   * useEffect would render one frame of an empty board and then re-render -
    * a cascading render for a value that is a pure function of what is already
    * here. If the selected doctor is no longer in the queue, the filter simply
    * does not apply this render.
@@ -165,7 +165,7 @@ export default function QueueDashboard({ readOnly = false }: { readOnly?: boolea
     [tokens, effectiveFilter],
   );
 
-  // Filters/derived stats are memoized on `visibleTokens` — this page re-renders
+  // Filters/derived stats are memoized on `visibleTokens` - this page re-renders
   // on every unrelated local-state change (menu open/close, dialog toggles), and
   // without memoization each of those re-runs 4+ full-array passes for no reason.
   const activeTokens = useMemo(
@@ -174,7 +174,7 @@ export default function QueueDashboard({ readOnly = false }: { readOnly?: boolea
   );
   const skippedTokens = useMemo(() => visibleTokens.filter((t) => t.statusCode === "SKIPPED"), [visibleTokens]);
   // Finished OPD patients. The backend already returns today's COMPLETED tokens,
-  // but nothing rendered them — they were filtered out of `activeTokens` and had
+  // but nothing rendered them - they were filtered out of `activeTokens` and had
   // no section of their own, so a patient simply vanished from the screen once
   // seen, leaving no record of who was actually done today. Newest first, since
   // "who just finished" is the question being asked.
@@ -185,7 +185,7 @@ export default function QueueDashboard({ readOnly = false }: { readOnly?: boolea
     [visibleTokens]
   );
 
-  // Today's first-vs-repeat mix across every token (not just the active ones —
+  // Today's first-vs-repeat mix across every token (not just the active ones -
   // a patient already seen still counts toward the day's mix).
   const firstVisitCount = useMemo(() => visibleTokens.filter((t) => t.visitType === "First visit").length, [visibleTokens]);
   const repeatCount = useMemo(
@@ -265,11 +265,11 @@ export default function QueueDashboard({ readOnly = false }: { readOnly?: boolea
         actions={
           <>
           {/* Only worth showing when there is more than one doctor to choose
-              between — a single-doctor clinic gets a control that can only ever
+              between - a single-doctor clinic gets a control that can only ever
               say what the screen already shows. */}
           {doctorsInQueue.length > 1 && (
             /* Searchable, because a busy morning can have more doctors in the
-               queue than fit a menu — and the desk knows the name, not the
+               queue than fit a menu - and the desk knows the name, not the
                position in the list. The waiting count moves to the option's
                second line: it used to sit inline after the name, which the
                field then had to redraw as its own value. */
@@ -318,7 +318,7 @@ export default function QueueDashboard({ readOnly = false }: { readOnly?: boolea
           { label: "Avg Wait", value: fmtWait(avgWait), color: waitColor(avgWait) },
           { label: "Longest Wait", value: fmtWait(maxWait), color: waitColor(maxWait) },
           { label: "Completed Today", value: String(completedTokens.length), color: SEMANTIC.success },
-          // Today's mix at a glance — the same split the OPD Visit Register
+          // Today's mix at a glance - the same split the OPD Visit Register
           // reports over a date range.
           { label: "First / Repeat Today", value: `${firstVisitCount} / ${repeatCount}`, color: "#ec4899" },
         ].map((s) => (
@@ -494,7 +494,7 @@ export default function QueueDashboard({ readOnly = false }: { readOnly?: boolea
         </Box>
       )}
 
-      {/* Completed Patients Section — today's finished OPD consultations. */}
+      {/* Completed Patients Section - today's finished OPD consultations. */}
       {completedTokens.length > 0 && (
         <Box sx={{ mt: 6 }}>
           <Typography variant="h6" sx={{ color: "text.secondary", fontWeight: 700, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -560,7 +560,7 @@ export default function QueueDashboard({ readOnly = false }: { readOnly?: boolea
         onClose={() => setAnchorEl(null)}
         PaperProps={{ sx: { bgcolor: "background.paper", color: "text.primary", border: "1px solid", borderColor: "divider" } }}
       >
-        {/* Record Vitals — only shown when hospital is configured for Receptionist vitals */}
+        {/* Record Vitals - only shown when hospital is configured for Receptionist vitals */}
         {vitalsCollector === "RECEPTIONIST" && selectedAppt?.appointmentId && (
           <MenuItem onClick={openVitals} sx={{ "&:hover": { bgcolor: "rgba(6,182,212,0.08)" } }}>
             <MonitorHeartRounded fontSize="small" sx={{ mr: 1.5, color: "#06b6d4" }} />

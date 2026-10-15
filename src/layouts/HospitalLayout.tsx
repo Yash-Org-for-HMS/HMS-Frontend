@@ -40,7 +40,7 @@ export default function HospitalLayout() {
   const { unread: announcementsUnread, onAnnouncement, onConnect } = useAnnouncementBadge();
   const queryClient = useQueryClient();
   useSocket({ ANNOUNCEMENT_PUBLISHED: onAnnouncement, connect: () => { onConnect(); catchUpEventOnlyScreens(queryClient); } });
-  // In the order a hospital is set up — each step needs the ones above it:
+  // In the order a hospital is set up - each step needs the ones above it:
   // profile, settings and modules first; departments before the wards, doctors
   // and staff that belong to them; charges before beds (a bed's room class
   // picks up its rent from the Schedule of Charges); wards and beds before
@@ -52,25 +52,25 @@ export default function HospitalLayout() {
     { text: "Dashboard", icon: <DashboardRounded />, path: "/hospital/dashboard", section: "Overview" },
 
     // ── Set up, in this order ──
-    { text: "Organisation profile", icon: <LocalHospitalRounded />, path: "/hospital/profile", adminOnly: true, needs: ["H_ADMIN"], section: "Set up — in this order" },
-    { text: "System Settings", icon: <SettingsRounded />, path: "/hospital/settings", adminOnly: true, needs: ["H_ADMIN"], section: "Set up — in this order" },
-    { text: "Branches", icon: <ApartmentRounded />, path: "/hospital/branches", adminOnly: true, needs: ["H_ADMIN"], section: "Set up — in this order" },
-    { text: "Branch settings", icon: <ApartmentRounded />, path: "/hospital/branch-settings", adminOnly: true, needs: ["B_ADMIN"], section: "Set up — in this order" },
-    { text: "Module Access", icon: <WidgetsRounded />, path: "/hospital/module-access", adminOnly: true, needs: ["H_ADMIN"], section: "Set up — in this order" },
-    { text: "Departments", icon: <DomainRounded />, path: "/hospital/departments", adminOnly: true, section: "Set up — in this order" },
-    { text: "Schedule of Charges", icon: <ReceiptLongRounded />, path: "/hospital/soc", adminOnly: true, section: "Set up — in this order" },
+    { text: "Organisation profile", icon: <LocalHospitalRounded />, path: "/hospital/profile", adminOnly: true, needs: ["H_ADMIN"], section: "Set up - in this order" },
+    { text: "System Settings", icon: <SettingsRounded />, path: "/hospital/settings", adminOnly: true, needs: ["H_ADMIN"], section: "Set up - in this order" },
+    { text: "Branches", icon: <ApartmentRounded />, path: "/hospital/branches", adminOnly: true, needs: ["H_ADMIN"], section: "Set up - in this order" },
+    { text: "Branch settings", icon: <ApartmentRounded />, path: "/hospital/branch-settings", adminOnly: true, needs: ["B_ADMIN"], section: "Set up - in this order" },
+    { text: "Module Access", icon: <WidgetsRounded />, path: "/hospital/module-access", adminOnly: true, needs: ["H_ADMIN"], section: "Set up - in this order" },
+    { text: "Departments", icon: <DomainRounded />, path: "/hospital/departments", adminOnly: true, section: "Set up - in this order" },
+    { text: "Schedule of Charges", icon: <ReceiptLongRounded />, path: "/hospital/soc", adminOnly: true, section: "Set up - in this order" },
     // Backend restricts these strictly to H_ADMIN/B_ADMIN (requireRole, no
-    // permission-code bypass) — adminOnly here matches that exactly so a
+    // permission-code bypass) - adminOnly here matches that exactly so a
     // custom role never sees a link that would just 403.
-    { text: "Ward & Bed Setup", icon: <HotelRounded />, path: "/hospital/facility-setup", adminOnly: true, module: "IPD", section: "Set up — in this order" },
-    { text: "Operating Theatres", icon: <MedicalServicesRounded />, path: "/hospital/theatres", adminOnly: true, module: "IPD", section: "Set up — in this order" },
-    { text: "Doctors", icon: <MedicalServicesRounded />, path: "/hospital/doctors", adminOnly: true, section: "Set up — in this order" },
-    // People (with or without a login) and who they report to — the one place a
+    { text: "Ward & Bed Setup", icon: <HotelRounded />, path: "/hospital/facility-setup", adminOnly: true, module: "IPD", section: "Set up - in this order" },
+    { text: "Operating Theatres", icon: <MedicalServicesRounded />, path: "/hospital/theatres", adminOnly: true, module: "IPD", section: "Set up - in this order" },
+    { text: "Doctors", icon: <MedicalServicesRounded />, path: "/hospital/doctors", adminOnly: true, section: "Set up - in this order" },
+    // People (with or without a login) and who they report to - the one place a
     // person is added. Logins & roles below manages the logins themselves.
-    { text: "Staff Directory", icon: <AccountTreeRounded />, path: "/hospital/staff", adminOnly: true, needs: ["H_ADMIN", "HR_ADMIN"], section: "Set up — in this order" },
+    { text: "Staff Directory", icon: <AccountTreeRounded />, path: "/hospital/staff", adminOnly: true, needs: ["H_ADMIN", "HR_ADMIN"], section: "Set up - in this order" },
     // Who reports to whom, and the departments under those who oversee them.
-    { text: "Organisation chart", icon: <SchemaRounded />, path: "/hospital/organogram", adminOnly: true, needs: ["H_ADMIN", "HR_ADMIN", "B_ADMIN"], section: "Set up — in this order" },
-    { text: "Logins & roles", icon: <BadgeRounded />, path: "/hospital/users", adminOnly: true, needs: ["H_ADMIN"], section: "Set up — in this order" },
+    { text: "Organisation chart", icon: <SchemaRounded />, path: "/hospital/organogram", adminOnly: true, needs: ["H_ADMIN", "HR_ADMIN", "B_ADMIN"], section: "Set up - in this order" },
+    { text: "Logins & roles", icon: <BadgeRounded />, path: "/hospital/users", adminOnly: true, needs: ["H_ADMIN"], section: "Set up - in this order" },
 
     // ── Catalogs and forms, as the hospital needs them ──
     { text: "Medicine Catalog", icon: <MedicationRounded />, path: "/hospital/medicines", adminOnly: true, module: "Pharmacy", section: "Catalogs & forms" },
@@ -79,7 +79,7 @@ export default function HospitalLayout() {
     { text: "Form Builder", icon: <DynamicFormRounded />, path: "/hospital/form-builder", adminOnly: true, section: "Catalogs & forms" },
     // Role Management and the Permission Matrix used to live here, commented
     // out. Both are gone now: every hospital uses the fixed standard role set,
-    // and role authoring is removed rather than hidden — see the note in
+    // and role authoring is removed rather than hidden - see the note in
     // rbac.controller.ts for why.
     { text: "Dropdown lists", icon: <DatasetRounded />, path: "/hospital/lookups", adminOnly: true, section: "Catalogs & forms" },
 
@@ -110,12 +110,12 @@ export default function HospitalLayout() {
 
   // Org AND branch admins see everything (mirrors the backend ADMIN_ROLE_CODES
   // bypass). B_ADMIN was previously omitted, which hid every permission-gated
-  // tab for branch admins — leaving only the two ungated items (the "2 tabs" bug).
+  // tab for branch admins - leaving only the two ungated items (the "2 tabs" bug).
   const isAdmin = isAdminUser(user);
   // An Auditor or HR Admin (15_System_Roles) sees only their part of this panel.
   const onlyPaths = menuPathsFor(user, "hospital");
   const { isModuleEnabled } = useEnabledModules();
-  // Module-gated items are NOT hidden — they render with a lock badge so tenants
+  // Module-gated items are NOT hidden - they render with a lock badge so tenants
   // can discover the feature and upgrade (the page itself shows the upsell).
   // adminOnly / permission still gate visibility as before.
   const visibleMenuItems = menuItems.filter(item => {

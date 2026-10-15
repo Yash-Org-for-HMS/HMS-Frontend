@@ -19,7 +19,7 @@ import { hasRole } from "@/constants/roles";
  * How this hospital charts its wards.
  *
  * Nothing here is required. A hospital that never opens this screen still gets a
- * correct chart from the defaults — this exists so the ones whose shifts or
+ * correct chart from the defaults - this exists so the ones whose shifts or
  * units differ are not forced into somebody else's pattern.
  *
  * Two panels used to sit here and do nothing. "How often observations are
@@ -30,7 +30,7 @@ import { hasRole } from "@/constants/roles";
  * is worse than an absent one, because the ward believes it.
  *
  * What is left is wired. Shifts and the chart day drive the chart; the
- * temperature unit is read by it; and the sign-off roles reach the handover —
+ * temperature unit is read by it; and the sign-off roles reach the handover -
  * verified end to end: saving ["ZZ Charge Nurse", …] made those exact roles the
  * ones a shift asks for, replacing the Staff Nurse / Duty Doctor defaults.
  */
@@ -62,11 +62,11 @@ export default function WardChartSettings() {
     setRoles(data.signOffRoles);
   }, [data]);
 
-  // The chart day is derived from the earliest shift, never entered separately —
+  // The chart day is derived from the earliest shift, never entered separately -
   // so it can never drift out of step with the shifts themselves.
   const chartDayStart = shifts.length
     ? [...shifts].sort((a, b) => a.sortOrder - b.sortOrder)[0].startTime
-    : "—";
+    : "-";
 
   const save = useMutation({
     mutationFn: async () =>
@@ -92,7 +92,7 @@ export default function WardChartSettings() {
     <Box sx={{ pb: 6 }}>
       <PageHeader
         title="Ward Chart Settings"
-        subtitle="How this hospital charts its in-patients — shifts, who signs them off, and units."
+        subtitle="How this hospital charts its in-patients - shifts, who signs them off, and units."
         actions={canEdit &&
           <Button variant="contained" startIcon={<SaveRounded />} onClick={() => save.mutate()} disabled={save.isPending} sx={{ textTransform: "none" }}>
             {save.isPending ? "Saving…" : "Save settings"}
@@ -107,7 +107,7 @@ export default function WardChartSettings() {
       )}
       {canEdit && !data?.isConfigured && (
         <Alert severity="info" sx={{ mb: 2.5, borderRadius: 2 }}>
-          These are the <strong>standard defaults</strong>. The ward chart already works exactly as shown —
+          These are the <strong>standard defaults</strong>. The ward chart already works exactly as shown -
           change anything here only if your hospital differs.
         </Alert>
       )}
@@ -125,7 +125,7 @@ export default function WardChartSettings() {
               <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>Shifts</Typography>
             </Box>
             <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 2 }}>
-              Two, three or four — whatever this hospital runs. A shift may cross midnight.
+              Two, three or four - whatever this hospital runs. A shift may cross midnight.
             </Typography>
 
             {shifts.map((s, i) => (
@@ -152,7 +152,7 @@ export default function WardChartSettings() {
             <Divider sx={{ my: 2 }} />
             <Alert severity="info" icon={false} sx={{ borderRadius: 2, py: 0.5 }}>
               <Typography variant="body2">
-                The chart day runs <strong>{chartDayStart} to {chartDayStart}</strong> — taken from the
+                The chart day runs <strong>{chartDayStart} to {chartDayStart}</strong> - taken from the
                 earliest shift, so it always matches. Totals and the day selector follow it.
               </Typography>
             </Alert>
@@ -197,7 +197,7 @@ export default function WardChartSettings() {
         </Grid>
 
         {/* ── The hospital's own observations ────────────────────────────── */}
-        {/* Saved as you go, not by the button above — each one is its own
+        {/* Saved as you go, not by the button above - each one is its own
             record with readings against it, so it cannot ride on a form save. */}
         <Grid size={12}>
           <ObservationFieldsPanel />

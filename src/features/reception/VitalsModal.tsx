@@ -26,7 +26,7 @@ interface VitalsModalProps {
   onSaved?: () => void;
   readonly?: boolean;
   // Where to READ vitals from. Defaults to the reception endpoint (used by the
-  // reception + nurse panels). The doctor panel can't reach /reception/* — it
+  // reception + nurse panels). The doctor panel can't reach /reception/* - it
   // passes its own /doctor/... read path so "View Vitals" doesn't 403 into a
   // blank form. The save endpoint is unaffected (only used when !readonly, i.e.
   // never in the doctor's read-only view).
@@ -105,7 +105,7 @@ export default function VitalsModal({ open, onClose, appointmentId, patientId, p
 
   // Vitals load only when the dialog is open. A missing record is a normal
   // state (patient has no vitals yet), so query errors are intentionally not
-  // surfaced — the form just falls back to defaults.
+  // surfaced - the form just falls back to defaults.
   const { data: existingVitals, isLoading: loading } = useQuery({
     queryKey: ["vitals", appointmentId, vitalsReadUrl],
     queryFn: async () => (await axiosInstance.get(vitalsReadUrl)).data.data,
@@ -320,7 +320,7 @@ export default function VitalsModal({ open, onClose, appointmentId, patientId, p
             <Divider sx={{ borderColor: "divider", mb: 2 }} />
 
             {/* ── Section 5: Pain Scale ── */}
-            <SectionHeader icon={painIcon} label={`Pain Scale — ${form.painScale}/10`} />
+            <SectionHeader icon={painIcon} label={`Pain Scale - ${form.painScale}/10`} />
             <Box sx={{ px: 1, mb: 3 }}>
               <Slider
                 value={form.painScale}
@@ -377,7 +377,7 @@ export default function VitalsModal({ open, onClose, appointmentId, patientId, p
         <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
           {bmi && (
             <Chip
-              label={`BMI: ${bmi} — ${bmiCategory?.label}`}
+              label={`BMI: ${bmi} - ${bmiCategory?.label}`}
               size="small"
               sx={{ bgcolor: `${bmiCategory?.color}22`, color: bmiCategory?.color, fontWeight: 600, fontSize: "0.75rem" }}
             />

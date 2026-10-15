@@ -17,7 +17,7 @@ import { TRANSFER_STATUS, type TransferDetail, type TransferItem } from "./trans
 const HEAD = { fontWeight: 700, color: "text.secondary", whiteSpace: "nowrap" } as const;
 const NUM = { fontVariantNumeric: "tabular-nums" } as const;
 
-/** Soonest expiry first, up to what was asked for — the order stock should leave in. */
+/** Soonest expiry first, up to what was asked for - the order stock should leave in. */
 function firstExpiryFirst(item: TransferItem): Record<string, string> {
   let left = item.requestedQuantity;
   const out: Record<string, string> = {};
@@ -32,7 +32,7 @@ function firstExpiryFirst(item: TransferItem): Record<string, string> {
 const n = (v: string | undefined) => (v && /^\d+$/.test(v) ? Number(v) : 0);
 
 /**
- * One transfer: read it, and — for whichever end the user is at — act on it.
+ * One transfer: read it, and - for whichever end the user is at - act on it.
  * The sending branch picks the batches and dispatches; the receiving branch
  * says how many of each arrived. Either can call off one that has not left;
  * only the sender can call back one on the road.
@@ -108,13 +108,13 @@ export default function TransferDialog({ stockTransferId, shortReasons, onClose,
     const bad = lines.find((l) => l.quantityReceived > l.b.quantitySent);
     if (bad) { toast.error(`Batch ${bad.b.batchNumber}: no more than ${bad.b.quantitySent} can arrive.`); return; }
     const noWhy = lines.find((l) => l.quantityReceived < l.b.quantitySent && (l.shortReason ?? "").length < 3);
-    if (noWhy) { toast.error(`Batch ${noWhy.b.batchNumber} is short — say why.`); return; }
+    if (noWhy) { toast.error(`Batch ${noWhy.b.batchNumber} is short - say why.`); return; }
     setBusy(true);
     try {
       const r = await axiosInstance.post(`/pharmacy/stock-transfers/${t.stockTransferId}/receive`, {
         lines: lines.map(({ stockTransferBatchId, quantityReceived, shortReason }) => ({ stockTransferBatchId, quantityReceived, shortReason })),
       });
-      done("Received — the stock is on your shelf", r.data.data);
+      done("Received - the stock is on your shelf", r.data.data);
     } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Couldn't receive the transfer"));
     } finally { setBusy(false); }
@@ -127,7 +127,7 @@ export default function TransferDialog({ stockTransferId, shortReasons, onClose,
     try {
       const r = await axiosInstance.post(`/pharmacy/stock-transfers/${t.stockTransferId}/cancel`, { reason: cancelWhy.trim() });
       setCancelling(false);
-      done(t.status === "DISPATCHED" ? "Called back — the stock is back on your shelf" : "Transfer cancelled", r.data.data);
+      done(t.status === "DISPATCHED" ? "Called back - the stock is back on your shelf" : "Transfer cancelled", r.data.data);
     } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Couldn't cancel the transfer"));
     } finally { setBusy(false); }
@@ -161,7 +161,7 @@ export default function TransferDialog({ stockTransferId, shortReasons, onClose,
               Asked for {formatDateTime(t.createdAt)}{t.requestedBy ? ` by ${t.requestedBy}` : ""}
               {t.dispatchedAt && <> · dispatched {formatDateTime(t.dispatchedAt)}{t.dispatchedBy ? ` by ${t.dispatchedBy}` : ""}</>}
               {t.receivedAt && <> · received {formatDateTime(t.receivedAt)}{t.receivedBy ? ` by ${t.receivedBy}` : ""}</>}
-              {t.cancelledAt && <> · cancelled {formatDateTime(t.cancelledAt)}{t.cancelledBy ? ` by ${t.cancelledBy}` : ""}{t.cancelReason ? ` — ${t.cancelReason}` : ""}</>}
+              {t.cancelledAt && <> · cancelled {formatDateTime(t.cancelledAt)}{t.cancelledBy ? ` by ${t.cancelledBy}` : ""}{t.cancelReason ? ` - ${t.cancelReason}` : ""}</>}
             </Typography>
             {t.notes && <Typography variant="body2">Note: {t.notes}</Typography>}
 
@@ -253,7 +253,7 @@ export default function TransferDialog({ stockTransferId, shortReasons, onClose,
                                     inputProps={{ inputMode: "numeric", style: { textAlign: "right" }, "aria-label": `Arrived of batch ${b.batchNumber}` }}
                                     sx={{ width: 90 }}
                                   />
-                                ) : b.quantityReceived ?? "—"}
+                                ) : b.quantityReceived ?? "-"}
                               </TableCell>
                               {t.canReceive ? (
                                 <TableCell sx={{ minWidth: 220 }}>
@@ -278,7 +278,7 @@ export default function TransferDialog({ stockTransferId, shortReasons, onClose,
                                 </TableCell>
                               ) : t.status === "RECEIVED" ? (
                                 <TableCell sx={{ color: (b.quantityReceived ?? 0) < b.quantitySent ? SEMANTIC.danger : "text.secondary" }}>
-                                  {(b.quantityReceived ?? 0) < b.quantitySent ? `${b.quantitySent - (b.quantityReceived ?? 0)} — ${b.shortReason ?? ""}` : "—"}
+                                  {(b.quantityReceived ?? 0) < b.quantitySent ? `${b.quantitySent - (b.quantityReceived ?? 0)} - ${b.shortReason ?? ""}` : "-"}
                                 </TableCell>
                               ) : null}
                             </TableRow>

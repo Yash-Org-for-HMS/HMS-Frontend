@@ -1,6 +1,6 @@
 /**
  * How every dropdown in the app behaves (MuiMenu in theme.ts): it never grows
- * past this height — it scrolls — and from this many choices it has a search
+ * past this height - it scrolls - and from this many choices it has a search
  * box. MUI's own menus grow to the window's height minus 96px, so a list of
  * sixty doctors or two hundred tests covered most of the page.
  *

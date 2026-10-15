@@ -13,7 +13,7 @@ export interface OrderPatientRef {
   firstName?: string | null;
   lastName?: string | null;
   uhidNumber?: string | null;
-  /** Detail endpoint only — the list payload stops at the name and UHID. */
+  /** Detail endpoint only - the list payload stops at the name and UHID. */
   dateOfBirth?: string | null;
   genderId?: number | null;
 }
@@ -24,7 +24,7 @@ export interface OrderDoctorRef {
   user?: { firstName?: string | null; lastName?: string | null } | null;
 }
 
-/** The catalog test a report is for — joined on, since LabReport stores only the id. */
+/** The catalog test a report is for - joined on, since LabReport stores only the id. */
 export interface LabTestRef {
   labTestId: string;
   testCode?: string | null;
@@ -33,7 +33,7 @@ export interface LabTestRef {
   defaultNormalRange?: string | null;
   isProfile?: boolean | null;
   chargeItemId?: string | null;
-  /** Catalog list price. A Prisma Decimal — Number() it before arithmetic. */
+  /** Catalog list price. A Prisma Decimal - Number() it before arithmetic. */
   price?: Money | null;
 }
 
@@ -41,7 +41,7 @@ export interface LabTestRef {
  * One test on a lab order, with its result once entered.
  *
  * The name/code/unit live on the joined `labTest`, not on the report itself,
- * and the range column is `normalRange` — the report row has neither a
+ * and the range column is `normalRange` - the report row has neither a
  * `testName` nor a `status` of its own.
  */
 export interface LabReportRow {
@@ -65,13 +65,13 @@ export interface LabOrderRow {
   branchId?: string | null;
   patientId?: string | null;
   doctorId?: string | null;
-  /** Set when the order belongs to an inpatient stay — it bills at discharge. */
+  /** Set when the order belongs to an inpatient stay - it bills at discharge. */
   admissionId?: string | null;
   admissionNumber?: string | null;
   sampleBarcode?: string | null;
   sampleCollectedAt?: string | null;
   priorityId?: number | null;
-  /** "PAID" | "UNPAID" — gates collection when billing is pre-paid. */
+  /** "PAID" | "UNPAID" - gates collection when billing is pre-paid. */
   paymentStatus?: string | null;
   verified?: boolean | null;
   createdAt: string;
@@ -81,7 +81,7 @@ export interface LabOrderRow {
   doctor?: OrderDoctorRef | null;
   /**
    * Computed server-side: this order must be paid before the sample can be
-   * collected. Always false for an admission-linked order — an inpatient test
+   * collected. Always false for an admission-linked order - an inpatient test
    * settles on the discharge bill, never pre-paid at the counter.
    */
   billingLockActive?: boolean;
@@ -89,7 +89,7 @@ export interface LabOrderRow {
 }
 
 /**
- * GET /lab/orders/:id — the queue row plus the pathologist sign-off details and
+ * GET /lab/orders/:id - the queue row plus the pathologist sign-off details and
  * the joined test on every report, which the list path only gained recently.
  */
 /** Letterhead fields for the printed report. */
@@ -156,13 +156,13 @@ export interface RadiologyOrderRow {
   verifiedAt?: string | null;
   /**
    * Computed server-side: this order must be paid before the scan can be
-   * done. Always false for an admission-linked order — an inpatient scan
+   * done. Always false for an admission-linked order - an inpatient scan
    * settles on the discharge bill, never pre-paid at the counter.
    */
   billingLockActive?: boolean;
 }
 
-/** Priority resolved from the lookup table — null when the order has none. */
+/** Priority resolved from the lookup table - null when the order has none. */
 export interface OrderPriorityRef {
   code?: string | null;
   label?: string | null;
@@ -172,7 +172,7 @@ export interface OrderPriorityRef {
 /** A critical result the ordering doctor has not acknowledged yet. */
 export interface CriticalAlertRow {
   labReportId: string;
-  /** The order the result belongs to — what a click on the row opens. */
+  /** The order the result belongs to - what a click on the row opens. */
   labOrderId: string | null;
   patientName: string;
   testName: string;
@@ -185,7 +185,7 @@ export interface PendingLabRow {
   labOrderId: string;
   patientName: string;
   sampleBarcode?: string | null;
-  /** "Awaiting sample" | "In process" — where the order sits on the bench. */
+  /** "Awaiting sample" | "In process" - where the order sits on the bench. */
   status: string;
   ageHours: number;
   ageDays: number;
@@ -207,7 +207,7 @@ export interface CatalogRow {
   chargeItemId?: string | null;
   testCode?: string | null;
   testName?: string | null;
-  /** A Prisma Decimal — Number() it before arithmetic. */
+  /** A Prisma Decimal - Number() it before arithmetic. */
   price?: Money | null;
   category?: string | null;
 }

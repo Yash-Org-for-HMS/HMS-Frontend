@@ -5,7 +5,7 @@ import { renderWithProviders } from "@/test/renderWithProviders";
 /**
  * The doctor's queue asks the server again only when something it shows has
  * changed: an outpatient event yes, a lab or radiology one no (the queue holds
- * no lab data — the results badge and dashboard pick those up), the first
+ * no lab data - the results badge and dashboard pick those up), the first
  * connect no, a reconnect yes.
  */
 
@@ -26,7 +26,7 @@ beforeEach(() => {
   get.mockResolvedValue({ data: { data: [] } });
 });
 
-describe("DoctorQueue — live updates", () => {
+describe("DoctorQueue - live updates", () => {
   it("an outpatient change asks again; a lab change and the first connect do not", async () => {
     renderWithProviders(<DoctorQueue />);
     await waitFor(() => expect(asks()).toBe(1));

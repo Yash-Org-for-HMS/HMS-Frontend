@@ -76,7 +76,7 @@ export default function FormTemplatesList() {
     <Box>
       <PageHeader
         title="Form Builder"
-        subtitle="Design the forms this hospital issues to patients. Name it whatever you call it — every form is offered from the patient's profile."
+        subtitle="Design the forms this hospital issues to patients. Name it whatever you call it - every form is offered from the patient's profile."
         actions={
           <Button
             variant="contained"

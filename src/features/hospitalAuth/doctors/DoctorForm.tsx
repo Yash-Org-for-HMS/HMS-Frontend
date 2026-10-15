@@ -38,7 +38,7 @@ export default function DoctorForm() {
   const [branchIds, setBranchIds] = useState<string[]>([]);
   // The doctor's fee at a branch, where it differs from their own. "" = their own.
   const [branchFees, setBranchFees] = useState<Record<string, { consultationFee: string; ipdVisitCharge: string }>>({});
-  // Other departments the doctor works in — what "specialization" used to say,
+  // Other departments the doctor works in - what "specialization" used to say,
   // kept on the doctor's staff record. They can be booked under these too.
   const [additionalDepartmentIds, setAdditionalDepartmentIds] = useState<string[]>([]);
   const [createdCreds, setCreatedCreds] = useState<{ email: string; temporaryPassword: string; name: string } | null>(null);
@@ -65,7 +65,7 @@ export default function DoctorForm() {
       const [deptRes, dropdownRes] = await Promise.all([
         // Every department, not the endpoint's first page: since the standard list
         // was copied in, a hospital has 100+ departments (most switched off), and
-        // the first 50 by date were switched-off copies — the hospital's real
+        // the first 50 by date were switched-off copies - the hospital's real
         // departments never reached this dropdown.
         axiosInstance.get("/hospital/departments", { params: { limit: 1000 } }),
         axiosInstance.get("/hospital/users/dropdowns").catch(() => ({ data: { data: { branches: [] } } })),
@@ -111,7 +111,7 @@ export default function DoctorForm() {
     setAdditionalDepartmentIds(Array.isArray(d.additionalDepartmentIds) ? d.additionalDepartmentIds : []);
   }, [docData]);
 
-  // Departments in use — plus any this doctor already has, so an existing choice
+  // Departments in use - plus any this doctor already has, so an existing choice
   // never shows blank even if that department has since been switched off.
   const departments = allDepartments
     .filter((d) => d.status === "active" || d.departmentId === formData.departmentId || additionalDepartmentIds.includes(d.departmentId))
@@ -128,7 +128,7 @@ export default function DoctorForm() {
     setErrors((prev) => (prev[name as keyof typeof formData] ? { ...prev, [name]: undefined } : prev));
   };
 
-  // Personal fields live on tab 0, professional on tab 1 — jump to the first
+  // Personal fields live on tab 0, professional on tab 1 - jump to the first
   // tab that has an error so the highlighted field is actually visible.
   const TAB0_FIELDS = ["firstName", "lastName", "email", "phone"] as const;
 
@@ -149,7 +149,7 @@ export default function DoctorForm() {
       consultationFee: [required("Consultation fee"), isPositiveNumber],
       ipdVisitCharge: [required("IPD ward-visit charge"), isPositiveNumber],
       experienceYears: [isNonNegativeNumber],
-      // A doctor MUST belong to a department — booking filters the doctor list by
+      // A doctor MUST belong to a department - booking filters the doctor list by
       // department, so a departmentless doctor is invisible there (the empty-
       // dropdown bug). The field showed a required asterisk but was never enforced.
       departmentId: [required("Department")],
@@ -339,7 +339,7 @@ export default function DoctorForm() {
                     ))}
                   renderInput={(params) => (
                     <TextField {...params} {...textFieldProps} label="Also works in" placeholder={additionalDepartmentIds.length ? "" : "None"}
-                      helperText="Other departments they see patients in — they can be booked there too." />
+                      helperText="Other departments they see patients in - they can be booked there too." />
                   )}
                 />
               </Grid>

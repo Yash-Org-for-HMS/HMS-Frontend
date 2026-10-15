@@ -21,7 +21,7 @@ import { SEMANTIC, BRAND } from "@/styles/accents";
  * Where to send a patient, who to call, and which doctors work there.
  *
  * The doctors were the one thing here nobody else shows, and they were hidden in
- * a hover tooltip behind a count — invisible when scanning, unreachable on a
+ * a hover tooltip behind a count - invisible when scanning, unreachable on a
  * touch screen. They are named on the card now, and the card hands off to Doctor
  * Availability filtered to the department, so "the patient needs Cardiology"
  * leads to "and Dr X is free at 3:30" instead of ending here.
@@ -67,7 +67,7 @@ export default function DepartmentDirectory() {
 
   const totals = useMemo(() => {
     const doctors = departments.reduce((n, d) => n + d.doctorCount, 0);
-    // A department reception cannot route to — no location and no extension — is
+    // A department reception cannot route to - no location and no extension - is
     // worth counting, because the card for it can only say "ask someone else".
     const unreachable = departments.filter((d) => !d.location && !d.phoneExtension).length;
     const empty = departments.filter((d) => d.doctorCount === 0).length;
@@ -150,7 +150,7 @@ function DeptCard({ d, onSeeAvailability }: { d: Dept; onSeeAvailability: () => 
   ].filter(Boolean) as { icon: React.ReactNode; text: string }[];
 
   // Named once, quietly, rather than a row of italic placeholders per field.
-  // Joined with "or" — a bare comma list read as "No location, OPD hours set".
+  // Joined with "or" - a bare comma list read as "No location, OPD hours set".
   const missing = joinOr([
     !d.location ? "location" : null,
     !d.phoneExtension ? "extension" : null,
@@ -176,7 +176,7 @@ function DeptCard({ d, onSeeAvailability }: { d: Dept; onSeeAvailability: () => 
             {d.departmentName}
           </Typography>
           <Typography variant="caption" sx={{ color: "text.secondary" }} noWrap>
-            {[d.departmentCode, d.departmentType].filter(Boolean).join(" • ") || "—"}
+            {[d.departmentCode, d.departmentType].filter(Boolean).join(" • ") || "-"}
           </Typography>
         </Box>
         {d.status !== "active" && (
@@ -186,7 +186,7 @@ function DeptCard({ d, onSeeAvailability }: { d: Dept; onSeeAvailability: () => 
 
       {d.headOfDepartment && (
         <Typography variant="body2" sx={{ color: "text.primary" }} noWrap>
-          <Box component="span" sx={{ color: "text.secondary" }}>Head — </Box>
+          <Box component="span" sx={{ color: "text.secondary" }}>Head - </Box>
           <Box component="span" sx={{ fontWeight: 600 }}>{d.headOfDepartment}</Box>
         </Typography>
       )}
@@ -209,7 +209,7 @@ function DeptCard({ d, onSeeAvailability }: { d: Dept; onSeeAvailability: () => 
         </Box>
       ) : (
         <Typography variant="caption" sx={{ color: SEMANTIC.warning, fontWeight: 600 }}>
-          No location, extension or OPD hours set — add them under Departments
+          No location, extension or OPD hours set - add them under Departments
         </Typography>
       )}
 
@@ -229,7 +229,7 @@ function DeptCard({ d, onSeeAvailability }: { d: Dept; onSeeAvailability: () => 
           </Box>
         ) : (
           <Typography variant="caption" sx={{ color: SEMANTIC.warning, fontWeight: 600 }}>
-            Nobody assigned — reception has no one to send a patient to
+            Nobody assigned - reception has no one to send a patient to
           </Typography>
         )}
       </Box>

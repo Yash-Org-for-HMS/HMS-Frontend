@@ -14,7 +14,7 @@ interface SoftChipProps {
 }
 
 /**
- * A small soft-tinted status pill with an optional leading icon — the
+ * A small soft-tinted status pill with an optional leading icon - the
  * `<Chip icon label size="small" sx={{ bgcolor, color, fontWeight: 700 }} />`
  * that the IPD lab / radiology / medicine dialogs each rendered from a local
  * status map. Distinct from StatusChip (which derives its tint from a single

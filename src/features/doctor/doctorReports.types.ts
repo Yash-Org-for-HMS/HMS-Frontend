@@ -1,5 +1,5 @@
 /**
- * GET /doctor/reports — one payload sliced by every sub-report on the page,
+ * GET /doctor/reports - one payload sliced by every sub-report on the page,
  * mirrored from backend/src/modules/doctor/reports.controller.ts.
  *
  * The whole page shares a single fetch, so each report receives this object and
@@ -38,7 +38,7 @@ export interface MedicineCount {
   totalQuantity: number;
 }
 
-/** Order counts by status — the same shape for lab and radiology. */
+/** Order counts by status - the same shape for lab and radiology. */
 export interface StatusCount {
   status: string;
   count: number;

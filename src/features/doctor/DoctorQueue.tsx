@@ -50,7 +50,7 @@ export default function DoctorQueue() {
 
   const [vitalsDialog, setVitalsDialog] = useState<{ open: boolean; token: any; readonly: boolean }>({ open: false, token: null, readonly: true });
 
-  // Memoized on `tokens` — this page re-renders on unrelated local state (the
+  // Memoized on `tokens` - this page re-renders on unrelated local state (the
   // vitals dialog opening/closing), which would otherwise re-run all 6 of
   // these full-array passes for no reason.
   const { waiting, inProgress, completed, skipped, activeTokens, skippedTokens } = useMemo(() => {
@@ -150,7 +150,7 @@ export default function DoctorQueue() {
                           added to it. Every row here is this doctor's own
                           queue, so prefixing the doctor's initials identified
                           nothing and printed "PP-1" for a patient holding a
-                          slip that says 1 — a milder version of the two-numbers
+                          slip that says 1 - a milder version of the two-numbers
                           problem the queue work removed. The nurse queue keeps
                           the prefix because its rows span several doctors. */}
                       <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>

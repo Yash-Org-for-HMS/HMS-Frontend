@@ -65,7 +65,7 @@ export default function LabTestPicker({ open, onClose, onToggle, selectedIds, ac
         ) : filtered.length === 0 ? (
           <Typography variant="body2" sx={{ color: "text.secondary", py: 4, textAlign: "center" }}>
             {tests.length === 0
-              ? "No lab tests configured — add them in Schedule of Charges (Type: Lab test)."
+              ? "No lab tests configured - add them in Schedule of Charges (Type: Lab test)."
               : "No tests match."}
           </Typography>
         ) : (

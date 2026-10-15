@@ -144,7 +144,7 @@ export default function MySchedule() {
                     <Box sx={{ flex: 1 }} />
                     {day.onLeave && (
                       <SoftChip
-                        label={day.leaveReason ? `On leave — ${day.leaveReason}` : "On leave"}
+                        label={day.leaveReason ? `On leave - ${day.leaveReason}` : "On leave"}
                         icon={<EventBusyRounded sx={{ fontSize: 14 }} />}
                         bg={alpha(SEMANTIC.warning, 0.14)} color={SEMANTIC.warning}
                       />
@@ -163,7 +163,7 @@ export default function MySchedule() {
                   </Stack>
 
                   {/* A day the doctor is away but still has bookings is the one
-                      worth shouting about — somebody will arrive to no doctor. */}
+                      worth shouting about - somebody will arrive to no doctor. */}
                   {day.onLeave && day.booked > 0 && (
                     <Alert severity="warning" square sx={{ borderRadius: 0 }}>
                       You are on leave this day but {day.booked} patient{day.booked === 1 ? " is" : "s are"} still
@@ -190,7 +190,7 @@ export default function MySchedule() {
                                 {time(r.appointmentDate)}
                               </TableCell>
                               <TableCell sx={{ fontVariantNumeric: "tabular-nums" }}>
-                                {r.tokenNumber ?? "—"}
+                                {r.tokenNumber ?? "-"}
                               </TableCell>
                               <TableCell sx={{ fontWeight: 600 }}>{r.patientName}</TableCell>
                               <TableCell sx={{ color: NEUTRAL.muted, fontSize: "0.75rem" }}>{r.uhid}</TableCell>

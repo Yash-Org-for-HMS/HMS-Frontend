@@ -4,7 +4,7 @@
  * denormalised (backend/src/modules/reception/queue.controller.ts).
  *
  * Statuses are lookup rows carrying their own label and colour, which the UI
- * renders directly — that is why `statusCode` is a plain string here rather
+ * renders directly - that is why `statusCode` is a plain string here rather
  * than a union: the set is data, not a compile-time constant.
  */
 export interface QueueTokenRow {
@@ -30,7 +30,7 @@ export interface QueueTokenRow {
 
   // ── Resolved server-side ──
   /** WAITING_FOR_VITALS | READY_FOR_DOCTOR | IN_CONSULTATION | PHARMACY_PENDING
-   *  | COMPLETED | SKIPPED | CANCELLED — "UNKNOWN" when the lookup is missing. */
+   *  | COMPLETED | SKIPPED | CANCELLED - "UNKNOWN" when the lookup is missing. */
   statusCode: string;
   statusLabel: string;
   statusColor: string;
@@ -46,7 +46,7 @@ export interface QueueTokenRow {
 /**
  * What the billing/vitals dialogs are handed off a selected token.
  * appointmentId and patientId are nullable because a walk-in token has no
- * appointment behind it — the dialogs are gated on the id, not on the object.
+ * appointment behind it - the dialogs are gated on the id, not on the object.
  */
 export interface QueueAppointmentRef {
   appointmentId: string | null;

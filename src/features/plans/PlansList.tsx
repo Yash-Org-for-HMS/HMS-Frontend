@@ -240,9 +240,9 @@ function PlanCard({ plan, modules, onMenu }: { plan: any; modules: Module[]; onM
 
       {/* Limits */}
       <Box sx={{ display: "flex", gap: 1, px: 2, py: 1.5, mx: 2.5, mb: 0.5, borderRadius: 2, bgcolor: "action.hover" }}>
-        <LimitStat icon={<GroupsRounded sx={{ fontSize: 18 }} />} label="Users" value={plan.maxUsers ?? "—"} />
+        <LimitStat icon={<GroupsRounded sx={{ fontSize: 18 }} />} label="Users" value={plan.maxUsers ?? "-"} />
         <Divider orientation="vertical" flexItem />
-        <LimitStat icon={<BusinessRounded sx={{ fontSize: 18 }} />} label="Branches" value={plan.maxBranches ?? "—"} />
+        <LimitStat icon={<BusinessRounded sx={{ fontSize: 18 }} />} label="Branches" value={plan.maxBranches ?? "-"} />
         <Divider orientation="vertical" flexItem />
         <LimitStat icon={<CloudQueueRounded sx={{ fontSize: 18 }} />} label="Storage" value={`${plan.maxStorageGb ?? 0}GB`} />
       </Box>

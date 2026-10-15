@@ -19,7 +19,7 @@ import { ListSkeleton } from "@/components/TableRowsSkeleton";
 
 const DOCTOR_BLUE = BRAND.action;
 
-/** One scan queued for submission. price is display-only — the server prices from SOC. */
+/** One scan queued for submission. price is display-only - the server prices from SOC. */
 type RadiologyScanLine = { chargeItemId: string; scanType: string; radiologistNotes: string; price: number };
 
 interface RadiologyOrderFormProps {
@@ -39,7 +39,7 @@ export default function RadiologyOrderForm({ consultationId, patientId, onRequir
   const toast = useToast();
   const qc = useQueryClient();
 
-  // Form state — the test is chosen from the SOC radiology catalogue via a picker,
+  // Form state - the test is chosen from the SOC radiology catalogue via a picker,
   // so its chargeItemId is the price master.
   const [selectedTest, setSelectedTest] = useState<PickedRadTest | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -66,7 +66,7 @@ export default function RadiologyOrderForm({ consultationId, patientId, onRequir
   const removeFromBasket = (idx: number) => setBasket((prev) => prev.filter((_, i) => i !== idx));
 
   // A scan picked but not yet "added" still counts, so ordering a single scan
-  // needs no extra Add click — Add is only for stacking several.
+  // needs no extra Add click - Add is only for stacking several.
   const effectiveScans = selectedTest ? [...basket, lineFor(selectedTest)] : basket;
   const estTotal = effectiveScans.reduce((sum, s) => sum + (s.price || 0), 0);
 

@@ -9,7 +9,7 @@
 export function isNavItemActive(pathname: string, itemPath: string): boolean {
   if (pathname === itemPath) return true;
   // The platform dashboard lives at "/", which is a prefix of literally every
-  // route — it can only ever match exactly.
+  // route - it can only ever match exactly.
   if (itemPath === "/") return false;
   // Trailing slash guards the prefix: "/lab/radiology-catalog" does not start
   // with "/lab/radiology/", but "/lab/radiology/123" does.

@@ -17,8 +17,8 @@ import { SEMANTIC, NEUTRAL, alpha } from "@/styles/accents";
  * The platform's Razorpay credentials.
  *
  * Scope is narrow on purpose: this gateway exists so HOSPITALS can pay US for
- * their subscription. Patients never pay through it — patient billing is
- * recorded at the desk, deliberately — so there is one merchant account and no
+ * their subscription. Patients never pay through it - patient billing is
+ * recorded at the desk, deliberately - so there is one merchant account and no
  * per-tenant credentials anywhere on this screen.
  *
  * Secrets are write-only. Once saved they are sealed and cannot be read back,
@@ -155,7 +155,7 @@ export default function PaymentGatewaySettings() {
         subtitle="How hospitals pay you for their subscription"
       />
 
-      {/* State first — an operator opening this page is asking one question:
+      {/* State first - an operator opening this page is asking one question:
           can hospitals pay right now? */}
       <Paper sx={{ p: 3, mb: 3 }}>
         <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap" useFlexGap>
@@ -165,7 +165,7 @@ export default function PaymentGatewaySettings() {
             bg={alpha(data.isActive ? SEMANTIC.success : NEUTRAL.muted, 0.12)}
           />
           <SoftChip
-            label={shownMode === "LIVE" ? "LIVE — real money" : "TEST mode"}
+            label={shownMode === "LIVE" ? "LIVE - real money" : "TEST mode"}
             color={shownMode === "LIVE" ? SEMANTIC.warning : NEUTRAL.muted}
             bg={alpha(shownMode === "LIVE" ? SEMANTIC.warning : NEUTRAL.muted, 0.12)}
           />
@@ -222,7 +222,7 @@ export default function PaymentGatewaySettings() {
               <ToggleButton value="LIVE">Live</ToggleButton>
             </ToggleButtonGroup>
             <Typography variant="caption" sx={{ color: NEUTRAL.muted, ml: 2 }}>
-              The key itself decides which one is really used — this must match it.
+              The key itself decides which one is really used - this must match it.
             </Typography>
           </Box>
 
@@ -230,13 +230,13 @@ export default function PaymentGatewaySettings() {
             fullWidth label="Key ID" value={shownKeyId}
             onChange={(e) => setKeyId(e.target.value)}
             placeholder="rzp_test_xxxxxxxxxxxx"
-            helperText="Public — it is sent to the browser. Safe to read back."
+            helperText="Public - it is sent to the browser. Safe to read back."
           />
 
           <TextField
             fullWidth type="password" label="Key Secret" value={keySecret}
             onChange={(e) => setKeySecret(e.target.value)}
-            placeholder={data.hasKeySecret ? "•••••••• stored — leave blank to keep it" : "Paste the secret"}
+            placeholder={data.hasKeySecret ? "•••••••• stored - leave blank to keep it" : "Paste the secret"}
             helperText={
               data.hasKeySecret
                 ? "Stored and encrypted. It cannot be shown again; leave blank unless you are replacing it."
@@ -248,7 +248,7 @@ export default function PaymentGatewaySettings() {
             <TextField
               fullWidth type="password" label="Webhook Secret" value={webhookSecret}
               onChange={(e) => setWebhookSecret(e.target.value)}
-              placeholder={data.hasWebhookSecret ? "•••••••• stored — leave blank to keep it" : "Choose one, or generate"}
+              placeholder={data.hasWebhookSecret ? "•••••••• stored - leave blank to keep it" : "Choose one, or generate"}
               helperText="You invent this, then paste the same value into Razorpay. It is what proves a payment callback really came from them."
             />
             <Button size="small" sx={{ mt: 1 }} onClick={() => mint.mutate()} disabled={mint.isPending}>
@@ -279,7 +279,7 @@ export default function PaymentGatewaySettings() {
             </Button>
           </Stack>
           <Typography variant="caption" sx={{ color: NEUTRAL.muted }}>
-            Saving always switches collection off and clears verification — a changed key is an
+            Saving always switches collection off and clears verification - a changed key is an
             unproven key, and an unproven key would fail at the bank rather than here.
           </Typography>
         </Stack>
@@ -299,7 +299,7 @@ export default function PaymentGatewaySettings() {
           help={
             data.webhookUrl.startsWith("http")
               ? "Razorpay must be able to reach this from the internet."
-              : "Incomplete — set PUBLIC_API_URL on the server so this resolves to a full address."
+              : "Incomplete - set PUBLIC_API_URL on the server so this resolves to a full address."
           }
         />
       </Paper>

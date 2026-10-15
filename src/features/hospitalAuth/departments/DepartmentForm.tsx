@@ -176,7 +176,7 @@ export default function DepartmentForm() {
     <Box sx={{ maxWidth: FORM_PAGE_WIDTH, mx: "auto", width: "100%" }}>
       <PageHeader
         title={isEditing ? "Edit Department" : "Add New Department"}
-        subtitle={isEditing ? "Update department details." : "For a department the standard list doesn't have. Most are already there — switch them on from the Departments list."}
+        subtitle={isEditing ? "Update department details." : "For a department the standard list doesn't have. Most are already there - switch them on from the Departments list."}
         actions={
           <Button
             variant="outlined"
@@ -212,7 +212,7 @@ export default function DepartmentForm() {
               />
               {standardMatches.length > 0 && (
                 <Alert severity="info" sx={{ mt: 1.5 }}>
-                  <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>Already on the standard list — use it instead of adding a new one:</Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>Already on the standard list - use it instead of adding a new one:</Typography>
                   <Stack spacing={0.75}>
                     {standardMatches.map((d) => (
                       <Stack key={d.departmentId} direction="row" spacing={1.5} alignItems="center">
@@ -257,7 +257,7 @@ export default function DepartmentForm() {
                 name="headOfDepartmentId"
                 value={formData.headOfDepartmentId}
                 onChange={handleChange}
-                helperText="Optional — you can assign this later, after adding staff."
+                helperText="Optional - you can assign this later, after adding staff."
                 InputLabelProps={{ style: { color: "text.secondary" } }}
                 sx={{
                   "& .MuiOutlinedInput-root": {
@@ -341,7 +341,7 @@ export default function DepartmentForm() {
                 <Typography variant="body2" sx={{ color: "text.secondary", mb: 1 }}>
                   {Object.keys(atBranches).length
                     ? "Only the branches ticked offer this department for booking."
-                    : "Every branch — tick branches to run it at some only."}
+                    : "Every branch - tick branches to run it at some only."}
                 </Typography>
                 <Stack spacing={1}>
                   {availableBranches.map((b) => {

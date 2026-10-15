@@ -15,7 +15,7 @@ import { API_URL } from "@/api/axios";
 const BLUE = BRAND.action;
 const BLUE_DARK = BRAND.actionDark;
 
-// The mark's gradient — the ONLY gradient in the panel, on a badge under 74px.
+// The mark's gradient - the ONLY gradient in the panel, on a badge under 74px.
 // It previously also painted the buttons and chat bubbles in a sky-to-navy ramp
 // belonging to no palette here, which read as a dark cloud beside the indigo
 // BRAND button. Everything else is flat BRAND, and the halo is a ring not a blur.
@@ -27,7 +27,7 @@ const DEX_TAGLINE = "AI clinical assistant";
 type Status = "idle" | "streaming" | "done" | "error";
 type ChatMsg = { role: "user" | "assistant"; content: string };
 
-// Preset clinical questions — quick one-tap prompts. The doctor can also type
+// Preset clinical questions - quick one-tap prompts. The doctor can also type
 // their own question in the input below.
 const SUGGESTED = [
   "Summarize the active problems.",
@@ -53,7 +53,7 @@ function authHeaders(extra: Record<string, string> = {}): Record<string, string>
 }
 
 /**
- * Dr. Dex's glyph — a trace with a reading point at its head, from the same
+ * Dr. Dex's glyph - a trace with a reading point at its head, from the same
  * clinical vocabulary as the vitals monitor rather than the four-pointed
  * sparkle every AI feature ships with, which also blurs at the 28px size used
  * beside each reply. Exported so the buttons summoning Dex carry Dex's mark.
@@ -77,7 +77,7 @@ export function DexGlyph({ size = 20 }: { size?: number }) {
 }
 
 /**
- * The glyph in its badge. A rounded square, not a circle — every other round
+ * The glyph in its badge. A rounded square, not a circle - every other round
  * badge in this app is a person's avatar, and Dex is not a person. `ring` lifts
  * the mark off the surface without the old blurred halo's dark cloud.
  */
@@ -136,7 +136,7 @@ async function readSse(
 }
 
 /**
- * Dr. Dex — AI clinical assistant: a pre-consultation summary + a grounded
+ * Dr. Dex - AI clinical assistant: a pre-consultation summary + a grounded
  * follow-up chat, both streamed (SSE) from the backend and scoped to this
  * patient's own record. Rendered inside a slide-over on the consultation page.
  */
@@ -247,7 +247,7 @@ export default function AiSummaryPanel({ patientId, onCollapse }: { patientId?: 
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%", bgcolor: "background.paper" }}>
-      {/* ── Header (light — the orb is the only colour pop) ─ */}
+      {/* ── Header (light - the orb is the only colour pop) ─ */}
       <Box sx={{ bgcolor: "background.paper", color: "text.primary", px: 2, py: 1.5, display: "flex", alignItems: "center", gap: 1.25, borderBottom: "1px solid", borderColor: "divider" }}>
         <Box sx={{ position: "relative", flexShrink: 0 }}>
           <DexMark size={36} />
@@ -290,7 +290,7 @@ export default function AiSummaryPanel({ patientId, onCollapse }: { patientId?: 
               <DexMark size={74} ring />
               <Typography sx={{ fontWeight: 800, fontSize: "1.25rem", mt: 3, mb: 0.75 }}>Hi, I'm {DEX_NAME}</Typography>
               <Typography sx={{ ...typeScale.body, color: "text.secondary", maxWidth: 320, mb: 3 }}>
-                Your clinical co-pilot. I'll review this patient's history, vitals, medications and documents and brief you in seconds — or answer any question you have.
+                Your clinical co-pilot. I'll review this patient's history, vitals, medications and documents and brief you in seconds - or answer any question you have.
               </Typography>
               <Button
                 variant="contained" size="large" onClick={generate} disabled={!patientId} startIcon={<DexGlyph size={19} />}
@@ -398,7 +398,7 @@ export default function AiSummaryPanel({ patientId, onCollapse }: { patientId?: 
         <Box sx={{ mt: 1.25, mb: 2, display: "flex", gap: 1, alignItems: "flex-start", p: 1, borderRadius: 2, bgcolor: "action.hover" }}>
           <InfoOutlined sx={{ fontSize: 15, color: "text.secondary", mt: "1px" }} />
           <Typography sx={{ ...typeScale.caption }}>
-            {DEX_NAME} is AI decision support — verify against the record. Not a diagnosis or treatment order.
+            {DEX_NAME} is AI decision support - verify against the record. Not a diagnosis or treatment order.
           </Typography>
         </Box>
       </Box>

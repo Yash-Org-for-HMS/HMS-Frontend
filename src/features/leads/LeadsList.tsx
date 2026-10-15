@@ -92,7 +92,7 @@ export default function LeadsList() {
     queryFn: async () => (await axiosInstance.get("/plans", { params: { limit: 100 } })).data.data || [],
   });
 
-  // The request waits until typing pauses — it fired on every keystroke.
+  // The request waits until typing pauses - it fired on every keystroke.
   const debouncedSearch = useDebouncedValue(search);
   const {
     data: leadsData,
@@ -338,8 +338,8 @@ export default function LeadsList() {
                       {lead.assignedUser ? `${lead.assignedUser.firstName} ${lead.assignedUser.lastName}` : "Unassigned"}
                     </TableCell>
                     <TableCell>
-                      {/* "In Trial" / "Converted" are system-managed outcomes — set by
-                          starting a trial or converting the lead, never picked by hand —
+                      {/* "In Trial" / "Converted" are system-managed outcomes - set by
+                          starting a trial or converting the lead, never picked by hand -
                           so they render as a read-only chip, not an editable dropdown. */}
                       {lead.leadStatus === "trialing" || lead.leadStatus === "converted" ? (
                         <Tooltip title={lead.leadStatus === "trialing" ? "Set when a trial was started for this lead" : "Set when this lead was converted to a hospital"}>
@@ -443,7 +443,7 @@ export default function LeadsList() {
         </MenuItem>
       </Menu>
 
-      {/* Convert Dialog — pick a plan + the first admin */}
+      {/* Convert Dialog - pick a plan + the first admin */}
       <Dialog open={Boolean(convertId)} onClose={() => !converting && setConvertId(null)} maxWidth="sm" fullWidth PaperProps={{ sx: { bgcolor: "background.paper", color: "text.primary", borderRadius: 3 } }}>
         <DialogTitle sx={{ fontWeight: 700 }}>Convert Lead to Hospital</DialogTitle>
         <DialogContent>
@@ -459,7 +459,7 @@ export default function LeadsList() {
               value={convertForm.planId}
               onChange={(e) => setConvertForm((f) => ({ ...f, planId: e.target.value }))}
             >
-              {plans.length === 0 && <MenuItem value="" disabled>No plans available — create one first</MenuItem>}
+              {plans.length === 0 && <MenuItem value="" disabled>No plans available - create one first</MenuItem>}
               {plans.map((p) => (
                 <MenuItem key={p.planId} value={p.planId}>{p.planName}</MenuItem>
               ))}
@@ -496,7 +496,7 @@ export default function LeadsList() {
         </DialogActions>
       </Dialog>
 
-      {/* Credentials Dialog — shown once after conversion */}
+      {/* Credentials Dialog - shown once after conversion */}
       <CredentialDialog
         open={Boolean(credentials)}
         title="Hospital Provisioned"

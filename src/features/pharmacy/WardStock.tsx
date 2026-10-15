@@ -83,8 +83,8 @@ function units(n: number, unit: string | null): string {
  * One figure in a summary row.
  *
  * `color` is now optional, and that is the point. Every stat used to be a
- * tinted box with a coloured border — "Lines held" in blue and "Units" in
- * green beside "Expired" in red — so four tiles shouted equally and the one
+ * tinted box with a coloured border - "Lines held" in blue and "Units" in
+ * green beside "Expired" in red - so four tiles shouted equally and the one
  * that meant something did not stand out. Blue and green were carrying no
  * information: a count of lines is not a state.
  *
@@ -245,7 +245,7 @@ function IssueDialog({ ward, onClose, onDone }: { ward: WardSummary; onClose: ()
             after. A ward holding batch A cannot be given batch B. */}
         <Typography variant="caption" sx={{ color: "text.secondary" }}>
           A ward gives out one batch at a time. If it still holds units of a different batch, use or return
-          those first — that is what lets a recall tell which batch a patient received.
+          those first - that is what lets a recall tell which batch a patient received.
         </Typography>
       </DialogContent>
       <DialogActions sx={{ p: 2 }}>
@@ -301,7 +301,7 @@ function ReturnDialog({ ward, row, onClose, onDone }: {
           onChange={(e) => setReason(e.target.value)}
           helperText="The store needs this to know whether it goes back on the shelf."
         >
-          <MenuItem value="Surplus to requirements">Surplus — not needed</MenuItem>
+          <MenuItem value="Surplus to requirements">Surplus - not needed</MenuItem>
           <MenuItem value="Nearing expiry">Nearing expiry</MenuItem>
           <MenuItem value="Wrong item issued">Wrong item issued</MenuItem>
           <MenuItem value="Damaged or contaminated">Damaged or contaminated</MenuItem>
@@ -450,11 +450,11 @@ function AddItemDialog({ onClose, onDone }: { onClose: () => void; onDone: () =>
             <TextField
               fullWidth size="small" label="Counted in" value={unit} onChange={(e) => setUnit(e.target.value)}
               placeholder="pair, pack, vial"
-              helperText="What the WARD counts — the catalogue unit is often something else entirely."
+              helperText="What the WARD counts - the catalogue unit is often something else entirely."
             />
             <FormControlLabel
               control={<Switch checked={billsToPatient} onChange={(e) => setBillsToPatient(e.target.checked)} />}
-              label={billsToPatient ? "Billed to the patient who uses it" : "Floor stock — absorbed, never billed"}
+              label={billsToPatient ? "Billed to the patient who uses it" : "Floor stock - absorbed, never billed"}
             />
           </>
         )}
@@ -572,7 +572,7 @@ function ConsumeDialog({ ward, stock, onClose, onDone }: {
             InputProps={{ inputProps: { min: 1 } }}
           />
           {/* Outlined, not a bare text button. Adding to the basket is a
-              REQUIRED step — Record stays disabled until something is in it —
+              REQUIRED step - Record stays disabled until something is in it -
               and as a low-emphasis link beside a number field it read as
               optional. Choosing an item and pressing Record did nothing, with
               no reason given. */}
@@ -591,7 +591,7 @@ function ConsumeDialog({ ward, stock, onClose, onDone }: {
         {!basket.length && (
           <Alert severity="info" sx={{ py: 0.5 }}>
             {chosen
-              ? "Press Add to put this on the list — nothing is recorded until it is on the list."
+              ? "Press Add to put this on the list - nothing is recorded until it is on the list."
               : "Pick an item and press Add. You can record several in one go."}
           </Alert>
         )}
@@ -614,7 +614,7 @@ function ConsumeDialog({ ward, stock, onClose, onDone }: {
             ))}
             <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 1 }}>
               {billable === 0
-                ? "None of this bills the patient — it is all floor stock."
+                ? "None of this bills the patient - it is all floor stock."
                 : `${billable} of ${basket.length} will be added to the patient's bill.`}
             </Typography>
           </Box>
@@ -691,7 +691,7 @@ function WardUsage({ wardId }: { wardId: string }) {
               <Typography key={i.stockIssueItemId} variant="caption" sx={{ display: "block", color: "text.secondary" }}>
                 · {i.quantity} × {i.itemName ?? "item"}
                 {i.batchNumber ? ` (batch ${i.batchNumber})` : ""}
-                {i.billed ? "" : " — floor stock, not billed"}
+                {i.billed ? "" : " - floor stock, not billed"}
               </Typography>
             ))}
             {r.notes && (
@@ -729,7 +729,7 @@ function ParCell({ wardId, row, editable, onSaved }: {
   const [saving, setSaving] = useState(false);
 
   if (!editable) {
-    return <Typography variant="caption" sx={{ color: "text.secondary" }}>{row.parLevel ?? "—"}</Typography>;
+    return <Typography variant="caption" sx={{ color: "text.secondary" }}>{row.parLevel ?? "-"}</Typography>;
   }
 
   const commit = async () => {
@@ -756,7 +756,7 @@ function ParCell({ wardId, row, editable, onSaved }: {
 
   return (
     <TextField
-      size="small" type="number" variant="standard" placeholder="—"
+      size="small" type="number" variant="standard" placeholder="-"
       value={value} disabled={saving}
       onChange={(e) => setValue(e.target.value)}
       onBlur={commit}
@@ -869,7 +869,7 @@ function CountDialog({ ward, stock, onClose, onDone }: {
      * Full screen, and that is the whole point rather than a style choice.
      *
      * A normal dialog floats over the ward table with a dim backdrop, and the
-     * quantities are perfectly readable through it — the "Units" tile and the
+     * quantities are perfectly readable through it - the "Units" tile and the
      * on-hand column sit right behind the sheet. Hiding the figure inside the
      * dialog while leaving it legible two inches away is not a blind count, it
      * just looks like one. Covering the page is the only version that holds.
@@ -889,7 +889,7 @@ function CountDialog({ ward, stock, onClose, onDone }: {
       <DialogContent dividers sx={{ pt: 2.5, ...SHEET }}>
         <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 2 }}>
           Write down what is actually on the shelf. What the system thinks is there is deliberately
-          hidden until you are done — a sheet that shows you the answer is a sheet that gets ticked.
+          hidden until you are done - a sheet that shows you the answer is a sheet that gets ticked.
         </Typography>
 
         {stock.length === 0 ? (
@@ -904,7 +904,7 @@ function CountDialog({ ward, stock, onClose, onDone }: {
               )}
             </Box>
             <TextField
-              size="small" type="number" placeholder="—" sx={{ width: 100 }}
+              size="small" type="number" placeholder="-" sx={{ width: 100 }}
               value={counts[s.stockItemId] ?? ""}
               onChange={(e) => setCounts((c) => ({ ...c, [s.stockItemId]: e.target.value }))}
               InputProps={{ inputProps: { min: 0, "aria-label": `Count of ${s.name}` } }}
@@ -1008,7 +1008,7 @@ function ReorderTab() {
                     color: l.canCover ? "text.secondary" : SEMANTIC.danger,
                     fontWeight: l.canCover ? 400 : 700,
                   }}>
-                    {l.inStore}{l.canCover ? "" : " — short"}
+                    {l.inStore}{l.canCover ? "" : " - short"}
                   </Typography>
                 </TableCell>
               </TableRow>
@@ -1051,7 +1051,7 @@ function WardDetail({ ward, onBack, canIssue }: { ward: WardSummary; onBack: () 
       {/* Title and actions on separate rows rather than one wrapping flex line.
           Four controls sharing a row with a heading meant that at tablet width
           the buttons wrapped one at a time and the back arrow ended up orphaned
-          above a stack of three — so the way back moved depending on how wide
+          above a stack of three - so the way back moved depending on how wide
           the window was. */}
       <Box sx={{ mb: 2.5 }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
@@ -1093,7 +1093,7 @@ function WardDetail({ ward, onBack, canIssue }: { ward: WardSummary; onBack: () 
         <ListSkeleton rows={5} />
       ) : (
         <>
-          {/* Counts plain, states coloured, and a state at zero left out —
+          {/* Counts plain, states coloured, and a state at zero left out -
               a red "0 expired" is a warning about nothing. */}
           <Box sx={{ display: "flex", gap: 1.5, mb: 2.5, flexWrap: "wrap" }}>
             <Stat label="Lines held" value={data.summary.items} />
@@ -1138,7 +1138,7 @@ function WardDetail({ ward, onBack, canIssue }: { ward: WardSummary; onBack: () 
                             )}
                           </Box>
                         ) : (
-                          <Typography variant="caption" sx={{ color: "text.disabled" }}>—</Typography>
+                          <Typography variant="caption" sx={{ color: "text.disabled" }}>-</Typography>
                         )}
                       </TableCell>
                       <TableCell align="right">
@@ -1592,7 +1592,7 @@ function PositionView({ data }: { data: PositionReport }) {
         <Alert severity="info" sx={{ mb: 2 }}>
           {data.totals.medicineUnitsOffValuation} drug unit{data.totals.medicineUnitsOffValuation === 1 ? "" : "s"} sit
           in ward cupboards. Issuing to a ward takes them out of pharmacy inventory, so they are not in the
-          Stock Valuation report — the hospital's stock is that report plus this one.
+          Stock Valuation report - the hospital's stock is that report plus this one.
         </Alert>
       )}
 
@@ -1618,17 +1618,17 @@ function PositionView({ data }: { data: PositionReport }) {
                 <TableCell align="right" sx={{ fontVariantNumeric: "tabular-nums" }}>{formatINRAuto(w.listValue)}</TableCell>
                 <TableCell align="right">
                   <Typography variant="body2" sx={{ fontWeight: w.expiredUnits ? 800 : 400, color: w.expiredUnits ? SEMANTIC.danger : "text.disabled" }}>
-                    {w.expiredUnits || "—"}
+                    {w.expiredUnits || "-"}
                   </Typography>
                 </TableCell>
                 <TableCell align="right">
                   <Typography variant="body2" sx={{ color: w.expiringUnits ? SEMANTIC.warning : "text.disabled" }}>
-                    {w.expiringUnits || "—"}
+                    {w.expiringUnits || "-"}
                   </Typography>
                 </TableCell>
                 <TableCell align="right">
                   <Typography variant="body2" sx={{ color: w.belowPar ? SEMANTIC.warning : "text.disabled" }}>
-                    {w.belowPar || "—"}
+                    {w.belowPar || "-"}
                   </Typography>
                 </TableCell>
               </TableRow>
@@ -1650,10 +1650,10 @@ function ConsumptionView({ data }: { data: ConsumptionReport }) {
         <Stat label="Absorbed as floor stock" value={formatINRAuto(data.totals.absorbedValue)} color={SEMANTIC.warning} />
       </Box>
       {/* Two numbers of different kinds, and reading the second as revenue lost
-          would be wrong — it is the size of a decision, taken on purpose. */}
+          would be wrong - it is the size of a decision, taken on purpose. */}
       <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 2 }}>
         Billed is what patients were actually charged. Absorbed is what the same units would have billed at
-        list price had they not been marked floor stock — the size of that decision, not a loss.
+        list price had they not been marked floor stock - the size of that decision, not a loss.
         Prices exclude GST.
       </Typography>
 
@@ -1753,24 +1753,24 @@ function VarianceView({ data }: { data: VarianceReport }) {
                   )}
                 </TableCell>
                 <TableCell align="right" sx={{ fontVariantNumeric: "tabular-nums" }}>{w.unitsHeld}</TableCell>
-                <TableCell align="right">{w.counts || "—"}</TableCell>
-                <TableCell align="right">{w.off || "—"}</TableCell>
+                <TableCell align="right">{w.counts || "-"}</TableCell>
+                <TableCell align="right">{w.off || "-"}</TableCell>
                 <TableCell align="right">
                   <Typography variant="body2" sx={{ fontWeight: w.unitsShort ? 800 : 400, color: w.unitsShort ? SEMANTIC.danger : "text.disabled" }}>
-                    {w.unitsShort || "—"}
+                    {w.unitsShort || "-"}
                   </Typography>
                 </TableCell>
                 <TableCell align="right">
                   <Typography variant="body2" sx={{ color: w.unitsOver ? SEMANTIC.warning : "text.disabled" }}>
-                    {w.unitsOver || "—"}
+                    {w.unitsOver || "-"}
                   </Typography>
                 </TableCell>
                 <TableCell align="right" sx={{ fontVariantNumeric: "tabular-nums" }}>
-                  {w.unitsShort ? formatINRAuto(w.shortValue) : "—"}
+                  {w.unitsShort ? formatINRAuto(w.shortValue) : "-"}
                 </TableCell>
                 <TableCell align="right">
                   <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                    {w.lastCountedAt ? formatDate(w.lastCountedAt) : "—"}
+                    {w.lastCountedAt ? formatDate(w.lastCountedAt) : "-"}
                   </Typography>
                 </TableCell>
               </TableRow>
@@ -1806,7 +1806,7 @@ export default function WardStock() {
     <Box sx={{ width: "100%" }}>
       {/* The shared header, not a hand-rolled h4. This page was setting its own
           title and subtitle with its own margins, so it sat a few pixels off
-          every other page in the panel — which is the whole reason PageHeader
+          every other page in the panel - which is the whole reason PageHeader
           exists. */}
       <PageHeader
         title="Ward Stock"

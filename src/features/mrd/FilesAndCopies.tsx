@@ -18,7 +18,7 @@ import PatientPicker, { type PickedPatient } from "./PatientPicker";
 
 /**
  * The record room's register (backend /mrd/files, /mrd/copies): which paper
- * files are out and with whom — one place at a time, overdue flagged — and
+ * files are out and with whom - one place at a time, overdue flagged - and
  * every copy of records handed out, to whom, against what identity.
  */
 
@@ -51,7 +51,7 @@ function SendOutDialog({ onClose, onDone }: { onClose: () => void; onDone: () =>
       <DialogContent dividers>
         <Stack spacing={2}>
           <PatientPicker id="file-patient" value={patient} onChange={setPatient} />
-          <TextField id="file-party" required label="Who takes it" placeholder="e.g. Medicine OPD — Dr. Rao" value={f.party} onChange={set("party")} />
+          <TextField id="file-party" required label="Who takes it" placeholder="e.g. Medicine OPD - Dr. Rao" value={f.party} onChange={set("party")} />
           <TextField id="file-purpose" label="Purpose" value={f.purpose} onChange={set("purpose")} />
           <TextField id="file-due" type="datetime-local" label="Due back" value={f.dueBackAt} onChange={set("dueBackAt")} InputLabelProps={{ shrink: true }} />
         </Stack>
@@ -178,7 +178,7 @@ export default function FilesAndCopies() {
                   </TableCell>
                   <TableCell sx={{ whiteSpace: "nowrap" }}>{dayjs(f.outAt).format("DD MMM, h:mm A")}</TableCell>
                   <TableCell sx={{ whiteSpace: "nowrap" }}>
-                    {f.dueBackAt ? (f.overdue ? <SoftChip label={`Overdue — ${dayjs(f.dueBackAt).format("DD MMM, h:mm A")}`} bg={`${SEMANTIC.danger}1a`} color={SEMANTIC.danger} /> : dayjs(f.dueBackAt).format("DD MMM, h:mm A")) : "—"}
+                    {f.dueBackAt ? (f.overdue ? <SoftChip label={`Overdue - ${dayjs(f.dueBackAt).format("DD MMM, h:mm A")}`} bg={`${SEMANTIC.danger}1a`} color={SEMANTIC.danger} /> : dayjs(f.dueBackAt).format("DD MMM, h:mm A")) : "-"}
                   </TableCell>
                   <TableCell align="right"><Button size="small" disabled={busy === f.movementId} onClick={() => backIn(f)}>Back in</Button></TableCell>
                 </TableRow>
@@ -217,7 +217,7 @@ export default function FilesAndCopies() {
                     <Typography variant="caption" sx={{ color: "text.secondary" }}>{PARTY[c.partyType] ?? c.partyType}{c.purpose ? ` · ${c.purpose}` : ""}</Typography>
                   </TableCell>
                   <TableCell>{c.documents}</TableCell>
-                  <TableCell>{c.idProof ?? "—"}</TableCell>
+                  <TableCell>{c.idProof ?? "-"}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

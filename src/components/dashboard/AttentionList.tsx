@@ -6,7 +6,7 @@ import { SEMANTIC, BRAND } from "@/styles/accents";
 
 /**
  * How urgent a row is. Drives the left stripe and the meta chip, so severity
- * reads before the text does — and is always paired with the meta text, never
+ * reads before the text does - and is always paired with the meta text, never
  * carried by colour alone.
  */
 export type AttentionSeverity = "critical" | "warning" | "info";
@@ -19,9 +19,9 @@ const SEVERITY_COLOR: Record<AttentionSeverity, string> = {
 
 export interface AttentionItem {
   id: string;
-  /** The thing needing attention — a patient, a bill, a medicine. */
+  /** The thing needing attention - a patient, a bill, a medicine. */
   primary: ReactNode;
-  /** Context under it — the doctor, the test, the batch. */
+  /** Context under it - the doctor, the test, the batch. */
   secondary?: ReactNode;
   /** Right-aligned status: how long it's been waiting, how much is owed. */
   meta?: ReactNode;
@@ -48,7 +48,7 @@ export interface AttentionListProps {
    */
   maxRows?: number;
   /**
-   * The true size of the set when the SERVER already trimmed it — pass it and
+   * The true size of the set when the SERVER already trimmed it - pass it and
    * the chip and "and N more" describe everything, not just what arrived. An
    * endpoint returning its top 8 would otherwise make a backlog of 40 read as 8.
    */
@@ -63,7 +63,7 @@ export interface AttentionListProps {
 }
 
 /**
- * The "what needs me now" panel — a ranked list of things a person can act on,
+ * The "what needs me now" panel - a ranked list of things a person can act on,
  * with an explicit count and a way through to each one.
  *
  * Every dashboard had counts ("4 pending lab tests") and lists ordered by

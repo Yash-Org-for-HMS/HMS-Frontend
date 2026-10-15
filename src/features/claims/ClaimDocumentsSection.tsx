@@ -139,7 +139,7 @@ function UploadDialog({ claimId, docType, stage, onClose, onDone }: { claimId: s
 
   return (
     <Dialog open onClose={saving ? undefined : onClose} maxWidth="xs" fullWidth>
-      <DialogTitle>Upload — {docTypeLabel(docType)}</DialogTitle>
+      <DialogTitle>Upload - {docTypeLabel(docType)}</DialogTitle>
       <DialogContent>
         <Box sx={{ pt: 1 }}>
           <Button variant="outlined" component="label" startIcon={<CloudUploadRounded />} fullWidth sx={{ py: 2, borderStyle: "dashed" }}>

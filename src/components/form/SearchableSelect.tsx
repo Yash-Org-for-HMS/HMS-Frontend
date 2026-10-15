@@ -9,7 +9,7 @@ import { OwnSearchMenuList } from "./MenuListWithSearch";
 export interface SelectOption {
   value: string;
   label: string;
-  /** Second line under the label — a department, a code, a price. */
+  /** Second line under the label - a department, a code, a price. */
   secondary?: string;
   disabled?: boolean;
   /** Extra words the search should match but which are not shown. */
@@ -24,14 +24,14 @@ interface Props {
    * MUI TextField s own handler type, forwarded untouched.
    *
    * Typed from TextFieldProps rather than a hand-written shape so an existing
-   * handleChange can be passed straight across with no cast and no adapter —
+   * handleChange can be passed straight across with no cast and no adapter -
    * the whole point of keeping the field a TextField underneath.
    */
   onChange: TextFieldProps["onChange"];
   options: SelectOption[];
   /** The greyed-out first row, shown when nothing is chosen. */
   placeholder?: string;
-  /** A real, selectable "no filter" row — e.g. "All Departments". */
+  /** A real, selectable "no filter" row - e.g. "All Departments". */
   emptyOption?: { value: string; label: string };
   searchPlaceholder?: string;
   /** Below this many options the search box is pointless, so it is hidden. */
@@ -47,7 +47,7 @@ interface Props {
    * An icon at the head of the FIELD (not the search box).
    *
    * The queue's doctor filter carries a funnel that turns the accent colour
-   * while a filter is on — the only thing on that toolbar saying the list is
+   * while a filter is on - the only thing on that toolbar saying the list is
    * narrowed. Swapping the plain select for this one would have dropped it,
    * so the affordance is passed through rather than lost.
    */
@@ -62,7 +62,7 @@ interface Props {
  * departments that is fine; with sixty doctors it covers the form, there is no
  * way to type at it, and finding someone means scrolling a list that has no
  * order you can predict. This keeps the same field and the same onChange shape
- * — `{ target: { name, value } }` — so swapping it in touches nothing else.
+ * - `{ target: { name, value } }` - so swapping it in touches nothing else.
  *
  * Three things here are less obvious than they look:
  *
@@ -70,12 +70,12 @@ interface Props {
  *    MenuItem happens to be mounted. Without it, typing a search that filters
  *    out the CHOSEN row blanks the field, because MUI displays the selected
  *    child's contents and that child is gone.
- *  - The search sits in a ListSubheader, which is sticky and — unlike a
- *    MenuItem — is not selectable, so it cannot be landed on with the arrow
+ *  - The search sits in a ListSubheader, which is sticky and - unlike a
+ *    MenuItem - is not selectable, so it cannot be landed on with the arrow
  *    keys or picked by pressing Enter.
  *  - MUI's menus do their own type-ahead: typing "d" jumps to an option
  *    starting with "d". Inside a menu that would fight every keystroke, so the
- *    search box stops keys propagating — except Escape, which should still
+ *    search box stops keys propagating - except Escape, which should still
  *    close the menu.
  */
 export default function SearchableSelect({
@@ -120,7 +120,7 @@ export default function SearchableSelect({
        *
        * A label normally floats up only when MUI thinks the field is filled,
        * and an empty select is not. So the label sat down in the field on top
-       * of the placeholder and the two rendered over each other — "Doctor *"
+       * of the placeholder and the two rendered over each other - "Doctor *"
        * and "Select a Doctor" in the same pixels.
        */
       slotProps={{
@@ -130,7 +130,7 @@ export default function SearchableSelect({
       SelectProps={{
         displayEmpty: true,
         // Drawn from `options`, so the field keeps its text while the list is
-        // filtered — see the note above.
+        // filtered - see the note above.
         renderValue: () => {
           if (value === "" || value == null) {
             return (
@@ -146,7 +146,7 @@ export default function SearchableSelect({
         // person's filter still applied.
         onClose: () => setQuery(""),
         MenuProps: {
-          // It searches by itself, so not the theme's searching list as well —
+          // It searches by itself, so not the theme's searching list as well -
           // but its box keeps the cursor (see OwnSearchMenuList).
           slots: { list: OwnSearchMenuList },
           // Below the field, not over it.

@@ -74,7 +74,7 @@ export default function IndentCard({ indent, store = false, actions }: { indent:
                 {store && <TableCell align="right" sx={{ fontVariantNumeric: "tabular-nums", fontWeight: 800 }}>{l.remaining}</TableCell>}
                 {store && (
                   <TableCell align="right" sx={{ fontVariantNumeric: "tabular-nums", color: l.inStore < l.remaining ? SEMANTIC.danger : "text.secondary", fontWeight: l.inStore < l.remaining ? 700 : 400 }}>
-                    {l.inStore}{l.inStore < l.remaining ? " — short" : ""}
+                    {l.inStore}{l.inStore < l.remaining ? " - short" : ""}
                   </TableCell>
                 )}
               </TableRow>

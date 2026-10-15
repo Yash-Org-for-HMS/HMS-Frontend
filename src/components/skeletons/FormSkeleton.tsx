@@ -4,7 +4,7 @@ import { Box, Paper, Skeleton, Stack } from "@mui/material";
  * Placeholder for a form page/dialog while its existing record loads (edit
  * mode, or a form that needs lookups before it can render). Mirrors the
  * common shape: a header, then a card of labelled field rows, then an action
- * bar — so the swap from spinner reads as "the form is arriving", not "stuck".
+ * bar - so the swap from spinner reads as "the form is arriving", not "stuck".
  */
 export default function FormSkeleton({ fields = 6, header = true }: { fields?: number; header?: boolean }) {
   return (

@@ -46,8 +46,8 @@ function balanceColor(r: { balance: number | string; invoiceStatus?: string }): 
 }
 
 // OPD (appointment-billed) and IPD (admission-billed) bills are structurally
-// different — different origin, different columns worth showing, different
-// print action — so they're kept in separate tabs/sections rather than one
+// different - different origin, different columns worth showing, different
+// print action - so they're kept in separate tabs/sections rather than one
 // mixed list. "New Invoice" (manual charge consolidation) is an OPD-side
 // concept: IPD bills are always auto-generated at discharge, never by hand.
 // `readOnly` renders a pure oversight view (hospital-admin Operations): the
@@ -200,7 +200,7 @@ function BillsList({ type, readOnly = false, basePath = "/reception/billing", de
                     <Typography variant="body2" sx={{ fontWeight: 600, color: "text.primary" }}>{r.patientName}</Typography>
                     <Typography variant="caption" sx={{ color: "text.secondary" }}>{r.uhid}</Typography>
                   </TableCell>
-                  {isIpd && <TableCell sx={{ fontFamily: "monospace", color: "text.secondary" }}>{r.admissionNumber || "—"}</TableCell>}
+                  {isIpd && <TableCell sx={{ fontFamily: "monospace", color: "text.secondary" }}>{r.admissionNumber || "-"}</TableCell>}
                   <TableCell sx={{ color: "text.secondary" }}>{formatDate(r.invoiceDate)}</TableCell>
                   {department && (
                     <TableCell align="right" sx={{ fontWeight: 800, color: "text.primary" }}>
@@ -219,19 +219,19 @@ function BillsList({ type, readOnly = false, basePath = "/reception/billing", de
                   <TableCell align="right" sx={{ color: "text.secondary" }}>{formatINR(r.paidAmount)}</TableCell>
                   {/* Green here means "settled by payment". A cancelled or draft
                       invoice also carries a zero balance, but because it was
-                      never a live bill — painting that green read as "paid" on
+                      never a live bill - painting that green read as "paid" on
                       money nobody ever collected, so it stays neutral. */}
                   <TableCell align="right" sx={{ fontWeight: 700, color: balanceColor(r) }}>{formatINR(r.balance)}</TableCell>
                   <TableCell>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, flexWrap: "wrap" }}>
                       <StatusChip label={r.statusLabel} color={r.statusColor} />
                       {/* A refund awaiting an administrator returns no money, so the
-                          status stays "Paid" — correctly. That leaves the request
+                          status stays "Paid" - correctly. That leaves the request
                           itself invisible, which is its own way of misleading the
                           desk, so it gets its own marker rather than bending the
                           status to carry two meanings. */}
                       {Number(r.refundPending) > 0.005 && (
-                        <Tooltip title={`${formatINR(r.refundPending)} refund raised — no money is returned until an administrator approves it`}>
+                        <Tooltip title={`${formatINR(r.refundPending)} refund raised - no money is returned until an administrator approves it`}>
                           <Chip
                             size="small"
                             label="Refund pending"

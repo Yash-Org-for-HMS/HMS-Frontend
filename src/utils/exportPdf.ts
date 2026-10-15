@@ -1,11 +1,11 @@
 /**
- * "Export to PDF" for report tables — the printable counterpart to
+ * "Export to PDF" for report tables - the printable counterpart to
  * {@link exportTableToExcel}.
  *
  * Excel is for working with the numbers; PDF is for the copy that gets filed,
  * signed or handed to somebody. So this produces a DOCUMENT, not a screenshot
  * of a grid: the hospital and branch it belongs to, the report's name, when it
- * was generated and by whom, and a page count — the things that make a printed
+ * was generated and by whom, and a page count - the things that make a printed
  * page defensible weeks later when nobody remembers which filter was set.
  *
  * jsPDF is loaded on demand. It is far larger than everything else in this
@@ -29,7 +29,7 @@ function letterhead(): { hospital: string; branch: string | null; user: string |
 
 /**
  * jsPDF's built-in Helvetica is WinAnsi-encoded and has no glyph for ₹, so it
- * renders as "¹" — every money column on every financial report would print
+ * renders as "¹" - every money column on every financial report would print
  * corrupted. Embedding a Unicode font would cost a few hundred kB on a chunk
  * that is already the largest thing we load, to gain one character.
  *
@@ -37,7 +37,7 @@ function letterhead(): { hospital: string; branch: string | null; user: string |
  * a font cannot carry it, so the substitution is the conventional spelling
  * rather than a degradation. Other non-WinAnsi characters are transliterated
  * where there is an obvious equivalent and dropped otherwise, which is still
- * better than a wrong glyph — a wrong character reads as data.
+ * better than a wrong glyph - a wrong character reads as data.
  */
 function pdfSafe(v: unknown): string {
   if (v === null || v === undefined) return "";

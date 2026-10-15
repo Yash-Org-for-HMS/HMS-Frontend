@@ -26,7 +26,7 @@ export default function HospitalChangePassword() {
   const { login } = useHospitalAuth();
   const navigate = useNavigate();
   // Captured once, on mount. The guard below asks whether this page was
-  // reached with a temp token — not whether one is still in storage. The
+  // reached with a temp token - not whether one is still in storage. The
   // success path clears the token and then signs the user in, so re-reading
   // it every render made that clear fire the guard: the moment the new
   // password was accepted, the user was redirected back to the login screen
@@ -93,7 +93,7 @@ export default function HospitalChangePassword() {
 
   return (
     <Box sx={{ minHeight: "100dvh", display: "flex", alignItems: "center", justifyContent: "center", px: 3, py: 6, backgroundImage: "url('/login.png')", backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat" }}>
-      {/* Minimalist: the form sits directly on the background image — no card. */}
+      {/* Minimalist: the form sits directly on the background image - no card. */}
       <Box sx={{ width: "100%", maxWidth: 400 }}>
 
         <Typography sx={{ color: TEXT, fontWeight: 700, fontSize: "0.6875rem", letterSpacing: "1.5px", textTransform: "uppercase", mb: 0.75, textAlign: "center" }}>

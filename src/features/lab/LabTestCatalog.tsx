@@ -51,7 +51,7 @@ export default function LabTestCatalog() {
       <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, p: 1.5, mb: 2, borderRadius: 2, bgcolor: alpha(theme.palette.info.main, 0.08), border: "1px solid", borderColor: alpha(theme.palette.info.main, 0.25) }}>
         <InfoOutlined fontSize="small" color="info" />
         <Typography variant="body2" sx={{ color: "text.secondary" }}>
-          Lab tests are managed in <b>Schedule of Charges</b> — add a charge with <b>Type: Lab test</b> under a category and it appears here and in the order screens, priced from the rate card.
+          Lab tests are managed in <b>Schedule of Charges</b> - add a charge with <b>Type: Lab test</b> under a category and it appears here and in the order screens, priced from the rate card.
         </Typography>
       </Box>
 
@@ -95,7 +95,7 @@ export default function LabTestCatalog() {
                     ] : []),
                     <TableRow key={t.chargeItemId || t.testName} hover>
                       <TableCell sx={{ fontWeight: 500 }}>{t.testName}</TableCell>
-                      <TableCell sx={{ fontFamily: "monospace", color: "text.secondary" }}>{t.testCode || "—"}</TableCell>
+                      <TableCell sx={{ fontFamily: "monospace", color: "text.secondary" }}>{t.testCode || "-"}</TableCell>
                       <TableCell align="right" sx={{ fontWeight: 600 }}>{formatINR(Number(t.price))}</TableCell>
                     </TableRow>,
                   ])}

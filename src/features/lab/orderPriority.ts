@@ -1,8 +1,8 @@
 /**
  * Order priority for lab and radiology.
  *
- * The `priorities` lookup table exists in the schema — with a colorHex column,
- * like every other status lookup — but it has NO ROWS. The ordering dialog has
+ * The `priorities` lookup table exists in the schema - with a colorHex column,
+ * like every other status lookup - but it has NO ROWS. The ordering dialog has
  * always hardcoded these three values, and orders on file carry priorityId 1 and
  * 2 against a table that cannot explain them. So this mirrors what the ordering
  * UI actually writes, rather than reading a lookup that would return nothing.
@@ -28,7 +28,7 @@ const META: Record<number, PriorityMeta> = {
 };
 
 /**
- * Anything above routine. A missing priorityId means routine — 24 of the orders
+ * Anything above routine. A missing priorityId means routine - 24 of the orders
  * on file have none, and an unset value must not read as an emergency.
  */
 export const isUrgent = (priorityId?: number | null): boolean =>
@@ -42,7 +42,7 @@ export const priorityMeta = (priorityId?: number | null): PriorityMeta | null =>
  * table far better than a full border, plus a tint so the row itself stands out
  * when the eye is scanning the middle columns rather than the margin.
  *
- * Never the only signal — the label chip beside it carries the same information
+ * Never the only signal - the label chip beside it carries the same information
  * for anyone who cannot separate the colours.
  */
 export const urgentRowSx = (priorityId?: number | null) => {

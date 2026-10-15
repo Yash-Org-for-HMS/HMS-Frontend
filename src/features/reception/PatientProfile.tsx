@@ -70,7 +70,7 @@ function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string;
           {label}
         </Typography>
         <Typography variant="body2" sx={{ color: value ? "text.primary" : "text.disabled", mt: 0.1, fontWeight: value ? 600 : 400, wordBreak: "break-word" }}>
-          {value || "—"}
+          {value || "-"}
         </Typography>
       </Box>
     </Box>
@@ -94,7 +94,7 @@ function SectionCard({ title, icon, action, children }: { title: string; icon: R
 }
 
 // `readOnly` lets the same page render as a pure view when opened from the
-// hospital-admin's oversight area (mounted at /hospital/patients/:id) — the
+// hospital-admin's oversight area (mounted at /hospital/patients/:id) - the
 // admin can watch what's happening without being able to act, per the
 // Operations section's "staff still do the work; the admin observes" design.
 // Every mutating affordance on the page (and the nested tab sections it
@@ -103,14 +103,14 @@ function SectionCard({ title, icon, action, children }: { title: string; icon: R
  * `canRecordVaccinations` opens up the immunisation tab alone while the rest of
  * the page stays read-only. A nurse is the person who actually gives the dose,
  * and the API has always let her (vaccinationAccess admits NURSE for
- * administer/skip/undo) — only this page said otherwise, so the record was
+ * administer/skip/undo) - only this page said otherwise, so the record was
  * signed by whoever happened to be at the desk.
  *
  * `canRecordConsent` does the same for the Forms tab, for the same reason: the
  * nurse is who stands with the patient when a consent form is signed, before a
  * procedure or a transfusion. Making her fetch a receptionist either stops the
  * form being taken at the bedside or records it under somebody who was not
- * there — and a consent record exists precisely to say who was.
+ * there - and a consent record exists precisely to say who was.
  *
  * Both are deliberately narrow. The one `readOnly` flag also governs
  * demographics and billing, and a nurse should not be editing an invoice; each
@@ -142,7 +142,7 @@ export default function PatientProfile(
   // The immunisation worklist sends a nurse straight to the tab she needs.
   // Callers pass a name, so the index lives in exactly one place; the tabs
   // below are literal JSX in order, so re-ordering them still means updating
-  // this map — one line, rather than hunting every navigate() in the app.
+  // this map - one line, rather than hunting every navigate() in the app.
   const location = useLocation();
   const TAB_BY_NAME: Record<string, number> = { forms: 5, vaccinations: 6 };
   const requestedTab = (location.state as { tab?: string } | null)?.tab;
@@ -257,7 +257,7 @@ export default function PatientProfile(
       {/* Top nav */}
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2, gap: 1, flexWrap: "wrap" }}>
         <Button startIcon={<ArrowBackRounded />} onClick={() => navigate(-1)} sx={{ color: "text.secondary", textTransform: "none", fontWeight: 600 }}>Back to patients</Button>
-        {/* Name what IS editable rather than just saying read-only — a chip that
+        {/* Name what IS editable rather than just saying read-only - a chip that
             lists nothing sends a nurse looking for the reception desk when the
             thing she needs is on the page in front of her. */}
         {readOnly && (
@@ -342,7 +342,7 @@ export default function PatientProfile(
           </Stack>
         </Box>
 
-        {/* Allergy strip — clinically critical, always visible when present */}
+        {/* Allergy strip - clinically critical, always visible when present */}
         {patient.allergies && (
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, px: { xs: 2.5, sm: 3 }, py: 1.25, bgcolor: alpha(SEMANTIC.danger, 0.07), borderTop: "1px solid", borderColor: alpha(SEMANTIC.danger, 0.2) }}>
             <WarningAmberRounded sx={{ color: SEMANTIC.danger, fontSize: 20, flexShrink: 0 }} />
@@ -358,7 +358,7 @@ export default function PatientProfile(
         <StatCard layout="horizontal" icon={<EventRounded />} label="Appointments" value={String(stats.total)} color={ACCENT}
           sub={stats.upcoming ? `${stats.upcoming} upcoming` : "none upcoming"} />
         <StatCard layout="horizontal" icon={<CalendarTodayRounded />} label="Last visit" color="#8b5cf6"
-          value={stats.lastVisit ? stats.lastVisit.toLocaleDateString("en-IN", { day: "numeric", month: "short" }) : "—"}
+          value={stats.lastVisit ? stats.lastVisit.toLocaleDateString("en-IN", { day: "numeric", month: "short" }) : "-"}
           sub={stats.lastVisit ? stats.lastVisit.getFullYear().toString() : "no visits yet"} />
         {billingEnabled && (
           <StatCard layout="horizontal" icon={<PaymentsRounded />} label="Total billed" value={formatINR(billing?.totals?.totalBilled)} color={SEMANTIC.success}
@@ -432,7 +432,7 @@ export default function PatientProfile(
             )}
           </SectionCard>
 
-          {/* Every stay at any branch, transfers linked — one history across the group. */}
+          {/* Every stay at any branch, transfers linked - one history across the group. */}
           <StaysSection patientId={patient.patientId} />
 
           <SectionCard title="Allergies & Medical Notes" icon={<WarningAmberRounded fontSize="small" />}>
@@ -561,7 +561,7 @@ export default function PatientProfile(
                         <TableCell sx={{ borderColor: "divider", color: "text.secondary" }}>{new Date(inv.invoiceDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</TableCell>
                         <TableCell sx={{ borderColor: "divider", color: "text.primary", fontWeight: 600 }}>{formatINR(inv.netAmount)}</TableCell>
                         <TableCell sx={{ borderColor: "divider" }}>
-                          {Number(inv.balance) > 0 ? <Typography variant="body2" sx={{ color: SEMANTIC.danger, fontWeight: 700 }}>{formatINR(inv.balance)}</Typography> : <Typography variant="body2" sx={{ color: SEMANTIC.success }}>—</Typography>}
+                          {Number(inv.balance) > 0 ? <Typography variant="body2" sx={{ color: SEMANTIC.danger, fontWeight: 700 }}>{formatINR(inv.balance)}</Typography> : <Typography variant="body2" sx={{ color: SEMANTIC.success }}>-</Typography>}
                         </TableCell>
                         <TableCell sx={{ borderColor: "divider" }}>
                           <StatusChip label={inv.statusLabel} color={inv.statusColor} />
@@ -569,7 +569,7 @@ export default function PatientProfile(
                         <TableCell align="right" sx={{ borderColor: "divider" }}>
                           {/* A bill raised at another branch opens there: its money is that branch's. */}
                           {activeBranchId && inv.branchId && inv.branchId !== activeBranchId ? (
-                            <Tooltip title={`Billed at ${inv.branchName ?? "another branch"} — switch to it to open this bill`}>
+                            <Tooltip title={`Billed at ${inv.branchName ?? "another branch"} - switch to it to open this bill`}>
                               <span><Button size="small" variant="text" disabled sx={{ textTransform: "none" }}>View</Button></span>
                             </Tooltip>
                           ) : (

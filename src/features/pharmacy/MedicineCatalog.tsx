@@ -71,7 +71,7 @@ export default function MedicineCatalog() {
 
   const [errorMsg, setErrorMsg] = useState("");
 
-  // Suppliers — used only for the dialog dropdown (full list).
+  // Suppliers - used only for the dialog dropdown (full list).
   const { data: suppliers = [] } = useQuery<any[]>({
     queryKey: ["pharmacy-suppliers"],
     queryFn: async () => (await axiosInstance.get("/pharmacy/suppliers")).data.data || [],
@@ -248,14 +248,14 @@ export default function MedicineCatalog() {
         backdropFilter: 'blur(20px)',
       }}>
         {/* Stated once, over the whole catalog. A medicine with no HSN still
-            sells perfectly well — it just bills without a code on the line, and
+            sells perfectly well - it just bills without a code on the line, and
             nothing anywhere said so. */}
         {(!!taxGaps?.missingHsn || !!taxGaps?.missingCost) && (
           <Alert severity="warning" sx={{ borderRadius: 0 }}>
             <Box sx={{ display: "flex", flexDirection: "column", gap: 0.75 }}>
               {!!taxGaps?.missingHsn && (
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
-                  <span>{taxGaps.missingHsn} of {taxGaps.total} have no HSN/SAC — those lines print on the tax invoice without one.</span>
+                  <span>{taxGaps.missingHsn} of {taxGaps.total} have no HSN/SAC - those lines print on the tax invoice without one.</span>
                   <Button size="small" color="inherit" onClick={() => { setTaxOnly((v) => !v); setCostOnly(false); setPage(1); }}
                     sx={{ textTransform: "none", fontWeight: 700 }}>
                     {taxOnly ? "Show all" : "Show these"}
@@ -264,7 +264,7 @@ export default function MedicineCatalog() {
               )}
               {!!taxGaps?.missingCost && (
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
-                  <span>{taxGaps.missingCost} of {taxGaps.total} have no cost on record — stock valuation cannot speak for them.</span>
+                  <span>{taxGaps.missingCost} of {taxGaps.total} have no cost on record - stock valuation cannot speak for them.</span>
                   <Button size="small" color="inherit" onClick={() => { setCostOnly((v) => !v); setTaxOnly(false); setPage(1); }}
                     sx={{ textTransform: "none", fontWeight: 700 }}>
                     {costOnly ? "Show all" : "Show these"}
@@ -339,11 +339,11 @@ export default function MedicineCatalog() {
                             +{Number(med.gstPercent)}% GST
                           </Typography>
                         )}
-                        {/* GST 0 is not flagged — plenty of drugs are genuinely
+                        {/* GST 0 is not flagged - plenty of drugs are genuinely
                             zero-rated, and marking those would teach the reader
                             to ignore the marker. A missing HSN is unambiguous. */}
                         {!med.hsnCode && (
-                          <Tooltip title="No HSN/SAC code — this medicine bills without one on the tax invoice">
+                          <Tooltip title="No HSN/SAC code - this medicine bills without one on the tax invoice">
                             <Chip label="No HSN" size="small" sx={{ ml: 1, height: 18, fontSize: 10, fontWeight: 700,
                               bgcolor: `${SEMANTIC.warning}22`, color: SEMANTIC.warning }} />
                           </Tooltip>

@@ -38,7 +38,7 @@ beforeEach(() => {
 
 const calls = (path: string) => get.mock.calls.filter(([u]) => u === path);
 
-describe("HospitalDashboard — how fresh the figures are", () => {
+describe("HospitalDashboard - how fresh the figures are", () => {
   it("says when it was updated, and Refresh asks the database for every part", async () => {
     renderWithProviders(<HospitalDashboard />);
     expect(await screen.findByText(/Updated just now/)).toBeInTheDocument();

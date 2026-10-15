@@ -20,7 +20,7 @@ type Item = { chargeItemId: string; itemName: string; itemCode: string | null; p
 export type PickedCharge = { chargeItemId: string; itemName: string; price: number; basePrice: number; roomPrices: RoomPrice[]; taxPercent: number };
 
 // Reusable picker for the hospital's Schedule of Charges. Lets billing screens
-// choose a rate-card charge; the caller sends only the chargeItemId — the server
+// choose a rate-card charge; the caller sends only the chargeItemId - the server
 // prices the line from the catalog. `accent` themes it to the host panel.
 // When `roomClassId` is given, the displayed/returned price reflects that room
 // class's matrix price (falling back to base); the server re-prices authoritatively.
@@ -40,7 +40,7 @@ export default function SocChargePicker({ open, onClose, onPick, accent = "#0C73
   });
   const activeCats = useMemo(() => categories.filter((c) => c.isActive), [categories]);
   // A caller that knows what it is looking for says so, rather than opening on
-  // whichever category happens to sort first — the ward wants consumables, not
+  // whichever category happens to sort first - the ward wants consumables, not
   // whatever the catalogue lists at the top.
   const preferredId = useMemo(() => {
     if (!preferCategories?.length) return "";
@@ -105,7 +105,7 @@ export default function SocChargePicker({ open, onClose, onPick, accent = "#0C73
           <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}><CircularProgress size={26} /></Box>
         ) : filtered.length === 0 ? (
           <Typography variant="body2" sx={{ color: "text.secondary", py: 4, textAlign: "center" }}>
-            No charges in this category yet — add them in Configuration → Schedule of Charges.
+            No charges in this category yet - add them in Configuration → Schedule of Charges.
           </Typography>
         ) : (
           <List dense sx={{ maxHeight: 360, overflowY: "auto" }}>

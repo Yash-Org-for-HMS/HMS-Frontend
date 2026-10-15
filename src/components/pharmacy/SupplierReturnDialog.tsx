@@ -24,8 +24,8 @@ interface Batch {
  * Sending a batch back to the supplier for credit.
  *
  * Writing stock off was the only way to clear an expired or damaged batch, and
- * it eats the whole cost. Most of it is claimable — short-dated deliveries,
- * breakage in transit, the wrong item sent — so this raises the claim instead.
+ * it eats the whole cost. Most of it is claimable - short-dated deliveries,
+ * breakage in transit, the wrong item sent - so this raises the claim instead.
  *
  * The stock leaves now, because that is when the goods are physically
  * collected: leaving them on the shelf until a credit note arrives would keep
@@ -69,7 +69,7 @@ export default function SupplierReturnDialog({
         lines: [{ inventoryId: batch.inventoryId, quantity: qty, unitCost: cost, reason }],
         notes: notes.trim() || undefined,
       });
-      toast.success(`${res.data?.data?.returnNumber ?? "Return"} raised — ${formatINR(claim)} claimed`);
+      toast.success(`${res.data?.data?.returnNumber ?? "Return"} raised - ${formatINR(claim)} claimed`);
       onDone();
     } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Could not raise this return"));
@@ -93,7 +93,7 @@ export default function SupplierReturnDialog({
       <DialogContent dividers>
         <Alert severity="info" sx={{ mb: 2 }}>
           The stock leaves the shelf now, since this is when the goods go back.
-          Whether the supplier credits it — and for how much — is recorded when
+          Whether the supplier credits it - and for how much - is recorded when
           they answer.
         </Alert>
 

@@ -9,14 +9,14 @@ import { NEUTRAL } from "@/styles/accents";
  * What an unmatched URL renders.
  *
  * Until this existed the router had no catch-all, so any path it did not
- * recognise — a typo, a stale bookmark, a link to a page that has since been
- * removed — rendered a completely blank white page. Blank is the worst possible
+ * recognise - a typo, a stale bookmark, a link to a page that has since been
+ * removed - rendered a completely blank white page. Blank is the worst possible
  * answer: it is indistinguishable from the app having crashed, so it gets
  * reported as "the system is down".
  *
  * It does NOT auto-redirect. Silently bouncing someone to a dashboard hides the
  * fact that the address was wrong, which matters most for the case that brought
- * this about — a link somebody is still sending around.
+ * this about - a link somebody is still sending around.
  */
 export default function NotFound() {
   const navigate = useNavigate();
@@ -38,7 +38,7 @@ export default function NotFound() {
           This page doesn't exist
         </Typography>
         <Typography variant="body2" sx={{ color: "text.secondary", mb: 0.5 }}>
-          Nothing is broken — the address just doesn't lead anywhere.
+          Nothing is broken - the address just doesn't lead anywhere.
         </Typography>
         <Typography
           variant="caption"

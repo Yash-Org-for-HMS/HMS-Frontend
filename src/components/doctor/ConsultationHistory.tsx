@@ -12,7 +12,7 @@ interface Props {
 
 /**
  * The past-consultations timeline shown in the ConsultationWorkspace's left
- * "History" tab. Purely presentational — extracted verbatim from the workspace;
+ * "History" tab. Purely presentational - extracted verbatim from the workspace;
  * takes the loaded history plus an error/retry so the workspace stays lean.
  */
 export default function ConsultationHistory({ history, error, onRetry }: Props) {

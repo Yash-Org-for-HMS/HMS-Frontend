@@ -41,7 +41,7 @@ export function PharmacyOverview() {
     <Box>
       <ReportFilters value={range} onChange={setRange} />
       <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: -1, mb: 1.5 }}>
-        Sales figures are billed order value (includes unpaid orders), not cash collected — see the Day Book for collections.
+        Sales figures are billed order value (includes unpaid orders), not cash collected - see the Day Book for collections.
       </Typography>
 
       {isLoading ? (
@@ -68,7 +68,7 @@ export function PharmacyOverview() {
           )}
 
           {hasPlottableData(trend, ["sales"]) && (
-            <TrendChart title="Sales per day" subtitle="Billed order value — order count is shown in the KPI above, and would flatline against a rupee axis"
+            <TrendChart title="Sales per day" subtitle="Billed order value - order count is shown in the KPI above, and would flatline against a rupee axis"
               data={trend} xKey="date" series={[{ key: "sales", label: "Billed value", type: "area" }]} valueFormatter={inr} />
           )}
 
@@ -93,7 +93,7 @@ export function PharmacyOverview() {
                   { key: "medicineName", label: "Medicine" },
                   { key: "availableQuantity", label: "Available", align: "right" },
                   { key: "reorderLevel", label: "Reorder level", align: "right" },
-                ]} rows={lowStock} emptyText="No low-stock items — inventory looks healthy." />
+                ]} rows={lowStock} emptyText="No low-stock items - inventory looks healthy." />
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
               <ReportTable title="Expiring within 30 days" filename="pharmacy_expiring"

@@ -9,14 +9,14 @@ import { stageOf, type CaseStage, type JourneyInput } from "./caseStage";
 /**
  * Where this case has got to, and the one thing to do next.
  *
- * The actions for moving a patient had ended up on three different screens —
+ * The actions for moving a patient had ended up on three different screens -
  * the bed board's menu, a button under a tab called "Anaesthesia", and an item
  * on the operating list that set a status and moved nobody. Each was added
  * where it was convenient rather than where somebody would look, and between
  * them there was no screen that answered "where is this case up to".
  *
  * This is that screen. The steps are the journey a patient actually makes, the
- * current one is marked, and the single next action is a button — so the case
+ * current one is marked, and the single next action is a button - so the case
  * can be driven from beginning to end without knowing which screen hides which
  * verb.
  */
@@ -41,7 +41,7 @@ export default function CaseJourney({ j, onAction, busy = false, canAct = true }
     return (
       <Paper elevation={0} sx={{ p: 2.5, mb: 2.5, borderRadius: 3, border: "1px solid", borderColor: "divider", bgcolor: "action.hover" }}>
         <Typography variant="subtitle2" sx={{ fontWeight: 700, color: NEUTRAL.muted }}>
-          This case was cancelled — there is nothing to record.
+          This case was cancelled - there is nothing to record.
         </Typography>
       </Paper>
     );
@@ -52,11 +52,11 @@ export default function CaseJourney({ j, onAction, busy = false, canAct = true }
   // What to do from here. Deliberately ONE thing: a row of equally-weighted
   // buttons is how the actions got scattered in the first place.
   const next = stage === "BOOKED"
-    ? { action: "WHEEL_IN" as const, label: j.theatreName ? `Wheel in to ${j.theatreName}` : "Wheel in", hint: "Records the time and moves the patient — the ward board will show them away" }
+    ? { action: "WHEEL_IN" as const, label: j.theatreName ? `Wheel in to ${j.theatreName}` : "Wheel in", hint: "Records the time and moves the patient - the ward board will show them away" }
     : stage === "IN_THEATRE"
       ? { action: "WHEEL_OUT" as const, label: "Wheel out to recovery", hint: "Frees the theatre for cleaning; their bed stays held" }
       : stage === "IN_RECOVERY"
-        ? { action: "PLACE_IN_BED" as const, label: "Place in a bed", hint: j.bedNumber ? `Bed ${j.bedNumber} is being held for them` : "They have no bed — choose one" }
+        ? { action: "PLACE_IN_BED" as const, label: "Place in a bed", hint: j.bedNumber ? `Bed ${j.bedNumber} is being held for them` : "They have no bed - choose one" }
         : null;
 
   return (

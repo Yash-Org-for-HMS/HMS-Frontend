@@ -5,7 +5,7 @@ import {
 } from "./invoiceMoney";
 import type { Invoice, Payment, Refund } from "@/types";
 
-// Amounts arrive from the API as decimal STRINGS, so every fixture uses strings —
+// Amounts arrive from the API as decimal STRINGS, so every fixture uses strings -
 // testing with numbers would pass while the real payload silently coerced badly.
 const pay = (paymentId: string, paidAmount: string): Payment => ({ paymentId, paidAmount });
 const ref = (refundId: string, paymentId: string, refundAmount: string): Refund =>
@@ -52,7 +52,7 @@ describe("balanceOf", () => {
   });
 
   // The regression this helper is named for: a fully-paid invoice that is then
-  // refunded is NOT settled — the money went back, so the balance re-opens.
+  // refunded is NOT settled - the money went back, so the balance re-opens.
   // Any implementation that ignores refunds returns 0 here and reports the
   // invoice as paid while the hospital is owed the money again.
   it("re-opens the balance when a payment is refunded", () => {
@@ -80,7 +80,7 @@ describe("refundablePayments", () => {
   });
 
   // Without this, the refund picker would keep offering a payment that has
-  // already been returned in full — the over-refunding shape.
+  // already been returned in full - the over-refunding shape.
   it("drops a payment that has been fully refunded", () => {
     const inv = invoice("1000", [pay("p1", "600"), pay("p2", "400")], [ref("r1", "p1", "600")]);
     expect(refundablePayments(inv).map((r) => r.paymentId)).toEqual(["p2"]);
@@ -115,7 +115,7 @@ describe("refunds awaiting approval", () => {
   it("a pending refund is NOT money returned", () => {
     expect(refundedTotal(withPending)).toBe(0);
     expect(netPaid(withPending)).toBe(1000);
-    // The patient is not owed anything yet — nothing has been handed back.
+    // The patient is not owed anything yet - nothing has been handed back.
     expect(balanceOf(withPending)).toBe(0);
     expect(isSettled(withPending)).toBe(true);
   });
@@ -139,7 +139,7 @@ describe("refunds awaiting approval", () => {
     const rejected = invoice("1000.00", [pay("p1", "1000.00")], [refStatus("r1", "p1", "600.00", "REJECTED")]);
     expect(refundedTotal(rejected)).toBe(0);
     expect(pendingRefundTotal(rejected)).toBe(0);
-    // The whole payment is claimable again — a rejected refund must not sit on it.
+    // The whole payment is claimable again - a rejected refund must not sit on it.
     expect(refundablePayments(rejected).map((p) => p.refundable)).toEqual([1000]);
   });
 
@@ -155,7 +155,7 @@ describe("refunds awaiting approval", () => {
     expect(refundablePayments(mixed).map((p) => p.refundable)).toEqual([500]); // 1000 − 200 − 300
   });
 
-  it("treats status case-insensitively — the API is the source of that string", () => {
+  it("treats status case-insensitively - the API is the source of that string", () => {
     const lower = invoice("1000.00", [pay("p1", "1000.00")], [refStatus("r1", "p1", "250.00", "completed")]);
     expect(refundedTotal(lower)).toBe(250);
   });
@@ -184,7 +184,7 @@ describe("balanceFromRefunds", () => {
     expect(balanceFromRefunds(i)).toBe(200);
   });
 
-  it("ignores a refund still awaiting approval — no money has moved yet", () => {
+  it("ignores a refund still awaiting approval - no money has moved yet", () => {
     const i = invoice("850.00", [pay("p1", "850.00")], [refStatus("r1", "p1", "850.00", "PENDING")]);
     expect(balanceOf(i)).toBe(0);
     expect(balanceFromRefunds(i)).toBe(0);

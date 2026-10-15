@@ -101,7 +101,7 @@ export default function PharmacyDashboard() {
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                   {/* Ward requests waiting on this desk. There was no sign of
-                      them here at all — the only way to know was to open the
+                      them here at all - the only way to know was to open the
                       IPD Medication Requests page and look. */}
                   <StatCard
                     label="IPD requests waiting"
@@ -113,7 +113,7 @@ export default function PharmacyDashboard() {
                   />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  {/* Was "Total Sales" — the sum of every order ever placed,
+                  {/* Was "Total Sales" - the sum of every order ever placed,
                       with no period stated. A lifetime figure only goes up, so
                       it could never say whether today was any good. */}
                   <StatCard
@@ -135,7 +135,7 @@ export default function PharmacyDashboard() {
                   <AttentionList
                     title="Low stock"
                     subtitle="Furthest below its reorder level first"
-                    emptyText="No low stock items — inventory looks healthy."
+                    emptyText="No low stock items - inventory looks healthy."
                     items={lowStockAlerts
                       .map((item) => ({
                         item,
@@ -163,7 +163,7 @@ export default function PharmacyDashboard() {
 
                 <Grid size={{ xs: 12, md: 6 }}>
                   {/* The other way a pharmacy loses money, and unlike low stock
-                      it is silent until it's too late — nothing on this screen
+                      it is silent until it's too late - nothing on this screen
                       mentioned expiry at all. Soonest first; already-expired
                       batches lead. */}
                   <AttentionList
@@ -197,7 +197,7 @@ export default function PharmacyDashboard() {
                       </Typography>
                     </Box>
                     {/* Was a column of order-ID fragments (6D5CFAB3, 0FDA7C50).
-                        Nobody recognises a sale by its id — they recognise the
+                        Nobody recognises a sale by its id - they recognise the
                         patient and what was dispensed. */}
                     <Table>
                       <TableHead>

@@ -21,7 +21,7 @@ const round = (n: number) => Math.round(n * 10) / 10;
  * known adult dose using standard pharmacology formulas:
  *   - Young's rule (age):    adult x age / (age + 12)
  *   - Clark's rule (weight): adult x weight(kg) / 70
- * This is a calculation aid, not authoritative dosing — the doctor confirms.
+ * This is a calculation aid, not authoritative dosing - the doctor confirms.
  */
 export default function DoseCalculator({ ageYears, weightKg, onApply }: Props) {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -67,7 +67,7 @@ export default function DoseCalculator({ ageYears, weightKg, onApply }: Props) {
 
         <Box sx={{ display: "flex", gap: 1, mb: 1.5, flexWrap: "wrap" }}>
           <Chip size="small" label={hasAge ? `Age: ${ageYears} y` : "Age: unknown"} />
-          <Chip size="small" label={wt > 0 ? `Weight: ${wt} kg` : "Weight: —"} color={wt > 0 ? "default" : "warning"} variant={wt > 0 ? "filled" : "outlined"} />
+          <Chip size="small" label={wt > 0 ? `Weight: ${wt} kg` : "Weight: -"} color={wt > 0 ? "default" : "warning"} variant={wt > 0 ? "filled" : "outlined"} />
         </Box>
 
         <TextField
@@ -78,7 +78,7 @@ export default function DoseCalculator({ ageYears, weightKg, onApply }: Props) {
         <TextField
           fullWidth size="small" type="number" label="Weight (kg)"
           value={weight} onChange={(e) => setWeight(e.target.value)} sx={{ mb: 1.5 }}
-          helperText={weightKg == null ? "Not on file — enter for a weight-based estimate" : undefined}
+          helperText={weightKg == null ? "Not on file - enter for a weight-based estimate" : undefined}
         />
 
         <Divider sx={{ my: 1 }} />
@@ -90,7 +90,7 @@ export default function DoseCalculator({ ageYears, weightKg, onApply }: Props) {
             control={<Radio size="small" />}
             label={
               <Typography variant="body2">
-                Clark's (weight): <b>{clarkDose != null ? `${clarkDose} mg` : "—"}</b>
+                Clark's (weight): <b>{clarkDose != null ? `${clarkDose} mg` : "-"}</b>
                 <Typography component="span" variant="caption" sx={{ color: "text.secondary", ml: 0.5 }}>more accurate</Typography>
               </Typography>
             }
@@ -101,7 +101,7 @@ export default function DoseCalculator({ ageYears, weightKg, onApply }: Props) {
             control={<Radio size="small" />}
             label={
               <Typography variant="body2">
-                Young's (age): <b>{youngDose != null ? `${youngDose} mg` : "—"}</b>
+                Young's (age): <b>{youngDose != null ? `${youngDose} mg` : "-"}</b>
               </Typography>
             }
           />

@@ -5,7 +5,7 @@ import type { DispensableMedicine, PrescriptionItem, CartLine } from "@/types";
  *
  * Extracted from DispensaryPOS.loadPrescription so it can be tested directly:
  * this is the step that decides how much of a drug leaves the pharmacy, and it
- * used to get that wrong. The bug was `if (match.inStock < item.quantity)` —
+ * used to get that wrong. The bug was `if (match.inStock < item.quantity)` -
  * a prescribed item may carry no explicit quantity, and comparing a number
  * against `undefined` is always false, so the stock check was skipped and a
  * cart line was pushed with `quantity: undefined`: an order for an unknown
@@ -17,7 +17,7 @@ import type { DispensableMedicine, PrescriptionItem, CartLine } from "@/types";
 export interface PrescriptionToCartResult {
   /** Lines that can be dispensed now. */
   cart: CartLine[];
-  /** Prescribed names with no catalog match — the pharmacist substitutes by hand. */
+  /** Prescribed names with no catalog match - the pharmacist substitutes by hand. */
   missing: string[];
   /** Matched but short on stock, with what is actually available. */
   outOfStock: { medicineName: string; wanted: number; available: number }[];

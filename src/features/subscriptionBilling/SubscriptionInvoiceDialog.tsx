@@ -15,7 +15,7 @@ import { usePrintWindow } from "@/utils/usePrintWindow";
 /**
  * One subscription invoice, and how it was actually paid.
  *
- * The list could only tell you that an invoice was marked Paid — by whom, by
+ * The list could only tell you that an invoice was marked Paid - by whom, by
  * what method, against which bank reference was recorded but never shown
  * anywhere. That makes "Paid" a claim rather than something anyone can check,
  * which is the whole point of a payment record.
@@ -46,9 +46,9 @@ interface InvoiceDetail {
 }
 
 const d = (v?: string | null) =>
-  v ? new Date(v).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "—";
+  v ? new Date(v).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "-";
 const dt = (v?: string | null) =>
-  v ? new Date(v).toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "—";
+  v ? new Date(v).toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "-";
 
 const Meta = ({ label, value }: { label: string; value: React.ReactNode }) => (
   <Box sx={{ minWidth: 150 }}>
@@ -91,8 +91,8 @@ export default function SubscriptionInvoiceDialog({
         ) : inv ? (
           <>
             <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2.5, mb: 2 }}>
-              <Meta label="TENANT" value={inv.hospital?.hospitalName || "—"} />
-              <Meta label="PLAN" value={`${inv.planName || "—"} · ${inv.billingCycle === "ANNUAL" ? "Annual" : "Monthly"}`} />
+              <Meta label="TENANT" value={inv.hospital?.hospitalName || "-"} />
+              <Meta label="PLAN" value={`${inv.planName || "-"} · ${inv.billingCycle === "ANNUAL" ? "Annual" : "Monthly"}`} />
               <Meta label="PERIOD" value={`${d(inv.periodStart)} – ${d(inv.periodEnd)}`} />
               <Meta label="ISSUED" value={d(inv.issuedAt)} />
               <Meta label="DUE" value={d(inv.dueDate)} />
@@ -105,7 +105,7 @@ export default function SubscriptionInvoiceDialog({
             {payments.length === 0 ? (
               <Typography variant="body2" sx={{ color: "text.secondary" }}>
                 {inv.status === "VOID"
-                  ? "This invoice was voided — nothing was collected against it."
+                  ? "This invoice was voided - nothing was collected against it."
                   : "Nothing has been received against this invoice yet."}
               </Typography>
             ) : (
@@ -124,8 +124,8 @@ export default function SubscriptionInvoiceDialog({
                     <TableRow key={p.subscriptionPaymentId}>
                       <TableCell>{dt(p.paidAt)}</TableCell>
                       <TableCell>{p.method}</TableCell>
-                      <TableCell sx={{ color: p.reference ? "text.primary" : "text.disabled" }}>{p.reference || "—"}</TableCell>
-                      <TableCell>{p.recordedByName || "—"}</TableCell>
+                      <TableCell sx={{ color: p.reference ? "text.primary" : "text.disabled" }}>{p.reference || "-"}</TableCell>
+                      <TableCell>{p.recordedByName || "-"}</TableCell>
                       <TableCell align="right" sx={{ fontWeight: 700 }}>{formatINR(Number(p.amount))}</TableCell>
                     </TableRow>
                   ))}

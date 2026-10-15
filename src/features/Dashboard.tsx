@@ -74,7 +74,7 @@ interface DashboardStats {
   recentActivities: Array<{
     activityLogId: string;
     moduleName: string | null;
-    /** A readable sentence — "Rajesh Sharma created an invoice". */
+    /** A readable sentence - "Rajesh Sharma created an invoice". */
     description: string;
     /** Which tenant it happened in; null for platform-level actions. */
     hospitalName?: string | null;
@@ -131,7 +131,7 @@ const GroupCard = ({ title, icon, color, primary, subs }: any) => (
 /**
  * The way out of a chart and into the rows behind it.
  *
- * The bars themselves are clickable, but nothing about a bar says so — this
+ * The bars themselves are clickable, but nothing about a bar says so - this
  * gives the card a visible, keyboard-reachable way through, and states where
  * it goes.
  */
@@ -210,7 +210,7 @@ export default function Dashboard() {
 
   // Every stage a lead can be in, in pipeline order. This listed five of the
   // seven: `trialing` and `lost` were missing, so leads sitting in either were
-  // drawn nowhere while the tile above still counted them in Total Leads — the
+  // drawn nowhere while the tile above still counted them in Total Leads - the
   // bars did not add up to the total and nothing on screen said why.
   //
   // Lost is not a funnel stage, it is the exit, so it is coloured apart and
@@ -239,7 +239,7 @@ export default function Dashboard() {
   const trendData = stats.hospitalsTrend ?? [];
   const activities = stats.recentActivities ?? [];
   // The three onboarding checkpoints, counted as tenants STILL WAITING on each
-  // — plus the ones with all three ticked that nobody has switched to
+  // - plus the ones with all three ticked that nobody has switched to
   // completed. This used to plot onboardingStatus, a column that is set by
   // hand and that nothing in the backend ever advances, so a tenant two steps
   // in was drawn identically to one that had not started.
@@ -271,7 +271,7 @@ export default function Dashboard() {
         </Box>
       </Box>
 
-      {/* Grouped KPIs — related metrics live together */}
+      {/* Grouped KPIs - related metrics live together */}
       <Grid container spacing={3} sx={{ mb: 5 }}>
         <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
           <GroupCard
@@ -314,8 +314,8 @@ export default function Dashboard() {
           <GroupCard
             title="Revenue & Plans" color="#F59E0B" icon={<AccountBalanceRounded />}
             // "MRR" on its own kept raising the question of whether yearly
-            // customers were in it. They are — an annual plan is counted as a
-            // twelfth per month — so the label says so, and ARR sits beside it
+            // customers were in it. They are - an annual plan is counted as a
+            // twelfth per month - so the label says so, and ARR sits beside it
             // for anyone who wants the year.
             primary={{ label: "MRR · yearly plans ÷ 12", value: formatINRAuto(stats.totalRevenue) }}
             subs={[
@@ -329,7 +329,7 @@ export default function Dashboard() {
 
       {/* ── Charts ────────────────────────────────────────────────────────── */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
-        {/* Lead conversion funnel — ordered pipeline stages, single hue, direct labels */}
+        {/* Lead conversion funnel - ordered pipeline stages, single hue, direct labels */}
         <Grid size={{ xs: 12, lg: 8 }}>
           <ChartCard
             title="Lead Conversion Funnel"
@@ -364,7 +364,7 @@ export default function Dashboard() {
                   }}
                 >
                   {/* Lost is an exit, not a step, so it is greyed rather than
-                      drawn in the funnel's hue — it must be visible (those
+                      drawn in the funnel's hue - it must be visible (those
                       leads exist) without reading as progress. */}
                   {funnelData.map((d) => <Cell key={d.key} fill={d.exit ? "#94a3b8" : INDIGO} />)}
                   <LabelList dataKey="count" position="right" style={{ fill: "#475569", fontSize: 12, fontWeight: 700 }} />
@@ -374,7 +374,7 @@ export default function Dashboard() {
           </ChartCard>
         </Grid>
 
-        {/* Hospitals by plan — magnitude by category, single hue, sorted desc */}
+        {/* Hospitals by plan - magnitude by category, single hue, sorted desc */}
         <Grid size={{ xs: 12, lg: 4 }}>
           <ChartCard
             title="Hospitals by Plan"
@@ -414,7 +414,7 @@ export default function Dashboard() {
           the API returns hospitalsTrend and recentActivities on every call and
           nothing rendered them. */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
-        {/* New tenants per month — a count per discrete period, so bars rather
+        {/* New tenants per month - a count per discrete period, so bars rather
             than a line: nothing continuous joins one month to the next. */}
         <Grid size={{ xs: 12, lg: 8 }}>
           <ChartCard title="Tenant Growth" subtitle="New hospitals onboarded per month" height={280}>
@@ -436,7 +436,7 @@ export default function Dashboard() {
           </ChartCard>
         </Grid>
 
-        {/* Onboarding progress — where tenants are stuck before going live.
+        {/* Onboarding progress - where tenants are stuck before going live.
             A bar answers "how many"; the register behind it answers which
             tenants, so the bars lead there. */}
         <Grid size={{ xs: 12, lg: 4 }}>
@@ -467,7 +467,7 @@ export default function Dashboard() {
                     }}
                   >
                     {/* "Ready to go live" is not a blockage, it is a job waiting
-                        for someone — green, so it reads as the one to action
+                        for someone - green, so it reads as the one to action
                         rather than another queue. */}
                     {stepData.map((d) => <Cell key={d.step} fill={d.step === "ready" ? "#10b981" : TEAL} />)}
                     <LabelList dataKey="count" position="right" style={{ fill: "#475569", fontSize: 12, fontWeight: 700 }} />
@@ -479,7 +479,7 @@ export default function Dashboard() {
         </Grid>
       </Grid>
 
-      {/* Recent activity — the last ten audited actions across the platform. */}
+      {/* Recent activity - the last ten audited actions across the platform. */}
       <Paper elevation={0} sx={{ p: 3, mb: 4, bgcolor: "background.paper", border: "1px solid", borderColor: "divider", borderRadius: 3 }}>
         <Box sx={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", mb: 2 }}>
           <Box>
@@ -512,7 +512,7 @@ export default function Dashboard() {
                 {/* These two may shrink; only the dot and the timestamp are
                     rigid. With all three pinned at flexShrink: 0 the row had a
                     minimum width wider than a phone, so it dragged the whole
-                    page sideways — and the timestamp growing by a single pixel
+                    page sideways - and the timestamp growing by a single pixel
                     was enough to tip it. Truncating the tenant or the module is
                     the right thing to give up: the description is the message,
                     and the time is the anchor everything aligns to. */}

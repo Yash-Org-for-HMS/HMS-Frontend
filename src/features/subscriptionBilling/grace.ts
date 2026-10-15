@@ -1,20 +1,20 @@
 /**
  * Wording for the subscription grace-period countdown.
  *
- * Three super-admin screens show the same deadline — the Action Needed list, a
- * tenant's overview, and the invoice console — and they must not each invent
+ * Three super-admin screens show the same deadline - the Action Needed list, a
+ * tenant's overview, and the invoice console - and they must not each invent
  * their own phrasing for it. The server owns the arithmetic (one grace-days
  * constant, floored); this owns only how the number reads.
  *
  * `days` is floored server-side, so 0 means access goes today and a negative
- * number means it already should have — the tenant is still listed because
+ * number means it already should have - the tenant is still listed because
  * suspension only bites at their next sign-in or token refresh.
  */
 
 /** Sentence form, for a row's secondary line. */
 export function graceText(days: number | null | undefined): string {
   if (days == null) return "suspends after the grace period";
-  if (days < 0) return `grace ended ${plural(Math.abs(days))} ago — access blocked at next sign-in`;
+  if (days < 0) return `grace ended ${plural(Math.abs(days))} ago - access blocked at next sign-in`;
   if (days === 0) return "suspends today";
   return `suspends in ${plural(days)}`;
 }

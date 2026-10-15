@@ -6,7 +6,7 @@ import { NEUTRAL } from "@/styles/accents";
  * CHART_SERIES is a fixed-order categorical palette, validated on a white
  * (#ffffff) chart surface: it clears the lightness band, chroma floor, adjacent
  * CVD ΔE (worst 9.1) and normal-vision floor (worst 19.6). Three hues sit below
- * 3:1 contrast, so charts always ship with a legend/direct labels or a table —
+ * 3:1 contrast, so charts always ship with a legend/direct labels or a table -
  * which every report does. Assign by fixed order, never cycle a 9th hue: fold
  * the tail into "Other".
  */
@@ -48,7 +48,7 @@ export const yAxisProps = {
   axisLine: false,
   tickLine: false,
   // 44 was too narrow for a rupee tick, and Recharts clips rather than
-  // overflows — the label lost its leading digits instead of its gutter.
+  // overflows - the label lost its leading digits instead of its gutter.
   width: 64,
 } as const;
 

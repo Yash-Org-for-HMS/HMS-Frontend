@@ -72,7 +72,7 @@ export default function NursingNotesDialog({ open, onClose, admission }: Props) 
       </DialogTitle>
       <DialogContent dividers>
         <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
-          {admission?.patientName} — nursing observations & handover for this stay. Notes are permanent (append-only): they can't be edited or deleted.
+          {admission?.patientName} - nursing observations & handover for this stay. Notes are permanent (append-only): they can't be edited or deleted.
         </Typography>
 
         <Stack spacing={1.5} sx={{ mb: 2 }}>

@@ -16,8 +16,8 @@ import type { Invoice, Refund } from "@/types";
  * One figure in the money strip.
  *
  * The four numbers that decide whether this invoice can be refunded at all used
- * to be a single run-on caption — "₹500 of ₹2,000 collected returned · ₹100
- * awaiting approval · ₹1,400 still refundable" — wrapping across two lines of
+ * to be a single run-on caption - "₹500 of ₹2,000 collected returned · ₹100
+ * awaiting approval · ₹1,400 still refundable" - wrapping across two lines of
  * 12px text. They are the whole basis of the decision, so they get to be
  * figures.
  */
@@ -59,7 +59,7 @@ interface ReturnableMedicine {
  * the control to return more.
  *
  * Shared deliberately. This lived only inside the appointment billing screen,
- * which meant it could only be reached for an invoice that HAS an appointment —
+ * which meant it could only be reached for an invoice that HAS an appointment -
  * so every IPD bill and every hand-generated OPD invoice was unrefundable
  * through the UI (23 of 27 invoices holding money, on the live data). Refunding
  * belongs to the invoice, not to the appointment that happened to create it, so
@@ -117,7 +117,7 @@ export default function RefundSection({
   const awaiting = pendingRefundTotal(invoice);
   const remaining = totalRefundable(invoice);
 
-  // Which payment a refund was taken from — ambiguous from the amount alone once
+  // Which payment a refund was taken from - ambiguous from the amount alone once
   // an invoice has more than one payment, which is exactly when it matters.
   const paymentLabel = (id: string): string => {
     const all = invoice?.Payment ?? [];
@@ -128,7 +128,7 @@ export default function RefundSection({
     return ` · from payment ${idx + 1} (${p.paymentMethod?.methodName || "payment"} ${formatINR(p.paidAmount)})`;
   };
 
-  // Nothing collected and nothing returned — there is no refund story to tell.
+  // Nothing collected and nothing returned - there is no refund story to tell.
   if (!invoice || (refunds.length === 0 && refundable.length === 0)) return null;
 
   const begin = () => {
@@ -143,7 +143,7 @@ export default function RefundSection({
   };
 
   // Does this refund hand back everything the invoice is holding? Only then is
-  // there a decision to make — and only then will the server accept one.
+  // there a decision to make - and only then will the server accept one.
   const clearsTheBill = Number(amount) > 0 && Number(amount) >= remaining - 0.005;
   // An IPD bill is voided at its admission, not here.
   const canVoid = clearsTheBill && !invoice?.admissionId;
@@ -166,7 +166,7 @@ export default function RefundSection({
           .map((r) => ({ medicineId: r.medicineId, quantity: Number(returning[r.medicineId] || 0) }))
           .filter((r) => r.quantity > 0),
       });
-      // The server's message differs when the refund only got RAISED — saying
+      // The server's message differs when the refund only got RAISED - saying
       // "processed" for one awaiting approval would tell the desk the patient
       // had been paid when they have not.
       toast.success(res.data?.message || "Refund processed");
@@ -188,7 +188,7 @@ export default function RefundSection({
       }}
     >
       {/* Money leaving the building is the most consequential thing on a bill.
-          It was drawn as a dashed purple box — and the purple was the NURSE
+          It was drawn as a dashed purple box - and the purple was the NURSE
           panel's accent, hardcoded, so the Reception billing screen wore
           another panel's colour. Ordinary card chrome instead, with colour
           spent only where it means something: red on what can still go out,
@@ -219,7 +219,7 @@ export default function RefundSection({
             )}
             <Figure
               label="Still refundable"
-              value={remaining > 0.005 ? formatINR(remaining) : "—"}
+              value={remaining > 0.005 ? formatINR(remaining) : "-"}
               tone={remaining > 0.005 ? SEMANTIC.danger : "text.disabled"}
               strong
             />
@@ -325,7 +325,7 @@ export default function RefundSection({
           >
             {refundable.map((p) => (
               <MenuItem key={p.paymentId} value={p.paymentId}>
-                {p.paymentMethod?.methodName || "Payment"} — {Number(p.paidAmount).toFixed(2)} (refundable {p.refundable.toFixed(2)})
+                {p.paymentMethod?.methodName || "Payment"} - {Number(p.paidAmount).toFixed(2)} (refundable {p.refundable.toFixed(2)})
               </MenuItem>
             ))}
           </TextField>
@@ -346,7 +346,7 @@ export default function RefundSection({
               </Typography>
               <Typography variant="caption" sx={{ display: "block", color: "text.secondary", mb: 1.5 }}>
                 Only what physically returns to the shelf. Leave at zero if the money is
-                going back but the medicine is not — a broken seal cannot be resold.
+                going back but the medicine is not - a broken seal cannot be resold.
               </Typography>
               {canReturn.map((r) => {
                 const typed = Number(returning[r.medicineId] || 0);
@@ -376,7 +376,7 @@ export default function RefundSection({
 
           {/* The one genuine decision in this flow, and it was set in 12px grey
               inside a grey box. It decides whether the services on this bill go
-              back to be re-billed — so it is drawn as a decision. */}
+              back to be re-billed - so it is drawn as a decision. */}
           {canVoid && (
             <Box
               sx={{
@@ -403,7 +403,7 @@ export default function RefundSection({
                     <Box>
                       <Typography variant="body2" sx={{ fontWeight: 700 }}>The charge stands</Typography>
                       <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                        The patient still owes this — an overpayment returned, or they are paying again by another method.
+                        The patient still owes this - an overpayment returned, or they are paying again by another method.
                       </Typography>
                     </Box>
                   }

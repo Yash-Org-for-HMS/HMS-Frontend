@@ -95,7 +95,7 @@ export default function DynamicFormRenderer({ fields, values, onChange, errors =
               key={f.fieldName} select fullWidth size="small" label={label}
               value={val} onChange={(e) => set(f.fieldName, e.target.value)} error={!!err} helperText={err || undefined}
             >
-              <MenuItem value="">—</MenuItem>
+              <MenuItem value="">-</MenuItem>
               {(f.validationRulesJson?.options || []).filter(Boolean).map((opt) => (
                 <MenuItem key={opt} value={opt}>{opt}</MenuItem>
               ))}

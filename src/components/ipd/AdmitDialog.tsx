@@ -31,7 +31,7 @@ export default function AdmitDialog({ open, onClose, onAdmitted, prefilledPatien
   const [form, setForm] = useState({
     patientId: prefilledPatientId || "", doctorId: "", bedId: "",
     admittingDiagnosis: "", reason: "", notes: "",
-    /** Who pays when it is not an insurance / scheme case — picks the bed tariff. */
+    /** Who pays when it is not an insurance / scheme case - picks the bed tariff. */
     paidBy: "CASH",
   });
   const set = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }));
@@ -42,7 +42,7 @@ export default function AdmitDialog({ open, onClose, onAdmitted, prefilledPatien
   const debouncedPatientQuery = useDebouncedValue(patientQuery, 300);
   const [selectedPatient, setSelectedPatient] = useState<any | null>(null);
 
-  // Insurance / scheme case — optional; captured here and turned into a claim
+  // Insurance / scheme case - optional; captured here and turned into a claim
   // (linked to the new admission) so the pre-auth flow can start right away.
   const [insuranceOn, setInsuranceOn] = useState(false);
   const [ins, setIns] = useState({ schemeType: "INSURANCE", payerId: "", policyOrCardNumber: "", tpaName: "", estimatedCost: "" });
@@ -119,7 +119,7 @@ export default function AdmitDialog({ open, onClose, onAdmitted, prefilledPatien
       const admissionId = res.data?.data?.admissionId;
 
       // If this is an insurance/scheme case, start the claim against the new
-      // admission. A claim failure (e.g. permission) must not undo the admit —
+      // admission. A claim failure (e.g. permission) must not undo the admit -
       // warn but keep the admission.
       if (insuranceOn && admissionId) {
         try {
@@ -164,7 +164,7 @@ export default function AdmitDialog({ open, onClose, onAdmitted, prefilledPatien
                   value={selectedPatient}
                   filterOptions={(x) => x}
                   isOptionEqualToValue={(o: any, v: any) => o.patientId === v?.patientId}
-                  getOptionLabel={(p: any) => (p ? `${p.firstName} ${p.lastName} — ${p.uhidNumber}` : "")}
+                  getOptionLabel={(p: any) => (p ? `${p.firstName} ${p.lastName} - ${p.uhidNumber}` : "")}
                   onInputChange={(_e, val, reason) => { if (reason === "input") setPatientQuery(val); }}
                   onChange={(_e, val: any) => { setSelectedPatient(val); set("patientId", val?.patientId || ""); setNewPatientLabel(""); }}
                   noOptionsText={debouncedPatientQuery.trim().length < 2 ? "Type at least 2 characters to search…" : "No matching patients"}
@@ -182,13 +182,13 @@ export default function AdmitDialog({ open, onClose, onAdmitted, prefilledPatien
               <SearchableSelect
                 label="Admitting doctor" name="doctorId"
                 value={form.doctorId} onChange={(e) => set("doctorId", e.target.value)}
-                placeholder="—"
-                emptyOption={{ value: "", label: "—" }}
+                placeholder="-"
+                emptyOption={{ value: "", label: "-" }}
                 searchPlaceholder="Search doctors…"
                 options={(dropdowns?.doctors || []).map((d: any) => ({
                   value: d.doctorId,
                   label: `Dr. ${d.user?.firstName || ""} ${d.user?.lastName || ""}`.trim(),
-                  // The doctor's department (specializations are gone — see the staff record).
+                  // The doctor's department (specializations are gone - see the staff record).
                   secondary: ((dropdowns?.departments || []) as { departmentId: string; departmentName: string }[]).find((x) => x.departmentId === d.departmentId)?.departmentName || undefined,
                 }))}
               />
@@ -212,7 +212,7 @@ export default function AdmitDialog({ open, onClose, onAdmitted, prefilledPatien
                       : null,
                   ].filter(Boolean).join(" · ") || undefined,
                 }))}
-                helperText={beds.length === 0 ? "No beds available — free or add one" : undefined}
+                helperText={beds.length === 0 ? "No beds available - free or add one" : undefined}
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
@@ -235,7 +235,7 @@ export default function AdmitDialog({ open, onClose, onAdmitted, prefilledPatien
               </Grid>
             )}
 
-            {/* Insurance / scheme — optional, starts a claim on admit */}
+            {/* Insurance / scheme - optional, starts a claim on admit */}
             <Grid size={{ xs: 12 }}>
               <Divider sx={{ mb: 1 }} />
               <FormControlLabel
@@ -254,8 +254,8 @@ export default function AdmitDialog({ open, onClose, onAdmitted, prefilledPatien
                   <SearchableSelect
                     label="Payer / TPA" name="payerId"
                     value={ins.payerId} onChange={(e) => setI("payerId", e.target.value)}
-                    placeholder="— None —"
-                    emptyOption={{ value: "", label: "— None —" }}
+                    placeholder="- None -"
+                    emptyOption={{ value: "", label: "- None -" }}
                     searchPlaceholder="Search payers…"
                     options={payers.map((p: any) => ({ value: p.payerId, label: p.payerName }))}
                   />

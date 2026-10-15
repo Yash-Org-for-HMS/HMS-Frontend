@@ -27,7 +27,7 @@ import SearchableSelect from "@/components/form/SearchableSelect";
  *
  * The plan's own risk section says it plainly: an operative record filled in
  * the next morning from memory is worse than a paper one. So this screen is
- * built for a wall-mounted display and gloved hands — big targets, five short
+ * built for a wall-mounted display and gloved hands - big targets, five short
  * tabs instead of one forty-field form, every section saving on its own, and
  * nothing required in order to save.
  *
@@ -89,7 +89,7 @@ const clock = (s?: string | null) =>
  * An ISO instant as a <input type="datetime-local"> value, in LOCAL time.
  *
  * datetime-local rather than a bare time input because a night list crosses
- * midnight, and a time alone would need the date inferred — which is guesswork
+ * midnight, and a time alone would need the date inferred - which is guesswork
  * at exactly the moment the record has to be exact.
  */
 const toLocalInput = (iso?: string | null): string => {
@@ -112,7 +112,7 @@ const gap = (from?: string | null, to?: string | null): string | null => {
  * The intervals the six times exist to produce.
  *
  * They were captured and never shown back, so the one question the six stamps
- * are for — how long did this take — could only be answered by subtracting two
+ * are for - how long did this take - could only be answered by subtracting two
  * clock faces in your head, and a mis-stamp stayed invisible until it reached a
  * utilisation report weeks later.
  */
@@ -137,7 +137,7 @@ export default function OtCaseRecord() {
    * case is actually in.
    *
    * Held as "not chosen yet" rather than defaulting to 0, because a case
-   * halfway through should not open on paperwork that was done an hour ago —
+   * halfway through should not open on paperwork that was done an hour ago -
    * and once a person has chosen a phase, the screen must stay where they put
    * it even as the case moves on underneath them.
    */
@@ -172,8 +172,8 @@ export default function OtCaseRecord() {
   /**
    * The journey's one action.
    *
-   * Both wheel events go through the record endpoint — the same path the times
-   * have always used — so there is exactly one way a patient moves, whichever
+   * Both wheel events go through the record endpoint - the same path the times
+   * have always used - so there is exactly one way a patient moves, whichever
    * screen the button was pressed on.
    */
   const journeyAction = useMutation({
@@ -185,7 +185,7 @@ export default function OtCaseRecord() {
       const m = (res as { movement?: { status?: string } } | undefined)?.movement?.status;
       toast.success(
         m === "moved"
-          ? a === "WHEEL_IN" ? "In theatre — the ward board now shows them away" : "Out to recovery — their bed is still held"
+          ? a === "WHEEL_IN" ? "In theatre - the ward board now shows them away" : "Out to recovery - their bed is still held"
           : m === "no-theatre" ? "Time recorded. No theatre is booked for this case, so the patient was not moved"
           : m === "theatre-busy" ? "Time recorded. The theatre is not free, so the patient was not moved"
           : "Time recorded",
@@ -235,32 +235,32 @@ export default function OtCaseRecord() {
   const STEPS: { key: string; text: string; phase: number; done: boolean }[] = [
     { key: "consent", text: "Record the surgical consent", phase: STEP_PHASE.consent, done: done.consent },
     { key: "team", text: "Name the primary surgeon", phase: STEP_PHASE.team, done: done.team },
-    { key: "signIn", text: "Run Sign In — before anaesthesia", phase: STEP_PHASE.signIn, done: done.signIn },
+    { key: "signIn", text: "Run Sign In - before anaesthesia", phase: STEP_PHASE.signIn, done: done.signIn },
     { key: "wheeledIn", text: "Stamp Wheeled in when the patient enters theatre", phase: STEP_PHASE.wheeledIn, done: done.wheeledIn },
-    { key: "timeOut", text: "Run Time Out — before the incision", phase: STEP_PHASE.timeOut, done: done.timeOut },
+    { key: "timeOut", text: "Run Time Out - before the incision", phase: STEP_PHASE.timeOut, done: done.timeOut },
     { key: "incision", text: "Stamp Incision", phase: STEP_PHASE.incision, done: done.incision },
     { key: "closure", text: "Stamp Closure", phase: STEP_PHASE.closure, done: done.closure },
     { key: "procedure", text: "Write what was actually done", phase: STEP_PHASE.procedure, done: done.procedure },
-    { key: "signOut", text: "Run Sign Out — before the patient leaves", phase: STEP_PHASE.signOut, done: done.signOut },
+    { key: "signOut", text: "Run Sign Out - before the patient leaves", phase: STEP_PHASE.signOut, done: done.signOut },
     { key: "wheeledOut", text: "Stamp Wheeled out", phase: STEP_PHASE.wheeledOut, done: done.wheeledOut },
   ];
 
   /**
-   * How far the case has actually got — the LAST thing done, not the first
+   * How far the case has actually got - the LAST thing done, not the first
    * thing missing.
    *
    * These are different, and conflating them is misleading at exactly the wrong
    * moment. On a live case with Sign In, Wheeled in and Time Out all recorded
-   * but no consent on file, "first thing missing" says *record the consent* —
+   * but no consent on file, "first thing missing" says *record the consent* -
    * true, but the patient is anaesthetised and the next ACTION is the incision.
    */
   const lastDone = STEPS.reduce((acc, s, i) => (s.done ? i : acc), -1);
 
-  /** The next step forward — used to land on the right phase, not to nag. */
+  /** The next step forward - used to land on the right phase, not to nag. */
   const nextStep = STEPS.slice(lastDone + 1).find((s) => !s.done) ?? null;
 
   /**
-   * Steps the case has moved PAST without recording — skipped, not pending.
+   * Steps the case has moved PAST without recording - skipped, not pending.
    *
    * Surfaced separately and in warning colour, because a consent that was never
    * recorded on a patient already on the table is not a to-do item, it is a
@@ -284,8 +284,8 @@ export default function OtCaseRecord() {
       <PageHeader
         title={surgery?.procedureName || "Case"}
         subtitle={surgery?.patientName
-          ? `${surgery.patientName}${surgery.uhid ? ` · ${surgery.uhid}` : ""} — save each section as you go`
-          : "The record for this case — save each section as you go"}
+          ? `${surgery.patientName}${surgery.uhid ? ` · ${surgery.uhid}` : ""} - save each section as you go`
+          : "The record for this case - save each section as you go"}
         actions={
           <Stack direction="row" spacing={1} alignItems="center">
             {/* What has happened to this patient before, without leaving the
@@ -325,7 +325,7 @@ export default function OtCaseRecord() {
         }}
       />
 
-      {/* Passed over, not pending — the case has moved on without them. Kept
+      {/* Passed over, not pending - the case has moved on without them. Kept
           because a consent never recorded on an anaesthetised patient is a hole
           in the record, not a to-do. Each one goes to the phase that fixes it. */}
       {missedSteps.length > 0 && (
@@ -352,7 +352,7 @@ export default function OtCaseRecord() {
         Three phases, not seven topics.
         A case is a timeline; the old tabs sliced it by subject, so "what do I do
         now" had to be translated into "which subject holds that" every time. The
-        same forms are all still here — Sign In sits with consent and the team
+        same forms are all still here - Sign In sits with consent and the team
         because they happen before anaesthesia, and the counts sit with Sign Out
         because that is when they are done.
       */}
@@ -412,7 +412,7 @@ export default function OtCaseRecord() {
 /**
  * The theatre bill, line by line.
  *
- * "Auto-price" builds the standard lines from what the case already knows — who
+ * "Auto-price" builds the standard lines from what the case already knows - who
  * was in the room, how long the theatre was used for, which implants went in.
  * It adds only what is missing, so pressing it twice is safe, and it says so
  * rather than silently doing nothing.
@@ -573,7 +573,7 @@ function useSectionSave(id: string, onSaved: () => void, message = "Saved") {
  * The three moments a case passes through.
  *
  * Deliberately not the seven subjects the record is made of. The subjects are
- * still all here — they are grouped by WHEN they are used rather than by what
+ * still all here - they are grouped by WHEN they are used rather than by what
  * they are about, which is the order the person filling this in is working in.
  */
 const PHASES = [
@@ -595,7 +595,7 @@ const GUTTER = { xs: 2, md: 3 };
 /**
  * A tab label carrying whether that section is settled.
  *
- * A tick, not a colour alone — a dot on its own says "something", and which
+ * A tick, not a colour alone - a dot on its own says "something", and which
  * something is exactly what a person mid-case has no attention to spare for.
  * Tabs with no required state (Implants, Billing) get no mark at all rather
  * than a permanent "incomplete".
@@ -622,7 +622,7 @@ function TabMark({ text, state }: { text: string; state: "done" | "todo" | null 
  * just another line of text.
  *
  * Header and footer are now separated by rules and the footer is right-aligned
- * on a tinted ground, which puts "save" in the same place on every card — and
+ * on a tinted ground, which puts "save" in the same place on every card - and
  * lets the intro sentences move out of the body into `description`, where they
  * belong, instead of being the first child with an ad-hoc margin.
  */
@@ -771,7 +771,7 @@ function ChecklistTab({ id, data, onSaved, stages, showCounts = true }: {
         const stageItems = items?.[m.stage] ?? [];
         // Start from what was actually signed, not from an empty form. A
         // signed stage that renders every box unticked is not just wrong to
-        // look at — pressing "Re-sign" would record the whole stage as NOT
+        // look at - pressing "Re-sign" would record the whole stage as NOT
         // done and quietly erase the record.
         const saved = (cl?.[m.itemsKey] as unknown as Record<string, boolean> | null) ?? {};
         const current = ticks[m.stage] ?? saved;
@@ -789,7 +789,7 @@ function ChecklistTab({ id, data, onSaved, stages, showCounts = true }: {
               <>
                 {!allTicked && stageItems.length > 0 && (
                   <Typography variant="caption" sx={{ color: "text.secondary", flex: 1, minWidth: 200 }}>
-                    Signing records exactly what is ticked — unticked items are recorded as not done.
+                    Signing records exactly what is ticked - unticked items are recorded as not done.
                   </Typography>
                 )}
                 <Button
@@ -801,8 +801,8 @@ function ChecklistTab({ id, data, onSaved, stages, showCounts = true }: {
                     extra: m.stage === "SIGN_IN" ? { siteMarked: !!current.SITE_MARKED, laterality: laterality || undefined } : undefined,
                   })}
                 >
-                  {/* The stage titles are already verbs — "Sign In", "Time Out",
-                      "Sign Out" — so prefixing "Sign" produced "Sign Sign In". */}
+                  {/* The stage titles are already verbs - "Sign In", "Time Out",
+                      "Sign Out" - so prefixing "Sign" produced "Sign Sign In". */}
                   {signedAt ? `Re-confirm ${m.title}` : `Confirm ${m.title}`}
                 </Button>
               </>
@@ -969,7 +969,7 @@ function AddTeamDialog({ id, onClose, onDone }: { id: string; onClose: () => voi
             {TEAM_ROLES.map((r) => <MenuItem key={r.value} value={r.value}>{r.label}</MenuItem>)}
           </TextField>
           <TextField select label="Who" fullWidth value={who} onChange={(e) => setWho(e.target.value as typeof who)}
-            helperText="A visiting surgeon or agency nurse has no login — name them instead">
+            helperText="A visiting surgeon or agency nurse has no login - name them instead">
             <MenuItem value="doctor">A doctor here</MenuItem>
             <MenuItem value="staff">A staff member here</MenuItem>
             <MenuItem value="external">Someone visiting</MenuItem>
@@ -1029,7 +1029,7 @@ function AddTeamDialog({ id, onClose, onDone }: { id: string; onClose: () => voi
  *     them; re-tapping the most recent stamp passed validation and destroyed it.
  *  2. A TIME THAT HAD ALREADY PASSED COULD NOT BE ENTERED. The scrub nurse is
  *     scrubbed at the moment of incision and cannot reach the screen, so the
- *     stamp was either late — and wrong — or never made. The API has always
+ *     stamp was either late - and wrong - or never made. The API has always
  *     accepted any past instant; only this screen insisted on `now`.
  *  3. THE DURATIONS WERE NEVER SHOWN BACK. Six stamps exist to answer "how long
  *     did this take", and answering it meant subtracting clock faces by eye.
@@ -1070,7 +1070,7 @@ function TimesSection({ record, stamp }: {
           return (
             <Box key={t.key} sx={{ px: 1, py: 1.5 }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
-                {/* Numbered because the six ARE a sequence — the server rejects
+                {/* Numbered because the six ARE a sequence - the server rejects
                     a time that falls out of this order, so the order is a rule
                     the nurse is held to and should be able to see. */}
                 <Typography
@@ -1131,7 +1131,7 @@ function TimesSection({ record, stamp }: {
               <Collapse in={isEditing} unmountOnExit>
                 <Stack direction="row" spacing={1} alignItems="flex-start" sx={{ mt: 1.5, pl: { xs: 0, sm: "34px" }, flexWrap: "wrap" }}>
                   <TextField
-                    type="datetime-local" size="small" label={`${t.label} — actual time`}
+                    type="datetime-local" size="small" label={`${t.label} - actual time`}
                     value={draft} onChange={(e) => setDraft(e.target.value)}
                     InputLabelProps={{ shrink: true }}
                     sx={{ minWidth: 230 }}
@@ -1189,7 +1189,7 @@ function AnaesthesiaTab({ id, record, onSaved, show = "both" }: {
   const toast = useToast();
   const save = useSectionSave(id, onSaved, "Anaesthesia saved");
   // Wheeling in and out moves the patient as well as recording the time, so
-  // the toast has to say so — a button that quietly does two things is a
+  // the toast has to say so - a button that quietly does two things is a
   // button people stop trusting.
   const stampTime = useMutation({
     mutationFn: async (body: Record<string, unknown>) =>
@@ -1197,10 +1197,10 @@ function AnaesthesiaTab({ id, record, onSaved, show = "both" }: {
     onSuccess: (res) => {
       const m = (res as { movement?: { status?: string } } | undefined)?.movement?.status;
       toast.success(
-        m === "moved" ? "Time recorded — the patient has been moved, and the ward board now shows it"
+        m === "moved" ? "Time recorded - the patient has been moved, and the ward board now shows it"
           : m === "no-theatre" ? "Time recorded. No theatre is booked for this case, so the patient was not moved"
-          : m === "theatre-busy" ? "Time recorded. The theatre is not free, so the patient was not moved — check the theatre board"
-          : m === "no-admission" ? "Time recorded (day case — there is no ward bed to move them from)"
+          : m === "theatre-busy" ? "Time recorded. The theatre is not free, so the patient was not moved - check the theatre board"
+          : m === "no-admission" ? "Time recorded (day case - there is no ward bed to move them from)"
           : "Time recorded",
       );
       onSaved();
@@ -1281,7 +1281,7 @@ function ProcedureTab({ id, record, onSaved }: { id: string; record: Record<stri
     >
       <Grid container spacing={2.5}>
         {field("preOpDiagnosis", "Pre-operative diagnosis", { half: true })}
-        {field("postOpDiagnosis", "Post-operative diagnosis", { half: true, helper: "Kept separate — the difference is the point" })}
+        {field("postOpDiagnosis", "Post-operative diagnosis", { half: true, helper: "Kept separate - the difference is the point" })}
         {field("procedurePerformed", "Procedure actually performed")}
         {field("incision", "Incision", { half: true })}
         {field("bloodLossMl", "Estimated blood loss (ml)", { half: true })}
@@ -1346,7 +1346,7 @@ function ImplantsTab({ id, implants, onSaved }: { id: string; implants: Record<s
                     </Typography>
                     {!traceable && (
                       <Typography variant="caption" sx={{ color: SEMANTIC.warning, fontWeight: 700 }}>
-                        No batch or serial — this one cannot be found in a recall
+                        No batch or serial - this one cannot be found in a recall
                       </Typography>
                     )}
                   </Box>
@@ -1435,7 +1435,7 @@ function ConsentTab({ id, consents, onSaved, formsPath }: {
                 <Box sx={{ flex: 1, minWidth: 0 }}>
                   <Typography variant="body2" sx={{ fontWeight: 700 }}>
                     {CONSENT_TYPES.find((t) => t.value === c.consentType)?.label ?? String(c.consentType)}
-                    {!c.isActive && " — withdrawn"}
+                    {!c.isActive && " - withdrawn"}
                   </Typography>
                   <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>
                     {c.givenBy === "PATIENT" ? "Given by the patient" : `Given by ${c.giverName} (${c.relationship})`}
@@ -1539,7 +1539,7 @@ function WithdrawDialog({ id, consent, onClose, onDone }: {
 /**
  * Placing a patient after recovery, from the case itself.
  *
- * The same move the bed board offers — this is the second door, and it exists
+ * The same move the bed board offers - this is the second door, and it exists
  * because the person driving the case should not have to leave it to finish
  * the journey. Both go through return-from-theatre, so they cannot diverge.
  */
@@ -1576,14 +1576,14 @@ function PlaceFromRecoveryDialog({ admissionId, heldBed, onClose, onDone }: {
           </Alert>
         ) : (
           <Alert severity="warning" sx={{ mb: 2 }}>
-            They have no bed — their old one was released on the way in. Choose one.
+            They have no bed - their old one was released on the way in. Choose one.
           </Alert>
         )}
         <SearchableSelect
           label="Bed" name="toBedId" required={!heldBed}
           value={toBedId} onChange={(e) => setToBedId(e.target.value)}
           placeholder={heldBed ? `Back to bed ${heldBed}` : "Pick a bed"}
-          // The held bed stays a real, selectable option — it is the default
+          // The held bed stays a real, selectable option - it is the default
           // and the common answer, not an absence of one.
           emptyOption={heldBed ? { value: "", label: `Back to bed ${heldBed}` } : undefined}
           searchPlaceholder="Search by ward, room or bed…"

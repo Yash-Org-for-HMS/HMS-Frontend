@@ -6,7 +6,7 @@ import { renderWithProviders } from "@/test/renderWithProviders";
 /**
  * The readiness chip must distinguish "all set" from "nothing set".
  *
- * It used to count only gaps — taxed rows with no HSN — so "No gaps" meant
+ * It used to count only gaps - taxed rows with no HSN - so "No gaps" meant
  * both "every taxed item is coded" and "nothing is configured at all". Those
  * are opposite answers to the one question this page exists to settle, and
  * they collapsed into the same green chip because an unconfigured row is 0% by
@@ -14,7 +14,7 @@ import { renderWithProviders } from "@/test/renderWithProviders";
  * @default(0)) and a 0% row correctly needs no HSN.
  *
  * It was also clickable at zero, which filtered the table down to
- * "Nothing matches." — a control whose only outcome was an empty list.
+ * "Nothing matches." - a control whose only outcome was an empty list.
  */
 
 const row = (id: string, name: string, taxPercent: number, hsnCode: string | null) => ({

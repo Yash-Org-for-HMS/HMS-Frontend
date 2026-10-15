@@ -46,7 +46,7 @@ interface DashboardStats {
   completedVisits: number;
   /** Cash kept today: taken today, less anything handed back today. */
   todaysRevenue: number;
-  /** Of that, what went back out — shown so a smaller figure explains itself. */
+  /** Of that, what went back out - shown so a smaller figure explains itself. */
   todaysRefunded?: number;
   upcomingAppointments: AppointmentEntry[];
 }
@@ -153,7 +153,7 @@ export default function ReceptionDashboard() {
     (t) => t.statusCode !== "COMPLETED" && t.statusCode !== "SKIPPED" && t.statusCode !== "CANCELLED",
   );
 
-  // Today's bills — to surface anything still owed (best-effort; ignore errors).
+  // Today's bills - to surface anything still owed (best-effort; ignore errors).
   const { data: billsToday } = useQuery({
     queryKey: ["dashboard-bills-today", today],
     queryFn: async () => (await axiosInstance.get("/reception/billing/invoices", { params: { from: today, to: today, limit: 100 } })).data,
@@ -174,7 +174,7 @@ export default function ReceptionDashboard() {
     queryFn: async () => (await axiosInstance.get("/ipd/structure", { params: { view: "summary" } })).data.data,
     // Both halves matter: isModuleEnabled() answers "yes" while the module
     // list is still loading, so gating on it alone still fired the request on
-    // first render — which is exactly the 403 this was meant to stop.
+    // first render - which is exactly the 403 this was meant to stop.
     enabled: modulesLoaded && isModuleEnabled("IPD"),
     retry: 0,
     // The whole bed board, for one tile: coming back to the dashboard within a
@@ -196,22 +196,22 @@ export default function ReceptionDashboard() {
       {/* Header */}
       <PageHeader title="Reception Desk" subtitle={`Front-desk operations for ${hospital?.name || "the hospital"}`} />
 
-      {/* Needs attention — action cards */}
+      {/* Needs attention - action cards */}
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(3, 1fr)" }, gap: 2, mb: 2.5 }}>
         <ActionCard
-          icon={<HourglassTopRounded />} label="Patients waiting" value={loading ? "—" : String(waiting)}
+          icon={<HourglassTopRounded />} label="Patients waiting" value={loading ? "-" : String(waiting)}
           sub={waiting === 0 ? "Queue is clear" : `avg wait ${fmtWait(avgWait)}`}
           color={waiting === 0 ? SEMANTIC.success : avgWait >= 20 ? SEMANTIC.danger : SEMANTIC.warning}
           onClick={() => navigate("/reception/queue")}
         />
         <ActionCard
-          icon={<ReceiptLongRounded />} label="Unpaid bills today" value={billsToday ? String(outstandingCount) : "—"}
+          icon={<ReceiptLongRounded />} label="Unpaid bills today" value={billsToday ? String(outstandingCount) : "-"}
           sub={outstandingCount === 0 ? "All settled today" : `${inr(outstandingDue)} to collect`}
           color={outstandingCount === 0 ? SEMANTIC.success : SEMANTIC.danger}
           onClick={() => navigate("/reception/billing")}
         />
         <ActionCard
-          icon={<HotelRounded />} label="Beds available" value={bedsAvail == null ? "—" : String(bedsAvail)}
+          icon={<HotelRounded />} label="Beds available" value={bedsAvail == null ? "-" : String(bedsAvail)}
           sub={beds ? `${beds.occupied}/${beds.totalBeds} occupied` : "IPD"}
           color={bedsAvail == null ? ACCENT : bedsAvail === 0 ? SEMANTIC.danger : bedsAvail <= 2 ? SEMANTIC.warning : SEMANTIC.success}
           onClick={() => navigate("/reception/ipd/beds")}
@@ -224,7 +224,7 @@ export default function ReceptionDashboard() {
         <MiniStat icon={<CheckCircleRounded fontSize="small" />} title="Completed" value={stats?.completedVisits || 0} loading={loading} />
         <MiniStat icon={<AccessTimeRounded fontSize="small" />} title="Avg wait" value={stats ? fmtWait(avgWait) : "0m"} loading={loading} />
         {/* "Revenue today" read as "what today's work earned", so a quiet day
-            with an old bill settled on it looked inexplicable — ₹41,000 against
+            with an old bill settled on it looked inexplicable - ₹41,000 against
             no appointments. It is money taken today against bills of ANY date,
             less anything handed back, so it says that. */}
         <MiniStat
@@ -244,7 +244,7 @@ export default function ReceptionDashboard() {
       {/* Queue + quick actions */}
       {/* minmax(0, …) rather than a bare 1fr. A bare fr track is
           minmax(auto, 1fr), and that auto floor is the widest child's
-          min-content — here the appointments table, 521px of it. So the track
+          min-content - here the appointments table, 521px of it. So the track
           refused to shrink below the table and pushed the whole page sideways
           on a phone, even though the table already sits in its own
           overflow-x container and was perfectly willing to scroll by itself. */}
@@ -274,7 +274,7 @@ export default function ReceptionDashboard() {
                 <TableRow>
                   {/* No separate Doctor column: the doctor now sits under the
                       token it belongs to. A token counts one DOCTOR's patients
-                      for the day, so several doctors each have a #1 — and with
+                      for the day, so several doctors each have a #1 - and with
                       the owner two columns away the number read as a duplicate
                       and made the table look broken. */}
                   {["Token", liveQueue.length ? "Waiting since" : "Time", "Patient", "Status"].map((hd) => (
@@ -312,7 +312,7 @@ export default function ReceptionDashboard() {
                     <TableRow key={appt.appointmentId} hover>
                       <TableCell sx={{ borderColor: "divider" }}>
                         <Typography sx={{ fontWeight: 700, color: "text.primary", lineHeight: 1.3 }}>#{appt.tokenNumber}</Typography>
-                        <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>{appt.doctorName ?? "—"}</Typography>
+                        <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>{appt.doctorName ?? "-"}</Typography>
                       </TableCell>
                       <TableCell sx={{ color: "text.primary", borderColor: "divider" }}>{new Date(appt.appointmentTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</TableCell>
                       {/* Name and UHID, not an ID fragment. This column used to

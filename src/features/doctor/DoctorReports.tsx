@@ -32,9 +32,9 @@ const PRESETS = [
 ];
 
 
-// Downloadable table — every report on this page ends in one of these.
+// Downloadable table - every report on this page ends in one of these.
 
-// ── Individual report views — each is one item in the sidebar, rendered on
+// ── Individual report views - each is one item in the sidebar, rendered on
 // its own rather than all stacked on one page. All read from the single
 // already-fetched payload (one backend call powers every report here). ─────
 
@@ -93,7 +93,7 @@ function MedicinesReport({ data }: { data: DoctorReportsData }) {
 function LabOrdersReport({ data }: { data: DoctorReportsData }) {
   const labStatusBreakdown: StatusCount[] = data?.labStatusBreakdown || [];
   return (
-    <SimpleTable title="Lab orders — status" head={["Status", "Orders"]}
+    <SimpleTable title="Lab orders - status" head={["Status", "Orders"]}
       rows={labStatusBreakdown.map((r) => [r.status, Number(r.count)])} />
   );
 }
@@ -101,7 +101,7 @@ function LabOrdersReport({ data }: { data: DoctorReportsData }) {
 function RadiologyOrdersReport({ data }: { data: DoctorReportsData }) {
   const radStatusBreakdown: StatusCount[] = data?.radStatusBreakdown || [];
   return (
-    <SimpleTable title="Radiology orders — status" head={["Status", "Orders"]}
+    <SimpleTable title="Radiology orders - status" head={["Status", "Orders"]}
       rows={radStatusBreakdown.map((r) => [r.status, Number(r.count)])} />
   );
 }
@@ -112,13 +112,13 @@ function ConsultationsRegisterReport({ data }: { data: DoctorReportsData }) {
     <SimpleTable
       title="Consultations register"
       head={["Date", "Patient", "UHID", "Diagnosis", "Prescriptions"]}
-      rows={consultationsList.map((c) => [formatDateTime(c.date), c.patientName, c.uhid, c.diagnosis || "—", Number(c.prescriptions)])}
+      rows={consultationsList.map((c) => [formatDateTime(c.date), c.patientName, c.uhid, c.diagnosis || "-", Number(c.prescriptions)])}
       note={<ReportTruncationNote truncated={data?.truncated} totalRows={data?.totalRows} shownRows={data?.shownRows} />}
     />
   );
 }
 
-// ── Report catalogue — one entry per sidebar item, grouped like ReportsHub. ──
+// ── Report catalogue - one entry per sidebar item, grouped like ReportsHub. ──
 
 type ReportItem = { key: string; label: string; Comp: React.ComponentType<{ data: DoctorReportsData }> };
 type ReportGroup = { heading: string; items: ReportItem[] };
@@ -154,7 +154,7 @@ export default function DoctorReports() {
     setTo(p.to().format("YYYY-MM-DD"));
   };
 
-  // One fetch powers every report in the sidebar — switching reports just
+  // One fetch powers every report in the sidebar - switching reports just
   // changes which slice of this same payload is rendered, no extra requests.
   const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
     queryKey: ["doctor-reports", from, to],
@@ -162,7 +162,7 @@ export default function DoctorReports() {
     placeholderData: keepPreviousData,
   });
 
-  // Date range — shared across every report below.
+  // Date range - shared across every report below.
   const toolbar = (
     <Paper elevation={0} sx={{ p: 1.5, borderRadius: 3, border: "1px solid", borderColor: "divider", mb: 2, display: "flex", gap: 2, alignItems: "center", flexWrap: "wrap" }}>
       <ButtonGroup size="small" variant="outlined">
@@ -187,7 +187,7 @@ export default function DoctorReports() {
   return (
     <ReportNavLayout
       title="My Reports"
-      subtitle="Your practice analytics — pick a report on the left. Every table is downloadable."
+      subtitle="Your practice analytics - pick a report on the left. Every table is downloadable."
       groups={GROUPS}
       accent={DOCTOR_BLUE}
       actions={isFetching ? <HeartbeatLoader size={22} /> : undefined}

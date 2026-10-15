@@ -54,7 +54,7 @@ export default function ModuleAccess() {
   const inPlan = (m: string) => data?.planModules.includes(m) ?? false;
 
   // Flipping a module affects every staff member at once, so confirm either
-  // direction before it takes effect — disabling reads as a warning (staff lose
+  // direction before it takes effect - disabling reads as a warning (staff lose
   // access immediately), enabling as a plain confirm.
   const requestToggle = async (module: string, enabled: boolean) => {
     const ok = await confirm({
@@ -72,7 +72,7 @@ export default function ModuleAccess() {
     <Box sx={{ maxWidth: FORM_PAGE_WIDTH, mx: "auto", width: "100%" }}>
       <PageHeader
         title="Module Access"
-        subtitle="Turn modules your plan includes on or off. Modules outside your plan are locked — contact your provider to upgrade."
+        subtitle="Turn modules your plan includes on or off. Modules outside your plan are locked - contact your provider to upgrade."
       />
 
       <Paper sx={{ p: 3, mb: 3, bgcolor: "rgba(12, 115, 181, 0.08)", borderRadius: 2, border: "1px solid rgba(12, 115, 181, 0.2)" }}>

@@ -9,8 +9,8 @@ import { SEARCH_FROM } from "./dropdown";
 
 /**
  * The list inside every dropdown and menu (the MuiMenu `list` slot, set in
- * theme.ts), so a long one can be searched wherever it opens — a select on a
- * page, in a dialog, an action menu — without touching each one.
+ * theme.ts), so a long one can be searched wherever it opens - a select on a
+ * page, in a dialog, an action menu - without touching each one.
  *
  * Under SEARCH_FROM choices it is MUI's own list, untouched. From there it
  * puts a search box at the top that stays put while the choices scroll, and
@@ -23,7 +23,7 @@ import { SEARCH_FROM } from "./dropdown";
  *    "chosen" by Enter or arrowed onto as if it were an option.
  *  - MUI's menus jump to the row starting with whatever letter is typed.
  *    Inside the box that would steal every keystroke, so the box keeps its
- *    keys — except Escape and Tab, which still close the menu. Typing a letter
+ *    keys - except Escape and Tab, which still close the menu. Typing a letter
  *    while on a row goes into the box instead.
  *  - The chosen row is not focused (MUI would focus it on open, and focus
  *    again each time the list narrows, pulling the cursor out of the box);
@@ -34,7 +34,7 @@ import { SEARCH_FROM } from "./dropdown";
  * For a menu that brings its own search box, in a ListSubheader at its top
  * (SearchableSelect): MUI's own list, except that while that box is there no
  * row takes the focus. MUI focused the first row on open, and again whichever
- * row became first as the list narrowed — so the cursor left the box after a
+ * row became first as the list narrowed - so the cursor left the box after a
  * letter or two ("deepa 1" reached the box as "de"). Now the cursor goes into
  * the box on open and stays there; the chosen row is scrolled into view.
  */

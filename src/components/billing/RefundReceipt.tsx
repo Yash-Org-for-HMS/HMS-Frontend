@@ -6,7 +6,7 @@ import BillDocument, { type BillHospital } from "@/components/billing/BillDocume
  * The document a patient is handed when money is returned to them.
  *
  * Built on the shared <BillDocument> so it carries the same hospital header,
- * type and spacing as the bill it reverses — a refund slip that looked like a
+ * type and spacing as the bill it reverses - a refund slip that looked like a
  * different system's output would be the first thing a patient distrusts.
  *
  * Two things it must state plainly, because they are what a patient checks:
@@ -34,9 +34,9 @@ const th: CSSProperties = { padding: "10px 8px", borderBottom: "2px solid #e5e7e
 const td: CSSProperties = { padding: "10px 8px", borderBottom: "1px solid #f3f4f6", fontSize: 13 };
 
 const date = (d?: string | null) =>
-  d ? new Date(d).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "—";
+  d ? new Date(d).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "-";
 const dateTime = (d?: string | null) =>
-  d ? new Date(d).toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "—";
+  d ? new Date(d).toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "-";
 
 export default function RefundReceipt({ data }: { data: RefundReceiptData }) {
   const amount = Number(data.refundAmount ?? 0);
@@ -49,14 +49,14 @@ export default function RefundReceipt({ data }: { data: RefundReceiptData }) {
       hospital={data.hospital}
       title="Refund Receipt"
       metaLeft={[
-        { label: "Refund No.", value: data.refundNumber || "—" },
+        { label: "Refund No.", value: data.refundNumber || "-" },
         { label: "Refunded on", value: dateTime(data.processedAt) },
-        { label: "Against invoice", value: data.invoice?.invoiceNumber || "—" },
+        { label: "Against invoice", value: data.invoice?.invoiceNumber || "-" },
       ]}
       metaRight={[
-        { label: "Patient", value: data.patient?.name || "—" },
-        { label: "UHID", value: data.patient?.uhid || "—" },
-        { label: "Phone", value: data.patient?.phone || "—" },
+        { label: "Patient", value: data.patient?.name || "-" },
+        { label: "UHID", value: data.patient?.uhid || "-" },
+        { label: "Phone", value: data.patient?.phone || "-" },
       ]}
       // Just the one figure. Passing `refunded` as well printed "Total ₹2,450"
       // above "Refunded −₹2,450", which reads as a ₹2,450 bill that was then
@@ -69,7 +69,7 @@ export default function RefundReceipt({ data }: { data: RefundReceiptData }) {
           </div>
           <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#4b5563", marginBottom: 4 }}>
             <span>
-              {data.refundMethod || "—"}
+              {data.refundMethod || "-"}
               {data.referenceNumber ? ` (Ref: ${data.referenceNumber})` : ""}
             </span>
             <span style={{ fontWeight: 700 }}>{formatINR(amount)}</span>
@@ -78,7 +78,7 @@ export default function RefundReceipt({ data }: { data: RefundReceiptData }) {
               printing a guess as though it were fact. */}
           {data.refundMethodAssumed && (
             <div style={{ fontSize: 11, color: "#9ca3af" }}>
-              Method not recorded — shown as the original payment's method.
+              Method not recorded - shown as the original payment's method.
             </div>
           )}
 
@@ -87,7 +87,7 @@ export default function RefundReceipt({ data }: { data: RefundReceiptData }) {
           </div>
           <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#4b5563" }}>
             <span>
-              {date(data.originalPayment?.paidAt)} • {data.originalPayment?.method || "—"}
+              {date(data.originalPayment?.paidAt)} • {data.originalPayment?.method || "-"}
               {data.originalPayment?.reference ? ` (Ref: ${data.originalPayment.reference})` : ""}
             </span>
             <span style={{ fontWeight: 700 }}>{formatINR(Number(data.originalPayment?.paidAmount ?? 0))}</span>
@@ -97,7 +97,7 @@ export default function RefundReceipt({ data }: { data: RefundReceiptData }) {
       footer={
         <div style={{ fontSize: 11, color: "#6b7280" }}>
           <div style={{ marginBottom: 4 }}>
-            Processed by {data.processedByName || "—"}
+            Processed by {data.processedByName || "-"}
             {data.approvedByName ? ` · approved by ${data.approvedByName}` : ""}
           </div>
           <div>This receipt confirms money returned to the patient. Please retain it.</div>
@@ -116,7 +116,7 @@ export default function RefundReceipt({ data }: { data: RefundReceiptData }) {
             <td style={td}>
               {data.refundReason || "Refund"}
               <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 2 }}>
-                Invoice {data.invoice?.invoiceNumber || "—"} dated {date(data.invoice?.invoiceDate)}
+                Invoice {data.invoice?.invoiceNumber || "-"} dated {date(data.invoice?.invoiceDate)}
                 {data.invoice?.netAmount != null ? ` · bill ${formatINR(Number(data.invoice.netAmount))}` : ""}
               </div>
             </td>

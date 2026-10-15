@@ -27,7 +27,7 @@ export interface RadiologyMacro {
  * stopped being useful. A radiologist writing the same "unremarkable" paragraph
  * for the tenth time should be able to keep it without leaving the report.
  *
- * Reading these already worked — the picker existed. Nothing could WRITE one,
+ * Reading these already worked - the picker existed. Nothing could WRITE one,
  * so the table stayed empty and the picker never had anything to offer.
  *
  * Unlike SOAP templates, these belong to the hospital rather than one author: a
@@ -36,7 +36,7 @@ export interface RadiologyMacro {
 export default function RadiologyMacroBar({
   content, onApply,
 }: {
-  /** The notes as they stand — what "Save current report" would store. */
+  /** The notes as they stand - what "Save current report" would store. */
   content: string;
   onApply: (m: RadiologyMacro) => void;
 }) {
@@ -157,7 +157,7 @@ export default function RadiologyMacroBar({
           </Typography>
           <TextField
             autoFocus fullWidth size="small" label="Template name"
-            placeholder="e.g. CT Abdomen — normal study"
+            placeholder="e.g. CT Abdomen - normal study"
             value={name} onChange={(e) => setName(e.target.value)}
           />
         </DialogContent>

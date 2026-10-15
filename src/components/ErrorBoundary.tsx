@@ -21,7 +21,7 @@ interface State {
 
 /**
  * Top-level error boundary. React unmounts the whole tree when a render throws
- * and nothing catches it — that's the "blank white screen". This contains the
+ * and nothing catches it - that's the "blank white screen". This contains the
  * failure to a friendly panel with recover/reload actions, so a bug in one page
  * never takes down the entire app. Error boundaries must be class components.
  */
@@ -91,7 +91,7 @@ export default class ErrorBoundary extends Component<Props, State> {
           Something went wrong
         </Typography>
         <Typography variant="body2" sx={{ color: "text.secondary", maxWidth: 460 }}>
-          This page hit an unexpected error. Your data is safe — try again, or reload the page.
+          This page hit an unexpected error. Your data is safe - try again, or reload the page.
           If it keeps happening, please let your administrator know.
         </Typography>
 

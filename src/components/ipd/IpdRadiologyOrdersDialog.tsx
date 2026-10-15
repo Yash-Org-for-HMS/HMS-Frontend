@@ -68,7 +68,7 @@ export default function IpdRadiologyOrdersDialog({ open, onClose, admission, ord
   };
   const removeFromBasket = (idx: number) => setBasket(basket.filter((_, i) => i !== idx));
 
-  // A scan chosen in the picker but not yet "added" still counts — so ordering a
+  // A scan chosen in the picker but not yet "added" still counts - so ordering a
   // single scan needs no extra Add click. Add stays useful for stacking several.
   const effectiveScans = selectedTest ? [...basket, lineFor(selectedTest)] : basket;
   const estTotal = effectiveScans.reduce((s, x) => s + (x.price || 0), 0);
@@ -128,7 +128,7 @@ export default function IpdRadiologyOrdersDialog({ open, onClose, admission, ord
       </Tabs>
       <DialogContent dividers>
         <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
-          {admission?.patientName} — ordering a scan sends it to the radiology queue; once reported, the charge rolls onto the discharge bill.
+          {admission?.patientName} - ordering a scan sends it to the radiology queue; once reported, the charge rolls onto the discharge bill.
         </Typography>
 
         {tab === "order" ? (
@@ -181,7 +181,7 @@ export default function IpdRadiologyOrdersDialog({ open, onClose, admission, ord
                     <Box sx={{ flex: 1, minWidth: 0 }}>
                       <Typography variant="body2" sx={{ fontWeight: 600 }}>{o.scanType}</Typography>
                       <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                        {o.orderDate ? dayjs(o.orderDate).format("DD MMM YYYY, h:mm A") : "—"}
+                        {o.orderDate ? dayjs(o.orderDate).format("DD MMM YYYY, h:mm A") : "-"}
                       </Typography>
                     </Box>
                     <SoftChip {...sc} />

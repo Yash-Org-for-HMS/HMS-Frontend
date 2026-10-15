@@ -69,7 +69,7 @@ export default function IpdMedicationRequests() {
   return (
     <PharmacyPage
       title="IPD Medication Requests"
-      subtitle="Medicines the ward has requested for admitted patients — confirm to dispense (deducts stock), or reject with a reason."
+      subtitle="Medicines the ward has requested for admitted patients - confirm to dispense (deducts stock), or reject with a reason."
     >
       <Paper sx={{ borderRadius: 4, overflow: "hidden", border: "1px solid", borderColor: "divider" }}>
         <TableContainer sx={{ maxHeight: "calc(100vh - 300px)" }}>
@@ -98,18 +98,18 @@ export default function IpdMedicationRequests() {
               ) : requests.map((r) => (
                 <TableRow key={r.ipMedOrderId} hover>
                   <TableCell>
-                    <Box sx={{ fontWeight: 600 }}>{r.patientName || "—"}</Box>
+                    <Box sx={{ fontWeight: 600 }}>{r.patientName || "-"}</Box>
                     <Box sx={{ fontSize: "0.75rem", color: "text.secondary" }}>{r.uhid}{r.admissionNumber ? ` · ${r.admissionNumber}` : ""}</Box>
                   </TableCell>
-                  <TableCell sx={{ color: "text.secondary" }}>{r.bedLabel || "—"}</TableCell>
-                  <TableCell sx={{ fontWeight: 600, color: BRAND.action }}>{r.medicineName || "—"}</TableCell>
+                  <TableCell sx={{ color: "text.secondary" }}>{r.bedLabel || "-"}</TableCell>
+                  <TableCell sx={{ fontWeight: 600, color: BRAND.action }}>{r.medicineName || "-"}</TableCell>
                   <TableCell>
-                    {[r.dosage, r.frequency].filter(Boolean).join(" · ") || "—"}
+                    {[r.dosage, r.frequency].filter(Boolean).join(" · ") || "-"}
                     {r.route ? <Chip label={r.route} size="small" sx={{ ml: 1, height: 18, fontSize: "0.6875rem" }} /> : null}
                   </TableCell>
                   <TableCell align="center">{r.quantity}</TableCell>
                   <TableCell align="right">{formatINR(r.totalPrice)}</TableCell>
-                  <TableCell sx={{ color: "text.secondary" }}>{r.orderedAt ? dayjs(r.orderedAt).format("DD MMM, HH:mm") : "—"}</TableCell>
+                  <TableCell sx={{ color: "text.secondary" }}>{r.orderedAt ? dayjs(r.orderedAt).format("DD MMM, HH:mm") : "-"}</TableCell>
                   <TableCell align="right">
                     <Button size="small" variant="contained" color="success" startIcon={busyId === r.ipMedOrderId ? <HeartbeatLoader size={18} /> : <CheckCircleRounded />}
                       disabled={busyId === r.ipMedOrderId} onClick={() => confirm(r)} sx={{ mr: 1, textTransform: "none" }}>
@@ -133,7 +133,7 @@ export default function IpdMedicationRequests() {
       )}
 
       <Dialog open={!!rejecting} onClose={() => setRejecting(null)} maxWidth="xs" fullWidth>
-        <DialogTitle>Reject Request — {rejecting?.medicineName}</DialogTitle>
+        <DialogTitle>Reject Request - {rejecting?.medicineName}</DialogTitle>
         <DialogContent dividers sx={{ pt: 3 }}>
           <TextField
             label="Reason" placeholder="e.g. Out of stock, wrong medicine…"

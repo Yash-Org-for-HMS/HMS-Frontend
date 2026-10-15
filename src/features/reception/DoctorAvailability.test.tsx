@@ -15,7 +15,7 @@ vi.mock("@/api/axios", () => ({
 import DoctorAvailability from "./DoctorAvailability";
 
 /**
- * The badge on each doctor's card says what reception can do with them now —
+ * The badge on each doctor's card says what reception can do with them now -
  * the same thing the card says under it. It said "Available" for anyone
  * working at this branch today, over "Day finished" and "Book anyway", and
  * "Elsewhere" without saying where.

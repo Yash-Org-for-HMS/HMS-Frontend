@@ -30,7 +30,7 @@ beforeEach(() => {
   api.post.mockResolvedValue({ data: { data: {} } });
 });
 
-describe("Indents — the ward", () => {
+describe("Indents - the ward", () => {
   it("fills in what is below par, sends it, and offers Cancel only before the store starts", async () => {
     api.get.mockImplementation(async (url: string) => {
       if (url === "/ward-indents/wards") return { data: { data: [{ wardId: "w1", wardName: "General", wardCode: "GEN" }] } };
@@ -53,7 +53,7 @@ describe("Indents — the ward", () => {
   });
 });
 
-describe("Indents — the store", () => {
+describe("Indents - the store", () => {
   it("offers what is still asked for, capped by what is in store, and refuses more than was asked", async () => {
     api.get.mockResolvedValue({ data: { data: [indent("i1", "PART_ISSUED", [line("a", "Gloves", 8, 0, 50), line("b", "Cannula", 10, 5, 3)])] } });
     renderWithProviders(<StoreIndents />);

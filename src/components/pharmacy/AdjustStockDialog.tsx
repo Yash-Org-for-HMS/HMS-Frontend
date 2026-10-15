@@ -84,7 +84,7 @@ export default function AdjustStockDialog({
   const valid = Number.isInteger(typed) && typed >= 0;
   const delta = valid ? typed - batch.availableQuantity : 0;
   // "Other" on its own says nothing a month later, so it has to be written out.
-  const finalReason = reason === "Other" ? note.trim() : [reason, note.trim()].filter(Boolean).join(" — ");
+  const finalReason = reason === "Other" ? note.trim() : [reason, note.trim()].filter(Boolean).join(" - ");
   const canSave = valid && delta !== 0 && finalReason.length >= 3;
 
   const save = async () => {
@@ -119,8 +119,8 @@ export default function AdjustStockDialog({
 
       <DialogContent dividers>
         <Alert severity="info" sx={{ mb: 2 }}>
-          Enter what is actually on the shelf. Everything else — sales, deliveries,
-          returns — moves this number on its own; this is for what they cannot see.
+          Enter what is actually on the shelf. Everything else - sales, deliveries,
+          returns - moves this number on its own; this is for what they cannot see.
         </Alert>
 
         <Box sx={{ display: "flex", gap: 1.5, alignItems: "flex-start", mb: 2, flexWrap: "wrap" }}>
@@ -186,10 +186,10 @@ export default function AdjustStockDialog({
                     {m.reason ? ` · ${m.reason}` : ""}
                   </Typography>
                 </Box>
-                {/* Blank on rows written before the ledger recorded a balance —
+                {/* Blank on rows written before the ledger recorded a balance -
                     shown as a dash rather than a misleading zero. */}
                 <Typography variant="caption" sx={{ color: "text.secondary", fontVariantNumeric: "tabular-nums" }}>
-                  {m.balanceAfter == null ? "—" : `bal ${m.balanceAfter}`}
+                  {m.balanceAfter == null ? "-" : `bal ${m.balanceAfter}`}
                 </Typography>
               </Box>
             ))}

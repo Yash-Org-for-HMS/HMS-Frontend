@@ -1,4 +1,4 @@
-// Role codes that count as a hospital "admin" — the org admin (H_ADMIN), branch
+// Role codes that count as a hospital "admin" - the org admin (H_ADMIN), branch
 // admin (B_ADMIN), and the legacy HOSPITAL_ADMIN alias. Mirrors the backend's
 // ADMIN_ROLE_CODES bypass in hospitalAuth.jwt.ts, so the client shows admins the
 // same tabs the API already authorizes them for. Centralized here because the
@@ -17,7 +17,7 @@ export function isAdmin(role?: string | null): boolean {
 // its roles open and switches between them from the sidebar. The route guard
 // is deliberately NEVER stricter than the backend: admins bypass everything and
 // a user always reaches their own home panel. The backend still enforces the
-// real data boundary — including what the workbook's newer roles may change.
+// real data boundary - including what the workbook's newer roles may change.
 export type Panel = "reception" | "nurse" | "doctor" | "lab" | "pharmacy" | "housekeeping" | "hospital";
 
 /** The panel each role opens. Codes not listed (admins, anything unknown) are the hospital panel. */
@@ -47,7 +47,7 @@ export const PANEL_LABEL: Record<Panel, string> = {
 };
 
 // The panel a role belongs to. Anything that isn't a known clinical role (admins
-// and custom management roles) belongs to the hospital-admin panel — matching
+// and custom management roles) belongs to the hospital-admin panel - matching
 // the login redirect's default branch.
 export function primaryPanelForRole(role?: string | null): Panel {
   return ROLE_PANEL[(role || "").toUpperCase()] ?? "hospital";
@@ -72,7 +72,7 @@ export function canAccessPanel(role: string | null | undefined, panel: Panel): b
 // ── Several roles per login ─────────────────────────────────────────────────
 
 /**
- * What the app shows a role — which pages it opens, where it lands, what it may
+ * What the app shows a role - which pages it opens, where it lands, what it may
  * do beyond its panel. Decided on the server (backend lib/roleCatalog.ts) and
  * sent with the login and on every load; not repeated here, so the two cannot
  * disagree. pages null: the role's whole panel.
@@ -101,7 +101,7 @@ export interface RoleHolder {
 
 /**
  * A role's features: the latest the server sent, else what came with the login.
- * Undefined for a session from before roles had features — treated as the
+ * Undefined for a session from before roles had features - treated as the
  * role's whole panel until the next load fills it in.
  */
 export function featuresFor(user: RoleHolder | null | undefined, code: string): RoleFeatures | undefined {
@@ -114,7 +114,7 @@ export function featuresFor(user: RoleHolder | null | undefined, code: string): 
 /**
  * The facility the screen works in, as the API client sends it: the branch
  * picked, else (the organisation admin's all-branches view, or none stored yet)
- * the login's own — what the server falls back to as well. Null if unknown.
+ * the login's own - what the server falls back to as well. Null if unknown.
  */
 function workingBranch(): string | null {
   try {
@@ -130,7 +130,7 @@ function workingBranch(): string | null {
 /** Every role the login holds (primary first). A session from before roles could be several has only `role`. */
 export function heldRoles(user: RoleHolder | null | undefined): string[] {
   if (!user) return [];
-  // An extra role given at one facility counts only while working there — the
+  // An extra role given at one facility counts only while working there - the
   // server judges roles at the branch the request is for (lib/access rolesFor),
   // so offering its pages elsewhere only led to refusals.
   const here = workingBranch();
@@ -180,7 +180,7 @@ export function panelHomeForUser(user: RoleHolder | null | undefined, panel: Pan
 }
 
 /**
- * Which menu paths of a panel this login sees, or null for all of them — when
+ * Which menu paths of a panel this login sees, or null for all of them - when
  * any role it holds there sees the whole panel (every original role and admin).
  * The pages come from the server with the role (featuresFor).
  */

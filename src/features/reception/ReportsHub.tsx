@@ -64,7 +64,7 @@ const GROUPS: ReportGroup[] = [
     heading: "Operating Theatre",
     module: "IPD",
     // Theatre utilisation, complications and the rest are clinical and
-    // management figures, not reception's — and the server refuses them to
+    // management figures, not reception's - and the server refuses them to
     // the receptionist role.
     adminOnly: true,
     items: [

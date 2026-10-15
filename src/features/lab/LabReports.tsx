@@ -141,16 +141,16 @@ export function TestWise() {
 }
 
 // ── Turnaround & SLA ──────────────────────────────────────────────────────────
-// TAT distribution, SLA compliance, avg/median/p90, and the slowest orders — the
+// TAT distribution, SLA compliance, avg/median/p90, and the slowest orders - the
 // core lab quality view, for lab and radiology side by side.
 
 // With no completed orders the API still returns zeros, and "0 hrs / 0%" reads
-// as "instant, and failing every target" — the opposite of "nothing to report".
+// as "instant, and failing every target" - the opposite of "nothing to report".
 // So every card falls back to an em dash + a plain sentence when count is 0.
 // Sub-hour figures are worded, not printed: a real median can round to 0.0 and
 // "half are ready within 0 hrs" is nonsense to read.
 const hoursText = (v: unknown) => { const n = Number(v) || 0; return n < 1 ? "under an hour" : `${n} hrs`; };
-const avgText = (d?: TatStat) => (!d?.count ? "—" : Number(d.avg) < 1 ? "< 1 hr" : `${d.avg} hrs`);
+const avgText = (d?: TatStat) => (!d?.count ? "-" : Number(d.avg) < 1 ? "< 1 hr" : `${d.avg} hrs`);
 const spreadText = (d?: TatStat) => (d?.count
   ? `Half are ready within ${hoursText(d.median)} · 9 in 10 within ${hoursText(d.p90)}`
   : "Nothing completed in this period");
@@ -182,11 +182,11 @@ export function Turnaround() {
       {/* The two modalities are timed from DIFFERENT starting points, so the
           figures below are not directly comparable. Saying so beats letting
           someone conclude radiology is "slower" when it simply starts counting
-          earlier — it includes the wait for the patient to attend. */}
+          earlier - it includes the wait for the patient to attend. */}
       <Alert severity="info" sx={{ mb: 2.5, borderRadius: 2 }}>
         <strong>How this is measured.</strong> For lab tests, the clock starts when the{" "}
         <strong>sample is collected</strong> and stops when results are entered. For radiology, it starts
-        when the scan is <strong>ordered</strong> and stops when the report is filed — so radiology also
+        when the scan is <strong>ordered</strong> and stops when the report is filed - so radiology also
         includes the time waiting for the patient to come in. Compare each against its own target rather
         than against the other.
       </Alert>
@@ -194,17 +194,17 @@ export function Turnaround() {
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
             {/* Plain words instead of TAT / SLA / p90. "p90" in particular is
-                meaningless outside analytics — "9 in 10 within Xh" says the
+                meaningless outside analytics - "9 in 10 within Xh" says the
                 same thing and needs no explaining. */}
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<SpeedRounded />} accent={BRAND.action}
-              label="Lab — average time to result" value={avgText(data.lab)} sub={spreadText(data.lab)} /></Grid>
+              label="Lab - average time to result" value={avgText(data.lab)} sub={spreadText(data.lab)} /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<VerifiedRounded />} accent={onTimeAccent(data.lab)}
-              label={`Lab — ready within ${sla} hrs`} value={data.lab.count ? `${data.lab.slaPct}%` : "—"}
+              label={`Lab - ready within ${sla} hrs`} value={data.lab.count ? `${data.lab.slaPct}%` : "-"}
               sub={data.lab.count ? `of ${data.lab.count} completed test${data.lab.count === 1 ? "" : "s"}` : "No completed tests in this period"} /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<MonitorHeartRounded />} accent={BRAND.actionDark}
-              label="Radiology — average time to report" value={avgText(data.radiology)} sub={spreadText(data.radiology)} /></Grid>
+              label="Radiology - average time to report" value={avgText(data.radiology)} sub={spreadText(data.radiology)} /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<VerifiedRounded />} accent={onTimeAccent(data.radiology)}
-              label={`Radiology — ready within ${sla} hrs`} value={data.radiology.count ? `${data.radiology.slaPct}%` : "—"}
+              label={`Radiology - ready within ${sla} hrs`} value={data.radiology.count ? `${data.radiology.slaPct}%` : "-"}
               sub={data.radiology.count ? `of ${data.radiology.count} reported scan${data.radiology.count === 1 ? "" : "s"}` : "No reported scans in this period"} /></Grid>
           </Grid>
 
@@ -276,7 +276,7 @@ export function Pending() {
             <Grid size={{ xs: 12, md: 6 }}>
               <ReportTable title="By stage" filename="lab_pending_by_stage"
                 columns={[{ key: "stage", label: "Stage" }, num("count", "Orders"), { key: "oldestHours", label: "Oldest (h)", align: "right", value: (r) => Number(r.oldestHours) }]}
-                rows={byStage} emptyText="Nothing pending — the queue is clear." />
+                rows={byStage} emptyText="Nothing pending - the queue is clear." />
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
               <ReportTable title="Aging" filename="lab_pending_aging"
@@ -286,7 +286,7 @@ export function Pending() {
           </Grid>
 
           <ReportTable title="Oldest pending orders" filename="lab_pending_detail"
-            emptyText="Nothing pending — the queue is clear."
+            emptyText="Nothing pending - the queue is clear."
             columns={[
               { key: "patient", label: "Patient" },
               { key: "uhid", label: "UHID" },
@@ -355,7 +355,7 @@ export function CriticalResults() {
 
 
 // ── Order Register (every order, line by line) ────────────────────────────────
-// The other detail tables here are all filtered slices — slowest N, oldest
+// The other detail tables here are all filtered slices - slowest N, oldest
 // pending, critical only. This is the plain list: every lab order and every
 // scan in the period, with patient names, downloadable as-is.
 export function OrderRegister() {
@@ -365,7 +365,7 @@ export function OrderRegister() {
   const { data: opts } = useReportFilterOptions();
   // Two registers in one response, so each pages on its own keys. A single
   // `page` would scroll both tables at once and mean the right thing for
-  // neither — and a reader on page 12 of the lab register has no business
+  // neither - and a reader on page 12 of the lab register has no business
   // being moved through radiology at the same time.
   const labPaging = useReportPaging({ prefix: "lab" });
   const radPaging = useReportPaging({ prefix: "rad" });
@@ -382,7 +382,7 @@ export function OrderRegister() {
   const labRows: RegisterRow[] = data?.lab?.rows ?? [];
   const radRows: RegisterRow[] = data?.radiology?.rows ?? [];
 
-  // Sending no page at all is what returns the whole register — which is what
+  // Sending no page at all is what returns the whole register - which is what
   // an export has to contain, not the page the reader happened to be on.
   const fetchWhole = async (half: "lab" | "radiology") =>
     ((await axiosInstance.get("/lab/reports/register", { params: registerParams })).data.data?.[half]?.rows ?? []) as Record<string, unknown>[];

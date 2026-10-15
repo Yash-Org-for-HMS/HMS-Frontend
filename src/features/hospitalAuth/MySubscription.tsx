@@ -18,7 +18,7 @@ import { SEMANTIC, NEUTRAL, alpha } from "@/styles/accents";
  * What this hospital owes, and how to pay it.
  *
  * Before this screen the billing system was visible only to the platform, so a
- * tenant's first signal that payment was due was a 403 at login — for an
+ * tenant's first signal that payment was due was a 403 at login - for an
  * invoice they had never been shown, of an amount they had never seen. The
  * money could move (Razorpay emails a link) but nobody could go and look.
  */
@@ -139,7 +139,7 @@ export default function MySubscription() {
         <Stack direction="row" spacing={4} flexWrap="wrap" useFlexGap>
           <Box>
             <Typography variant="caption" sx={{ color: NEUTRAL.muted, fontWeight: 700, display: "block" }}>PLAN</Typography>
-            <Typography sx={{ fontWeight: 700, fontSize: "1rem" }}>{data.plan?.name ?? "—"}</Typography>
+            <Typography sx={{ fontWeight: 700, fontSize: "1rem" }}>{data.plan?.name ?? "-"}</Typography>
           </Box>
           <Box>
             <Typography variant="caption" sx={{ color: NEUTRAL.muted, fontWeight: 700, display: "block" }}>BILLED</Typography>

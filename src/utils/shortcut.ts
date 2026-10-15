@@ -2,7 +2,7 @@
  * Keyboard-shortcut labels that match the keyboard in front of the user.
  *
  * The command palette has always listened for `ctrlKey || metaKey`, so both
- * keys work — but every hint printed the Mac glyph, so on Windows (which is
+ * keys work - but every hint printed the Mac glyph, so on Windows (which is
  * what the hospital desks run) the app told people to press a key their
  * keyboard does not have.
  */

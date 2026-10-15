@@ -45,7 +45,7 @@ const inr = (v: any) => {
   return x < 0 ? `(₹${s})` : `₹${s}`;
 };
 function ageSex(p: any): string {
-  if (!p) return "—";
+  if (!p) return "-";
   const sex = p.genderId === 1 ? "M" : p.genderId === 2 ? "F" : "O";
   const age = p.dateOfBirth ? Math.floor((Date.now() - new Date(p.dateOfBirth).getTime()) / 31557600000) : null;
   return age != null ? `${age}Y / ${sex}` : sex;
@@ -54,7 +54,7 @@ function ageSex(p: any): string {
 const MetaRow = ({ k, v }: { k: string; v: any }) => (
   <div style={{ display: "flex", gap: 6, marginBottom: 3, fontSize: 11.5 }}>
     <span style={{ color: SUB, minWidth: 96, fontWeight: 600 }}>{k}</span>
-    <span style={{ color: INK, fontWeight: 500 }}>{v ?? "—"}</span>
+    <span style={{ color: INK, fontWeight: 500 }}>{v ?? "-"}</span>
   </div>
 );
 const TotalRow = ({ k, v, bold, color, big }: { k: string; v: string; bold?: boolean; color?: string; big?: boolean }) => (
@@ -90,7 +90,7 @@ export default function PrintIpBill() {
       if (!rows.length) return null;
       const byDate = new Map<string, any[]>();
       for (const r of rows) {
-        const key = r.itemDate ? new Date(r.itemDate).toISOString().slice(0, 10) : "—";
+        const key = r.itemDate ? new Date(r.itemDate).toISOString().slice(0, 10) : "-";
         (byDate.get(key) ?? byDate.set(key, []).get(key)!).push(r);
       }
       const dates = [...byDate.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([date, rs]) => ({ date, rows: rs }));
@@ -110,7 +110,7 @@ export default function PrintIpBill() {
   const totalRefunded = refundedTotal(inv);
   const balance = n(inv.netAmount) - (totalPaid - totalRefunded);
   const patientAddress = p ? [p.addressLine1, p.addressLine2, p.city, p.district, p.state, p.postalCode].filter(Boolean).join(", ") : "";
-  const bedLabel = bed ? [bed.wardName, bed.roomNumber ? `Room ${bed.roomNumber}` : null, bed.bedNumber ? `Bed ${bed.bedNumber}` : null, bed.roomClass].filter(Boolean).join(" · ") : "—";
+  const bedLabel = bed ? [bed.wardName, bed.roomNumber ? `Room ${bed.roomNumber}` : null, bed.bedNumber ? `Bed ${bed.bedNumber}` : null, bed.roomClass].filter(Boolean).join(" · ") : "-";
 
   const th: React.CSSProperties = { padding: "6px 7px", fontSize: 10.5, fontWeight: 700, background: HEAD, color: "#334155", textTransform: "uppercase", letterSpacing: 0.3, borderBottom: `1.5px solid #cbd5e1` };
   const td: React.CSSProperties = { padding: "5px 7px", fontSize: 11, borderBottom: `1px solid ${LINE}`, verticalAlign: "top" };
@@ -139,7 +139,7 @@ export default function PrintIpBill() {
             block. Everything between them is specific to an in-patient bill. */}
         <BillLetterhead hospital={hosp} />
         <BillTitleBar
-          title="Tax Invoice — In-Patient Bill"
+          title="Tax Invoice - In-Patient Bill"
           right={<><b style={{ color: INK }}>{inv.invoiceNumber}</b> · {formatDateTime(inv.invoiceDate)}{inv.invoiceStatus ? ` · ${inv.invoiceStatus}` : ""}</>}
         />
 
@@ -147,10 +147,10 @@ export default function PrintIpBill() {
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 14 }}>
           <div style={{ border: `1px solid ${LINE}`, borderRadius: 5, padding: "9px 11px" }}>
             <div style={{ fontSize: 10, fontWeight: 700, color: ACCENT, letterSpacing: 0.6, marginBottom: 5 }}>PATIENT</div>
-            <MetaRow k="Name" v={<b>{p ? `${p.firstName || ""} ${p.lastName || ""}`.trim() : "—"} ({ageSex(p)})</b>} />
+            <MetaRow k="Name" v={<b>{p ? `${p.firstName || ""} ${p.lastName || ""}`.trim() : "-"} ({ageSex(p)})</b>} />
             <MetaRow k="UHID / MRN" v={p?.uhidNumber} />
             <MetaRow k="Phone" v={p?.phone} />
-            <MetaRow k="Address" v={patientAddress || "—"} />
+            <MetaRow k="Address" v={patientAddress || "-"} />
             <MetaRow k="Consultant" v={adm?.consultantName} />
           </div>
           <div style={{ border: `1px solid ${LINE}`, borderRadius: 5, padding: "9px 11px" }}>
@@ -188,7 +188,7 @@ export default function PrintIpBill() {
           </tbody>
         </table>
 
-        {/* ── Detailed itemisation — each charge group its own section, dates within ── */}
+        {/* ── Detailed itemisation - each charge group its own section, dates within ── */}
         {mode === "detailed" && groups.map((g) => (
           <div key={g.cat} style={{ marginBottom: 12, breakInside: "avoid" }}>
             <div style={{ background: ACCENT, color: "white", fontSize: 11, fontWeight: 700, letterSpacing: 0.4, padding: "4px 8px", borderRadius: "4px 4px 0 0" }}>
@@ -212,7 +212,7 @@ export default function PrintIpBill() {
                 {g.dates.map((d) => (
                   <Fragment key={`d-${g.cat}-${d.date}`}>
                     <tr>
-                      <td colSpan={9} style={{ ...td, background: "#f8fafc", fontWeight: 700, fontSize: 10.5, color: SUB, borderBottom: `1px solid ${LINE}` }}>{d.date === "—" ? "Undated" : formatDate(d.date)}</td>
+                      <td colSpan={9} style={{ ...td, background: "#f8fafc", fontWeight: 700, fontSize: 10.5, color: SUB, borderBottom: `1px solid ${LINE}` }}>{d.date === "-" ? "Undated" : formatDate(d.date)}</td>
                     </tr>
                     {d.rows.map((it, i) => {
                       const taxable = n(it.totalPrice), tax = n(it.taxAmount);
@@ -224,12 +224,12 @@ export default function PrintIpBill() {
                             {it.description}
                             {sub && <div style={{ fontSize: 9.5, color: SUB, marginTop: 1 }}>{sub}</div>}
                           </td>
-                          <td style={{ ...td, textAlign: "center", color: SUB, fontSize: 10 }}>{it.hsnCode || "—"}</td>
+                          <td style={{ ...td, textAlign: "center", color: SUB, fontSize: 10 }}>{it.hsnCode || "-"}</td>
                           <td style={{ ...td, ...num }}>{it.quantity}</td>
                           <td style={{ ...td, ...num }}>{inr(it.unitPrice)}</td>
                           <td style={{ ...td, ...num }}>{inr(taxable)}</td>
-                          <td style={{ ...td, ...num, color: SUB }}>{tax ? inr(tax / 2) : "—"}</td>
-                          <td style={{ ...td, ...num, color: SUB }}>{tax ? inr(tax / 2) : "—"}</td>
+                          <td style={{ ...td, ...num, color: SUB }}>{tax ? inr(tax / 2) : "-"}</td>
+                          <td style={{ ...td, ...num, color: SUB }}>{tax ? inr(tax / 2) : "-"}</td>
                           <td style={{ ...td, ...num, fontWeight: 600 }}>{inr(taxable + tax)}</td>
                         </tr>
                       );
@@ -266,7 +266,7 @@ export default function PrintIpBill() {
           </div>
         </div>
 
-        <BillFooter>Computer-generated tax invoice — no signature required. CGST/SGST as applicable.</BillFooter>
+        <BillFooter>Computer-generated tax invoice - no signature required. CGST/SGST as applicable.</BillFooter>
       </Box>
     </Box>
   );

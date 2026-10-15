@@ -6,7 +6,7 @@ import { printHtml } from "./printHtml";
  * unstyled page in production while looking perfect in dev.
  *
  * Emotion switches to CSSOM `insertRule()` in production, leaving its
- * <style data-emotion> tags EMPTY while holding hundreds of rules — so copying
+ * <style data-emotion> tags EMPTY while holding hundreds of rules - so copying
  * `outerHTML` lost the lot. Neither dev, a typecheck nor a build shows it.
  *
  * These build style tags both ways Emotion does and assert the rules survive,
@@ -19,7 +19,7 @@ import { printHtml } from "./printHtml";
  * printHtml writes synchronously and only prints later, once stylesheets have
  * settled, so the document is fully there the instant the call returns.
  * Detaching the iframe here also makes printHtml's `isConnected` guard skip the
- * print() it would otherwise attempt — jsdom has no printer.
+ * print() it would otherwise attempt - jsdom has no printer.
  */
 function capture(fn: () => void): { html: string; doc: Document } {
   fn();
@@ -31,7 +31,7 @@ function capture(fn: () => void): { html: string; doc: Document } {
   return { html, doc };
 }
 
-/** A <style> whose rules live only in the CSSOM — how Emotion behaves in a build. */
+/** A <style> whose rules live only in the CSSOM - how Emotion behaves in a build. */
 function addSpeedyStyle(cssText: string): HTMLStyleElement {
   const el = document.createElement("style");
   el.setAttribute("data-emotion", "css");

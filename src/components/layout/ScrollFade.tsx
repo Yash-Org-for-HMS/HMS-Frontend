@@ -6,7 +6,7 @@ import type { SxProps, Theme } from "@mui/material";
  * A scroll area that admits when there is more below.
  *
  * The sidebar nav is the only elastic band between a pinned header and a pinned
- * footer, so everything that does not fit is simply invisible — measured, a
+ * footer, so everything that does not fit is simply invisible - measured, a
  * hospital admin on a 768px laptop could reach 9 of 29 menu items, and nothing
  * on screen suggested the other 20 existed. Scrolling was always possible; the
  * problem was never knowing to try.
@@ -14,7 +14,7 @@ import type { SxProps, Theme } from "@mui/material";
  * So: a soft fade at whichever edge has content beyond it. It does not reduce
  * the scrolling, it removes "I did not know that page was there".
  *
- * The fade is `pointer-events: none` — an overlay that ate clicks on the last
+ * The fade is `pointer-events: none` - an overlay that ate clicks on the last
  * menu item would trade one navigation bug for a worse one.
  */
 export default function ScrollFade({

@@ -20,12 +20,12 @@ export interface ReceiptRow {
   invoiceNumber: string;
   patientName: string;
   uhid: string;
-  /** "Patient" | "Payer" — a payer settlement is not counter cash. */
+  /** "Patient" | "Payer" - a payer settlement is not counter cash. */
   source: string;
   /** Tender; payer settlements carry the payer tender label, not a cash method. */
   method: string;
   reference: string;
-  /** "—" for payer settlements, which have no cashier. */
+  /** "-" for payer settlements, which have no cashier. */
   collector: string;
   amount: Money;
 }
@@ -141,7 +141,7 @@ export interface PatientStatementInvoice {
   invoiceDate: string;
   appointmentId: string | null;
   netAmount: Money;
-  /** Payments MINUS completed refunds — not gross collections. */
+  /** Payments MINUS completed refunds - not gross collections. */
   paidAmount: Money;
   balance: Money;
   invoiceStatus: string;

@@ -121,7 +121,7 @@ export default function TrialForm() {
       });
       const admin = res.data?.data?.admin;
       if (admin?.temporaryPassword) {
-        // Trial provisioned a live hospital + admin login — surface the credentials.
+        // Trial provisioned a live hospital + admin login - surface the credentials.
         setTrialCreds({ email: admin.email, temporaryPassword: admin.temporaryPassword });
       } else {
         toast.success("Trial started");
@@ -206,7 +206,7 @@ export default function TrialForm() {
               </TextField>
             </Grid>
 
-            {/* Hospital admin — a separate person at the hospital who will run the
+            {/* Hospital admin - a separate person at the hospital who will run the
                 system. NOT the sales contact (who may be our own salesperson). */}
             <Grid size={{ xs: 12 }}>
               <Typography variant="subtitle2" sx={{ color: "text.secondary", fontWeight: 700 }}>
@@ -255,12 +255,12 @@ export default function TrialForm() {
                 helperText="The prospect's trial includes this plan's modules and limits."
               >
                 {plans.length === 0 ? (
-                  <MenuItem value="" disabled>No plans available — create one under Plans first</MenuItem>
+                  <MenuItem value="" disabled>No plans available - create one under Plans first</MenuItem>
                 ) : (
                   plans.map((p: any) => (
                     <MenuItem key={p.planId} value={p.planId}>
                       {p.planName}
-                      {p.monthlyPrice != null ? ` — ₹${Number(p.monthlyPrice).toLocaleString("en-IN")}/mo` : ""}
+                      {p.monthlyPrice != null ? ` - ₹${Number(p.monthlyPrice).toLocaleString("en-IN")}/mo` : ""}
                     </MenuItem>
                   ))
                 )}
@@ -385,13 +385,13 @@ export default function TrialForm() {
         </form>
       </Paper>
 
-      {/* Trial admin credentials — the trial provisions a live hospital + login */}
+      {/* Trial admin credentials - the trial provisions a live hospital + login */}
       <Dialog open={!!trialCreds} onClose={() => { setTrialCreds(null); navigate("/trials"); }} maxWidth="xs" fullWidth
         PaperProps={{ sx: { bgcolor: "background.paper", borderRadius: 3 } }}>
         <DialogTitle sx={{ fontWeight: 700 }}>Trial started</DialogTitle>
         <DialogContent>
           <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
-            A live hospital was created for this trial. Share these one-time login credentials with the hospital admin — they'll set a new password on first login.
+            A live hospital was created for this trial. Share these one-time login credentials with the hospital admin - they'll set a new password on first login.
           </Typography>
           <Alert severity="info">
             <Box sx={{ mb: 0.5 }}><b>Login email:</b> {trialCreds?.email}</Box>

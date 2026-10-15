@@ -45,7 +45,7 @@ const STATIC_ROUTES = [
   { name: "Nurse Dashboard", path: "/nurse/dashboard", icon: <DashboardRounded />, section: "Nurse" },
   { name: "Nurse Patient Queue", path: "/nurse/queue", icon: <QueueRounded />, section: "Nurse" },
   { name: "Nurse Reports", path: "/nurse/reports", icon: <AssessmentRounded />, section: "Nurse" },
-  // Admin section — all within the hospital-admin shell (/hospital/*). Admins
+  // Admin section - all within the hospital-admin shell (/hospital/*). Admins
   // are shown ONLY these (see allowSection): the palette must not route them into
   // the full Reception/Doctor/etc. panels, and the read-only Operations pages
   // below are their in-shell equivalents.
@@ -161,12 +161,12 @@ export default function CommandPalette() {
   // Determine if we're in a hospital/clinical route. If not, don't mount the palette at all.
   // Note the trailing slash on `hospital/`: it matches the hospital-admin panel
   // (/hospital/dashboard, …) but NOT the super-admin Organizations list at
-  // /hospitals — which would otherwise flip this flag and, combined with the
+  // /hospitals - which would otherwise flip this flag and, combined with the
   // early return below, change the hook count between renders (crash).
   const isClinicalRoute = /^\/(reception|doctor|nurse|lab|pharmacy|hospital\/)/.test(location.pathname);
   // The hospital login + forced change-password pages match the `hospital/`
   // prefix above but are PRE-app: no real session yet (change-password holds
-  // only a temp token), so the palette must not open there — it would pop an
+  // only a temp token), so the palette must not open there - it would pop an
   // empty dialog and, worse, offer a navigation escape from the password gate
   // if a stale session lingered. Mirrors AdminCommandPalette's auth-route guard.
   const isAuthRoute = location.pathname === "/hospital/login" || location.pathname.startsWith("/hospital/change-password");
@@ -197,7 +197,7 @@ export default function CommandPalette() {
   }, [open]);
 
   // This component is mounted unconditionally at the top of the hospital tree,
-  // so it re-renders on every navigation/state change everywhere in the app —
+  // so it re-renders on every navigation/state change everywhere in the app -
   // including the super-admin portal and every non-clinical page. Bail out
   // before doing any of the sessionStorage parsing or list filtering below;
   // only the keydown listener above needs to always be alive.
@@ -210,7 +210,7 @@ export default function CommandPalette() {
 
     // Only search patients if the caller's panel owns a patient view, and the
     // query is 3+ chars. Lab/Pharmacy have no patient-profile destination, so
-    // they get no patient results — which also stops a patient hit from routing
+    // they get no patient results - which also stops a patient hit from routing
     // them into the Reception panel. Mirrors the backend, which gates
     // /reception/patients behind receptionAccess (RECEPTIONIST/NURSE + admin +
     // PATIENT_VIEW/APPOINTMENT_VIEW).
@@ -252,7 +252,7 @@ export default function CommandPalette() {
     if (hospitalUserStr) {
       userRole = JSON.parse(hospitalUserStr).role?.toLowerCase() || "";
     }
-  } catch { /* no readable session — the palette simply shows nothing */ }
+  } catch { /* no readable session - the palette simply shows nothing */ }
 
   const panel = primaryPanelForRole(userRole);
   const isReception = panel === "reception";
@@ -260,20 +260,20 @@ export default function CommandPalette() {
   const isPharmacy = panel === "pharmacy";
   const isDoctor = panel === "doctor";
   const isNurse = panel === "nurse";
-  // Role codes are "H_ADMIN" (org admin) / "B_ADMIN" (branch admin) — see
+  // Role codes are "H_ADMIN" (org admin) / "B_ADMIN" (branch admin) - see
   // middleware/branchContext.ts. Matching literal "admin"/"hospital_admin"
   // never matched a real role, so admins previously saw an empty palette.
   const isAdmin = userRole === "h_admin" || userRole === "b_admin";
 
   // Who may search patient PII from the palette. Only panels with a real
   // patient-profile destination (reception, nurse→reception, doctor, admin→
-  // hospital oversight). Lab/Pharmacy are deliberately excluded — see the guard
+  // hospital oversight). Lab/Pharmacy are deliberately excluded - see the guard
   // in handleSearchChange.
   const canSearchPatients = isReception || isNurse || isDoctor || isAdmin;
 
   const allowSection = (section: string) => {
     // Admins operate from their own shell. Surface ONLY the Admin section (which
-    // points at /hospital/*), never the other panels' shortcuts — clicking those
+    // points at /hospital/*), never the other panels' shortcuts - clicking those
     // would drop the admin into the full Reception/Doctor/etc. panels. Patient
     // search is separate and already routes admins to /hospital.
     if (isAdmin) return section === "Admin";
@@ -288,9 +288,9 @@ export default function CommandPalette() {
   // Route to a shell the caller actually owns. Doctors and nurses get their
   // own confined profile view (nurses previously fell through to
   // /reception/patients/:id, which rendered inside the FULL Reception
-  // sidebar — letting a nurse click into front desk/billing/admissions
+  // sidebar - letting a nurse click into front desk/billing/admissions
   // screens that aren't theirs). Hospital admins get the read-only oversight
-  // profile inside their own shell (/hospital/*) — otherwise a patient hit from
+  // profile inside their own shell (/hospital/*) - otherwise a patient hit from
   // the admin panel bounced them into the full Reception panel. Everyone else
   // uses the Reception profile.
   const patientPath = (p: any) =>
@@ -311,7 +311,7 @@ export default function CommandPalette() {
       .sort((a, b) => b.s - a.s)
       .map((x) => x.it);
 
-  // Recently-opened items — only when idle (empty query), re-gated in case the
+  // Recently-opened items - only when idle (empty query), re-gated in case the
   // role/modules changed since they were saved, and re-pathed for the caller.
   const recentItems: PaletteItem[] = (open && q === "" ? loadRecents() : [])
     .map((r): PaletteItem | null => {
@@ -332,12 +332,12 @@ export default function CommandPalette() {
   const filteredActions = open ? rank(QUICK_ACTIONS).filter((a) => !(q === "" && recentPaths.has(a.path))) : [];
   const filteredRoutes = open ? rank(STATIC_ROUTES).filter((r) => !(q === "" && recentPaths.has(r.path))) : [];
 
-  // Single flat, ordered list mirroring what's rendered below — drives
+  // Single flat, ordered list mirroring what's rendered below - drives
   // keyboard navigation (arrow keys select by index, Enter activates).
   // NOT a useMemo: this sits after the `if (!isClinicalRoute) return null`
   // early return above, and a hook after a conditional return violates the
   // Rules of Hooks (the crash this file previously hit). A plain const is
-  // safe here — the list is tiny and only built while the palette is open.
+  // safe here - the list is tiny and only built while the palette is open.
   const allItems: PaletteItem[] = [
     ...recentItems,
     ...filteredActions.map((a) => ({ key: `action-${a.path}`, path: a.path, name: a.name, icon: a.icon, section: a.section, kind: "action" as const, recent: { kind: "route" as const, path: a.path, name: a.name } })),
@@ -517,7 +517,7 @@ export default function CommandPalette() {
                   <ListItemIcon sx={{ minWidth: 40, color: "#06b6d4" }}><PersonRounded /></ListItemIcon>
                   <ListItemText
                     primary={`${p.firstName} ${p.lastName}`}
-                    secondary={`MRN: ${p.uhidNumber || "—"}${p.phone ? ` • ${p.phone}` : ""}`}
+                    secondary={`MRN: ${p.uhidNumber || "-"}${p.phone ? ` • ${p.phone}` : ""}`}
                     primaryTypographyProps={{ fontWeight: 600, color: "text.primary" }}
                   />
                 </ListItemButton>

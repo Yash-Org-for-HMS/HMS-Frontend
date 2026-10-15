@@ -30,8 +30,8 @@ const RATES = [0, 5, 12, 18, 28];
 /**
  * The catalogue behind the GST return, editable where the return is read.
  *
- * The report already counted what was unconfigured — medicines with no HSN,
- * taxable charge items with none — and then sent you to the Medicine Catalogue
+ * The report already counted what was unconfigured - medicines with no HSN,
+ * taxable charge items with none - and then sent you to the Medicine Catalogue
  * and the Schedule of Charges to fix 248 rows one at a time, in two screens
  * that say nothing about the return they feed. Counting a problem in one place
  * and fixing it in another is how a catalogue stays half-set for a year.
@@ -66,7 +66,7 @@ export default function GstSetup() {
   });
 
   // Memoised so the filter below does not see a new array identity on every
-  // render — `?? []` creates a fresh one each time otherwise.
+  // render - `?? []` creates a fresh one each time otherwise.
   const all = useMemo(
     () => (tab === 0 ? data?.medicines ?? [] : data?.chargeItems ?? []),
     [tab, data],
@@ -85,7 +85,7 @@ export default function GstSetup() {
 
   /**
    * Render a page at a time. Every row carries a MUI Select and a text field,
-   * and the charge-item tab has 208 of them — that is 416 inputs plus a
+   * and the charge-item tab has 208 of them - that is 416 inputs plus a
    * thousand MenuItem children in one commit, which locked the tab up for
    * seconds on click. Medicines (40) was fine; the difference was the row count,
    * not the code.
@@ -110,13 +110,13 @@ export default function GstSetup() {
   });
 
   /**
-   * What the status chip reports — three states, not two.
+   * What the status chip reports - three states, not two.
    *
    * It used to count gaps alone, which made "No gaps" mean both "every taxed
    * item is coded" and "nothing is configured at all". Those are opposite
    * answers to the only question this page exists to settle. They looked the
    * same because an unconfigured row is 0% by schema default, and a 0% row
-   * correctly needs no HSN — so a hospital that had set nothing scored a clean
+   * correctly needs no HSN - so a hospital that had set nothing scored a clean
    * green. `taxed` separates them.
    *
    * Counted off the STAGED values, like the per-row warnings, so the tally
@@ -161,7 +161,7 @@ export default function GstSetup() {
     <Box>
       <Alert severity="info" sx={{ mb: 3, borderRadius: 2 }}>
         These rates and codes decide what appears on the return. Healthcare services are
-        exempt — leave them at 0% with no code. Goods sold to a patient, chiefly medicines
+        exempt - leave them at 0% with no code. Goods sold to a patient, chiefly medicines
         and consumables, are taxable and need an HSN. Take both from your supplier invoices.
       </Alert>
 
@@ -179,7 +179,7 @@ export default function GstSetup() {
               <InputAdornment position="start"><SearchRounded fontSize="small" sx={{ color: "text.secondary" }} /></InputAdornment>
             ) } }}
           />
-          {/* Filing readiness. Only the red state is a filter — clicking green
+          {/* Filing readiness. Only the red state is a filter - clicking green
               used to narrow the list to nothing and render "Nothing matches.",
               a button whose whole job was to show you an empty table. */}
           <StatusChip
@@ -187,13 +187,13 @@ export default function GstSetup() {
             gaps={status.gaps}
             active={onlyGaps}
             /* Still clickable while the filter is ON even once the count hits
-               zero — coding the last gap must not strand you in a filtered
+               zero - coding the last gap must not strand you in a filtered
                list with no way back out. */
             onToggle={status.gaps || onlyGaps ? () => { setOnlyGaps((v) => !v); setPage(0); } : undefined}
           />
         </Box>
 
-        {/* Set one code and rate across everything currently listed — the point
+        {/* Set one code and rate across everything currently listed - the point
             of doing this here rather than row by row in another screen. */}
         <BulkBar count={rows.length} onApply={applyToVisible} />
 
@@ -291,7 +291,7 @@ export default function GstSetup() {
           </Box>
         )}
         <Box sx={{ px: 2, py: 2, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2, flexWrap: "wrap" }}>
-          {/* Counts every edit, not just those on this page — paging away from
+          {/* Counts every edit, not just those on this page - paging away from
               a change must not look like losing it. */}
           <Typography variant="caption" sx={{ color: "text.secondary" }}>
             {edited ? `${edited} unsaved change${edited === 1 ? "" : "s"}` : "No unsaved changes"}
@@ -337,7 +337,7 @@ function StatusChip({ taxed, gaps, active, onToggle }: {
          "Nothing here is taxed, so nothing needs an HSN/SAC yet. Set a rate on whatever you charge GST on."]
       : gaps > 0
         ? [`${gaps} missing an HSN`, SEMANTIC.danger,
-           "Taxed, but with no code to file it under — this is what blocks a GSTR-1 Table 12 filing. Click to see only these."]
+           "Taxed, but with no code to file it under - this is what blocks a GSTR-1 Table 12 filing. Click to see only these."]
         : [`${taxed} taxed item${taxed === 1 ? "" : "s"}, all coded`, SEMANTIC.success,
            "Every item you charge GST on has an HSN/SAC."];
 
@@ -384,10 +384,10 @@ function BulkBar({ count, onApply }: { count: number; onApply: (hsn: string, rat
       >
         Apply
       </Button>
-      {/* Staged, not written — the save button at the bottom is still the only
+      {/* Staged, not written - the save button at the bottom is still the only
           thing that touches the database. */}
       <Typography variant="caption" sx={{ color: "text.secondary" }}>
-        Staged only — nothing is saved until you press Save.
+        Staged only - nothing is saved until you press Save.
       </Typography>
     </Box>
   );

@@ -41,7 +41,7 @@ describe("computeDelta", () => {
   /**
    * Money reaches the UI as a decimal STRING (Prisma Decimal serialises that
    * way). `Number.isFinite("120.50")` is false, so a string baseline used to
-   * fall straight through the no-baseline guard and return mode "none" — the
+   * fall straight through the no-baseline guard and return mode "none" - the
    * delta chip silently vanished instead of anything failing.
    *
    * Every call site wraps in Number() today, so this was latent rather than

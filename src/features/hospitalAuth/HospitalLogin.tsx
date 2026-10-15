@@ -34,7 +34,7 @@ export default function HospitalLogin() {
   // Deliberately NOT gated on the fields being valid. Gating it made the
   // button flip grey→solid mid-word as the email became parseable, which
   // reads as a fault; and a disabled button never explains itself. The
-  // submit handler already refuses bad input, and now says why.
+  // submit handler already refuses bad input, and now says why.
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setTouched(true);
@@ -110,8 +110,8 @@ export default function HospitalLogin() {
 
         <LoginSubmitButton busy={isLoading} />
 
-        {/* Below the button, not above it. This does not reset anything — it
-            tells you to ask your administrator — so it is help text, and
+        {/* Below the button, not above it. This does not reset anything - it
+            tells you to ask your administrator - so it is help text, and
             sitting it between the password field and the primary action put
             advice in the action zone and broke the page's centred axis. */}
         <Box sx={{ display: "flex", justifyContent: "center", mt: 2.5 }}>

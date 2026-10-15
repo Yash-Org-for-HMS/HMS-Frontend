@@ -21,10 +21,10 @@ interface Stay {
 }
 
 const ACCENT = BRAND.action;
-const day = (d: string | null) => (d ? new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "—");
+const day = (d: string | null) => (d ? new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "-");
 
 /**
- * Every hospital stay the patient has had, at any branch — newest first, each
+ * Every hospital stay the patient has had, at any branch - newest first, each
  * naming its branch, and a stay that moved to another branch linked to the one
  * it continued in. One history across the group, however the bills are split.
  *

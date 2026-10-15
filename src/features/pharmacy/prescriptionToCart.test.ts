@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { prescriptionToCart, resolveQuantity } from "./prescriptionToCart";
 import type { DispensableMedicine, PrescriptionItem } from "@/types";
 
-// sellingPrice is a decimal STRING on the wire — testing with numbers would let
+// sellingPrice is a decimal STRING on the wire - testing with numbers would let
 // a string-coercion bug through.
 const med = (medicineId: string, opts: Partial<DispensableMedicine> = {}): DispensableMedicine => ({
   medicineId,
@@ -23,7 +23,7 @@ describe("resolveQuantity", () => {
 
   // The bug. An item with no quantity used to make `inStock < undefined`
   // evaluate to false, skipping the stock check and putting `undefined` in the
-  // cart — an order for an unknown amount with an NaN total.
+  // cart - an order for an unknown amount with an NaN total.
   it("defaults a missing quantity to one rather than undefined", () => {
     expect(resolveQuantity({})).toBe(1);
     expect(resolveQuantity({ quantity: null })).toBe(1);

@@ -34,10 +34,10 @@ export default function DispensaryPOS() {
   const toast = useToast();
   const confirm = useConfirm();
   // A pharmacy sale is stamped to one branch. Org admins viewing "All branches"
-  // (consolidated) have no active branch, so the backend rejects the sale — guide
+  // (consolidated) have no active branch, so the backend rejects the sale - guide
   // them to pick a concrete branch here instead of failing at checkout.
   const { activeBranchId, availableBranches, setActiveBranch } = useHospitalAuth();
-  // Real-time updates: the pharmacy's own work — a prescription written or
+  // Real-time updates: the pharmacy's own work - a prescription written or
   // changed, a sale or stock movement at another counter, a sale paid for and
   // dispensed at reception. Lab work, outpatient flow and lab payments change
   // nothing here. A reconnect re-asks, since changes may have been missed while
@@ -55,7 +55,7 @@ export default function DispensaryPOS() {
     },
   });
 
-  // What the counter sells from — the whole catalogue (the medicine picker
+  // What the counter sells from - the whole catalogue (the medicine picker
   // searches all of it) and the stock on hand. It moves with sales and stock
   // receipts, which are announced, so while live it is re-read only as a
   // safety net; every 30s as before while not.
@@ -65,7 +65,7 @@ export default function DispensaryPOS() {
       const [medRes, invRes] = await Promise.all([
         axiosInstance.get(`/pharmacy/medicines`),
         // Batches with stock only: the counter sums them per medicine, so an
-        // empty batch adds nothing — and every batch ever received is a list that
+        // empty batch adds nothing - and every batch ever received is a list that
         // only grows.
         axiosInstance.get(`/pharmacy/inventory`, { params: { hideDepleted: true } }),
       ]);
@@ -81,8 +81,8 @@ export default function DispensaryPOS() {
       /**
        * Today only, asked for as today.
        *
-       * This used to fetch every pharmacy order ever taken — 2,233 of them with
-       * all 4,181 line items nested, 2.2 MB — and filter to the day in the
+       * This used to fetch every pharmacy order ever taken - 2,233 of them with
+       * all 4,181 line items nested, 2.2 MB - and filter to the day in the
        * browser, keeping two. On a thirty-second poll, plus every queue event,
        * plus every socket reconnect, and with a cache-busting `t` so none of it
        * could ever be reused. That is what made this screen crawl.
@@ -180,7 +180,7 @@ export default function DispensaryPOS() {
             initialCart.push({
               ...match,
               quantity: item.quantity,
-              // Coerce to a number — an existing order's unitPrice arrives from
+              // Coerce to a number - an existing order's unitPrice arrives from
               // the API as a Decimal string, which would crash item.unitPrice.toFixed().
               unitPrice: Number(item.unitPrice) || Number(match.sellingPrice),
             });
@@ -259,7 +259,7 @@ export default function DispensaryPOS() {
 
   // Close a prescription that was already fulfilled (e.g. dispensed via a manual
   // walk-in sale rather than the linked "load prescription" flow, which clears it
-  // automatically). Marks it DISPENSED — not cancelled — so the records are right.
+  // automatically). Marks it DISPENSED - not cancelled - so the records are right.
   const handleMarkDispensed = async (p: PendingPrescription) => {
     const ok = await confirm({
       title: "Mark as dispensed",
@@ -281,7 +281,7 @@ export default function DispensaryPOS() {
     setPatientId(prescription.patientId || "");
     
     // The matching and quantity rules live in prescriptionToCart so they can be
-    // tested directly — this is the step that decides how much of a drug leaves
+    // tested directly - this is the step that decides how much of a drug leaves
     // the pharmacy. Here we only turn its result into UI.
     const { cart: newCart, missing, outOfStock } = prescriptionToCart(prescription.items, availableMedicines);
 
@@ -449,7 +449,7 @@ export default function DispensaryPOS() {
                         divider
                         secondaryAction={
                           <Box sx={{ display: 'flex', gap: 0.5 }}>
-                            <Tooltip title="Already dispensed — mark done">
+                            <Tooltip title="Already dispensed - mark done">
                               <IconButton
                                 edge="end"
                                 size="small"
@@ -569,7 +569,7 @@ export default function DispensaryPOS() {
                   </TableHead>
                   <TableBody>
                     {cart.length === 0 ? (
-                      <TableRow><TableCell colSpan={5} sx={{ py: 3, border: 0 }}><Mascot pose="nothing-here-yet" subtitle="Cart is empty — add items or load a prescription." size={110} /></TableCell></TableRow>
+                      <TableRow><TableCell colSpan={5} sx={{ py: 3, border: 0 }}><Mascot pose="nothing-here-yet" subtitle="Cart is empty - add items or load a prescription." size={110} /></TableCell></TableRow>
                     ) : cart.map((item) => (
                       <TableRow key={item.medicineId}>
                         <TableCell>
@@ -669,7 +669,7 @@ export default function DispensaryPOS() {
                         ) : sale.status === 'completed' ? (
                           <Chip size="small" label="Completed" color="success" variant="outlined" />
                         ) : (
-                          <Tooltip title="Draft sale — payment not yet collected">
+                          <Tooltip title="Draft sale - payment not yet collected">
                             <Chip size="small" label="Unpaid" color="warning" variant="outlined" />
                           </Tooltip>
                         )}
@@ -679,7 +679,7 @@ export default function DispensaryPOS() {
                       </TableCell>
                       <TableCell align="right">
                         {/* Only UNPAID drafts can be edited/cancelled here. A paid+
-                            dispensed sale is final — reversing it is a refund, not an
+                            dispensed sale is final - reversing it is a refund, not an
                             in-place edit (which would double-charge). */}
                         {sale.status !== 'completed' && sale.status !== 'cancelled' && (
                           <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
@@ -749,7 +749,7 @@ export default function DispensaryPOS() {
           onClose={handlePOSClose}
           onSuccess={handlePOSSuccess}
           // Refresh the till the moment the money lands, not after the receipt
-          // animation — otherwise Today's Orders shows the sale as unpaid.
+          // animation - otherwise Today's Orders shows the sale as unpaid.
           onPaid={() => fetchData()}
           patientId={createdOrder.patientId || patientId || "Walk-in"}
           patientName={patientId ? `Patient ID: ${patientId}` : "Walk-in Patient"}

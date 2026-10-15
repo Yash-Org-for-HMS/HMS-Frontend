@@ -18,7 +18,7 @@ import { useRoleHome } from "./useRoleHome";
 import Freshness from "./Freshness";
 
 /**
- * My desk — the home of the front office's desk roles (15_System_Roles:
+ * My desk - the home of the front office's desk roles (15_System_Roles:
  * Admission Desk, Billing, TPA / Insurance Desk, Medical Records). Each role
  * held gets its section; someone who holds none of them (the Receptionist, an
  * admin) sees all four. Every row leads to the screen where it is dealt with.
@@ -89,7 +89,7 @@ export default function DeskHome() {
   const mrd = useRoleHome<Mrd>("mrd", show.mrd);
   const queries = [show.admission && admission, show.billing && billing, show.tpa && tpa, show.mrd && mrd].filter(Boolean) as { dataUpdatedAt: number; isFetching: boolean; refetch: () => void; isError: boolean; error: unknown }[];
   const failed = queries.find((q) => q.isError);
-  // The oldest of the sections shown — 0 (no time shown) until every one has loaded.
+  // The oldest of the sections shown - 0 (no time shown) until every one has loaded.
   const oldest = queries.every((q) => q.dataUpdatedAt) ? Math.min(...queries.map((q) => q.dataUpdatedAt)) : 0;
 
   return (
@@ -101,7 +101,7 @@ export default function DeskHome() {
       />
       {failed && <ErrorState title="Couldn't load your desk" message={apiErrorText(failed.error)} onRetry={() => queries.forEach((q) => q.refetch())} />}
 
-      {/* A section whose figures failed to load is left out — the error above says so —
+      {/* A section whose figures failed to load is left out - the error above says so -
           rather than drawn empty, which would read as "nothing to do". */}
       {show.admission && !admission.isError && (
         <Section title="Admission desk" subtitle="Beds to give, beds coming free, and who is waiting for one.">
@@ -115,12 +115,12 @@ export default function DeskHome() {
           </Grid>
           <Grid container spacing={2}>
             <Grid size={half}>
-              <AttentionList title="Waiting for a bed" subtitle="Admitted with no bed yet — longest first" loading={admission.isLoading}
+              <AttentionList title="Waiting for a bed" subtitle="Admitted with no bed yet - longest first" loading={admission.isLoading}
                 emptyText="Everyone admitted has a bed." totalCount={admission.data?.waitingForBed.count}
                 items={(admission.data?.waitingForBed.rows ?? []).map((r) => ({ id: r.admissionId, primary: r.patientName, secondary: r.uhid, meta: since(r.since), severity: "critical" as const, icon: <HourglassTopRounded sx={{ fontSize: 18 }} />, onClick: () => navigate("/reception/ipd/admissions") }))} />
             </Grid>
             <Grid size={half}>
-              <AttentionList title="Discharges started" subtitle="Beds that will free up — earliest first" loading={admission.isLoading}
+              <AttentionList title="Discharges started" subtitle="Beds that will free up - earliest first" loading={admission.isLoading}
                 emptyText="No discharge in progress." totalCount={admission.data?.dischargesStarted.count}
                 items={(admission.data?.dischargesStarted.rows ?? []).map((r) => ({ id: r.admissionId, primary: r.patientName, secondary: r.bed ?? undefined, meta: since(r.since), severity: "info" as const, icon: <ExitToAppRounded sx={{ fontSize: 18 }} />, onClick: () => navigate("/reception/ipd/admissions") }))} />
             </Grid>
@@ -147,7 +147,7 @@ export default function DeskHome() {
           </Grid>
           <Grid container spacing={2}>
             <Grid size={half}>
-              <AttentionList title="Final bills to make" subtitle="Discharge started — the bill is the last step" loading={billing.isLoading}
+              <AttentionList title="Final bills to make" subtitle="Discharge started - the bill is the last step" loading={billing.isLoading}
                 emptyText="No discharge waiting on its bill." totalCount={billing.data?.finalBillsToMake.count}
                 items={(billing.data?.finalBillsToMake.rows ?? []).map((r) => ({ id: r.admissionId, primary: r.patientName, secondary: r.bed ?? undefined, meta: since(r.since), severity: "warning" as const, icon: <ExitToAppRounded sx={{ fontSize: 18 }} />, onClick: () => navigate("/reception/ipd/admissions") }))} />
             </Grid>
@@ -179,14 +179,14 @@ export default function DeskHome() {
           </Grid>
           <Grid container spacing={2}>
             <Grid size={half}>
-              <AttentionList title="Queried by the payer" subtitle="The payer is waiting on the hospital — oldest first" loading={tpa.isLoading}
+              <AttentionList title="Queried by the payer" subtitle="The payer is waiting on the hospital - oldest first" loading={tpa.isLoading}
                 emptyText="No open query." totalCount={tpa.data?.queried.count}
-                items={(tpa.data?.queried.rows ?? []).map((r) => ({ id: r.claimId, primary: `${r.claimNumber} — ${r.patientName}`, meta: since(r.since), severity: "critical" as const, icon: <HelpOutlineRounded sx={{ fontSize: 18 }} />, onClick: () => navigate(`/reception/claims/${r.claimId}`) }))} />
+                items={(tpa.data?.queried.rows ?? []).map((r) => ({ id: r.claimId, primary: `${r.claimNumber} - ${r.patientName}`, meta: since(r.since), severity: "critical" as const, icon: <HelpOutlineRounded sx={{ fontSize: 18 }} />, onClick: () => navigate(`/reception/claims/${r.claimId}`) }))} />
             </Grid>
             <Grid size={half}>
               <AttentionList title="Pre-authorisation pending" subtitle="Registered or sent, not yet approved" loading={tpa.isLoading}
                 emptyText="Nothing waiting for pre-authorisation." totalCount={tpa.data?.preAuthPending.count}
-                items={(tpa.data?.preAuthPending.rows ?? []).map((r) => ({ id: r.claimId, primary: `${r.claimNumber} — ${r.patientName}`, meta: since(r.since), severity: "warning" as const, icon: <HealthAndSafetyRounded sx={{ fontSize: 18 }} />, onClick: () => navigate(`/reception/claims/${r.claimId}`) }))} />
+                items={(tpa.data?.preAuthPending.rows ?? []).map((r) => ({ id: r.claimId, primary: `${r.claimNumber} - ${r.patientName}`, meta: since(r.since), severity: "warning" as const, icon: <HealthAndSafetyRounded sx={{ fontSize: 18 }} />, onClick: () => navigate(`/reception/claims/${r.claimId}`) }))} />
             </Grid>
             {(tpa.data?.insuredWithoutClaim.count ?? 0) > 0 && (
               <Grid size={half}>
@@ -199,14 +199,14 @@ export default function DeskHome() {
               <Grid size={half}>
                 <AttentionList title="Rooms over the policy limit" subtitle="The insurer may cut the claim in proportion" loading={tpa.isLoading}
                   totalCount={tpa.data?.roomsOverLimit.count}
-                  items={(tpa.data?.roomsOverLimit.rows ?? []).map((r) => ({ id: r.admissionId, primary: r.patientName, secondary: `${r.bed ?? "Room"} — ${inr(r.rent)}/day, limit ${inr(r.limit)}`, meta: `+${inr(r.over)}`, severity: "warning" as const, icon: <KingBedRounded sx={{ fontSize: 18 }} />, onClick: () => navigate("/reception/ipd/admissions") }))} />
+                  items={(tpa.data?.roomsOverLimit.rows ?? []).map((r) => ({ id: r.admissionId, primary: r.patientName, secondary: `${r.bed ?? "Room"} - ${inr(r.rent)}/day, limit ${inr(r.limit)}`, meta: `+${inr(r.over)}`, severity: "warning" as const, icon: <KingBedRounded sx={{ fontSize: 18 }} />, onClick: () => navigate("/reception/ipd/admissions") }))} />
               </Grid>
             )}
             {(tpa.data?.ageing.count ?? 0) > 0 && (
               <Grid size={half}>
-                <AttentionList title="Claims waiting over 21 days" subtitle="Submitted and not settled — worth chasing" loading={tpa.isLoading}
+                <AttentionList title="Claims waiting over 21 days" subtitle="Submitted and not settled - worth chasing" loading={tpa.isLoading}
                   totalCount={tpa.data?.ageing.count}
-                  items={(tpa.data?.ageing.rows ?? []).map((r) => ({ id: r.claimId, primary: `${r.claimNumber} — ${r.patientName}`, meta: r.days != null ? `${r.days}d` : "", severity: "warning" as const, icon: <HourglassTopRounded sx={{ fontSize: 18 }} />, onClick: () => navigate(`/reception/claims/${r.claimId}`) }))} />
+                  items={(tpa.data?.ageing.rows ?? []).map((r) => ({ id: r.claimId, primary: `${r.claimNumber} - ${r.patientName}`, meta: r.days != null ? `${r.days}d` : "", severity: "warning" as const, icon: <HourglassTopRounded sx={{ fontSize: 18 }} />, onClick: () => navigate(`/reception/claims/${r.claimId}`) }))} />
               </Grid>
             )}
           </Grid>
@@ -232,12 +232,12 @@ export default function DeskHome() {
           </Grid>
           <Grid container spacing={2}>
             <Grid size={half}>
-              <AttentionList title="Discharged without a summary" subtitle="This week — oldest first" loading={mrd.isLoading}
+              <AttentionList title="Discharged without a summary" subtitle="This week - oldest first" loading={mrd.isLoading}
                 emptyText="Every file this week has its summary." totalCount={mrd.data?.summariesMissing.count}
                 items={(mrd.data?.summariesMissing.rows ?? []).map((r) => ({ id: r.admissionId, primary: r.patientName, secondary: r.admissionNumber ?? undefined, meta: since(r.dischargedOn), severity: "warning" as const, icon: <DescriptionRounded sx={{ fontSize: 18 }} />, onClick: () => navigate("/reception/ipd/admissions") }))} />
             </Grid>
             <Grid size={half}>
-              <AttentionList title="Surgery without a signed consent" subtitle="In the next 48 hours — soonest first" loading={mrd.isLoading}
+              <AttentionList title="Surgery without a signed consent" subtitle="In the next 48 hours - soonest first" loading={mrd.isLoading}
                 emptyText="Every surgery coming up has its consent." totalCount={mrd.data?.consentsMissing.count}
                 items={(mrd.data?.consentsMissing.rows ?? []).map((r) => ({ id: r.surgeryId, primary: r.patientName, secondary: r.procedure, meta: formatDateTime(r.at), severity: "critical" as const, icon: <AssignmentLateRounded sx={{ fontSize: 18 }} />, onClick: () => navigate("/reception/patients") }))} />
             </Grid>

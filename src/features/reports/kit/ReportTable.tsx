@@ -11,7 +11,7 @@ import { exportTableToExcel } from "@/utils/exportExcel";
  * Pull the PDF writer in only when someone asks for a PDF.
  *
  * Imported statically it is reachable from the eager graph, and Vite adds a
- * modulepreload for its ~116 kB jspdf chunk — downloaded by every visitor,
+ * modulepreload for its ~116 kB jspdf chunk - downloaded by every visitor,
  * including the many who never export anything.
  */
 const loadPdfExport = async (...args: Parameters<typeof import("@/utils/exportPdf")["exportTableToPdf"]>) => {
@@ -33,7 +33,7 @@ export interface ReportColumn<T = any> {
    * Override the default clamp for a free-text column (a list of test names, a
    * remark). Cells are clamped to CELL_MAX_WIDTH by default so one verbose
    * value can't stretch the table; raise or lower it per column. The CSV export
-   * is unaffected — it always carries the full value.
+   * is unaffected - it always carries the full value.
    */
   maxWidth?: number;
   /**
@@ -48,7 +48,7 @@ export interface ReportColumn<T = any> {
   sticky?: "right";
   /**
    * Leave this column out of the CSV. For a column that holds a control rather
-   * than a value — exporting it adds a blank column to every row of the file.
+   * than a value - exporting it adds a blank column to every row of the file.
    */
   exportable?: false;
 }
@@ -60,7 +60,7 @@ export interface ReportColumn<T = any> {
  */
 /**
  * Default cell clamp. Cells don't wrap (see the Table sx below), so without a
- * ceiling a single long remark would drag its column — and the whole table —
+ * ceiling a single long remark would drag its column - and the whole table -
  * to an absurd width. Anything shorter than this is unaffected.
  */
 const CELL_MAX_WIDTH = 320;
@@ -83,14 +83,14 @@ export default function ReportTable<T = any>({ columns, rows, filename, title, m
   };
   /**
    * Where the EXPORT's rows come from when the table holds only a page.
-   * Without it a download silently contains the page on screen — a file that
+   * Without it a download silently contains the page on screen - a file that
    * looks complete and is not.
    */
   exportRows?: () => Promise<Record<string, unknown>[]>;
   title?: string;
   maxHeight?: number;
   emptyText?: string;
-  /** Detail-row cap signal from the report response — renders a notice when set. */
+  /** Detail-row cap signal from the report response - renders a notice when set. */
   truncated?: boolean;
   totalRows?: number;
   shownRows?: number;
@@ -137,7 +137,7 @@ export default function ReportTable<T = any>({ columns, rows, filename, title, m
     else { setSortKey(key); setDir("desc"); }
   };
 
-  // One shaping of the rows, two destinations — so the spreadsheet and the
+  // One shaping of the rows, two destinations - so the spreadsheet and the
   // printed page can never disagree about what the report contained.
   const exportMatrix = (source: T[] = sorted) => {
     const cols = columns.filter((c) => c.exportable !== false);

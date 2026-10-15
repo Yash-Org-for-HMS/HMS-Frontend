@@ -17,7 +17,7 @@ type SoapFields = Partial<Record<(typeof SECTIONS)[number]["key"], string | null
  * A past visit's SOAP note, all four sections.
  *
  * History used to show the Assessment alone, so what a doctor wrote under
- * Subjective, Objective and Plan was saved and then never seen again — the
+ * Subjective, Objective and Plan was saved and then never seen again - the
  * doctor at the next visit had no way to read last time's complaint, findings
  * or plan. Sections left empty are skipped rather than drawn as blank labels.
  *

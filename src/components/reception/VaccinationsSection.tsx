@@ -43,7 +43,7 @@ type Row = {
   batchNumber: string | null; notes: string | null; invoiceId: string | null; invoiceNumber: string | null; state: string;
 };
 
-// Prints a formatted immunization certificate (hidden iframe — same pattern as
+// Prints a formatted immunization certificate (hidden iframe - same pattern as
 // the invoice/lab-report prints elsewhere) listing only administered doses.
 function printCertificate(opts: { hospitalName: string; patientName: string; patientUhid: string; patientDob: string | null; rows: Row[] }) {
   const doneRows = opts.rows.filter((r) => r.state === "DONE");
@@ -53,8 +53,8 @@ function printCertificate(opts: { hospitalName: string; patientName: string; pat
         <tr>
           <td>${r.vaccineName}</td>
           <td>${r.doseLabel}</td>
-          <td>${r.administeredDate ? dayjs(r.administeredDate).format("DD MMM YYYY") : "—"}</td>
-          <td>${r.batchNumber || "—"}</td>
+          <td>${r.administeredDate ? dayjs(r.administeredDate).format("DD MMM YYYY") : "-"}</td>
+          <td>${r.batchNumber || "-"}</td>
         </tr>`).join("")
     : `<tr><td colspan="4" style="text-align:center;color:#64748b;padding:24px">No administered doses on record</td></tr>`;
 
@@ -78,7 +78,7 @@ function printCertificate(opts: { hospitalName: string; patientName: string; pat
       <div class="info">
         <div><span>Patient</span>${opts.patientName}</div>
         <div><span>UHID</span>${opts.patientUhid}</div>
-        <div><span>Date of birth</span>${opts.patientDob ? dayjs(opts.patientDob).format("DD MMM YYYY") : "—"}</div>
+        <div><span>Date of birth</span>${opts.patientDob ? dayjs(opts.patientDob).format("DD MMM YYYY") : "-"}</div>
       </div>
       <table>
         <thead><tr><th>Vaccine</th><th>Dose</th><th>Date given</th><th>Batch no.</th></tr></thead>
@@ -88,7 +88,7 @@ function printCertificate(opts: { hospitalName: string; patientName: string; pat
         <div>Printed on ${dayjs().format("DD MMM YYYY")}</div>
         <div class="sign">Authorized signature</div>
       </div>`,
-    { title: `Immunization Certificate — ${opts.patientName}`, extraCss: css },
+    { title: `Immunization Certificate - ${opts.patientName}`, extraCss: css },
   );
 }
 
@@ -96,7 +96,7 @@ export default function VaccinationsSection({ patientId, patientName, patientUhi
   const toast = useToast();
   const { hospital } = useHospitalAuth();
   const qc = useQueryClient();
-  // Administering a priced vaccine raises a real invoice — the sibling
+  // Administering a priced vaccine raises a real invoice - the sibling
   // Billing tab on this same patient page (queryKey ["patient-billing", id])
   // fetches once on mount and has no other reason to know that happened, so
   // it'd show stale totals until a manual refresh without this.
@@ -108,12 +108,12 @@ export default function VaccinationsSection({ patientId, patientName, patientUhi
   const [administeredDate, setAdministeredDate] = useState(dayjs().format("YYYY-MM-DD"));
   const [batchNumber, setBatchNumber] = useState("");
   const [notes, setNotes] = useState("");
-  // Where a dose given elsewhere was evidenced from — a card and a parent's
+  // Where a dose given elsewhere was evidenced from - a card and a parent's
   // recollection are not the same thing, and the record should say which.
   const [externalSource, setExternalSource] = useState("Immunisation card");
   const [saving, setSaving] = useState(false);
 
-  // "+ Add Vaccine" — assign any catalog vaccine to this patient outside the
+  // "+ Add Vaccine" - assign any catalog vaccine to this patient outside the
   // auto-generated standard schedule (a flu shot, a hospital-specific vaccine,
   // a catch-up dose, etc.), either logged as already given or scheduled ahead.
   const [addOpen, setAddOpen] = useState(false);
@@ -136,7 +136,7 @@ export default function VaccinationsSection({ patientId, patientName, patientUhi
     staleTime: 5 * 60 * 1000,
   });
   // The backend already excludes irrelevant pending childhood doses once the
-  // patient is an adult (18+) — nothing to filter client-side.
+  // patient is an adult (18+) - nothing to filter client-side.
   const rows: Row[] = data?.rows ?? [];
   const isAdult: boolean = data?.isAdult ?? false;
 
@@ -299,7 +299,7 @@ export default function VaccinationsSection({ patientId, patientName, patientUhi
                 <Typography variant="caption" sx={{ fontWeight: isToday ? 800 : 500, color: isToday ? ACCENT : "text.secondary" }}>{d.date()}</Typography>
                 <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.4, mt: 0.4 }}>
                   {doses.slice(0, 4).map((dose) => (
-                    <Tooltip key={dose.patientVaccinationId} title={`${dose.vaccineName} — ${dose.doseLabel} (${STATE_META[dose.state]?.label})`}>
+                    <Tooltip key={dose.patientVaccinationId} title={`${dose.vaccineName} - ${dose.doseLabel} (${STATE_META[dose.state]?.label})`}>
                       <Box sx={{ width: 7, height: 7, borderRadius: "50%", bgcolor: STATE_META[dose.state]?.color || "#94a3b8" }} />
                     </Tooltip>
                   ))}
@@ -316,7 +316,7 @@ export default function VaccinationsSection({ patientId, patientName, patientUhi
           <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>Immunization schedule</Typography>
           {isAdult && (
             <Typography variant="caption" sx={{ color: "text.secondary" }}>
-              Standard childhood schedule doesn't apply (patient is an adult) — completed doses on record still show below. Use "+ Add Vaccine" to log or schedule any vaccine.
+              Standard childhood schedule doesn't apply (patient is an adult) - completed doses on record still show below. Use "+ Add Vaccine" to log or schedule any vaccine.
             </Typography>
           )}
         </Box>
@@ -340,7 +340,7 @@ export default function VaccinationsSection({ patientId, patientName, patientUhi
                     <TableRow key={r.patientVaccinationId} hover>
                       <TableCell sx={{ borderColor: "divider", fontWeight: 600 }}>{r.vaccineName}</TableCell>
                       <TableCell sx={{ borderColor: "divider" }}>{r.doseLabel}</TableCell>
-                      <TableCell sx={{ borderColor: "divider", color: "text.secondary" }}>{r.ageLabel || "—"}</TableCell>
+                      <TableCell sx={{ borderColor: "divider", color: "text.secondary" }}>{r.ageLabel || "-"}</TableCell>
                       <TableCell sx={{ borderColor: "divider" }}>{dayjs(r.dueDate).format("DD MMM YYYY")}</TableCell>
                       <TableCell sx={{ borderColor: "divider" }}>
                         <Chip size="small" label={meta.label} sx={{ bgcolor: `${meta.color}1f`, color: meta.color, fontWeight: 700 }} />
@@ -348,14 +348,14 @@ export default function VaccinationsSection({ patientId, patientName, patientUhi
                       <TableCell sx={{ borderColor: "divider", color: "text.secondary", fontSize: "0.75rem" }}>
                         {r.state === "DONE" && (
                           <Box>
-                            <Box>Batch: {r.batchNumber || "—"} · {dayjs(r.administeredDate).format("DD MMM YYYY")}</Box>
+                            <Box>Batch: {r.batchNumber || "-"} · {dayjs(r.administeredDate).format("DD MMM YYYY")}</Box>
                             {r.invoiceNumber && (
                               <Chip size="small" icon={<ReceiptLongRounded sx={{ fontSize: "13px !important" }} />} label={`Billed: ${r.invoiceNumber}`}
                                 sx={{ mt: 0.5, height: 20, bgcolor: `${ACCENT}1a`, color: ACCENT, fontWeight: 600, "& .MuiChip-label": { px: 1, fontSize: "0.6875rem" } }} />
                             )}
                           </Box>
                         )}
-                        {r.state === "SKIPPED" && (r.notes || "—")}
+                        {r.state === "SKIPPED" && (r.notes || "-")}
                       </TableCell>
                       <TableCell align="right" sx={{ borderColor: "divider" }}>
                         {!readOnly && (r.state === "OVERDUE" || r.state === "DUE_SOON" || r.state === "UPCOMING") && (
@@ -399,12 +399,12 @@ export default function VaccinationsSection({ patientId, patientName, patientUhi
         <DialogContent dividers>
           {actionTarget && (
             <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
-              {actionTarget.row.vaccineName} — {actionTarget.row.doseLabel}
+              {actionTarget.row.vaccineName} - {actionTarget.row.doseLabel}
             </Typography>
           )}
           {actionTarget?.kind === "external" && (
             <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
-              Recorded as already given — this raises no charge and is not credited to this hospital.
+              Recorded as already given - this raises no charge and is not credited to this hospital.
             </Typography>
           )}
           {(actionTarget?.kind === "administer" || actionTarget?.kind === "external") && (
@@ -430,7 +430,7 @@ export default function VaccinationsSection({ patientId, patientName, patientUhi
         </DialogActions>
       </Dialog>
 
-      {/* Add Vaccine dialog — assign any catalog vaccine outside the standard schedule */}
+      {/* Add Vaccine dialog - assign any catalog vaccine outside the standard schedule */}
       <Dialog open={addOpen} onClose={() => (addSaving ? undefined : setAddOpen(false))} maxWidth="xs" fullWidth>
         <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <VaccinesRounded sx={{ color: ACCENT }} /> Add vaccine
@@ -440,7 +440,7 @@ export default function VaccinationsSection({ patientId, patientName, patientUhi
             {catalog.length === 0 ? (
               <MenuItem value="" disabled>Loading…</MenuItem>
             ) : (
-              catalog.map((v) => <MenuItem key={v.vaccineId} value={v.vaccineId}>{v.vaccineName}{v.price ? ` — ${inr(v.price)}` : ""}</MenuItem>)
+              catalog.map((v) => <MenuItem key={v.vaccineId} value={v.vaccineId}>{v.vaccineName}{v.price ? ` - ${inr(v.price)}` : ""}</MenuItem>)
             )}
           </TextField>
           <TextField fullWidth label="Dose label (optional)" placeholder="e.g. Booster, Annual dose" sx={{ mb: 2 }}

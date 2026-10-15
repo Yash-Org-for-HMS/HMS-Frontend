@@ -65,7 +65,7 @@ describe("apiGet envelope unwrapping", () => {
     }
     expect((caught as Error)?.message).toBe("500");
     // Clear the throwing implementation here rather than leaving it for the next
-    // beforeEach — otherwise it is still installed while the suite tears down.
+    // beforeEach - otherwise it is still installed while the suite tears down.
     get.mockReset();
   });
 });

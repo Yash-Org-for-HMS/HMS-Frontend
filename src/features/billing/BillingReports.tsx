@@ -190,7 +190,7 @@ export function Outstanding() {
   );
 }
 
-// Refund status chip — derived from the ledger, so it can't drift from reality.
+// Refund status chip - derived from the ledger, so it can't drift from reality.
 function refundStatusChip(s: string) {
   const c = s === "Refunded" ? { bg: "rgba(16,185,129,0.14)", fg: "#0f9d78" }
     : s === "Partially refunded" ? { bg: "rgba(245,158,11,0.16)", fg: "#b45309" }
@@ -200,13 +200,13 @@ function refundStatusChip(s: string) {
 }
 
 // Advance deposits owed BACK to patients: closed (discharged/cancelled) admissions
-// with a held deposit. Read-only oversight — shows a ledger-derived refund status
+// with a held deposit. Read-only oversight - shows a ledger-derived refund status
 // (Pending / Held / Partially refunded / Refunded); refunds are processed in the
 // admission deposit flow, and this reflects them automatically. Snapshot.
 //
 // Already-refunded rows are carried here on purpose: an IPD advance refund writes
 // only a DepositEntry(REFUNDED) and never a Refund row, so the Refund Register
-// cannot see it — drop it here and a refund the hospital actually paid appears in
+// cannot see it - drop it here and a refund the hospital actually paid appears in
 // no report at all. But a settled row is not an "unreturned advance", so the
 // default view is the money still to return and the filter says which is which.
 export function UnreturnedAdvances() {
@@ -253,7 +253,7 @@ export function UnreturnedAdvances() {
             emptyText={
               view === "refunded" ? "No advance has been refunded yet."
               : view === "all" ? "No closed admission has an advance to account for."
-              : "No unreturned advances — every closed admission's deposit is settled."
+              : "No unreturned advances - every closed admission's deposit is settled."
             }
             columns={[
               { key: "admissionNumber", label: "Admission" },
@@ -309,7 +309,7 @@ export function ServiceWise() {
       {isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : isLoading || !data ? <ReportSkeleton /> : (
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
-            {/* This total sums LINE values, so it is gross — before the invoice's
+            {/* This total sums LINE values, so it is gross - before the invoice's
                 own discount and tax. Calling it "billed" invited a comparison
                 with Financial Overview's Billed Value, which is net: on this
                 data they sit ₹145.90 apart, exactly the discount less the tax,
@@ -420,7 +420,7 @@ export function PatientStatement() {
   const [term, setTerm] = useState("");
   const [selected, setSelected] = useState<PatientSearchRow | null>(null);
 
-  // The request waits until typing pauses — it fired on every keystroke.
+  // The request waits until typing pauses - it fired on every keystroke.
   const debouncedTerm = useDebouncedValue(term);
   const { data: options = [] } = useQuery({
     queryKey: ["billing-patient-search", debouncedTerm],
@@ -428,7 +428,7 @@ export function PatientStatement() {
     enabled: debouncedTerm.trim().length >= 2,
   });
 
-  // Hoisted so the query key, the URL and `enabled` all read the same value —
+  // Hoisted so the query key, the URL and `enabled` all read the same value -
   // the guard is what stops this firing without a patient.
   const patientId = selected?.patientId;
   const { data, isLoading, isError, error, refetch } = useQuery({
@@ -468,7 +468,7 @@ export function PatientStatement() {
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<SavingsRounded />} accent={SEMANTIC.info} label="Advance held" value={inr(data.totals.totalDeposit)} /></Grid>
           </Grid>
           <ReportTable
-            title={`Account statement — ${selected.firstName} ${selected.lastName}`}
+            title={`Account statement - ${selected.firstName} ${selected.lastName}`}
             filename={`statement_${selected.uhidNumber || selected.patientId}`}
             columns={[
               { key: "invoiceNumber", label: "Invoice" },

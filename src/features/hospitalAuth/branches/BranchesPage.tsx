@@ -54,7 +54,7 @@ export default function BranchesPage() {
   const line = (label: string, value: string | null, inherited: string | null) => (
     <Typography variant="body2" sx={{ color: value ? "text.primary" : "text.secondary" }}>
       <Box component="span" sx={{ color: "text.secondary", mr: 0.75 }}>{label}</Box>
-      {value || (inherited ? `Hospital's — ${inherited}` : "Not set")}
+      {value || (inherited ? `Hospital's - ${inherited}` : "Not set")}
     </Typography>
   );
 
@@ -66,7 +66,7 @@ export default function BranchesPage() {
       />
       <Alert severity="info" sx={{ mb: 2 }}>
         To add, rename or close a branch, or change its plan, contact your Dolphin administrator. Anything left empty here follows the hospital's own details.
-        How a branch works — who records vitals, lab billing, refund approvals, OPD hours — is set by that branch's admin.
+        How a branch works - who records vitals, lab billing, refund approvals, OPD hours - is set by that branch's admin.
       </Alert>
 
       <Stack spacing={2}>
@@ -95,7 +95,7 @@ export default function BranchesPage() {
                 <Stack spacing={0.5}>
                   <Stack direction="row" spacing={0.75} alignItems="center"><PlaceRounded fontSize="small" color="action" /><Typography variant="overline" sx={{ lineHeight: 1.5 }}>Address</Typography></Stack>
                   <Typography variant="body2" sx={{ color: b.addressLine1 ? "text.primary" : "text.secondary" }}>
-                    {b.addressLine1 ? address : hospitalAddress ? `Hospital's — ${hospitalAddress}` : "Not set"}
+                    {b.addressLine1 ? address : hospitalAddress ? `Hospital's - ${hospitalAddress}` : "Not set"}
                   </Typography>
                   {line("Phone", b.phone, hospital.officialPhone)}
                   {line("Email", b.email, hospital.officialEmail)}
@@ -111,7 +111,7 @@ export default function BranchesPage() {
                   <Stack direction="row" spacing={0.75} alignItems="center"><TuneRounded fontSize="small" color="action" /><Typography variant="overline" sx={{ lineHeight: 1.5 }}>Runs differently</Typography></Stack>
                   {own.length
                     ? own.map((t) => <Typography key={t} variant="body2">{t}</Typography>)
-                    : <Typography variant="body2" sx={{ color: "text.secondary" }}>Nothing — follows the hospital's settings</Typography>}
+                    : <Typography variant="body2" sx={{ color: "text.secondary" }}>Nothing - follows the hospital's settings</Typography>}
                   <Typography variant="caption" sx={{ color: "text.secondary" }}>Set by the branch admin</Typography>
                 </Stack>
               </Box>

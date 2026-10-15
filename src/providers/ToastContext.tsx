@@ -52,7 +52,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const info = useCallback((msg: string) => showToast(msg, "info"), [showToast]);
   const warning = useCallback((msg: string) => showToast(msg, "warning"), [showToast]);
 
-  // The methods are already useCallback-stable — without this, every one of
+  // The methods are already useCallback-stable - without this, every one of
   // this provider's ~67 consumers re-rendered whenever a toast was shown,
   // since a fresh object literal was passed as the context value every render.
   const value = useMemo(() => ({ success, error, info, warning }), [success, error, info, warning]);

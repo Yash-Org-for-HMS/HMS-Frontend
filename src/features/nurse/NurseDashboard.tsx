@@ -36,7 +36,7 @@ export default function NurseDashboard() {
   const { data, isLoading: loading, isError, error, refetch } = useQuery({
     // The queue endpoint already reports `vitalsRecorded` on every token, so
     // this used to fan out one extra GET /appointments/:id/vitals PER PATIENT to
-    // learn something the list had already told it — 50 requests for a 50-token
+    // learn something the list had already told it - 50 requests for a 50-token
     // queue, every 30 seconds. Read the flag off the token instead.
     queryKey: ["nurse-dashboard-queue"],
     queryFn: async () => {
@@ -136,7 +136,7 @@ export default function NurseDashboard() {
 
       {/* The worklist IS the page. It used to share the row with a "Vitals
           Completed" panel that took a third of the width to say what a number
-          in this header says — and the patients already done aren't work. */}
+          in this header says - and the patients already done aren't work. */}
       <Grid container spacing={4}>
         <Grid size={{ xs: 12 }}>
           <Paper elevation={0} sx={{ p: 3, borderRadius: 4, bgcolor: "background.paper", border: "1px solid", borderColor: "divider" }}>
@@ -146,7 +146,7 @@ export default function NurseDashboard() {
                   Patients Awaiting Vitals
                 </Typography>
                 <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                  Longest wait first — record vitals before their consultation
+                  Longest wait first - record vitals before their consultation
                   {vitalsCompleted > 0 && ` · ${vitalsCompleted} already recorded today`}
                 </Typography>
               </Box>
@@ -207,7 +207,7 @@ export default function NurseDashboard() {
                         <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", color: "text.secondary", fontSize: "0.875rem" }}>
                           {token.doctorName}
                         </TableCell>
-                        {/* How long they've been in the queue — the thing that
+                        {/* How long they've been in the queue - the thing that
                             decides who to see next, and the reason the rows are
                             in this order. Turns red past 30 minutes. */}
                         <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>

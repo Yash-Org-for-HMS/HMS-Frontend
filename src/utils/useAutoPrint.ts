@@ -8,11 +8,11 @@ import { useEffect } from "react";
  * 500ms is plenty on a dev machine where fonts are warm and the logo is in
  * cache, and it is a guess everywhere else: on a real deployment the dialog can
  * open over a page whose webfont has not swapped in or whose hospital logo has
- * not painted, which prints wrong — or, worse, prints a page that is still
+ * not painted, which prints wrong - or, worse, prints a page that is still
  * blank.
  *
- * So this waits for the things that actually change what the page looks like —
- * fonts settling and images finishing — rather than for a fixed number of
+ * So this waits for the things that actually change what the page looks like -
+ * fonts settling and images finishing - rather than for a fixed number of
  * milliseconds, with a cap so a hanging image can never leave a print button
  * that does nothing. Same trade printHtml makes: late and correct beats fast
  * and wrong, and never printing is the worst outcome of the three.
@@ -31,7 +31,7 @@ function whenPainted(): Promise<void> {
       .map(
         (img) =>
           new Promise<void>((resolve) => {
-            // An image that 404s must cost its picture, not the whole print —
+            // An image that 404s must cost its picture, not the whole print -
             // the hospital logo is served from ephemeral storage on the test
             // deployment and legitimately goes missing.
             img.addEventListener("load", () => resolve(), { once: true });

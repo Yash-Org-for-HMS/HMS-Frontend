@@ -65,13 +65,13 @@ export default function DoctorSchedule() {
   const pickBranch = availableBranches.length > 1;
   // A doctor at two or more branches names the branch of every session. "Every
   // branch" let each branch book the same hours, and nobody could tell where
-  // the doctor would be — patients turned up at the wrong one. At one branch
+  // the doctor would be - patients turned up at the wrong one. At one branch
   // there is nothing to choose: a session with no branch is that branch's.
   const mustPick = pickBranch && branchOptions.length > 1;
   const onlyBranch = pickBranch && branchOptions.length === 1 ? branchOptions[0].branchId : "";
   // What a new session takes: the first saved session's hours, at its branch or the first one.
   const tplWin: Win = { ...tpl, branchId: tpl.branchId || (mustPick ? branchOptions[0]?.branchId ?? "" : onlyBranch) };
-  // A session saved before it named a branch — still to be given one.
+  // A session saved before it named a branch - still to be given one.
   const unplaced = (w: Win) => mustPick && !w.branchId;
   // A session with no branch reads as what it means here: still to be placed
   // (two or more branches), the one branch there is, or every branch.
@@ -145,8 +145,8 @@ export default function DoctorSchedule() {
         return;
       }
     }
-    // A session already at a branch keeps it — even one at a branch this login
-    // cannot see — and only a session with none takes the doctor's one branch.
+    // A session already at a branch keeps it - even one at a branch this login
+    // cannot see - and only a session with none takes the doctor's one branch.
     const schedules = days
       .filter((d) => d.enabled)
       .flatMap((d) => d.windows.map((w) => ({ dayOfWeek: d.dayOfWeek, startTime: w.startTime, endTime: w.endTime, slotDurationMinutes: Number(w.slotDurationMinutes), branchId: w.branchId || onlyBranch || null })));
@@ -205,7 +205,7 @@ export default function DoctorSchedule() {
           {unplacedCount > 0 && (
             <Box sx={{ px: 2.5, py: 1.25, borderBottom: "1px solid", borderColor: "divider", bgcolor: `${SEMANTIC.warning}14` }}>
               <Typography variant="body2" sx={{ color: SEMANTIC.warning, fontWeight: 700 }}>
-                {unplacedCount === 1 ? "1 session does not say" : `${unplacedCount} sessions do not say`} which branch the doctor is at — choose one for each before saving.
+                {unplacedCount === 1 ? "1 session does not say" : `${unplacedCount} sessions do not say`} which branch the doctor is at - choose one for each before saving.
               </Typography>
             </Box>
           )}
@@ -255,7 +255,7 @@ export default function DoctorSchedule() {
                             </Tooltip>
                           )}
                           {wIdx === d.windows.length - 1 && (
-                            <Tooltip title={mustPick ? "Add another session that day — at this branch or another" : "Add another session that day (e.g. morning + evening)"}>
+                            <Tooltip title={mustPick ? "Add another session that day - at this branch or another" : "Add another session that day (e.g. morning + evening)"}>
                               <Button size="small" startIcon={<AddRounded />} onClick={() => addWin(dow)} sx={{ textTransform: "none", color: HOSP }}>Add time</Button>
                             </Tooltip>
                           )}

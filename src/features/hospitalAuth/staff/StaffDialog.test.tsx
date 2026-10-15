@@ -4,7 +4,7 @@ import { renderWithProviders } from "@/test/renderWithProviders";
 import type { StaffOptions } from "./staff.types";
 
 /**
- * Adding a person — the one place it is done. Coming from Logins & roles the
+ * Adding a person - the one place it is done. Coming from Logins & roles the
  * login is already ticked; the address and emergency contact, and a starting
  * password if one is typed, go with the person.
  */

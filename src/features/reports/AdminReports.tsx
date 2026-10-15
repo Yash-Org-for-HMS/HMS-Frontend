@@ -31,7 +31,7 @@ import { exportTableToExcel } from "@/utils/exportExcel";
  * Pull the PDF writer in only when someone asks for a PDF.
  *
  * Imported statically it is reachable from the eager graph, and Vite adds a
- * modulepreload for its ~116 kB jspdf chunk — downloaded by every visitor,
+ * modulepreload for its ~116 kB jspdf chunk - downloaded by every visitor,
  * including the many who never export anything.
  */
 const loadPdfExport = async (...args: Parameters<typeof import("@/utils/exportPdf")["exportTableToPdf"]>) => {
@@ -52,7 +52,7 @@ const monthKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).pad
 const inr = formatINRAuto;
 const cap = (s: unknown) => {
   const str = String(s ?? "").replace(/_/g, " ");
-  return str ? str.charAt(0).toUpperCase() + str.slice(1) : "—";
+  return str ? str.charAt(0).toUpperCase() + str.slice(1) : "-";
 };
 
 // Page every list endpoint (hard cap 1000/page server-side) so exported
@@ -110,12 +110,12 @@ function OverviewReport() {
       {/* Downloadable summary tables */}
       <Grid container spacing={2.5}>
         {/* Each row leads to the register that lists what it counted, filtered
-            to that row — a count on its own leaves the reader to go and work
+            to that row - a count on its own leaves the reader to go and work
             out which records it meant. */}
         <Grid size={{ xs: 12, md: 4 }}>
           <SimpleTable
             title="Branches by plan" head={["Plan", "Branches"]}
-            rows={byPlan.map((p) => [p.planName ?? "—", Number(p.count)])}
+            rows={byPlan.map((p) => [p.planName ?? "-", Number(p.count)])}
             rowHref={(_r, i) => `/reports?view=hospitals&plan=${encodeURIComponent(byPlan[i].planName ?? "")}`}
           />
         </Grid>
@@ -153,7 +153,7 @@ function HospitalsReport() {
 
   const planNames = (h: HospitalRegisterRow) => {
     const names = [...new Set((h.branches || []).map((b) => b.subscriptionPlan?.planName).filter(Boolean))];
-    return names.length ? names.join(", ") : "—";
+    return names.length ? names.join(", ") : "-";
   };
   const active = data.filter((h) => h.status === "active").length;
   const suspended = data.filter((h) => h.status === "suspended").length;
@@ -167,8 +167,8 @@ function HospitalsReport() {
   });
   const branchesInView = filtered.reduce((s: number, h) => s + Number(h._count?.branches ?? 0), 0);
   const rows = filtered.map((h) => [
-    `${h.hospitalName || "—"}`,
-    h.hospitalCode || "—",
+    `${h.hospitalName || "-"}`,
+    h.hospitalCode || "-",
     cap(h.status),
     planNames(h),
     Number(h._count?.branches ?? 0),
@@ -184,7 +184,7 @@ function HospitalsReport() {
         {/* Branches in the CURRENT VIEW, not platform-wide. It used to sum
             every hospital regardless of the filters, so it repeated the number
             already on the Overview and sat unchanged while you filtered to
-            "Suspended" or to one plan — the one tile on the row that ignored
+            "Suspended" or to one plan - the one tile on the row that ignored
             what you had asked for. */}
         <Grid size={{ xs: 6, md: 3 }}>
           <KpiCard
@@ -231,17 +231,17 @@ function LeadsReport() {
 
   const filtered = stageFilter === "all" ? data : data.filter((l) => l.leadStatus === stageFilter);
   const rows = filtered.map((l) => [
-    l.hospitalName || "—",
-    l.contactPersonName || "—",
-    l.email || "—",
-    l.phone || "—",
+    l.hospitalName || "-",
+    l.contactPersonName || "-",
+    l.email || "-",
+    l.phone || "-",
     cap(l.leadStatus),
-    l.assignedUser ? `${l.assignedUser.firstName || ""} ${l.assignedUser.lastName || ""}`.trim() || "—" : "—",
+    l.assignedUser ? `${l.assignedUser.firstName || ""} ${l.assignedUser.lastName || ""}`.trim() || "-" : "-",
     formatDate(l.createdAt),
   ]);
 
   // Every stage present in the data, so a stage the overview links to always
-  // has a chip — rather than a hardcoded list that silently drops new ones.
+  // has a chip - rather than a hardcoded list that silently drops new ones.
   const stages = [...new Set(data.map((l) => l.leadStatus))].sort();
 
   return (
@@ -279,7 +279,7 @@ function TrialsReport() {
   const byState = (s: string) => data.filter((t) => t.trialStatus === s).length;
   const filtered = statusFilter === "all" ? data : data.filter((t) => t.trialStatus === statusFilter);
 
-  // Days left is the reason to look at an active trial at all — it says which
+  // Days left is the reason to look at an active trial at all - it says which
   // ones are about to lapse. The register showed only the end date, leaving
   // that arithmetic to the reader.
   const daysLeft = (t: TrialRegisterRow) => {
@@ -289,13 +289,13 @@ function TrialsReport() {
   };
   const remaining = (t: TrialRegisterRow) => {
     const d = daysLeft(t);
-    if (d == null) return "—";
-    if (t.trialStatus !== "active") return "—";
+    if (d == null) return "-";
+    if (t.trialStatus !== "active") return "-";
     return d < 0 ? `${Math.abs(d)}d overdue` : d === 0 ? "today" : `${d}d`;
   };
 
   const rows = filtered.map((t) => [
-    t.lead?.hospitalName || "—",
+    t.lead?.hospitalName || "-",
     formatDate(t.trialStartDate),
     formatDate(t.trialEndDate),
     remaining(t),
@@ -379,8 +379,8 @@ function SubscriptionsReport() {
 // ── Tenant subscriptions (from /subscription-billing/tenants) ────────────────
 // Which tenant is on which plan, paid up until when, and how long that has left.
 //
-// This view did not exist. Subscription Billing lists INVOICES — what was
-// billed — and the hospitals register showed a plan name with no dates, so
+// This view did not exist. Subscription Billing lists INVOICES - what was
+// billed - and the hospitals register showed a plan name with no dates, so
 // "who lapses this month" could only be answered by reading the invoice list
 // and reconstructing it per hospital in your head.
 
@@ -388,10 +388,10 @@ const SUB_STATE: Record<TenantSubscriptionState, { label: string; color: string;
   ACTIVE: { label: "Active", color: SEMANTIC.success, note: "Paid up" },
   DUE_SOON: { label: "Due soon", color: SEMANTIC.warning, note: "Subscription ends within 14 days" },
   OVERDUE: { label: "Overdue", color: SEMANTIC.danger, note: "Past a due date, still inside the grace window" },
-  PAST_GRACE: { label: "Access at risk", color: SEMANTIC.danger, note: "Grace window closed — locked out at next login" },
-  AWAITING_FIRST: { label: "Awaiting 1st payment", color: SEMANTIC.warning, note: "Invoiced for the first time and that invoice is not due yet — nothing is wrong here" },
-  NOT_INVOICED: { label: "Not invoiced", color: SEMANTIC.danger, note: "On a plan, but no invoice has ever been raised — revenue nobody is asking for" },
-  TRIAL: { label: "On trial", color: "#8b5cf6", note: "Inside a trial — not billed yet" },
+  PAST_GRACE: { label: "Access at risk", color: SEMANTIC.danger, note: "Grace window closed - locked out at next login" },
+  AWAITING_FIRST: { label: "Awaiting 1st payment", color: SEMANTIC.warning, note: "Invoiced for the first time and that invoice is not due yet - nothing is wrong here" },
+  NOT_INVOICED: { label: "Not invoiced", color: SEMANTIC.danger, note: "On a plan, but no invoice has ever been raised - revenue nobody is asking for" },
+  TRIAL: { label: "On trial", color: "#8b5cf6", note: "Inside a trial - not billed yet" },
   NO_PLAN: { label: "No plan", color: NEUTRAL.muted, note: "No plan assigned, so nothing to bill" },
 };
 
@@ -405,9 +405,9 @@ const SUB_FILTERS: { key: string; label: string; match: (r: TenantSubscriptionRo
   { key: "noplan", label: "No plan", match: (r) => r.state === "NO_PLAN" },
 ];
 
-/** "in 42 days" / "12 days ago" / "—". A bare date makes the reader do the sum. */
+/** "in 42 days" / "12 days ago" / "-". A bare date makes the reader do the sum. */
 function daysText(days: number | null): string {
-  if (days == null) return "—";
+  if (days == null) return "-";
   if (days === 0) return "today";
   return days > 0 ? `in ${days} day${days === 1 ? "" : "s"}` : `${-days} day${days === -1 ? "" : "s"} ago`;
 }
@@ -432,16 +432,16 @@ function TenantSubscriptionsReport() {
     "Paid until", "Days left", "Last paid", "Next invoice", "Next amount", "Next due", "State", "Customer since",
   ];
   const exportRows = filtered.map((r) => [
-    r.hospitalName, r.hospitalCode || "—", r.planName || "—",
+    r.hospitalName, r.hospitalCode || "-", r.planName || "-",
     r.billingCycle === "ANNUAL" ? "Annual" : "Monthly",
-    r.price == null ? "—" : Number(r.price),
-    r.monthlyEquivalent == null ? "—" : Number(r.monthlyEquivalent),
-    r.paidUntil ? formatDate(r.paidUntil) : "—",
-    r.daysLeft == null ? "—" : r.daysLeft,
-    r.lastPaidAt ? formatDate(r.lastPaidAt) : "—",
-    r.nextInvoiceNumber || "—",
-    r.nextAmount == null ? "—" : Number(r.nextAmount),
-    r.nextDueDate ? formatDate(r.nextDueDate) : "—",
+    r.price == null ? "-" : Number(r.price),
+    r.monthlyEquivalent == null ? "-" : Number(r.monthlyEquivalent),
+    r.paidUntil ? formatDate(r.paidUntil) : "-",
+    r.daysLeft == null ? "-" : r.daysLeft,
+    r.lastPaidAt ? formatDate(r.lastPaidAt) : "-",
+    r.nextInvoiceNumber || "-",
+    r.nextAmount == null ? "-" : Number(r.nextAmount),
+    r.nextDueDate ? formatDate(r.nextDueDate) : "-",
     SUB_STATE[r.state].label,
     formatDate(r.customerSince),
   ]);
@@ -467,7 +467,7 @@ function TenantSubscriptionsReport() {
           <Tooltip title="Past a due date. Those beyond the grace window are locked out at their next login.">
             <Box>
               <KpiCard icon={<WarningAmberRounded />} label="Overdue" value={t.overdue}
-                sub={t.pastGrace ? `${t.pastGrace} past grace — access at risk`
+                sub={t.pastGrace ? `${t.pastGrace} past grace - access at risk`
                   : t.notInvoiced ? `${t.notInvoiced} never invoiced`
                     : "all still inside grace"}
                 accent={t.overdue ? SEMANTIC.danger : NEUTRAL.muted} />
@@ -487,7 +487,7 @@ function TenantSubscriptionsReport() {
           <Box>
             <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>Tenant subscriptions</Typography>
             <Typography variant="caption" sx={{ color: "text.secondary" }}>
-              "Paid until" is the end of the last period money was actually taken for — not the last period billed.
+              "Paid until" is the end of the last period money was actually taken for - not the last period billed.
             </Typography>
           </Box>
           <Box sx={{ flex: 1 }} />
@@ -512,7 +512,7 @@ function TenantSubscriptionsReport() {
                   {/* Seven columns, not nine. Cycle folded into Price ("₹40,000/mo"
                       carries both) and the countdown folded under Paid until,
                       because at nine the table was wider than its pane and
-                      something always scrolled out of reach — first the row
+                      something always scrolled out of reach - first the row
                       action, then, once that was pinned, the state chip. Making
                       it fit beats choosing which column to lose. */}
                   {["Hospital", "Plan", "Price", "Paid until", "Next due", "State", ""].map((h, i) => (
@@ -532,7 +532,7 @@ function TenantSubscriptionsReport() {
               <TableBody>
                 {filtered.map((r) => {
                   const s = SUB_STATE[r.state];
-                  // Colour the countdown, not just the state chip — the number
+                  // Colour the countdown, not just the state chip - the number
                   // is what the reader is scanning for.
                   const leftColor = r.daysLeft == null ? "text.secondary"
                     : r.daysLeft < 0 ? SEMANTIC.danger
@@ -541,11 +541,11 @@ function TenantSubscriptionsReport() {
                     <TableRow key={r.hospitalId} hover>
                       <TableCell sx={{ borderColor: "divider" }}>
                         <Typography variant="body2" sx={{ fontWeight: 600 }}>{r.hospitalName}</Typography>
-                        <Typography variant="caption" sx={{ color: "text.secondary" }}>{r.hospitalCode || "—"}</Typography>
+                        <Typography variant="caption" sx={{ color: "text.secondary" }}>{r.hospitalCode || "-"}</Typography>
                       </TableCell>
-                      <TableCell sx={{ borderColor: "divider" }}>{r.planName || "—"}</TableCell>
+                      <TableCell sx={{ borderColor: "divider" }}>{r.planName || "-"}</TableCell>
                       <TableCell sx={{ borderColor: "divider", whiteSpace: "nowrap" }}>
-                        {r.price == null ? "—" : `${inr(r.price)}${r.billingCycle === "ANNUAL" ? "/yr" : "/mo"}`}
+                        {r.price == null ? "-" : `${inr(r.price)}${r.billingCycle === "ANNUAL" ? "/yr" : "/mo"}`}
                         {/* Annual rows also carry the monthly figure, so a
                             yearly tenant and a monthly one can be compared
                             without doing the division in your head. */}
@@ -599,7 +599,7 @@ function TenantSubscriptionsReport() {
 }
 
 // ── Onboarding (from /onboarding) ────────────────────────────────────────────
-// "Payment verified" is a manual attestation with no audit trail — it has never
+// "Payment verified" is a manual attestation with no audit trail - it has never
 // been checked against the platform's own subscription billing records. The
 // backend now cross-references it (see onboarding.service.ts) so this register
 // can surface the mismatches: hospitals marked verified with nothing on file,
@@ -616,15 +616,15 @@ const STATUS_FILTERS = [
 /**
  * The checkpoint filters, matching the dashboard card's bars exactly.
  *
- * "Waiting on step X" excludes tenants already marked completed — they are not
- * waiting on anything — which is the same rule the dashboard counts by. If the
+ * "Waiting on step X" excludes tenants already marked completed - they are not
+ * waiting on anything - which is the same rule the dashboard counts by. If the
  * two drifted, a bar would say 4 and open a table of 6.
  */
 const STEP_MATCH: Record<string, (o: OnboardingRegisterRow) => boolean> = {
   "tenant-setup": (o) => o.onboardingStatus !== "completed" && !o.tenantSetupCompleted,
   roles: (o) => o.onboardingStatus !== "completed" && !o.defaultRolesSeeded,
   payment: (o) => o.onboardingStatus !== "completed" && !o.paymentVerified,
-  // The gates are nullable on the wire, so coerce — a null gate is "not done",
+  // The gates are nullable on the wire, so coerce - a null gate is "not done",
   // which is the same thing false means here.
   ready: (o) => o.onboardingStatus !== "completed"
     && !!o.tenantSetupCompleted && !!o.defaultRolesSeeded && !!o.paymentVerified,
@@ -647,7 +647,7 @@ function OnboardingReport() {
   // Both live in the URL so the dashboard can link straight to "the 4 pending".
   const [statusFilter] = useReportParam("status", "all");
   const [attentionOnly, setAttentionOnly] = useReportFlag("attention");
-  // Which checkpoint a tenant is still waiting on — the dashboard's Onboarding
+  // Which checkpoint a tenant is still waiting on - the dashboard's Onboarding
   // Progress bars link straight in here, so a count leads to the tenants
   // behind it rather than to the whole table.
   const [stepFilter, setStepFilter] = useReportParam("step", "all");
@@ -676,25 +676,25 @@ function OnboardingReport() {
   });
 
   const blockedOn = (o: OnboardingRegisterRow) =>
-    o.onboardingStatus === "completed" ? "—" : GATE_LABELS.filter(([key]) => !o[key]).map(([, label]) => label).join(", ") || "—";
+    o.onboardingStatus === "completed" ? "-" : GATE_LABELS.filter(([key]) => !o[key]).map(([, label]) => label).join(", ") || "-";
 
   const exportRows = filtered.map((o) => [
-    o.hospital?.hospitalName || "—",
-    o.hospital?.hospitalCode || "—",
-    o.hospital?.city || "—",
-    o.hospital?.planName || "—",
-    o.primaryAdmin?.name || "—",
-    o.primaryAdmin?.email || "—",
+    o.hospital?.hospitalName || "-",
+    o.hospital?.hospitalCode || "-",
+    o.hospital?.city || "-",
+    o.hospital?.planName || "-",
+    o.primaryAdmin?.name || "-",
+    o.primaryAdmin?.email || "-",
     formatDate(o.hospital?.createdAt),
     o.tenantSetupCompleted ? "Yes" : "No",
     o.defaultRolesSeeded ? "Yes" : "No",
     o.paymentVerified ? "Yes" : "No",
     Number(o.billing?.totalPaid || 0),
-    o.billing?.lastPaymentAt ? formatDate(o.billing.lastPaymentAt) : "—",
-    o.billing?.latestInvoiceStatus || "—",
+    o.billing?.lastPaymentAt ? formatDate(o.billing.lastPaymentAt) : "-",
+    o.billing?.latestInvoiceStatus || "-",
     cap(o.onboardingStatus),
     blockedOn(o),
-    o.paymentMismatch ? "Ticked, but never paid" : o.paymentUnverifiedButPaid ? "Paid, awaiting tick" : "—",
+    o.paymentMismatch ? "Ticked, but never paid" : o.paymentUnverifiedButPaid ? "Paid, awaiting tick" : "-",
   ]);
   const exportHead = [
     "Hospital", "Code", "City", "Plan", "Primary admin", "Admin email", "Registered",
@@ -712,7 +712,7 @@ function OnboardingReport() {
         <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CheckCircleRounded />} label="Payment verified" value={verifiedCount} accent="#0891b2" /></Grid>
         {/* These two cross-check the manual "Payment verified" tick against
             real money in Subscription Billing. The explanation used to live
-            only in a hover tooltip, so the labels had to be decoded — the
+            only in a hover tooltip, so the labels had to be decoded - the
             caption now says what the number means without hovering. */}
         <Grid size={{ xs: 6, md: 3 }}>
           <Tooltip title="Someone ticked Payment Verified on these tenants, but Subscription Billing holds no payment from them at all.">
@@ -726,7 +726,7 @@ function OnboardingReport() {
           </Tooltip>
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
-          <Tooltip title="These tenants have really paid — the money is in Subscription Billing — but nobody has ticked Payment Verified, so onboarding still reads as blocked.">
+          <Tooltip title="These tenants have really paid - the money is in Subscription Billing - but nobody has ticked Payment Verified, so onboarding still reads as blocked.">
             <Box>
               <KpiCard
                 icon={<InfoOutlined />} label="Paid, awaiting tick"
@@ -758,7 +758,7 @@ function OnboardingReport() {
         />
       </ReportStatusChips>
 
-      {/* Arriving from a dashboard bar, the table is already filtered — saying
+      {/* Arriving from a dashboard bar, the table is already filtered - saying
           so, removably, is the difference between "these are the four" and
           "where did everyone go". */}
       {stepFilter !== "all" && STEP_LABELS[stepFilter] && (
@@ -773,7 +773,7 @@ function OnboardingReport() {
           <Box sx={{ flex: 1 }} />
           {exportRows.length > 0 && (
             /* Hand-rolled table (status chips + an action column), so it does
-               not inherit the kit's buttons — both exports are wired off the
+               not inherit the kit's buttons - both exports are wired off the
                same rows the Excel one already prepared. */
             <Box sx={{ display: "flex", gap: 0.5 }}>
               <Button size="small" startIcon={<FileDownloadRounded fontSize="small" />}
@@ -803,11 +803,11 @@ function OnboardingReport() {
                   return (
                     <TableRow key={o.hospitalOnboardingId} hover sx={{ bgcolor: flagBg }}>
                       <TableCell sx={{ borderColor: "divider" }}>
-                        <Typography variant="body2" sx={{ fontWeight: 700, color: "text.primary" }}>{o.hospital?.hospitalName || "—"}</Typography>
-                        <Typography variant="caption" sx={{ color: "text.secondary", fontFamily: "monospace", display: "block" }}>{o.hospital?.hospitalCode || "—"}</Typography>
+                        <Typography variant="body2" sx={{ fontWeight: 700, color: "text.primary" }}>{o.hospital?.hospitalName || "-"}</Typography>
+                        <Typography variant="caption" sx={{ color: "text.secondary", fontFamily: "monospace", display: "block" }}>{o.hospital?.hospitalCode || "-"}</Typography>
                         {/* What this tenant is still waiting on, beside its name.
                             It used to sit in the last of twelve columns, off the
-                            right edge — so the register answered "which are
+                            right edge - so the register answered "which are
                             pending" on screen but "pending on what" only after a
                             horizontal scroll. */}
                         {o.onboardingStatus !== "completed" && (
@@ -816,10 +816,10 @@ function OnboardingReport() {
                           </Typography>
                         )}
                       </TableCell>
-                      <TableCell sx={{ borderColor: "divider", color: "text.secondary" }}>{o.hospital?.city || "—"}</TableCell>
-                      <TableCell sx={{ borderColor: "divider", color: "text.secondary" }}>{o.hospital?.planName || "—"}</TableCell>
+                      <TableCell sx={{ borderColor: "divider", color: "text.secondary" }}>{o.hospital?.city || "-"}</TableCell>
+                      <TableCell sx={{ borderColor: "divider", color: "text.secondary" }}>{o.hospital?.planName || "-"}</TableCell>
                       <TableCell sx={{ borderColor: "divider" }}>
-                        <Typography variant="body2" sx={{ color: "text.primary" }}>{o.primaryAdmin?.name || "—"}</Typography>
+                        <Typography variant="body2" sx={{ color: "text.primary" }}>{o.primaryAdmin?.name || "-"}</Typography>
                         {o.primaryAdmin?.email && <Typography variant="caption" sx={{ color: "text.secondary" }}>{o.primaryAdmin.email}</Typography>}
                       </TableCell>
                       <TableCell sx={{ borderColor: "divider", color: "text.secondary", whiteSpace: "nowrap" }}>{formatDate(o.hospital?.createdAt)}</TableCell>
@@ -837,7 +837,7 @@ function OnboardingReport() {
                             <Tooltip title="No payment on file for this hospital"><WarningAmberRounded sx={{ fontSize: 16, color: SEMANTIC.danger }} /></Tooltip>
                           )}
                           {o.paymentUnverifiedButPaid && (
-                            <Tooltip title="Payment on file — not yet verified"><InfoOutlined sx={{ fontSize: 16, color: SEMANTIC.warning }} /></Tooltip>
+                            <Tooltip title="Payment on file - not yet verified"><InfoOutlined sx={{ fontSize: 16, color: SEMANTIC.warning }} /></Tooltip>
                           )}
                         </Box>
                       </TableCell>
@@ -921,7 +921,7 @@ function AiUsageReport() {
     compactNum(h.calls),
     compactNum(h.totalTokens),
     inrCost(h.costMicros),
-    h.lastUsedAt ? formatDate(h.lastUsedAt) : "—",
+    h.lastUsedAt ? formatDate(h.lastUsedAt) : "-",
   ]);
 
   const featureRows = byFeature.map((f) => [
@@ -964,7 +964,7 @@ function AiUsageReport() {
             // longer has to fit an axis tick as well: the axis takes the short
             // form by default now, so this string is only ever the tooltip.
             // The note that stood here described trimming decimals so a tick
-            // would not be clipped to a leading-digit-less ".0000" — a
+            // would not be clipped to a leading-digit-less ".0000" - a
             // workaround for a bug now fixed where it belonged, at the axis.
             data={trend} xKey="date" valueFormatter={(n) => `₹${n.toFixed(2)}`}
             series={[{ key: "cost", label: "Cost", type: "area" }]}
@@ -998,7 +998,7 @@ function AiUsageReport() {
         Priced at ₹{(rates.inputPerMillionMicros / 1e6).toFixed(2)} per million input tokens and ₹
         {(rates.outputPerMillionMicros / 1e6).toFixed(2)} per million output tokens. Google bills this in US dollars,
         so these are a rupee conversion at a rate set in configuration, not a live FX rate. Each call stores the cost
-        it incurred at the time, so neither a price change nor a currency move restates a past month — but set the
+        it incurred at the time, so neither a price change nor a currency move restates a past month - but set the
         rates to your actual landed cost before treating any figure here as a bill.
       </Typography>
     </Box>
@@ -1055,7 +1055,7 @@ function SmsUsageReport() {
     compactNum(h.messages),
     compactNum(h.segments),
     inrCost(h.costMicros),
-    h.lastUsedAt ? formatDate(h.lastUsedAt) : "—",
+    h.lastUsedAt ? formatDate(h.lastUsedAt) : "-",
   ]);
 
   const statusRows = byStatus.map((s) => [
@@ -1110,7 +1110,7 @@ function SmsUsageReport() {
         title="By outcome"
         note={
           skipped
-            ? `${skipped} message(s) were not sent — no gateway configured, the patient opted out, or no usable number. None of those are billed.`
+            ? `${skipped} message(s) were not sent - no gateway configured, the patient opted out, or no usable number. None of those are billed.`
             : "Every message reached the gateway."
         }
         head={["Outcome", "Messages"]}
@@ -1119,7 +1119,7 @@ function SmsUsageReport() {
 
       <Typography variant="caption" sx={{ color: NEUTRAL.muted }}>
         Priced at ₹{(rates.perSegmentMicros / 1e6).toFixed(2)} per segment. Gateways bill per 160-character
-        segment — 70 if a message contains any character outside the GSM alphabet — so segments, not
+        segment - 70 if a message contains any character outside the GSM alphabet - so segments, not
         messages, are what cost money. Each message stores the cost it incurred at the time, so correcting
         the rate does not restate past months.
       </Typography>

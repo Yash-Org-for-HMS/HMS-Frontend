@@ -88,7 +88,7 @@ export default function SubscriptionInvoicePrint() {
         ]}
         totals={{ subtotal: Number(inv.amount), total: Number(inv.amount), paid: Number(inv.paid || 0), balance }}
         // How the money actually arrived. The invoice used to show only that
-        // SOMEONE had marked it paid — no method, no bank reference, no name —
+        // SOMEONE had marked it paid - no method, no bank reference, no name -
         // which is not something a tenant or an auditor can check against a
         // statement. The payload already carried all of it.
         afterTotals={
@@ -113,10 +113,10 @@ export default function SubscriptionInvoicePrint() {
         paidWatermark={fullyPaid}
         footer={p.gstNumber ? `GST: ${p.gstNumber} · This is a computer-generated subscription invoice.` : "This is a computer-generated subscription invoice."}
       >
-        {/* Bill To — the hospital tenant */}
+        {/* Bill To - the hospital tenant */}
         <div style={{ marginBottom: 16, padding: 10, border: "1px solid #e5e7eb", borderRadius: 4 }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", letterSpacing: 0.5 }}>BILL TO</div>
-          <div style={{ fontSize: 13, fontWeight: 700 }}>{h.legalBusinessName || h.hospitalName || "—"}</div>
+          <div style={{ fontSize: 13, fontWeight: 700 }}>{h.legalBusinessName || h.hospitalName || "-"}</div>
           {billToAddress && <div style={{ fontSize: 11.5, color: "#4b5563" }}>{billToAddress}</div>}
           {h.gstNumber && <div style={{ fontSize: 11.5, color: "#4b5563" }}>GST: {h.gstNumber}</div>}
           {h.officialEmail && <div style={{ fontSize: 11.5, color: "#4b5563" }}>{h.officialEmail}</div>}
@@ -130,7 +130,7 @@ export default function SubscriptionInvoicePrint() {
           <tbody>
             <tr>
               <td style={cell}>
-                {inv.planName} — {inv.billingCycle === "ANNUAL" ? "Annual" : "Monthly"} subscription
+                {inv.planName} - {inv.billingCycle === "ANNUAL" ? "Annual" : "Monthly"} subscription
                 <div style={{ fontSize: 11, color: "#6b7280", marginTop: 2 }}>Period: {formatDate(inv.periodStart)} – {formatDate(inv.periodEnd)}</div>
               </td>
               <td style={{ ...cell, textAlign: "right", fontWeight: 600 }}>{formatINR(inv.amount)}</td>

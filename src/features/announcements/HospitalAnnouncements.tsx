@@ -20,7 +20,7 @@ import { ANNOUNCEMENTS_KEY, ANNOUNCEMENT_BADGE_KEY, SENT_ANNOUNCEMENTS_KEY as SE
  * The hospital's own announcements to its staff (multi-branch plan, phase 7):
  * what the hospital and branch admins have said, and the dialog to say more.
  * The hospital admin writes to every branch or to some; a branch admin to the
- * branches they work at. The API holds both rules — this screen only offers
+ * branches they work at. The API holds both rules - this screen only offers
  * the choices it would accept.
  */
 
@@ -100,7 +100,7 @@ export function SentAnnouncements() {
             ) : rows.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={8}>
-                  <Mascot pose="nothing-here-yet" title="Nothing sent yet" subtitle="Write one to reach your staff — every branch, or just some." />
+                  <Mascot pose="nothing-here-yet" title="Nothing sent yet" subtitle="Write one to reach your staff - every branch, or just some." />
                 </TableCell>
               </TableRow>
             ) : (
@@ -118,7 +118,7 @@ export function SentAnnouncements() {
                     </TableCell>
                     <TableCell>{r.branchScope === "ALL_BRANCHES" ? "Every branch" : r.branches.map((b) => b.branchName).join(", ")}</TableCell>
                     <TableCell>{r.panelScope === "ALL_PANELS" ? "All panels" : r.panels.map((p) => PANEL_LABEL[p] ?? p).join(", ")}</TableCell>
-                    <TableCell>{r.writtenBy ?? "—"}</TableCell>
+                    <TableCell>{r.writtenBy ?? "-"}</TableCell>
                     <TableCell sx={{ whiteSpace: "nowrap" }}>{shortDate(r.publishAt)}</TableCell>
                     <TableCell>{r.readCount.toLocaleString("en-IN")}</TableCell>
                     <TableCell><SoftChip label={st.label} bg={st.bg} color={st.color} /></TableCell>

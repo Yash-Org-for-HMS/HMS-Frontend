@@ -8,14 +8,14 @@ type Accessor<T> = (row: T) => SortValue;
 /**
  * Client-side column sorting for tables whose FULL dataset is already loaded in
  * memory (e.g. lists fetched in one shot and filtered with useMemo). Do NOT use
- * this on server-paginated lists — it would only reorder the current page and
+ * this on server-paginated lists - it would only reorder the current page and
  * mislead the user.
  *
  * Pass a map of column-key -> value accessor. Clicking a column toggles
  * asc/desc; clicking a new column starts at asc. Nulls always sort last.
  *
  * `accessors` is read fresh on each sort but intentionally kept out of the memo
- * deps — the accessor logic is pure/stable, so a cached result computed with an
+ * deps - the accessor logic is pure/stable, so a cached result computed with an
  * earlier (identical) closure is still correct.
  */
 export function useTableSort<T>(
@@ -63,7 +63,7 @@ export function useTableSort<T>(
 
 /**
  * Sort-state controller for SERVER-paginated lists. It only tracks which column
- * and direction are active (toggling asc/desc on click) — feed `orderBy`/`order`
+ * and direction are active (toggling asc/desc on click) - feed `orderBy`/`order`
  * into your query params (as sortBy/sortOrder) and let the backend do the
  * ordering across the full dataset. Pairs with SortableHeadCell.
  */

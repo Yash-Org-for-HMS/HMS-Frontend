@@ -3,8 +3,8 @@ import { InfoOutlined } from "@mui/icons-material";
 
 /**
  * Shown when a report's detail list hit the server-side row cap and only a
- * prefix was returned. Reports have no pagination — they're bounded by their
- * date-range filter — so a very wide range can exceed the cap; this tells the
+ * prefix was returned. Reports have no pagination - they're bounded by their
+ * date-range filter - so a very wide range can exceed the cap; this tells the
  * user to narrow the range to see (and export) the full list. Summary totals
  * and charts are always computed from the full set, so they remain accurate.
  */
@@ -26,7 +26,7 @@ export default function ReportTruncationNote({
       sx={{ borderRadius: 3, alignItems: "center", ...sx }}
     >
       Showing the first <strong>{shown}</strong> of <strong>{total}</strong> rows. Totals and
-      charts above still reflect all {total} — narrow the date range to see or export the full detail list.
+      charts above still reflect all {total} - narrow the date range to see or export the full detail list.
     </Alert>
   );
 }

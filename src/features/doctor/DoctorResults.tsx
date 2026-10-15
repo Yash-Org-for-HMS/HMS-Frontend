@@ -86,7 +86,7 @@ export default function DoctorResults() {
     <Box>
       <PageHeader
         title="Results"
-        subtitle="Lab and radiology results for tests you've ordered — including those that came back after the visit."
+        subtitle="Lab and radiology results for tests you've ordered - including those that came back after the visit."
       />
 
       <Paper elevation={0} sx={{ borderRadius: 2, border: "1px solid", borderColor: "divider", overflow: "hidden" }}>
@@ -232,7 +232,7 @@ export default function DoctorResults() {
         )}
       </Paper>
 
-      {/* Results popup — opens on row click */}
+      {/* Results popup - opens on row click */}
       <Dialog open={!!selected} onClose={() => setSelected(null)} maxWidth="md" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
         {selected && (
           <>
@@ -374,7 +374,7 @@ function LabDetail({ reports }: { reports: any[] }) {
               {!rep.pending && (
                 <Box sx={{ mt: 1.25, pt: 1, borderTop: "1px dashed", borderColor: "divider", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1, flexWrap: "wrap" }}>
                   <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                    Normal range: <Box component="span" sx={{ color: "text.primary", fontWeight: 600 }}>{rep.normalRange || "—"}</Box>
+                    Normal range: <Box component="span" sx={{ color: "text.primary", fontWeight: 600 }}>{rep.normalRange || "-"}</Box>
                   </Typography>
                   {critical && <AckButton report={rep} />}
                 </Box>

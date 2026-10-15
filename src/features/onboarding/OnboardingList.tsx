@@ -39,7 +39,7 @@ const SECTION_PAGE = 20;
 
 // Each heading pages its own rows. The rows are all in hand (the server already
 // narrowed to actionable tenants/trials), because the headline counts are of
-// DISTINCT tenants across overlapping headings — paging on the server per
+// DISTINCT tenants across overlapping headings - paging on the server per
 // heading would make those counts wrong.
 function Section<T>({
   icon, title, color, rows, renderRow,
@@ -96,9 +96,9 @@ export default function OnboardingList() {
   const hospitals: any[] = hq.data?.data ?? [];
   const trials: any[] = tq.data?.data ?? [];
 
-  // Bucketing lives in actionNeeded.ts so its two awkward rules — the
+  // Bucketing lives in actionNeeded.ts so its two awkward rules - the
   // expiring window bounded at both ends, and counting distinct tenants
-  // across overlapping buckets — are covered by tests rather than by eye.
+  // across overlapping buckets - are covered by tests rather than by eye.
   const {
     expiring, expired, suspended, overdue, incomplete,
     trialCount, hospitalCount, total,
@@ -156,7 +156,7 @@ export default function OnboardingList() {
       </Grid>
 
       {truncated && (
-        <Alert severity="warning" sx={{ mb: 3 }}>Only the first 1,000 tenants and trials needing action are shown — counts may be low.</Alert>
+        <Alert severity="warning" sx={{ mb: 3 }}>Only the first 1,000 tenants and trials needing action are shown - counts may be low.</Alert>
       )}
 
       {total === 0 ? (
@@ -184,7 +184,7 @@ export default function OnboardingList() {
               );
             }} />
 
-          <Section icon={<TimerOffRounded />} title="Expired trials — convert or cancel" color={SEMANTIC.danger} rows={expired} renderRow={(t) => (
+          <Section icon={<TimerOffRounded />} title="Expired trials - convert or cancel" color={SEMANTIC.danger} rows={expired} renderRow={(t) => (
               <Row
                 key={t.hospitalTrialId}
                 primary={t.lead?.hospitalName || "Unknown"}
@@ -207,7 +207,7 @@ export default function OnboardingList() {
               />
             )} />
 
-          <Section icon={<HourglassBottomRounded />} title="Payment overdue — grace period" color={SEMANTIC.warning} rows={overdue} renderRow={(h) => (
+          <Section icon={<HourglassBottomRounded />} title="Payment overdue - grace period" color={SEMANTIC.warning} rows={overdue} renderRow={(h) => (
               <Row
                 key={h.hospitalId}
                 primary={h.hospitalName}

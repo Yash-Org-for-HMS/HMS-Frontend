@@ -21,7 +21,7 @@ import { apiErrorText, getApiErrorMessage } from "@/utils/apiError";
 import PatientPicker, { type PickedPatient } from "@/features/mrd/PatientPicker";
 
 /**
- * Bed reservations — the admission desk's (15_System_Roles ADMISSION_DESK:
+ * Bed reservations - the admission desk's (15_System_Roles ADMISSION_DESK:
  * "bed allocation, reservations, transfers"; workbook 06 RESERVED: held for a
  * planned admission, with an expiry). Every bed on hold, who for and until
  * when. A bed held for a named patient takes only them until the hold ends;
@@ -110,7 +110,7 @@ function ExtendDialog({ hold, onClose, onDone }: { hold: Hold; onClose: () => vo
       <DialogTitle sx={{ fontWeight: 700 }}>Hold {hold.label} longer</DialogTitle>
       <DialogContent>
         <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
-          Now held until {hold.reservedUntil ? dayjs(hold.reservedUntil).format("DD MMM, h:mm A") : "—"}. The new hold runs from now.
+          Now held until {hold.reservedUntil ? dayjs(hold.reservedUntil).format("DD MMM, h:mm A") : "-"}. The new hold runs from now.
         </Typography>
         <TextField id="extend-hours" select fullWidth label="Hold for" value={hours} onChange={(e) => setHours(e.target.value)}>
           {HOURS.map((h) => <MenuItem key={h} value={String(h)}>{h < 24 ? `${h} hours` : `${h / 24} day${h === 24 ? "" : "s"}`} from now</MenuItem>)}
@@ -187,7 +187,7 @@ export default function BedReservations() {
                   <TableCell sx={{ whiteSpace: "nowrap" }}>
                     {h.reservedUntil ? (h.endingSoon
                       ? <SoftChip label={`Ends ${dayjs(h.reservedUntil).format("h:mm A")}`} bg={`${SEMANTIC.warning}22`} color={SEMANTIC.warningDark} />
-                      : dayjs(h.reservedUntil).format("DD MMM, h:mm A")) : "—"}
+                      : dayjs(h.reservedUntil).format("DD MMM, h:mm A")) : "-"}
                   </TableCell>
                   <TableCell align="right" sx={{ whiteSpace: "nowrap" }}>
                     {h.patient && <Button size="small" variant="contained" onClick={() => setDialog({ kind: "admit", hold: h })} sx={{ mr: 1 }}>Admit</Button>}

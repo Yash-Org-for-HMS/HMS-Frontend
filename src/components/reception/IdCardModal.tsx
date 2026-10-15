@@ -29,7 +29,7 @@ interface IdCardModalProps {
 /**
  * Patient ID card / wristband print. Renders a credit-card-sized card with the
  * patient's identity and a CODE128 barcode of their UHID (scannable by handheld
- * readers), then prints it via a hidden iframe — no full-page reload, and the
+ * readers), then prints it via a hidden iframe - no full-page reload, and the
  * barcode is a self-contained SVG so it prints crisply.
  */
 export default function IdCardModal({ open, onClose, patient }: IdCardModalProps) {
@@ -53,7 +53,7 @@ export default function IdCardModal({ open, onClose, patient }: IdCardModalProps
           lineColor: "#000000",
         });
       } catch {
-        /* invalid value — fall back to the human-readable UHID shown below */
+        /* invalid value - fall back to the human-readable UHID shown below */
       }
     }
   }, [open, patient?.uhidNumber]);
@@ -72,14 +72,14 @@ export default function IdCardModal({ open, onClose, patient }: IdCardModalProps
   const fullName = `${patient.firstName || ""} ${patient.lastName || ""}`.trim() || "Patient";
   const dob = patient.dateOfBirth
     ? new Date(patient.dateOfBirth).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })
-    : "—";
-  // Built as real elements (not an HTML string) so React escapes every value —
+    : "-";
+  // Built as real elements (not an HTML string) so React escapes every value -
   // patient.phone in particular is free text and must never be interpolated
   // into markup directly.
   const infoItems: { label: string; value: string }[] = [
     { label: "DOB:", value: `${dob}${patient.age != null ? ` (${patient.age}y)` : ""}` },
-    { label: "Sex:", value: patient.genderLabel || "—" },
-    { label: "Blood:", value: patient.bloodGroupLabel || "—" },
+    { label: "Sex:", value: patient.genderLabel || "-" },
+    { label: "Blood:", value: patient.bloodGroupLabel || "-" },
     ...(patient.phone ? [{ label: "Ph:", value: patient.phone }] : []),
   ];
 

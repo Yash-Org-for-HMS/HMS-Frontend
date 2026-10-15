@@ -7,7 +7,7 @@ import { renderWithProviders } from "@/test/renderWithProviders";
  * Picking a medicine off the dropdown must not claim the catalogue has none.
  *
  * MUI's Autocomplete writes the chosen option's LABEL back into the input on
- * reason "reset" — here "Telma 40 (Telmisartan 40 mg Tablet)". That string was
+ * reason "reset" - here "Telma 40 (Telmisartan 40 mg Tablet)". That string was
  * fed straight back into the debounced search, but the server matches
  * medicineName and genericName separately with `contains`, so the composite
  * label matches neither and came back empty. Empty results with a non-empty
@@ -17,7 +17,7 @@ import { renderWithProviders } from "@/test/renderWithProviders";
  * returned 0 rows where its typed prefix returned 1-2.
  *
  * The axios mock below reproduces that `contains` semantics rather than
- * returning a fixed list — a mock that answers every query identically cannot
+ * returning a fixed list - a mock that answers every query identically cannot
  * fail on this bug.
  */
 
@@ -83,7 +83,7 @@ describe("PrescriptionWriter medicine picker", () => {
     const option = await screen.findByText("Telma 40", {}, { timeout: 3000 });
     await user.click(option);
 
-    // The field now holds the composite label — the exact string the old code
+    // The field now holds the composite label - the exact string the old code
     // re-searched on.
     await waitFor(() => expect((field as HTMLInputElement).value).toMatch(/Telma 40/));
 
@@ -112,12 +112,12 @@ describe("PrescriptionWriter medicine picker", () => {
     await user.type(field, "Telma");
     await user.click(await screen.findByText("Telma 40", {}, { timeout: 3000 }));
 
-    /* Change your mind and type a different drug over it — select the text,
+    /* Change your mind and type a different drug over it - select the text,
        then type, which replaces it in one keystroke.
 
        Not user.clear(): emptying the input makes MUI fire onChange(null,
        "clear") and drop the selection on its own, so the bug never appears and
-       the test passes against the unfixed code. Not "{selectall}" either — it
+       the test passes against the unfixed code. Not "{selectall}" either - it
        is silently a no-op here and appends instead. Replacing a selection never
        passes through empty, so MUI keeps `value`, and handleAddItem reads
        selectedMedicine FIRST: the field reads one drug and the Rx gets the

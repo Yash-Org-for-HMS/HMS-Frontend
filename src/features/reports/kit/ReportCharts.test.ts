@@ -37,7 +37,7 @@ describe("hasPlottableData", () => {
     expect(hasPlottableData(rows, ["orders"])).toBe(false);
   });
 
-  it("counts a negative value as plottable — a refund day is not an empty day", () => {
+  it("counts a negative value as plottable - a refund day is not an empty day", () => {
     expect(hasPlottableData([{ date: "d", amount: -500 }], ["amount"])).toBe(true);
   });
 

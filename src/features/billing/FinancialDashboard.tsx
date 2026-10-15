@@ -19,7 +19,7 @@ import { apiErrorText } from "@/utils/apiError";
 import { SEMANTIC, NEUTRAL } from "@/styles/accents";
 import { formatINR, axisINR } from "@/utils/format";
 
-// Each bar chart gets its own single hue (magnitude, not identity) — the two
+// Each bar chart gets its own single hue (magnitude, not identity) - the two
 // charts are told apart by their titles, not by cycling colours within either.
 const SOURCE_BAR = "#0891b2";
 const METHOD_BAR = "#8b5cf6";
@@ -54,7 +54,7 @@ export default function FinancialDashboard() {
    * What the collected figure is a share OF, and what came back out of it.
    *
    * This read "21% of billed value · net of refunds", which put the qualifier
-   * immediately beside "billed value" — so it scanned as though the denominator
+   * immediately beside "billed value" - so it scanned as though the denominator
    * were net of refunds. It is not: refunds are subtracted from the collected
    * figure above, and the denominator is everything invoiced. Naming the
    * denominator makes the percentage checkable, and the refund becomes its own
@@ -186,7 +186,7 @@ export default function FinancialDashboard() {
           </Paper>
         </Grid>
 
-        {/* Revenue By Department — sorted magnitude bars, one hue, direct labels */}
+        {/* Revenue By Department - sorted magnitude bars, one hue, direct labels */}
         <Grid size={{ xs: 12, md: 6 }}>
           <Paper
             elevation={0}
@@ -202,8 +202,8 @@ export default function FinancialDashboard() {
             }}
           >
             {/* Both charts below say what they measure. They report different
-                things from the tiles above and from each other — billed value
-                vs money received — and unlabelled they read as three attempts
+                things from the tiles above and from each other - billed value
+                vs money received - and unlabelled they read as three attempts
                 at one number that happen to disagree. */}
             <Typography variant="h6" sx={{ color: "text.primary", fontWeight: 600 }}>
               Revenue Source
@@ -235,7 +235,7 @@ export default function FinancialDashboard() {
           </Paper>
         </Grid>
 
-        {/* Payment Methods — same treatment, its own hue so the two charts read
+        {/* Payment Methods - same treatment, its own hue so the two charts read
             as distinct without cycling colours within either. */}
         <Grid size={{ xs: 12, md: 6 }}>
           <Paper
@@ -255,7 +255,7 @@ export default function FinancialDashboard() {
               Payment Methods
             </Typography>
             <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 2 }}>
-              How that money was tendered — before refunds
+              How that money was tendered - before refunds
             </Typography>
             <Box sx={{ flexGrow: 1, minHeight: 0 }}>
               <ResponsiveContainer width="100%" height="100%">

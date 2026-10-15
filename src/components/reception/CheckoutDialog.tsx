@@ -76,7 +76,7 @@ export default function CheckoutDialog({ open, onClose, token, onDone }: Checkou
   return (
     <>
       <Dialog open={open} onClose={handleClose} maxWidth="xs" fullWidth>
-        <DialogTitle>Check out — {token.patientName || "Patient"}</DialogTitle>
+        <DialogTitle>Check out - {token.patientName || "Patient"}</DialogTitle>
         <DialogContent dividers>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 0.5 }}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>

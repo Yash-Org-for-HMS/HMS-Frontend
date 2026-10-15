@@ -33,7 +33,7 @@ export default function RadiologyOrdersQueue() {
   const toast = useToast();
   // One scan is addressable as /lab/radiology/:id. Radiology is edited in a
   // dialog rather than on its own page, so the id opens that dialog OVER the
-  // queue — which keeps the worklist behind it, and makes the URL, a refresh,
+  // queue - which keeps the worklist behind it, and makes the URL, a refresh,
   // and the Back button all mean the same thing.
   const navigate = useNavigate();
   const { id: routeOrderId } = useParams<{ id?: string }>();
@@ -46,7 +46,7 @@ export default function RadiologyOrdersQueue() {
   useEffect(() => { setPage(1); }, [tabValue]);
 
   // Real-time updates: lab and radiology work, and a test or scan paid for at
-  // the counter (which releases a pre-paid sample) — the list and the backlog
+  // the counter (which releases a pre-paid sample) - the list and the backlog
   // count both. An outpatient change (a check-in, vitals) touches neither. A
   // reconnect re-asks, since changes may have been missed while it was down;
   // the first connect does not, the screen has only just asked.
@@ -94,7 +94,7 @@ export default function RadiologyOrdersQueue() {
 
   const [editOrder, setEditOrder] = useState<RadiologyOrderRow | null>(null);
 
-  // Everything the dialog needs, set in one place — used both when a row is
+  // Everything the dialog needs, set in one place - used both when a row is
   // clicked (the row is already in hand) and when arriving by URL (it is not).
   const applyOrder = (order: RadiologyOrderRow | null) => {
     setEditOrder(order);
@@ -105,7 +105,7 @@ export default function RadiologyOrdersQueue() {
 
   // The URL is what decides whether the dialog is open, so a refresh reopens
   // it and Back closes it. The order is taken from the loaded page when it is
-  // there, and fetched by id when it is not — a scan linked from a dashboard
+  // there, and fetched by id when it is not - a scan linked from a dashboard
   // is often on a page, or in a bucket, the queue has not loaded.
   useEffect(() => {
     let cancelled = false;
@@ -316,7 +316,7 @@ export default function RadiologyOrdersQueue() {
                 <TableRow key={order.radiologyOrderId} hover sx={urgentRowSx(order.priorityId)}>
                   <TableCell sx={{ fontWeight: 600 }}>
                     {order.scanType}
-                    {/* The colour is never the only signal — a red edge alone is
+                    {/* The colour is never the only signal - a red edge alone is
                         invisible to anyone who cannot separate it from the row. */}
                     {isUrgent(order.priorityId) && (
                       <Chip
@@ -379,7 +379,7 @@ export default function RadiologyOrdersQueue() {
           )}
           {editOrder?.admissionNumber && (
             <Alert severity="info" sx={{ mb: 2 }}>
-              Inpatient scan ({editOrder.admissionNumber}) — covered on the IP bill, settled at discharge. No pre-payment needed.
+              Inpatient scan ({editOrder.admissionNumber}) - covered on the IP bill, settled at discharge. No pre-payment needed.
             </Alert>
           )}
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
@@ -391,7 +391,7 @@ export default function RadiologyOrdersQueue() {
               onChange={(e) => setStatus(e.target.value)}
               fullWidth
               disabled={editOrder?.billingLockActive}
-              helperText={editOrder?.status === "COMPLETED" ? "A completed report can't be moved back to pending — edit the report in place." : " "}
+              helperText={editOrder?.status === "COMPLETED" ? "A completed report can't be moved back to pending - edit the report in place." : " "}
             >
               {/* A completed report can't be un-completed (it's delivered/billed);
                   the lower options are locked to match the backend guard. */}
@@ -452,7 +452,7 @@ export default function RadiologyOrdersQueue() {
 
             <Box sx={{ mt: 2 }}>
               {/* Picking a template appends it, and the same control saves the
-                  report you have written as a new one — the dropdown here could
+                  report you have written as a new one - the dropdown here could
                   only ever read, and nothing in the app could write, so it had
                   nothing to list. */}
               <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 1.5 }}>

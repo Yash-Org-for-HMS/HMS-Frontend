@@ -18,7 +18,7 @@ import { formatINR } from "@/utils/format";
 
 const inr = (v: number | null | undefined) => formatINR(v, 0);
 
-/** Days when it's been more than one, else hours — an 8-day-old order shouldn't read "208h". */
+/** Days when it's been more than one, else hours - an 8-day-old order shouldn't read "208h". */
 const ageLabel = (days: number, hours: number) => (days >= 1 ? `${days}d` : `${hours}h`);
 /** Anything sitting for a day is late; two days is a problem. */
 const ageSeverity = (days: number): "critical" | "warning" | "info" =>
@@ -28,7 +28,7 @@ export default function LabDashboard() {
   const navigate = useNavigate();
 
   // One server-side aggregate. This page used to GET /lab/orders and
-  // /lab/radiology-orders with no paging — which returns the FULL history — and
+  // /lab/radiology-orders with no paging - which returns the FULL history - and
   // reduce the lot in the browser to produce four numbers.
   const { data, isLoading: loading, isError, error, refetch } = useQuery({
     queryKey: ["lab-dashboard"],
@@ -110,16 +110,16 @@ export default function LabDashboard() {
         <Box sx={{ mb: 3 }}>
           <AttentionList
             title="Critical results awaiting acknowledgement"
-            subtitle="Oldest first — the ordering doctor has not signed these off yet"
+            subtitle="Oldest first - the ordering doctor has not signed these off yet"
             items={criticals.map((c) => ({
               id: c.labReportId,
-              primary: `${c.patientName} — ${c.testName}`,
-              secondary: `Result: ${c.resultValue ?? "—"}`,
+              primary: `${c.patientName} - ${c.testName}`,
+              secondary: `Result: ${c.resultValue ?? "-"}`,
               meta: c.ageHours >= 24 ? `${Math.floor(c.ageHours / 24)}d` : `${c.ageHours}h`,
               severity: "critical" as const,
               icon: <CrisisAlertRounded sx={{ fontSize: 18 }} />,
               // Open the result itself. Falling back to the worklist only when
-              // the report has somehow lost its order — every row used to do
+              // the report has somehow lost its order - every row used to do
               // that, which made the whole list a link to one page.
               onClick: () => navigate(c.labOrderId ? `/lab/orders/${c.labOrderId}` : "/lab/orders"),
             }))}
@@ -137,7 +137,7 @@ export default function LabDashboard() {
           <AttentionList
             title="Lab orders waiting"
             subtitle="Longest waiting first"
-            emptyText="No pending lab orders — the bench is clear."
+            emptyText="No pending lab orders - the bench is clear."
             items={pendingLab.map((o) => ({
               id: o.labOrderId,
               primary: o.patientName,
@@ -167,7 +167,7 @@ export default function LabDashboard() {
               severity: ageSeverity(o.ageDays),
               icon: <MonitorHeartRounded sx={{ fontSize: 18 }} />,
               // Radiology is edited in a dialog over the queue, so this id opens
-              // that dialog — shareable, refreshable, closed by Back.
+              // that dialog - shareable, refreshable, closed by Back.
               onClick: () => navigate(`/lab/radiology/${o.radiologyOrderId}`),
             }))}
             maxRows={6}

@@ -42,7 +42,7 @@ const tooltipStyle = { borderRadius: 10, border: `1px solid ${CHART_INK.grid}`, 
 export interface Series { key: string; label: string; type?: "area" | "line" | "bar"; }
 
 /**
- * Time-trend chart (single x-axis only — never dual-axis). Renders each series
+ * Time-trend chart (single x-axis only - never dual-axis). Renders each series
  * as area/line/bar in fixed categorical order. Legend shown for >= 2 series.
  */
 export function TrendChart({ data, xKey, series, valueFormatter, axisFormatter, height = 280, title, subtitle, action }: {
@@ -50,14 +50,14 @@ export function TrendChart({ data, xKey, series, valueFormatter, axisFormatter, 
   /**
    * Ticks only. The axis and the tooltip were sharing one formatter, and they
    * want opposite things: callers pass `₹${n.toFixed(2)}` because a tooltip
-   * should read "₹1,23,456.78", and that string cannot fit an axis gutter — so
+   * should read "₹1,23,456.78", and that string cannot fit an axis gutter - so
    * Recharts clipped it and the reader saw its right-hand end. Default the axis
    * to the short form and leave the tooltip exact.
    */
   axisFormatter?: (n: number) => string;
   height?: number; title: string; subtitle?: string; action?: ReactNode;
 }) {
-  // A count series must not get fractional ticks — "0.25 admissions" is not a
+  // A count series must not get fractional ticks - "0.25 admissions" is not a
   // thing a reader can act on. Derived rather than declared per call site, so
   // every chart in the app gets it: if every plotted value is a whole number the
   // axis stays whole, and a money series with paise still ticks in decimals.

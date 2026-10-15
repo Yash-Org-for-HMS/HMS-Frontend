@@ -59,7 +59,7 @@ export default function SuperAdminsList() {
   // Server-side column sorting (the list is paginated, so sorting happens in the DB).
   const { orderBy, order, onSort } = useServerSort();
 
-  // The request waits until typing pauses — it fired on every keystroke.
+  // The request waits until typing pauses - it fired on every keystroke.
   const debouncedSearch = useDebouncedValue(search);
   const { data, isLoading: loading, isError, error, refetch } = useQuery({
     queryKey: ["super-admins", page, debouncedSearch, orderBy, order],
@@ -73,7 +73,7 @@ export default function SuperAdminsList() {
   const admins: any[] = data?.data ?? [];
   const totalPages: number = data?.pagination?.totalPages ?? 1;
 
-  // Peer password recovery: any super admin can reset another's password —
+  // Peer password recovery: any super admin can reset another's password -
   // the platform-realm equivalent of the hospital admin resetting their own
   // staff's passwords in Staff & Users. Immediately invalidates the current
   // password, so confirm before firing.
@@ -86,7 +86,7 @@ export default function SuperAdminsList() {
   const handleResetPassword = async (admin: any) => {
     const ok = await confirm({
       title: "Reset password",
-      message: `Reset the password for ${admin.firstName} ${admin.lastName} (${admin.email})? Their current password stops working immediately — you'll get a new one-time password to share with them.`,
+      message: `Reset the password for ${admin.firstName} ${admin.lastName} (${admin.email})? Their current password stops working immediately - you'll get a new one-time password to share with them.`,
       confirmText: "Reset password",
       destructive: true,
     });
@@ -180,7 +180,7 @@ export default function SuperAdminsList() {
                       </Box>
                     </TableCell>
                     <TableCell sx={{ color: "text.primary" }}>
-                      {admin.phone || "—"}
+                      {admin.phone || "-"}
                     </TableCell>
                     <TableCell>
                       <Chip 

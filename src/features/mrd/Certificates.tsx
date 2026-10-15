@@ -20,7 +20,7 @@ import type { Mlc } from "./MlcRegister";
 
 /**
  * Numbered certificates (backend /mrd/certificates): medical, fitness and
- * death, each its own series, certified by a consultant. Never edited — a wrong
+ * death, each its own series, certified by a consultant. Never edited - a wrong
  * one is cancelled with a reason and its number is not given again. Printed
  * from here; every print after the first is marked a duplicate.
  */
@@ -81,7 +81,7 @@ function IssueDialog({ onClose, onDone }: { onClose: () => void; onDone: () => v
         <>
           <DialogContent dividers>
             <Typography variant="body1">Issued <b>{issued.certNumber}</b>.</Typography>
-            <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5 }}>Print it now for the consultant to sign — later prints are marked duplicate.</Typography>
+            <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5 }}>Print it now for the consultant to sign - later prints are marked duplicate.</Typography>
           </DialogContent>
           <DialogActions>
             <Button onClick={onClose} color="inherit">Close</Button>
@@ -125,7 +125,7 @@ function IssueDialog({ onClose, onDone }: { onClose: () => void; onDone: () => v
               </Box>
               {unnatural && (
                 <TextField id="cert-mlc" select required label="Medico-legal case" value={mlcId} onChange={(e) => setMlcId(e.target.value)}
-                  helperText={patient && !patientMlcs.length ? "This patient has no medico-legal case — register one first." : "A death that is not natural is medico-legal."}
+                  helperText={patient && !patientMlcs.length ? "This patient has no medico-legal case - register one first." : "A death that is not natural is medico-legal."}
                   error={!!patient && !patientMlcs.length}>
                   {patientMlcs.map((m) => <MenuItem key={m.mlcId} value={m.mlcId}>{m.mlcNumber}</MenuItem>)}
                 </TextField>
@@ -238,7 +238,7 @@ export default function Certificates() {
                   </TableCell>
                   <TableCell align="right" sx={{ whiteSpace: "nowrap" }}>
                     {c.status === "CANCELLED" ? (
-                      <SoftChip label={`Cancelled — ${c.cancelReason ?? ""}`} bg={`${SEMANTIC.danger}1a`} color={SEMANTIC.danger} />
+                      <SoftChip label={`Cancelled - ${c.cancelReason ?? ""}`} bg={`${SEMANTIC.danger}1a`} color={SEMANTIC.danger} />
                     ) : (
                       <>
                         <Button size="small" startIcon={<PrintRounded />} onClick={() => openPrint(printPath(c.certificateId))} sx={{ color: BRAND.action }}>Print</Button>

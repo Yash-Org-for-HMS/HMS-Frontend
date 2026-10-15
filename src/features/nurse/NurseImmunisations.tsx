@@ -20,7 +20,7 @@ import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 /**
  * The immunisation worklist.
  *
- * Childhood immunisation is recall-driven — the work is finding who has fallen
+ * Childhood immunisation is recall-driven - the work is finding who has fallen
  * off the schedule, not looking up one child at a time. Until this existed the
  * only route to a dose was opening a patient's record individually, which is
  * not how a defaulter is ever found.
@@ -50,7 +50,7 @@ export default function NurseImmunisations() {
   const [page, setPage] = useState(0);
   const rowsPerPage = 25;
 
-  // The request waits until typing pauses — it fired on every keystroke.
+  // The request waits until typing pauses - it fired on every keystroke.
   const debouncedSearch = useDebouncedValue(search);
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["nurse-immunisations", state, debouncedSearch, page],
@@ -72,7 +72,7 @@ export default function NurseImmunisations() {
     <Box sx={{ pb: 6 }}>
       <PageHeader
         title="Immunisations"
-        subtitle="Doses that are overdue or coming up — open a child to record the dose you gave."
+        subtitle="Doses that are overdue or coming up - open a child to record the dose you gave."
       />
 
       {/* A child whose schedule has never been opened has no doses yet, so it
@@ -135,7 +135,7 @@ export default function NurseImmunisations() {
                   >
                     <TableCell>
                       <Typography variant="body2" sx={{ fontWeight: 700 }}>{r.patientName}</Typography>
-                      <Typography variant="caption" sx={{ color: "text.secondary", fontFamily: "monospace" }}>{r.uhidNumber || "—"}</Typography>
+                      <Typography variant="caption" sx={{ color: "text.secondary", fontFamily: "monospace" }}>{r.uhidNumber || "-"}</Typography>
                     </TableCell>
                     <TableCell>
                       <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>

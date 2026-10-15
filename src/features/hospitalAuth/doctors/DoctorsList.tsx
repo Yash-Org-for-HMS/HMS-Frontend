@@ -64,7 +64,7 @@ export default function DoctorsList() {
   const meta = data?.meta as { total: number; totalPages: number } | undefined;
 
   // How many doctors there are; adding one adds a login, which counts against
-  // the hospital's user capacity (set by the super admin) — not a doctors-only cap.
+  // the hospital's user capacity (set by the super admin) - not a doctors-only cap.
   const { data: quota } = useQuery({
     queryKey: ["hospital-doctors-quota"],
     queryFn: async () => (await axiosInstance.get("/hospital/doctors/quota")).data.data as { used: number },
@@ -127,7 +127,7 @@ export default function DoctorsList() {
                 <SortableHeadCell label="Fee" sortKey="fee" orderBy={orderBy} order={order} onSort={onSort} sx={HEAD_SX} />
                 {/* Whether the doctor can still be booked. Deactivating the
                     account drops them from reception's booking dropdowns, but
-                    this list showed every doctor identically — so the roster
+                    this list showed every doctor identically - so the roster
                     here and the doctors reception could actually pick from
                     disagreed, with nothing on screen to explain it. */}
                 <TableCell sx={HEAD_SX}>Status</TableCell>
@@ -156,10 +156,10 @@ export default function DoctorsList() {
                       ) : "N/A"}
                     </TableCell>
                     <TableCell sx={{ color: "text.primary", borderBottom: "1px solid", borderColor: "divider" }}>
-                      {/* Additional departments (staff record) — what the old specialization became. */}
+                      {/* Additional departments (staff record) - what the old specialization became. */}
                       {doctor.additionalDepartments?.length
                         ? doctor.additionalDepartments.map((d: { departmentName: string }) => d.departmentName).join(", ")
-                        : "—"}
+                        : "-"}
                     </TableCell>
                     <TableCell sx={{ color: "text.primary", borderBottom: "1px solid", borderColor: "divider" }}>
                       {doctor.licenseNumber || "-"}

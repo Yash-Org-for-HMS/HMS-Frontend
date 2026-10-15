@@ -30,7 +30,7 @@ export default function ReferralsList({ basePath = "/reception" }: { basePath?: 
   // changing either resets to the first page.
   useEffect(() => { setPage(1); }, [search, typeFilter]);
 
-  // The request waits until typing pauses — it fired on every keystroke.
+  // The request waits until typing pauses - it fired on every keystroke.
   const debouncedSearch = useDebouncedValue(search);
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["referred-patients", typeFilter, debouncedSearch, page],
@@ -54,7 +54,7 @@ export default function ReferralsList({ basePath = "/reception" }: { basePath?: 
     <Box>
       <PageHeader
         title="Referred Patients"
-        subtitle="Patients referred to us — by one of our own doctors (internal) or an outside practitioner (external). Captured at registration."
+        subtitle="Patients referred to us - by one of our own doctors (internal) or an outside practitioner (external). Captured at registration."
       />
 
       {/* Filters */}

@@ -32,8 +32,8 @@ const StatusPill = ({ status }: { status: string }) => (
 
 /**
  * Read-only history for one purchase order: what was ordered, how much has
- * actually been received, under which batch/expiry, and — the part that
- * answers "I received it, so where did it go?" — the batch that stock landed
+ * actually been received, under which batch/expiry, and - the part that
+ * answers "I received it, so where did it go?" - the batch that stock landed
  * in plus the medicine's resulting total across all batches.
  */
 export default function PurchaseOrderDetailDialog({ purchaseOrderId, onClose }: Props) {
@@ -121,7 +121,7 @@ export default function PurchaseOrderDetailDialog({ purchaseOrderId, onClose }: 
                         )}
                       </TableCell>
                       <TableCell align="right" sx={{ color: "text.secondary" }}>
-                        {item.batchQuantityNow == null ? "—" : item.batchQuantityNow}
+                        {item.batchQuantityNow == null ? "-" : item.batchQuantityNow}
                       </TableCell>
                       <TableCell align="right" sx={{ fontWeight: 700 }}>{item.medicineTotalStock}</TableCell>
                       <TableCell><StatusPill status={item.status} /></TableCell>
@@ -133,7 +133,7 @@ export default function PurchaseOrderDetailDialog({ purchaseOrderId, onClose }: 
 
             <Typography variant="caption" sx={{ color: "text.secondary" }}>
               "Batch qty now" is what remains in that specific batch today (dispensing reduces it).
-              "Medicine total" is the medicine's usable stock across every non-expired batch — the
+              "Medicine total" is the medicine's usable stock across every non-expired batch - the
               figure the Current Stock tab's "Total (all batches)" column shows.
             </Typography>
           </Box>

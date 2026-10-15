@@ -20,7 +20,7 @@ import dayjs from "dayjs";
  *
  * Rows are readings, newest at the bottom, the way the paper chart runs. Every
  * value is optional: a blank cell means the reading was NOT TAKEN and stays
- * blank. It is never shown as 0 — on the reference chart, blood pressure was
+ * blank. It is never shown as 0 - on the reference chart, blood pressure was
  * empty all day, which is correct for a small child.
  *
  * A wrong reading is not edited. Correcting one records a replacement; the
@@ -57,7 +57,7 @@ interface Observation {
   extras: Record<string, number | string>;
 }
 
-/** A hospital-defined observation — see the ward chart settings screen. */
+/** A hospital-defined observation - see the ward chart settings screen. */
 interface FieldDef {
   observationFieldId: string;
   label: string;
@@ -76,7 +76,7 @@ const EMPTY = {
   bpSystolic: "", bpDiastolic: "", spo2: "", bloodSugar: "", painScore: "", remark: "",
 };
 
-/** A blank cell is "not taken" — never a zero, never a dash that looks like data. */
+/** A blank cell is "not taken" - never a zero, never a dash that looks like data. */
 const cell = (v: number | null | undefined, suffix = "") =>
   v === null || v === undefined ? "" : `${v}${suffix}`;
 
@@ -108,7 +108,7 @@ export default function ObservationChartDialog({ open, admission, onClose, readO
   const qc = useQueryClient();
   const admissionId = admission?.admissionId;
 
-  // The nursing day is NOT the calendar day — it starts at this hospital's
+  // The nursing day is NOT the calendar day - it starts at this hospital's
   // earliest shift (08:00 on the reference chart, 07:00 elsewhere). Read from the
   // chart profile, which falls back to working defaults when nothing is set, so
   // this never needs the hospital to have configured anything.
@@ -249,9 +249,9 @@ export default function ObservationChartDialog({ open, admission, onClose, readO
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
             <MonitorHeartRounded sx={{ color: BRAND.action }} />
             <Box>
-              <Typography variant="h6" sx={{ fontWeight: 700 }}>Observations — {admission?.patientName}</Typography>
+              <Typography variant="h6" sx={{ fontWeight: 700 }}>Observations - {admission?.patientName}</Typography>
               <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                {admission?.uhid} · {admission?.bed?.label || "—"} · chart day {chartDayStart} → {chartDayStart} next day
+                {admission?.uhid} · {admission?.bed?.label || "-"} · chart day {chartDayStart} → {chartDayStart} next day
               </Typography>
             </Box>
           </Box>
@@ -267,7 +267,7 @@ export default function ObservationChartDialog({ open, admission, onClose, readO
         <DialogContent dividers sx={{ p: 0 }}>
           {isLoading ? (
             // TableRowsSkeleton renders <TableRow>s, so it belongs inside a
-            // <TableBody> — wrapping it in a Box nests a tr inside a div.
+            // <TableBody> - wrapping it in a Box nests a tr inside a div.
             <Box sx={{ p: 3 }}><ListSkeleton rows={6} /></Box>
           ) : isError ? (
             <Box sx={{ p: 3 }}><ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /></Box>
@@ -289,7 +289,7 @@ export default function ObservationChartDialog({ open, admission, onClose, readO
                           color: "text.secondary", whiteSpace: "nowrap",
                           // Time is the chart's anchor. Once a hospital adds its own
                           // columns the grid is wider than the dialog, and without
-                          // this the time scrolls away — leaving rows of numbers
+                          // this the time scrolls away - leaving rows of numbers
                           // with nothing saying when they were taken.
                           ...(i === 0 ? STICKY_TIME_HEAD : null),
                         }}>
@@ -306,12 +306,12 @@ export default function ObservationChartDialog({ open, admission, onClose, readO
                     return (
                       <TableRow key={o.observationId} hover
                         sx={{
-                          // A superseded reading stays visible and struck through —
+                          // A superseded reading stays visible and struck through -
                           // the same as a crossed-out line on the paper chart.
                           opacity: dead ? 0.5 : 1,
                           "& td": { textDecoration: dead ? "line-through" : "none" },
                           // Set on the ROW, not the cell, so the pinned time cell can
-                          // inherit it and stay opaque over the scrolled columns —
+                          // inherit it and stay opaque over the scrolled columns -
                           // including on hover and on a correction's tint.
                           bgcolor: o.correctsId ? alpha(SEMANTIC.warning, 0.06) : "background.paper",
                         }}>
@@ -361,7 +361,7 @@ export default function ObservationChartDialog({ open, admission, onClose, readO
 
         <DialogActions sx={{ px: 3, py: 2, justifyContent: "space-between" }}>
           <Typography variant="caption" sx={{ color: "text.secondary" }}>
-            A blank means the reading was not taken. Readings are never edited — a correction is recorded alongside.
+            A blank means the reading was not taken. Readings are never edited - a correction is recorded alongside.
           </Typography>
           <Box sx={{ display: "flex", gap: 1 }}>
             <Button onClick={onClose} sx={{ textTransform: "none" }}>Close</Button>
@@ -381,7 +381,7 @@ export default function ObservationChartDialog({ open, admission, onClose, readO
             {correcting ? "Correct a reading" : "Record a reading"}
           </Typography>
           <Typography variant="caption" sx={{ color: "text.secondary" }}>
-            Fill in only what was measured — leave the rest blank.
+            Fill in only what was measured - leave the rest blank.
           </Typography>
         </DialogTitle>
         <DialogContent dividers sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
@@ -420,7 +420,7 @@ export default function ObservationChartDialog({ open, admission, onClose, readO
           </Box>
 
           {/* This hospital's own observations. When correcting, a since-retired
-              field still appears — the point of a correction is to state what
+              field still appears - the point of a correction is to state what
               the reading should have said, and it was live when it was taken. */}
           {(correcting ? fields : liveFields).length > 0 && (
             <Box>
@@ -433,7 +433,7 @@ export default function ObservationChartDialog({ open, admission, onClose, readO
                   const change = (val: string) => setExtras({ ...extras, [f.observationFieldId]: val });
                   const flag = outOfRange(f, v);
                   const help = !f.isActive
-                    ? "No longer charted — kept so this correction can reproduce the original."
+                    ? "No longer charted - kept so this correction can reproduce the original."
                     : flag
                       ? `Outside the normal ${f.normalLow ?? "?"}–${f.normalHigh ?? "?"}`
                       : undefined;
@@ -461,7 +461,7 @@ export default function ObservationChartDialog({ open, admission, onClose, readO
                       inputProps={{ inputMode: "decimal" }}
                       sx={{ width: 148 }}
                       helperText={help}
-                      // Out of the normal range is FLAGGED, not refused — using
+                      // Out of the normal range is FLAGGED, not refused - using
                       // the error state would tell the nurse to fix a reading
                       // that may well be the truth.
                       FormHelperTextProps={flag ? { sx: { color: SEMANTIC.danger, fontWeight: 600 } } : undefined}

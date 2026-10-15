@@ -8,8 +8,8 @@ import { SEMANTIC } from "@/styles/accents";
 
 /**
  * "Today: Branch A 10:00–14:00 · Branch B 14:00–19:00" on the doctor's
- * dashboard, and — when the clock says they should be at another branch than
- * the one they are working in — a button to switch to it. Shown only when the
+ * dashboard, and - when the clock says they should be at another branch than
+ * the one they are working in - a button to switch to it. Shown only when the
  * doctor's hours name branches; a doctor working one place sees nothing new.
  */
 

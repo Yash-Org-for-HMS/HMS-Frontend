@@ -33,7 +33,7 @@ const LAB_DARK = BRAND.actionDark;
 
 // Mirrors the backend's evaluateCriticalValue (lab.service.ts) so this live
 // preview matches what actually gets saved. Handles plain numbers, limit
-// notation ("<0.5", ">1000") and qualitative text — a positive culture or a
+// notation ("<0.5", ">1000") and qualitative text - a positive culture or a
 // reactive screen could previously never be flagged, because anything
 // non-numeric fell straight through as "not critical".
 const CRITICAL_QUALITATIVE = ["reactive", "positive", "detected", "growth", "incompatible", "isolated"];
@@ -94,7 +94,7 @@ export default function UpdateLabOrder() {
   });
 
   // Authoritative amount + per-line GST for the POS come from /billing/unbilled
-  // (server-priced), not the client-summed report prices — same source the lab
+  // (server-priced), not the client-summed report prices - same source the lab
   // billing queue uses, so the collection preview matches the invoice.
   const { data: posItem } = useQuery({
     queryKey: ["lab-order-unbilled", order?.patientId, id],
@@ -170,10 +170,10 @@ export default function UpdateLabOrder() {
 
   const reports: LabReportRow[] = order.reports ?? [];
   const patientName = `${order.patient?.firstName || ""} ${order.patient?.lastName || ""}`.trim() || "Unknown patient";
-  const doctorName = `${order.doctor?.user?.firstName || ""} ${order.doctor?.user?.lastName || ""}`.trim() || "—";
+  const doctorName = `${order.doctor?.user?.firstName || ""} ${order.doctor?.user?.lastName || ""}`.trim() || "-";
   const paid = order.paymentStatus === "PAID";
   // Inpatient (admission-linked) orders are settled on the discharge bill against
-  // the deposit — they're never collected at the POS counter (the billing endpoint
+  // the deposit - they're never collected at the POS counter (the billing endpoint
   // excludes them, so a POS attempt 400s "not a billable item").
   const ipd = !!order.admissionId;
   const collected = !!order.sampleCollectedAt;
@@ -241,7 +241,7 @@ export default function UpdateLabOrder() {
               <Avatar sx={{ bgcolor: `${LAB}14`, color: LAB_DARK, fontWeight: 700 }}>{getInitials(patientName)}</Avatar>
               <Box>
                 <Typography sx={{ ...typeScale.cardTitle }}>{patientName}</Typography>
-                <Typography sx={{ ...typeScale.caption }}>UHID {order.patient?.uhidNumber || "—"}</Typography>
+                <Typography sx={{ ...typeScale.caption }}>UHID {order.patient?.uhidNumber || "-"}</Typography>
               </Box>
             </Box>
             <Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap" }}>
@@ -273,7 +273,7 @@ export default function UpdateLabOrder() {
             </Grid>
             <Grid size={{ xs: 6, sm: 3 }}>
               <Fact icon={<AccessTimeRounded fontSize="small" />} label="Collected At">
-                {collected ? formatDateTime(order.sampleCollectedAt) : "—"}
+                {collected ? formatDateTime(order.sampleCollectedAt) : "-"}
               </Fact>
             </Grid>
             <Grid size={{ xs: 6, sm: 3 }}>
@@ -307,7 +307,7 @@ export default function UpdateLabOrder() {
         <Box sx={{ px: 3 }}>
           {locked && (
             <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>
-              <strong>Billing lock active.</strong> The invoice for these tests hasn't been paid — result entry is disabled until payment is collected.
+              <strong>Billing lock active.</strong> The invoice for these tests hasn't been paid - result entry is disabled until payment is collected.
             </Alert>
           )}
           {gatedByCollection && !locked && (
@@ -340,7 +340,7 @@ export default function UpdateLabOrder() {
                 <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1, mb: 1.5, flexWrap: "wrap" }}>
                   <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
                     {isCriticalNow && (
-                      <Tooltip title="Critical panic value — the ordering doctor is alerted on save">
+                      <Tooltip title="Critical panic value - the ordering doctor is alerted on save">
                         <WarningAmberRounded sx={{ color: SEMANTIC.danger, fontSize: 18 }} />
                       </Tooltip>
                     )}
@@ -354,7 +354,7 @@ export default function UpdateLabOrder() {
                   </Box>
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     {isCriticalNow && <Chip label="CRITICAL" size="small" color="error" sx={{ height: 22, fontWeight: 700 }} />}
-                    <Tooltip title="Automatic detection only covers a few numeric analytes. Tick this for anything else that needs the ordering doctor's acknowledgement — a positive culture, a reactive screen, an incompatible cross-match.">
+                    <Tooltip title="Automatic detection only covers a few numeric analytes. Tick this for anything else that needs the ordering doctor's acknowledgement - a positive culture, a reactive screen, an incompatible cross-match.">
                       <FormControlLabel
                         control={
                           <Checkbox
@@ -374,7 +374,7 @@ export default function UpdateLabOrder() {
                 <Grid container spacing={2}>
                   <Grid size={{ xs: 12, sm: 4 }}>
                     <TextField
-                      fullWidth size="small" label="Result" placeholder="—"
+                      fullWidth size="small" label="Result" placeholder="-"
                       value={results[rid]?.value || ""}
                       onChange={(e) => set(rid, "value", e.target.value)}
                       disabled={!canEdit}
@@ -407,7 +407,7 @@ export default function UpdateLabOrder() {
         <Box sx={{ p: 3, pt: 2.5, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 1.5, borderTop: "1px solid", borderColor: "divider" }}>
           <Typography sx={{ ...typeScale.caption }}>
             {criticalCount > 0
-              ? <Box component="span" sx={{ color: SEMANTIC.danger, fontWeight: 700 }}>Critical value(s) present — the doctor is notified on save.</Box>
+              ? <Box component="span" sx={{ color: SEMANTIC.danger, fontWeight: 700 }}>Critical value(s) present - the doctor is notified on save.</Box>
               : "Results are visible to the ordering doctor as soon as they're saved."}
           </Typography>
           <Button

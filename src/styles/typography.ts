@@ -13,7 +13,7 @@ import type { SxProps, Theme } from "@mui/material";
 /**
  * The ladder every size in the product now sits on.
  *
- * There were 31 distinct rem values across 118 files — nine different spellings
+ * There were 31 distinct rem values across 118 files - nine different spellings
  * of "small" alone (0.58 through 0.70). Near-duplicate sizes for the same job
  * are what make a UI feel unconsidered, and they drift further with every
  * screen added. All 313 were snapped to the nearest rung below; 150 moved.
@@ -23,17 +23,17 @@ import type { SxProps, Theme } from "@mui/material";
  * 11px is for dense labels that stand on their own.
  *
  * Use a token from typeScale where one fits. Where a raw size is unavoidable,
- * use a value FROM THIS LIST — anything between rungs re-opens the drift.
+ * use a value FROM THIS LIST - anything between rungs re-opens the drift.
  */
 export const FONT_SIZES = {
-  chip: "0.625rem",    // 10px — micro pills inside 17-18px chips
-  micro: "0.6875rem",  // 11px — dense standalone labels
-  caption: "0.75rem",  // 12px — captions, section labels, table headers
-  body: "0.875rem",    // 14px — default copy, table cells, buttons
-  title: "1rem",       // 16px — card and panel headings
-  large: "1.25rem",    // 20px — section headings
-  page: "1.5rem",      // 24px — page titles
-  hero: "2rem",        // 32px — the one number a screen is about
+  chip: "0.625rem",    // 10px - micro pills inside 17-18px chips
+  micro: "0.6875rem",  // 11px - dense standalone labels
+  caption: "0.75rem",  // 12px - captions, section labels, table headers
+  body: "0.875rem",    // 14px - default copy, table cells, buttons
+  title: "1rem",       // 16px - card and panel headings
+  large: "1.25rem",    // 20px - section headings
+  page: "1.5rem",      // 24px - page titles
+  hero: "2rem",        // 32px - the one number a screen is about
 } as const;
 
 export const typeScale = {

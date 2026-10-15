@@ -14,7 +14,7 @@ export function formatINR(amount: number | string | null | undefined, decimals =
 }
 
 /**
- * ₹ with natural precision (0–3 fraction digits) — exactly the bare
+ * ₹ with natural precision (0–3 fraction digits) - exactly the bare
  * `toLocaleString("en-IN")` that the report/dashboard views inlined. Use this
  * when trailing ".00" on whole amounts is undesirable; use {@link formatINR}
  * (with a `decimals` arg) when you need fixed 2dp.
@@ -29,12 +29,12 @@ export function formatINRAuto(amount: number | string | null | undefined): strin
  *
  * An axis gutter is 44–60px wide. A full "₹1,00,000" does not fit, and what
  * the reader gets instead is the RIGHT-hand end of it: the Revenue Trend axis
- * read "₹8000 · ₹8500 · ₹9000 · ₹9500 · ₹0", which is not even ascending —
+ * read "₹8000 · ₹8500 · ₹9000 · ₹9500 · ₹0", which is not even ascending -
  * those were ₹38,000, ₹28,500, ₹19,000 and ₹9,500 with their leading digits
  * cut off. A clipped number is worse than a rounded one, because it looks like
  * a number.
  *
- * Axes only. The tooltip and every table still show the exact figure —
+ * Axes only. The tooltip and every table still show the exact figure -
  * shortening is for the label that has no room, not for the value.
  */
 export function axisINR(value: number | string | null | undefined): string {
@@ -67,39 +67,39 @@ export function calculateAge(dob?: string | number | Date | null): number | null
 const DATE_FMT: Intl.DateTimeFormatOptions = { day: "2-digit", month: "short", year: "numeric" };
 
 /**
- * Format a date as "16 Jul 2026" — the one date format in the app.
+ * Format a date as "16 Jul 2026" - the one date format in the app.
  *
  * Named month rather than a numeric one, and the locale pinned rather than left
  * to the browser. Both matter: a bare `toLocaleDateString()` follows whatever
  * locale the user's browser reports, so the same medicine expiry rendered
- * `21/2/2027` for a receptionist on en-IN and `2/21/2027` for one on en-US —
+ * `21/2/2027` for a receptionist on en-IN and `2/21/2027` for one on en-US -
  * with `02/03/2027` meaning two different days on two screens. A month name
  * cannot be misread whichever way the reader is used to.
  *
  * Accepts a Date, timestamp, or date string.
  */
 export function formatDate(value: string | number | Date | null | undefined): string {
-  if (value == null || value === "") return "—";
+  if (value == null || value === "") return "-";
   const d = new Date(value);
-  return Number.isNaN(d.getTime()) ? "—" : d.toLocaleDateString("en-IN", DATE_FMT);
+  return Number.isNaN(d.getTime()) ? "-" : d.toLocaleDateString("en-IN", DATE_FMT);
 }
 
 /**
- * "Thursday, 22 August 2026" — the spelled-out form for a dashboard's date
+ * "Thursday, 22 August 2026" - the spelled-out form for a dashboard's date
  * line. Pinned to en-IN like the rest; this one had been hardcoded to en-US,
  * which put the month before the day on an Indian hospital's screen.
  */
 export function formatLongDate(value: string | number | Date): string {
   const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return "—";
+  if (Number.isNaN(d.getTime())) return "-";
   return d.toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 }
 
-/** The same date with a time beside it — "16 Jul 2026, 02:05 pm". */
+/** The same date with a time beside it - "16 Jul 2026, 02:05 pm". */
 export function formatDateTime(value: string | number | Date | null | undefined): string {
-  if (value == null || value === "") return "—";
+  if (value == null || value === "") return "-";
   const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return "—";
+  if (Number.isNaN(d.getTime())) return "-";
   return d.toLocaleString("en-IN", { ...DATE_FMT, hour: "2-digit", minute: "2-digit", hour12: true });
 }
 
@@ -133,7 +133,7 @@ export function getInitials(firstName?: string | null, lastName?: string | null,
 }
 
 /**
- * Initials from a doctor's display name — "Dr. Prakash Patel" → "PP".
+ * Initials from a doctor's display name - "Dr. Prakash Patel" → "PP".
  *
  * Distinct from {@link getInitials}, which takes first/last name fields; this
  * one takes the single rendered string the queue endpoints return, so it has to

@@ -16,7 +16,7 @@ export interface SidebarNavItem {
   section: string;
   /** Count shown on the icon; 0 or absent renders nothing. */
   badge?: number;
-  /** Module this entry belongs to — locked when the tenant lacks it. */
+  /** Module this entry belongs to - locked when the tenant lacks it. */
   module?: string;
 }
 
@@ -25,7 +25,7 @@ export interface SidebarNavItem {
  * locks and badges.
  *
  * Was five copies (doctor, nurse, lab, pharmacy, hospital-admin) that had
- * drifted — active tint 0.08 in three and 0.12 in two — and needed the same
+ * drifted - active tint 0.08 in three and 0.12 in two - and needed the same
  * one-line edit pasted into all five twice. Settled here on the majority.
  *
  * Reception and the platform console keep their own rendering: one draws a
@@ -45,7 +45,7 @@ export default function SidebarNav({
   onNavigate: (path: string) => void;
   /** Whether this entry's module is unavailable to the tenant. */
   isLocked?: (item: SidebarNavItem) => boolean;
-  /** Extra styling for the <List> — panels differ only in padding. */
+  /** Extra styling for the <List> - panels differ only in padding. */
   sx?: SxProps<Theme>;
 }) {
   return (
@@ -55,7 +55,7 @@ export default function SidebarNav({
       {items.map((item, idx, arr) => {
         const isActive = isNavItemActive(currentPath, item.path);
         const locked = isLocked?.(item) ?? false;
-        // First row of its section, not merely a change from the previous row —
+        // First row of its section, not merely a change from the previous row -
         // so an entry listed away from its group cannot print the heading twice.
         const startsSection = arr.findIndex((m) => m.section === item.section) === idx;
         return (

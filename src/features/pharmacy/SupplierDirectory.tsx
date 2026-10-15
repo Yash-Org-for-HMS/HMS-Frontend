@@ -122,7 +122,7 @@ export default function SupplierDirectory() {
   const handleSave = async () => {
     // Required-ness and format checked in ONE pass, so every problem surfaces on
     // its own field at once. The old flow reported "fill in all required fields"
-    // as a banner — across nine fields that meant hunting for the empty one, and
+    // as a banner - across nine fields that meant hunting for the empty one, and
     // it hid format errors until the required check happened to pass.
     const errors = validate(
       { supplierCode, supplierName, contactPersonName, phone, email, city, stateLoc, country, gstNumber },

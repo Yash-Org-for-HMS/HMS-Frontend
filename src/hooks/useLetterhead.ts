@@ -5,7 +5,7 @@ import type { BillHospital } from "@/components/billing/BillDocument";
 /**
  * The letterhead of the branch being worked at, for documents printed straight
  * from the browser (prescription, ID card, clinical records). Server-made
- * documents — bills, lab reports, consent forms — carry their own branch's
+ * documents - bills, lab reports, consent forms - carry their own branch's
  * identity already.
  *
  * The same rules as those: the hospital's details, with the branch's own
@@ -13,7 +13,7 @@ import type { BillHospital } from "@/components/billing/BillDocument";
  * when the hospital has more than one branch. Null until loaded (callers fall
  * back to the session's hospital name).
  *
- * `enabled` false holds off asking — for a dialog that is mounted closed.
+ * `enabled` false holds off asking - for a dialog that is mounted closed.
  */
 export function useLetterhead(enabled = true): BillHospital | null {
   const { data } = useQuery<BillHospital | null>({

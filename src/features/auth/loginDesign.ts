@@ -7,7 +7,7 @@ import { BRAND } from "@/styles/accents";
  * These two pages were built as separate copies of the same layout and then
  * drifted: the platform button quietly lost its `bgcolor`, leaving a white
  * label on a near-white page at 1.10:1, and all three auth screens kept
- * pointing at a `/login.jpg` that does not exist. Both are the same failure —
+ * pointing at a `/login.jpg` that does not exist. Both are the same failure -
  * a design duplicated by hand is a design that only gets fixed in one place.
  *
  * So the visual decisions live here and the pages supply only what genuinely
@@ -19,7 +19,7 @@ import { BRAND } from "@/styles/accents";
  * The single accent: focus rings, field icons, links, and the submit button.
  *
  * Taken from the product token rather than held privately here. This page used
- * to carry its own cyan (#0891b2) and a near-black submit button — the
+ * to carry its own cyan (#0891b2) and a near-black submit button - the
  * strongest contrast available, but it meant the first screen anyone sees
  * shared no colour with the logo sitting above it.
  */
@@ -29,7 +29,7 @@ const SUBMIT_HOVER = BRAND.actionDark;
 
 /**
  * Pill-shaped, near-borderless fields: soft neutral fill, fully rounded, colour
- * reserved for focus and errors. Placeholder-only — no floating label — so the
+ * reserved for focus and errors. Placeholder-only - no floating label - so the
  * pages must pass an `aria-label` on every input.
  */
 export const loginFieldSx = {
@@ -38,7 +38,7 @@ export const loginFieldSx = {
     borderRadius: "999px",
     backgroundColor: "#F5F5F7",
     transition: "box-shadow 0.2s ease, border-color 0.2s ease, background-color 0.2s ease",
-    // A visible-but-subtle border at rest — the fill alone read as invisible
+    // A visible-but-subtle border at rest - the fill alone read as invisible
     // against a similarly light page background.
     "& fieldset": { borderColor: "rgba(15,23,42,0.16)" },
     "&:hover fieldset": { borderColor: "rgba(15,23,42,0.30)" },
@@ -75,14 +75,14 @@ export const loginSubmitSx = {
  *
  * Busy is not the same state as disabled, and styling them the same was the
  * bug: submitting is the only thing that disables this button, so pressing
- * Login drained it to the pale grey `Mui-disabled` fill — the primary action
+ * Login drained it to the pale grey `Mui-disabled` fill - the primary action
  * on the first screen anyone sees, greyed out at the moment it is working
  * hardest. Worse, the loader inside it is tinted `primary.main`, so a blue
  * indicator sat on a grey ground at partial opacity and read as nothing at all.
  *
  * So a busy button keeps its brand fill and white label, and says what it is
  * doing in words rather than relying on an indicator being noticed. It stays
- * `disabled` for the real reason — a second submit must not fire — and carries
+ * `disabled` for the real reason - a second submit must not fire - and carries
  * `aria-busy` so it is announced as working rather than as unavailable.
  */
 export const loginSubmitBusySx = {

@@ -1,5 +1,5 @@
 import { SEMANTIC, NEUTRAL, BRAND } from "@/styles/accents";
-// Presentation metadata for claim statuses / enums — shared across the claims
+// Presentation metadata for claim statuses / enums - shared across the claims
 // list, detail, and form so labels and colors stay consistent.
 
 export const CLAIM_STATUS_META: Record<string, { label: string; color: string }> = {
@@ -34,7 +34,7 @@ export const PAYER_TYPE_OPTIONS = [
 
 export const RELATION_OPTIONS = ["Self", "Spouse", "Child", "Parent", "Other"];
 
-// Document checklist — mirrors CLAIM_DOC_CATALOG in the backend
+// Document checklist - mirrors CLAIM_DOC_CATALOG in the backend
 // (src/modules/claims/claims.constants.ts). Keep the two in sync.
 export type DocStage = "PREAUTH" | "FINAL";
 export const CLAIM_DOC_CATALOG: { code: string; label: string; stage: DocStage; required: boolean }[] = [

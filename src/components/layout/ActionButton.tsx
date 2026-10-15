@@ -2,9 +2,9 @@ import { Button, type ButtonProps } from "@mui/material";
 import { DISABLED_CONTAINED } from "@/styles/accents";
 
 interface ActionButtonProps extends ButtonProps {
-  /** Gradient start color — the module's accent. */
+  /** Gradient start color - the module's accent. */
   accentFrom?: string;
-  /** Gradient end color — the module's accent. */
+  /** Gradient end color - the module's accent. */
   accentTo?: string;
 }
 

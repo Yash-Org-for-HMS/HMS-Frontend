@@ -7,7 +7,7 @@ describe("graceText", () => {
     expect(graceText(1)).toBe("suspends in 1 day");
   });
 
-  // Zero is today, not "in 0 days" — the server floors the remainder, so a
+  // Zero is today, not "in 0 days" - the server floors the remainder, so a
   // tenant with hours left reads as 0.
   it("says today at zero", () => {
     expect(graceText(0)).toBe("suspends today");
@@ -16,8 +16,8 @@ describe("graceText", () => {
   // Past the grace window a tenant stays listed until their next sign-in flips
   // them, so the row has to explain why it is still here.
   it("explains a tenant whose grace has already run out", () => {
-    expect(graceText(-1)).toBe("grace ended 1 day ago — access blocked at next sign-in");
-    expect(graceText(-3)).toBe("grace ended 3 days ago — access blocked at next sign-in");
+    expect(graceText(-1)).toBe("grace ended 1 day ago - access blocked at next sign-in");
+    expect(graceText(-3)).toBe("grace ended 3 days ago - access blocked at next sign-in");
   });
 
   // A tenant with no overdue invoice carries no countdown, and neither does a

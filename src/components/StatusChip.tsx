@@ -2,9 +2,9 @@ import { Chip, type ChipProps } from "@mui/material";
 import { NEUTRAL } from "@/styles/accents";
 
 interface StatusChipProps extends Omit<ChipProps, "color" | "label"> {
-  /** Human-readable status text (falls back to "—"). */
+  /** Human-readable status text (falls back to "-"). */
   label?: string | null;
-  /** Accent colour (hex) — usually the server-provided `statusColor`. */
+  /** Accent colour (hex) - usually the server-provided `statusColor`. */
   color?: string | null;
 }
 
@@ -19,7 +19,7 @@ export default function StatusChip({ label, color, size = "small", sx, ...rest }
   const c = color || FALLBACK;
   return (
     <Chip
-      label={label || "—"}
+      label={label || "-"}
       size={size}
       sx={{
         bgcolor: `${c}22`,

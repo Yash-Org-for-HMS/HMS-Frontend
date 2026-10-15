@@ -29,12 +29,12 @@ interface WalkInOrderDialogProps {
   onCreated: () => void;
   /**
    * Pre-selected patient. When set the search box is replaced by a fixed
-   * summary — a nurse ordering from the queue already has the patient in
+   * summary - a nurse ordering from the queue already has the patient in
    * front of them, and re-searching invites picking the wrong one.
    */
   patient?: OrderForPatient | null;
   /**
-   * The clinician the order is raised UNDER — not whoever is typing it.
+   * The clinician the order is raised UNDER - not whoever is typing it.
    * A nurse ordering from the queue passes the doctor that patient is queued
    * for, so the record answers 'on whose authority'. The lab counter taking a
    * walk-in with an outside prescription has no internal doctor and omits it.
@@ -68,10 +68,10 @@ export default function WalkInOrderDialog({
   const [priority, setPriority] = useState(1);
   const [submitting, setSubmitting] = useState(false);
 
-  // Lab-specific — a basket of SOC lab tests picked via the browse picker.
+  // Lab-specific - a basket of SOC lab tests picked via the browse picker.
   const [labBasket, setLabBasket] = useState<PickedLabTest[]>([]);
   const [labPickerOpen, setLabPickerOpen] = useState(false);
-  // Radiology-specific — the test is chosen from the SOC radiology catalogue.
+  // Radiology-specific - the test is chosen from the SOC radiology catalogue.
   const [selectedTest, setSelectedTest] = useState<PickedRadTest | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [notes, setNotes] = useState("");
@@ -83,7 +83,7 @@ export default function WalkInOrderDialog({
   // Only the lab and radiology queues reach this: the nurse always passes a
   // patient in, so the search never runs there. Only fires once the user has
   // typed enough to narrow results.
-  // The request waits until typing pauses — it fired on every keystroke.
+  // The request waits until typing pauses - it fired on every keystroke.
   const debouncedPatientQuery = useDebouncedValue(patientQuery);
   const { data: patients = [], isFetching: searchingPatients } = useQuery<any[]>({
     queryKey: ["walkin-patient-search", debouncedPatientQuery],
@@ -180,7 +180,7 @@ export default function WalkInOrderDialog({
               <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 0.5 }}>
                 {doctorName
                   ? `Ordered under ${doctorName}`
-                  : "No ordering doctor on this visit — the order will record only who raised it."}
+                  : "No ordering doctor on this visit - the order will record only who raised it."}
               </Typography>
             </Box>
           ) : (
@@ -216,7 +216,7 @@ export default function WalkInOrderDialog({
           {kind === "lab" ? (
             <Box>
               <Button variant="outlined" startIcon={<ScienceRounded />} onClick={() => setLabPickerOpen(true)} sx={{ textTransform: "none" }}>
-                {labBasket.length ? `${labBasket.length} test${labBasket.length === 1 ? "" : "s"} selected — add / change` : "Select lab tests"}
+                {labBasket.length ? `${labBasket.length} test${labBasket.length === 1 ? "" : "s"} selected - add / change` : "Select lab tests"}
               </Button>
               {labBasket.length > 0 && (
                 <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75, mt: 1 }}>

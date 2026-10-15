@@ -3,7 +3,7 @@ import { Box, Skeleton, Stack } from "@mui/material";
 /**
  * Generic page placeholder shown while a lazily-loaded route chunk is fetched.
  * Rendered at the page-content level (inside each layout's <Outlet/>), so the
- * sidebar/nav stays put and only the content area shimmers — which reads as
+ * sidebar/nav stays put and only the content area shimmers - which reads as
  * "instant + loading" rather than a blank screen or a full-page spinner.
  */
 export default function PageSkeleton() {

@@ -12,9 +12,9 @@ const n = (v: unknown) => Number(v) || 0;
 
 /**
  * Every branch side by side, under the group's tiles (multi-branch plan,
- * phase 7). Each row follows the rule of the tile above it — cash as the Day
+ * phase 7). Each row follows the rule of the tile above it - cash as the Day
  * Book counts it, dues as the Outstanding register does, occupancy of census
- * beds — and the Total row is the group's figure, so the column adds up to it.
+ * beds - and the Total row is the group's figure, so the column adds up to it.
  * Money is net of refunds and not floored at zero, so a branch that paid out
  * more than it took today shows as a negative and the column still sums.
  */
@@ -29,7 +29,7 @@ export default function BranchComparison({ data }: { data: BranchComparisonData 
       <>{inr(r.outstanding)}<Typography component="span" variant="caption" sx={{ display: "block", color: "text.secondary" }}>{n(r.outstandingCount)} bill{n(r.outstandingCount) === 1 ? "" : "s"}</Typography></>,
       n(r.appointmentsToday).toLocaleString("en-IN"),
       n(r.inpatients).toLocaleString("en-IN"),
-      beds ? `${occ} of ${beds} · ${Math.round((occ / beds) * 100)}%` : "—",
+      beds ? `${occ} of ${beds} · ${Math.round((occ / beds) * 100)}%` : "-",
       `${n(r.admissionsToday)} · ${n(r.dischargesToday)}`,
     ];
     return cells.map((c, i) => (
@@ -42,7 +42,7 @@ export default function BranchComparison({ data }: { data: BranchComparisonData 
       <Box sx={{ px: 2.5, pt: 2, pb: 1 }}>
         <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>Branches side by side</Typography>
         <Typography variant="caption" sx={{ color: "text.secondary" }}>
-          Each branch's share of the figures above — the Total row is the group's, and the branches add up to it.
+          Each branch's share of the figures above - the Total row is the group's, and the branches add up to it.
         </Typography>
       </Box>
       <TableContainer sx={{ overflowX: "auto" }}>

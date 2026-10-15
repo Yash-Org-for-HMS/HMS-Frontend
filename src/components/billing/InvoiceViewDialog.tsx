@@ -25,7 +25,7 @@ interface Props {
   invoiceId: string;
   onClose: () => void;
   onChanged?: () => void;
-  /** Hide the "Collect Payment" form — used by the read-only admin oversight view. */
+  /** Hide the "Collect Payment" form - used by the read-only admin oversight view. */
   readOnly?: boolean;
   /**
    * Which billing mount to read through.
@@ -63,7 +63,7 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
   const [methodId, setMethodId] = useState("");
   const [paying, setPaying] = useState(false);
   const [voiding, setVoiding] = useState(false);
-  // The void endpoint requires a reason (min 3 chars) — it is an audited
+  // The void endpoint requires a reason (min 3 chars) - it is an audited
   // financial action. This used to be a window.confirm, which cannot collect
   // one, so every void returned 400 and the invoice never cancelled.
   const [voidOpen, setVoidOpen] = useState(false);
@@ -162,8 +162,8 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
                     { label: "Date", value: formatDate(invoice.invoiceDate) },
                   ]}
                   metaRight={[
-                    { label: "Patient", value: invoice.patient ? `${invoice.patient.firstName} ${invoice.patient.lastName}` : "—" },
-                    { label: "UHID", value: invoice.patient?.uhidNumber || "—" },
+                    { label: "Patient", value: invoice.patient ? `${invoice.patient.firstName} ${invoice.patient.lastName}` : "-" },
+                    { label: "UHID", value: invoice.patient?.uhidNumber || "-" },
                   ]}
                   totals={{
                     subtotal: Number(invoice.grossAmount || 0),
@@ -173,7 +173,7 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
                     total: Number(invoice.netAmount || 0), paid: totalPaid, refunded: totalRefunded, balance,
                     balanceNote: reopenedByRefund > 0.005
                       ? (wholeBalanceIsRefund
-                          ? "This bill was paid and then refunded — the balance is the refund, not an unpaid amount."
+                          ? "This bill was paid and then refunded - the balance is the refund, not an unpaid amount."
                           : `Includes ${formatINR(reopenedByRefund)} returned by refund.`)
                       : undefined,
                   }}
@@ -183,12 +183,12 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
                           medicine and the price but never which batch left the
                           shelf, so the copy the patient keeps could not be
                           matched against a recall. Absent on a bill dispensed
-                          before the ledger recorded a batch — printing nothing
+                          before the ledger recorded a batch - printing nothing
                           is better than printing a guess. */}
                       {dispensedBatches.length > 0 && (
                         <div style={{ marginTop: 16 }}>
                           <div style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", letterSpacing: 1, marginBottom: 6 }}>
-                            MEDICINES DISPENSED — BATCH &amp; EXPIRY
+                            MEDICINES DISPENSED - BATCH &amp; EXPIRY
                           </div>
                           {dispensedBatches.map((m) => (
                             <div key={m.medicineId} style={{ fontSize: 12, color: "#4b5563", marginTop: 4 }}>
@@ -207,7 +207,7 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
                           <div style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", letterSpacing: 1, marginBottom: 6 }}>PAYMENTS</div>
                           {invoice.Payment.map((p: Payment, i: number) => (
                             <div key={i} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#4b5563", marginTop: 4 }}>
-                              <span>{formatDate(p.createdAt)} · {p.paymentMethod?.methodName || "—"}</span>
+                              <span>{formatDate(p.createdAt)} · {p.paymentMethod?.methodName || "-"}</span>
                               <span>{formatINR(p.paidAmount)}</span>
                             </div>
                           ))}
@@ -223,7 +223,7 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
                      *
                      * The HSN column was added here without the tax columns that
                      * give it meaning, so a taxed invoice printed a code and no
-                     * rate, no taxable value and no CGST/SGST — which is not a
+                     * rate, no taxable value and no CGST/SGST - which is not a
                      * tax invoice, and is exactly what Rule 46 requires. The IPD
                      * bill has had these columns all along; this one had not.
                      *
@@ -255,7 +255,7 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
                       {invoice.InvoiceItem?.map((it: InvoiceItem, i: number) => {
                         const rate = Number(it.taxPercent ?? 0);
                         const tax = Number(it.taxAmount ?? 0);
-                        // Net of any discount apportioned to the line — the same
+                        // Net of any discount apportioned to the line - the same
                         // basis the GST report files on, so the bill and the
                         // return cannot disagree.
                         const taxable = Number(it.totalPrice ?? 0) - Number(it.discountAmount ?? 0);
@@ -263,12 +263,12 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
                         return (
                         <tr key={i}>
                           <td style={cell}>{it.description}</td>
-                          {showHsn && <td style={cell}>{it.hsnCode || "—"}</td>}
+                          {showHsn && <td style={cell}>{it.hsnCode || "-"}</td>}
                           <td style={{ ...cell, textAlign: "center" }}>{it.quantity}</td>
                           {showTax && <td style={{ ...cell, textAlign: "right" }}>{rate > 0 ? `${rate}%` : "Exempt"}</td>}
                           {showTax && <td style={{ ...cell, textAlign: "right" }}>{formatINR(taxable)}</td>}
-                          {showTax && <td style={{ ...cell, textAlign: "right" }}>{rate > 0 ? formatINR(cgst) : "—"}</td>}
-                          {showTax && <td style={{ ...cell, textAlign: "right" }}>{rate > 0 ? formatINR(sgst) : "—"}</td>}
+                          {showTax && <td style={{ ...cell, textAlign: "right" }}>{rate > 0 ? formatINR(cgst) : "-"}</td>}
+                          {showTax && <td style={{ ...cell, textAlign: "right" }}>{rate > 0 ? formatINR(sgst) : "-"}</td>}
                           <td style={{ ...cell, textAlign: "right" }}>{formatINR(Number(it.totalPrice ?? 0) + tax)}</td>
                         </tr>
                         );
@@ -301,7 +301,7 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
                   {wholeBalanceIsRefund && (
                     <Typography variant="caption" sx={{ display: "block", mb: 1.5, color: SEMANTIC.warning, fontWeight: 600 }}>
                       {formatINR(totalRefunded)} was already refunded on this bill. Taking payment again starts a new
-                      payment, which can then be refunded again — only do this if the patient is genuinely paying once more.
+                      payment, which can then be refunded again - only do this if the patient is genuinely paying once more.
                     </Typography>
                   )}
                   <Grid container spacing={1.5}>
@@ -331,7 +331,7 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
               )}
 
               {/* Refunding belongs to the INVOICE, not to the appointment that
-                  created it — this dialog is the only way most invoices are ever
+                  created it - this dialog is the only way most invoices are ever
                   opened (IPD bills and hand-generated OPD invoices have no
                   appointment at all). */}
               {/* The gap lives here, not inside RefundSection. Its other mount

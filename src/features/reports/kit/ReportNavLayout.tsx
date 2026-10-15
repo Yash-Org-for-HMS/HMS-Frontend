@@ -37,7 +37,7 @@ interface Props {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   componentProps?: Record<string, any>;
   /**
-   * Shown in the content pane INSTEAD of the active report — a skeleton while
+   * Shown in the content pane INSTEAD of the active report - a skeleton while
    * a shared fetch is in flight, or an error state. The picker stays visible so
    * the page doesn't collapse to nothing while loading.
    */
@@ -48,8 +48,8 @@ interface Props {
  * The shared shell for every reports page: a grouped, collapsible picker on the
  * left and the selected report on the right.
  *
- * Each panel used to carry its own copy of this — four near-identical
- * implementations, plus three panels still on a tab bar — so the reports pages
+ * Each panel used to carry its own copy of this - four near-identical
+ * implementations, plus three panels still on a tab bar - so the reports pages
  * looked and behaved differently depending on which one you opened.
  */
 export default function ReportNavLayout({
@@ -60,7 +60,7 @@ export default function ReportNavLayout({
 
   /**
    * The open report lives in the URL (`?view=`), so a report can be linked to,
-   * bookmarked and reached by the back button — and so a dashboard figure can
+   * bookmarked and reached by the back button - and so a dashboard figure can
    * hand off to the register that explains it, carrying its filter along.
    *
    * Falls back to the caller's initialKey, so a panel that never sets `view`
@@ -90,7 +90,7 @@ export default function ReportNavLayout({
 
   // Only what the user has explicitly toggled. Anything absent falls back to
   // "open if it holds the active report" at render time, so arriving on a
-  // report by URL expands its group — the previous version computed this once
+  // report by URL expands its group - the previous version computed this once
   // at mount, which left the target group collapsed and the pane looking empty
   // when a link pointed into it.
   const [open, setOpen] = useState<Record<string, boolean>>({});

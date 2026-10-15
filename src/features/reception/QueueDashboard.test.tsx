@@ -32,7 +32,7 @@ beforeEach(() => {
   socket.connected = true;
 });
 
-describe("QueueDashboard — live updates", () => {
+describe("QueueDashboard - live updates", () => {
   it("an outpatient change asks again; a lab change and the first connect do not", async () => {
     renderWithProviders(<QueueDashboard />);
     await waitFor(() => expect(queueAsks()).toBe(1));
@@ -49,7 +49,7 @@ describe("QueueDashboard — live updates", () => {
     await waitFor(() => expect(queueAsks()).toBe(3));
   });
 
-  it("a reconnect after a while asks — changes may have been missed", async () => {
+  it("a reconnect after a while asks - changes may have been missed", async () => {
     renderWithProviders(<QueueDashboard />);
     await waitFor(() => expect(queueAsks()).toBe(1));
     const spy = vi.spyOn(Date, "now").mockReturnValue(Date.now() + 60_000);

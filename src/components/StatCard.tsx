@@ -10,17 +10,17 @@ export interface StatCardProps {
   /** Label shown under (vertical) or beside (horizontal) the value. */
   label: string;
   value: ReactNode;
-  /** Accent colour (hex) for the icon tile — and the value in the horizontal layout. */
+  /** Accent colour (hex) for the icon tile - and the value in the horizontal layout. */
   color?: string;
   /** Optional secondary line under the value. */
   sub?: ReactNode;
   loading?: boolean;
   /** When set, the whole card becomes clickable. */
   onClick?: () => void;
-  /** "vertical" (icon top, big value below — default) or "horizontal" (icon left). */
+  /** "vertical" (icon top, big value below - default) or "horizontal" (icon left). */
   layout?: "vertical" | "horizontal";
   /**
-   * Raw current value. Pass with `previous` to show a ▲/▼ chip — the same
+   * Raw current value. Pass with `previous` to show a ▲/▼ chip - the same
    * comparison the reports KPI tile uses. A count with no baseline can't tell
    * anyone whether the day is going well, which is why every dashboard tile
    * should carry one where a sensible baseline exists.
@@ -28,7 +28,7 @@ export interface StatCardProps {
   current?: number;
   /** Raw comparable value from the prior period. */
   previous?: number | null;
-  /** Whether a higher value is good — drives the delta colour. Default true. */
+  /** Whether a higher value is good - drives the delta colour. Default true. */
   higherIsBetter?: boolean;
   /** What the comparison is against, shown on hover. Default "vs previous period". */
   deltaLabel?: string;
@@ -50,7 +50,7 @@ export default function StatCard({
   const horizontal = layout === "horizontal";
   // Locale pinned like every other figure in the app: a bare toLocaleString()
   // follows the browser, so the same count grouped 1,20,148 for one user and
-  // 120,148 for another — beside formatINR values that always group en-IN.
+  // 120,148 for another - beside formatINR values that always group en-IN.
   const displayValue = typeof value === "number" ? value.toLocaleString("en-IN") : value;
   const tileSize = horizontal ? 44 : 40;
 
@@ -59,11 +59,11 @@ export default function StatCard({
   const delta = current != null ? computeDelta(current, previous, higherIsBetter) : null;
   const showDelta = !loading && delta != null && delta.mode !== "none";
   // Below MIN_PCT_BASELINE a percentage overstates the move, so show the plain
-  // difference instead — same rule as the reports KPI tile.
+  // difference instead - same rule as the reports KPI tile.
   //
   // Magnitude only, in both modes: the arrow carries the direction, so signing
   // the number too rendered a drop of one as "↓ -1" while the percentage mode
-  // showed a bare "96.6%" — one chip, two conventions.
+  // showed a bare "96.6%" - one chip, two conventions.
   const deltaText = delta == null ? ""
     : delta.mode === "abs"
       ? String(Math.abs(Math.round(delta.abs!)))
@@ -115,13 +115,13 @@ export default function StatCard({
         flexDirection: horizontal ? "row" : "column",
         // Vertical cards pack from the TOP (icon, then value) so the number sits
         // at the same height in every card of a row regardless of whether that
-        // card has a `sub` line — "space-between" was bottom-anchoring the value
+        // card has a `sub` line - "space-between" was bottom-anchoring the value
         // block, so a taller block (icon+value+label+sub) pushed its number up
         // while a shorter one (icon+value+label) let its number sit lower,
         // reading as an uneven row. Horizontal cards keep space-between (icon
         // and value sit side by side, not stacked, so this doesn't apply there).
         justifyContent: horizontal ? "space-between" : "flex-start",
-        // Was 160 — a fixed floor much taller than the actual content (icon +
+        // Was 160 - a fixed floor much taller than the actual content (icon +
         // number + label, ~130px with the tightened padding/icon below), which
         // left a visible dead zone under cards that don't have a `sub` line.
         // 128 fits the common case snugly; a card WITH a sub line still grows
@@ -147,7 +147,7 @@ export default function StatCard({
           <Typography
             // h4 wrapped long currency values (e.g. "₹1,20,000.00") onto a
             // second line at typical card widths, which re-introduced the same
-            // "numbers don't line up" look this component just fixed — h5 gives
+            // "numbers don't line up" look this component just fixed - h5 gives
             // the row enough margin to stay on one line while still reading as
             // the card's headline number.
             variant={horizontal ? "h6" : "h5"}
@@ -165,7 +165,7 @@ export default function StatCard({
         </Typography>
         {/* The sub-line is skeletoned too, not just the number. Most callers
             build it from a `?? 0` fallback, so while the query is in flight it
-            reads as a statement of fact — "No beds configured" on a ward with
+            reads as a statement of fact - "No beds configured" on a ward with
             55 beds, "0 unpaid bills" before the bills have arrived. A card that
             asserts something false for a second is worse than one that says
             nothing yet. */}

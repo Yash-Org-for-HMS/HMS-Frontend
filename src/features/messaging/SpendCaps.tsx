@@ -90,7 +90,7 @@ export default function SpendCaps() {
     <Stack spacing={3}>
       {uncapped && (
         <Alert severity="warning">
-          No default cap is set, so a hospital can send without limit on your gateway — and the bill
+          No default cap is set, so a hospital can send without limit on your gateway - and the bill
           reaches you before the invoice reaches them.
         </Alert>
       )}
@@ -99,7 +99,7 @@ export default function SpendCaps() {
         <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5 }}>Monthly cap</Typography>
         <Typography variant="body2" sx={{ color: NEUTRAL.muted, mb: 2 }}>
           Applied to every hospital that does not have a cap of its own. A message that would take a
-          hospital over is not sent — it is recorded with the reason, and never billed.
+          hospital over is not sent - it is recorded with the reason, and never billed.
         </Typography>
 
         <Stack direction="row" spacing={1} alignItems="flex-start">

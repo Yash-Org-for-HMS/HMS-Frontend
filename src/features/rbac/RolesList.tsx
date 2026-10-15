@@ -19,7 +19,7 @@ import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 
 const headSx = { color: "text.secondary", fontWeight: 600, textTransform: "none", letterSpacing: "normal", fontSize: "0.875rem", bgcolor: "background.paper" } as const;
 
-// Mirrors backend/src/lib/roleCatalog.ts — the standard set seeded into every
+// Mirrors backend/src/lib/roleCatalog.ts - the standard set seeded into every
 // hospital. Custom (tenant) roles are not offered: access is by these fixed roles.
 const SYSTEM_ROLES: { code: string; name: string }[] = [
   { code: "H_ADMIN", name: "Hospital Admin" },
@@ -48,7 +48,7 @@ export default function RolesList() {
   const [search, setSearch] = useState("");
 
   // Fetch all roles so we can aggregate the per-hospital copies; presentational.
-  // The request waits until typing pauses — it fired on every keystroke.
+  // The request waits until typing pauses - it fired on every keystroke.
   const debouncedSearch = useDebouncedValue(search);
   const { data: roles = [], isLoading: loading, isError, error, refetch } = useQuery<any[]>({
     queryKey: ["rbac-roles", debouncedSearch],
@@ -77,11 +77,11 @@ export default function RolesList() {
     <PageContainer>
       <PageHeader
         title={t("rbac.title", "Hospital Roles")}
-        subtitle="The standard roles every hospital uses. Roles are fixed — grant access by assigning staff to a role on the Users screen."
+        subtitle="The standard roles every hospital uses. Roles are fixed - grant access by assigning staff to a role on the Users screen."
       />
 
       <Alert severity="info" sx={{ mb: 3, borderRadius: 2 }}>
-        Every hospital uses the same <strong>standard role set</strong> below. There are no custom roles — assign staff to one of these roles from the Users screen.
+        Every hospital uses the same <strong>standard role set</strong> below. There are no custom roles - assign staff to one of these roles from the Users screen.
       </Alert>
 
       <FilterBar>

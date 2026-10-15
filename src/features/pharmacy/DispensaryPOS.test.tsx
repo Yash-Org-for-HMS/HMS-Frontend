@@ -4,7 +4,7 @@ import { renderWithProviders } from "@/test/renderWithProviders";
 
 /**
  * The pharmacy counter re-reads its lists when the pharmacy's own work changes
- * — a prescription written, a sale or stock movement at another counter, a sale
+ * - a prescription written, a sale or stock movement at another counter, a sale
  * paid for at reception. Lab work, the outpatient flow and lab payments change
  * nothing here, and the first connect no longer repeats the screen's own load.
  */
@@ -29,7 +29,7 @@ beforeEach(() => {
   get.mockResolvedValue({ data: { data: [] } });
 });
 
-describe("DispensaryPOS — live updates", () => {
+describe("DispensaryPOS - live updates", () => {
   it("a pharmacy event re-reads the work and the stock; other kinds and the first connect do not", async () => {
     renderWithProviders(<DispensaryPOS />);
     await waitFor(() => {

@@ -15,7 +15,7 @@ interface PageHeaderProps {
  * action always sit in the same place.
  *
  * The row is top-aligned, not bottom-aligned. Bottom-aligning made the title's
- * position depend on which was taller — the title block or the buttons — so a
+ * position depend on which was taller - the title block or the buttons - so a
  * page with no subtitle rendered its title 5px lower than its neighbours
  * (measured: Lab Orders Queue at y=29 against y=24 everywhere else). The title
  * is the thing the eye tracks between pages, so its top is what must not move.

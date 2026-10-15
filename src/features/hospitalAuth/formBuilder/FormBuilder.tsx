@@ -57,7 +57,7 @@ export default function FormBuilder() {
   const toast = useToast();
   const [formData, setFormData] = useState({
     formName: "",
-    // The category the app actually offers somewhere — see the API's list.
+    // The category the app actually offers somewhere - see the API's list.
     description: "",
   });
 
@@ -254,7 +254,7 @@ export default function FormBuilder() {
                         </Tooltip>
                       </Box>
 
-                      {/* Label + input type (flex, not Grid-in-flex — minWidth:0 lets them shrink, no overflow) */}
+                      {/* Label + input type (flex, not Grid-in-flex - minWidth:0 lets them shrink, no overflow) */}
                       <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
                         <TextField label="Field Label (Question)" value={field.fieldLabel} onChange={(e) => handleFieldChange(idx, "fieldLabel", e.target.value)} required size="small" sx={{ flex: "2 1 220px", minWidth: 0 }} />
                         <TextField select label="Input Type" value={field.fieldType} onChange={(e) => handleFieldChange(idx, "fieldType", e.target.value)} required size="small" sx={{ flex: "1 1 150px", minWidth: 0 }}>
@@ -300,7 +300,7 @@ export default function FormBuilder() {
                       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2, mt: 1.5, flexWrap: "wrap" }}>
                         <FormControlLabel control={<Switch size="small" checked={field.isRequired} onChange={(e) => handleFieldChange(idx, "isRequired", e.target.checked)} />}
                           label={<Typography variant="body2" sx={{ color: "text.secondary" }}>Required</Typography>} />
-                        <Typography variant="caption" sx={{ color: "text.secondary", minWidth: 0, wordBreak: "break-word" }}>name: <Box component="code" sx={{ color: "text.primary" }}>{field.fieldName || "—"}</Box></Typography>
+                        <Typography variant="caption" sx={{ color: "text.secondary", minWidth: 0, wordBreak: "break-word" }}>name: <Box component="code" sx={{ color: "text.primary" }}>{field.fieldName || "-"}</Box></Typography>
                       </Box>
                     </Paper>
                   ))}

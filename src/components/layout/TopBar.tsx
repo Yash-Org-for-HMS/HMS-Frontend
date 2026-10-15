@@ -31,9 +31,9 @@ interface TopBarProps {
 /**
  * The bar across the top of every hospital panel: which hospital and which
  * branch, then who is signed in and as what. The three facts that matter on a
- * shared desk computer were the smallest things on the screen — the hospital a
+ * shared desk computer were the smallest things on the screen - the hospital a
  * cut-off caption at the foot of the sidebar, the role not shown at all, the
- * branch picker scrolling out of sight — so they sit here, always in view.
+ * branch picker scrolling out of sight - so they sit here, always in view.
  * Search, announcements, switching panel and signing out moved up with them;
  * the sidebar is navigation only.
  */

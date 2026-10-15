@@ -29,7 +29,7 @@ export interface PageMeta {
 export interface Paged<T> {
   rows: T[];
   meta: PageMeta | null;
-  /** True when the server capped the result set — `rows` is not the whole story. */
+  /** True when the server capped the result set - `rows` is not the whole story. */
   truncated: boolean;
 }
 
@@ -67,7 +67,7 @@ export async function apiGet<T>(url: string, config?: AxiosRequestConfig): Promi
 }
 
 /**
- * A list endpoint. Always returns an array — an endpoint that answers `null` or
+ * A list endpoint. Always returns an array - an endpoint that answers `null` or
  * an object gives `rows: []` rather than something a `.map()` will throw on.
  */
 export async function apiGetList<T>(url: string, config?: AxiosRequestConfig): Promise<Paged<T>> {

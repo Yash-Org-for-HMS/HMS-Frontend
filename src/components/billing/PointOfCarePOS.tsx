@@ -16,7 +16,7 @@ interface PointOfCarePOSProps {
   /**
    * Fired the moment the payment is recorded, before the success animation.
    * onSuccess runs behind a 2s delay so the receipt can be read, and callers
-   * were refreshing their data there — so a till showed a just-paid sale as
+   * were refreshing their data there - so a till showed a just-paid sale as
    * unpaid for as long as the animation lasted.
    */
   onPaid?: () => void;
@@ -44,7 +44,7 @@ export default function PointOfCarePOS({ open, onClose, onSuccess, onPaid, patie
   const [success, setSuccess] = useState(false);
   const [receiptData, setReceiptData] = useState<any>(null);
 
-  // Financial Math — GST comes from the item's rate-card taxPercent (0 = exempt), or
+  // Financial Math - GST comes from the item's rate-card taxPercent (0 = exempt), or
   // a precomputed taxAmount for a mixed-rate pharmacy order (per-medicine). Computed
   // on gross; the server re-derives it authoritatively at collection.
   const grossAmount = Number(item?.amount || 0);

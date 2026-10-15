@@ -124,7 +124,7 @@ export default function MessagingSettings({ base = "/hospital/messaging" }: { ba
     <Stack spacing={3}>
       {!data.credentialStorageAvailable && (
         <Alert severity="warning">
-          This server cannot store gateway credentials yet — <code>CREDENTIALS_ENCRYPTION_KEY</code> is not set.
+          This server cannot store gateway credentials yet - <code>CREDENTIALS_ENCRYPTION_KEY</code> is not set.
           Ask whoever runs the server to set one; until then the form below cannot be saved.
         </Alert>
       )}
@@ -136,7 +136,7 @@ export default function MessagingSettings({ base = "/hospital/messaging" }: { ba
             : "No platform gateway yet. Until one is set up, hospitals can only send if they connect their own."
           : live
             ? "SMS is live. Messages sent from reception will reach patients."
-            : "SMS is not live yet. Messages are recorded but not delivered — the screens say so when that happens."}
+            : "SMS is not live yet. Messages are recorded but not delivered - the screens say so when that happens."}
       </Alert>
 
       {/* A tenant should know how close it is BEFORE messages start being
@@ -145,7 +145,7 @@ export default function MessagingSettings({ base = "/hospital/messaging" }: { ba
       {data.quota && data.quota.capMicros !== null && (
         <Alert severity={data.quota.isExceeded ? "error" : data.quota.isWarning ? "warning" : "info"}>
           {data.quota.isExceeded
-            ? `This month's messaging allowance is used up — ${inrFromMicros(data.quota.spentMicros)} of ${inrFromMicros(data.quota.capMicros)}. Messages are being recorded but not sent until it resets.`
+            ? `This month's messaging allowance is used up - ${inrFromMicros(data.quota.spentMicros)} of ${inrFromMicros(data.quota.capMicros)}. Messages are being recorded but not sent until it resets.`
             : `Messaging this month: ${inrFromMicros(data.quota.spentMicros)} of ${inrFromMicros(data.quota.capMicros)} used, ${inrFromMicros(data.quota.remainingMicros)} left.`}
         </Alert>
       )}
@@ -184,8 +184,8 @@ function GatewayCard({ base, status, onSaved }: { base: string; status: Status; 
   const isPlatform = status.scope === "PLATFORM";
 
   // Only prefill from a gateway this scope actually OWNS. A tenant looking at
-  // the platform gateway is not editing it — saving this form creates their own
-  // — so putting someone else's registered sender ID in an editable field
+  // the platform gateway is not editing it - saving this form creates their own
+  // - so putting someone else's registered sender ID in an editable field
   // invites them to adopt a header they have no right to send under.
   const own = configured && sms.isOwnConfig;
 
@@ -200,7 +200,7 @@ function GatewayCard({ base, status, onSaved }: { base: string; status: Status; 
     mutationFn: () =>
       axiosInstance.put(`${base}/config`, {
         channel: "SMS", provider, senderId, dltEntityId,
-        // Blank means "keep the key you already have" — it is never sent back to
+        // Blank means "keep the key you already have" - it is never sent back to
         // the browser, so there is nothing to round-trip.
         authKey: authKey || undefined,
         isActive,
@@ -213,7 +213,7 @@ function GatewayCard({ base, status, onSaved }: { base: string; status: Status; 
     mutationFn: () => axiosInstance.post(`${base}/test`, { channel: "SMS", phone: testPhone }),
     onSuccess: (r) => {
       // Two distinct outcomes, and they must not look alike. A server running
-      // MESSAGING_PROVIDER=FAKE answers "sent" without anything leaving it —
+      // MESSAGING_PROVIDER=FAKE answers "sent" without anything leaving it -
       // reported as success, that sends an operator hunting through the
       // provider's empty logs for a message that was never submitted.
       //
@@ -228,7 +228,7 @@ function GatewayCard({ base, status, onSaved }: { base: string; status: Status; 
       } else {
         toast.success(
           providerMessageId
-            ? `Accepted by the gateway for ${sentTo}. Ref ${providerMessageId} — if it does not arrive, look this up in MSG91 → Logs.`
+            ? `Accepted by the gateway for ${sentTo}. Ref ${providerMessageId} - if it does not arrive, look this up in MSG91 → Logs.`
             : `Test sent to ${sentTo}`,
         );
       }
@@ -327,7 +327,7 @@ function GatewayCard({ base, status, onSaved }: { base: string; status: Status; 
  *
  * Mirrors normalizeTemplateSyntax / toProviderSyntax on the server so the box
  * below updates as you type. The server converts on save regardless, so this
- * copy being wrong could never store the wrong thing — it would only mislead.
+ * copy being wrong could never store the wrong thing - it would only mislead.
  */
 const toMsg91 = (v: string) => v.replace(/{{s*([a-zA-Z0-9_]+)s*}}/g, (_m, n) => "##" + n + "##");
 
@@ -376,12 +376,12 @@ function TemplateCard({ base, kind, readOnly, onSaved }: {
           helperText={
             readOnly
               ? undefined
-              : "Paste MSG91's ##name## version straight in if you have it — it converts on save."
+              : "Paste MSG91's ##name## version straight in if you have it - it converts on save."
           }
         />
 
         {/* The same sentence MSG91 needs. Shown rather than asked for, because
-            retyping it there is how the two copies drift apart — and a drifted
+            retyping it there is how the two copies drift apart - and a drifted
             template is rejected by the operator after we have been billed. */}
         {!readOnly && body.trim() !== "" && (
           <Box sx={{ border: "1px solid", borderColor: "divider", borderRadius: 1.5, p: 1.5, bgcolor: "background.default" }}>
@@ -395,7 +395,7 @@ function TemplateCard({ base, kind, readOnly, onSaved }: {
                 onClick={() => {
                   navigator.clipboard?.writeText(msg91Body).then(
                     () => { setCopied(true); window.setTimeout(() => setCopied(false), 1600); },
-                    () => toast.error("Could not copy — select the text and copy it manually."),
+                    () => toast.error("Could not copy - select the text and copy it manually."),
                   );
                 }}
               >
@@ -408,7 +408,7 @@ function TemplateCard({ base, kind, readOnly, onSaved }: {
               {msg91Body}
             </Typography>
             <Typography variant="caption" sx={{ color: NEUTRAL.muted, display: "block", mt: 0.75 }}>
-              Variables: {kind.variables.join(", ")} — add each by that exact name in MSG91.
+              Variables: {kind.variables.join(", ")} - add each by that exact name in MSG91.
             </Typography>
           </Box>
         )}
@@ -419,7 +419,7 @@ function TemplateCard({ base, kind, readOnly, onSaved }: {
           </Typography>
           {preview.unicode && (
             <SoftChip
-              label={`"${preview.offender}" forces Unicode — 70 characters per segment instead of 160`}
+              label={`"${preview.offender}" forces Unicode - 70 characters per segment instead of 160`}
               bg="rgba(245,158,11,0.14)" color={SEMANTIC.warning}
             />
           )}
@@ -434,7 +434,7 @@ function TemplateCard({ base, kind, readOnly, onSaved }: {
             {/* Only the lower field is load-bearing. The earlier copy here sent
                 operators hunting for a separate "Flow" record and a DLT-portal
                 id, and both sent the wrong way: MSG91 renamed Flows to
-                Templates (one record, two field names in their API — see
+                Templates (one record, two field names in their API - see
                 lib/messaging/msg91.ts), and MSG91 submits the text to DLT on
                 the account's behalf, so most operators never see a DLT id at
                 all. Only providerFlowId is read on send; dltTemplateId is
@@ -442,12 +442,12 @@ function TemplateCard({ base, kind, readOnly, onSaved }: {
             <TextField
               label="DLT template ID (optional)" value={dltTemplateId} onChange={(e) => setDltTemplateId(e.target.value)}
               size="small" sx={{ maxWidth: 320 }}
-              helperText="Record-keeping only — never used to send. Leave blank if MSG91 submitted the text to DLT for you, which is the usual case."
+              helperText="Record-keeping only - never used to send. Leave blank if MSG91 submitted the text to DLT for you, which is the usual case."
             />
             <TextField
               label="MSG91 template ID (flow ID)" value={providerFlowId} onChange={(e) => setProviderFlowId(e.target.value)}
               size="small" sx={{ maxWidth: 320 }}
-              helperText="Required — nothing sends without it. The id beside this template in MSG91 → Templates. Their API calls the same record a “flow”, hence the two names."
+              helperText="Required - nothing sends without it. The id beside this template in MSG91 → Templates. Their API calls the same record a “flow”, hence the two names."
             />
             <Box>
               <Button variant="outlined" size="small" disabled={save.isPending} onClick={() => save.mutate()}>

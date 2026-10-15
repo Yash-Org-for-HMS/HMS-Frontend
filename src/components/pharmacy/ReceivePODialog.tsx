@@ -15,7 +15,7 @@ interface Props {
 }
 
 /**
- * Receive goods against a PO (supports partial receipts — a line left at 0 is
+ * Receive goods against a PO (supports partial receipts - a line left at 0 is
  * skipped and stays open). Extracted verbatim from InventoryManagement; owns its
  * own receive form state, seeded whenever a PO is opened.
  */
@@ -68,14 +68,14 @@ export default function ReceivePODialog({ po, onClose, suppliers, getMedicineNam
           receivedQuantity: item.receivedQuantity,
           batchNumber: item.batchNumber,
           expiryDate: item.expiryDate,
-          // Blank means "invoice not here yet" — the server then leaves the
+          // Blank means "invoice not here yet" - the server then leaves the
           // line's cost unconfirmed rather than banking a guess.
           unitPrice: item.unitPrice === "" ? undefined : Number(item.unitPrice),
           supplierId: po.supplierId || supplierId,
         })),
       });
       onClose();
-      // Explicit confirmation of what was added — Current Stock defaults to an
+      // Explicit confirmation of what was added - Current Stock defaults to an
       // expiry-sorted, paged view, so a fresh receipt (often the longest
       // expiry in the list) can land off the visible first page. Without this,
       // a successful receive looks indistinguishable from a silent no-op.

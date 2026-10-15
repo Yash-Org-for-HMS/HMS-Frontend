@@ -44,7 +44,7 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
     enabled: open,
   });
 
-  // An open insurance/scheme claim for this admission (if any) — its approved
+  // An open insurance/scheme claim for this admission (if any) - its approved
   // amount tells us how much of this bill the payer covers vs the patient.
   const { data: claims = [] } = useQuery({
     queryKey: ["ipd-admission-claim", admissionId],
@@ -54,7 +54,7 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
   const claim = claims[0];
   const claimApproved = claim ? Number(claim.preAuthApprovedAmount || 0) : 0;
 
-  // Active room classes (Schedule of Charges) — options for the pricing override.
+  // Active room classes (Schedule of Charges) - options for the pricing override.
   const { data: roomClasses = [] } = useQuery<RoomClassRef[]>({
     queryKey: ["soc-room-classes"],
     queryFn: async () => (await axiosInstance.get("/hospital/soc/room-classes")).data.data,
@@ -84,7 +84,7 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
   const nursingCharge = Number(detail?.estimatedNursingCharge || 0);
   const bedSegments: BedSegment[] = detail?.bedSegments || [];
   // Clinical charges (doctor visits / lab / radiology) accrued during the stay
-  // that will roll onto the final bill — previewed so the total is honest.
+  // that will roll onto the final bill - previewed so the total is honest.
   const pendingCharges: PendingCharge[] = detail?.pendingCharges || [];
   const pendingTotal = Number(detail?.pendingChargesTotal || 0);
   // Requested, not dispensed: shown but never added to the total.
@@ -92,7 +92,7 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
   const awaitingPharmacyTotal = Number(detail?.awaitingPharmacyTotal || 0);
   const extrasTotal = extras.reduce((s, e) => s + lineAmount(e), 0);
   // Per-line GST, from BOTH sources. Charges accrued during the stay carry
-  // their own tax — a dispensed medicine is taxed at its rate-card GST — and
+  // their own tax - a dispensed medicine is taxed at its rate-card GST - and
   // so do charges picked here. Only the picked ones used to be counted, so a
   // stay with any medicines showed a "Final bill total" below the invoice the
   // patient actually received. Mirrors the server, which re-taxes
@@ -127,9 +127,9 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
       });
       const inv = res.data?.data?.invoice;
       const advanceLeft = Number(res.data?.data?.depositRemaining ?? 0);
-      toast.success(inv ? `Discharged — invoice ${inv.invoiceNumber} (${formatINR(inv.netAmount)})` : "Patient discharged");
+      toast.success(inv ? `Discharged - invoice ${inv.invoiceNumber} (${formatINR(inv.netAmount)})` : "Patient discharged");
       if (advanceAction === "REFUND" && advanceLeft > 0) {
-        toast.info(`${formatINR(advanceLeft)} advance is still held — use the refund action on this admission to return it.`);
+        toast.info(`${formatINR(advanceLeft)} advance is still held - use the refund action on this admission to return it.`);
       }
       onDone();
     } catch (err: unknown) {
@@ -143,7 +143,7 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
     <>
     <Dialog open={open} onClose={saving ? undefined : onClose} maxWidth="sm" fullWidth>
       <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-        <LogoutRounded sx={{ color: SEMANTIC.danger }} /> Discharge — {detail?.patientName || "Patient"}
+        <LogoutRounded sx={{ color: SEMANTIC.danger }} /> Discharge - {detail?.patientName || "Patient"}
       </DialogTitle>
       <DialogContent dividers>
         {detailLoading ? (
@@ -157,27 +157,27 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
         <Stack spacing={2.5} sx={{ pt: 0.5 }}>
           <Box sx={{ p: 2, borderRadius: 2, bgcolor: "action.hover" }}>
             {bedSegments.length > 1 ? (
-              // Patient was transferred mid-stay — bill (and show) each bed at its own rate,
+              // Patient was transferred mid-stay - bill (and show) each bed at its own rate,
               // instead of one line for the whole stay at just the current bed's rate.
               <Stack spacing={0.75}>
                 {bedSegments.map((seg, i) => (
                   <Box key={i} sx={{ display: "flex", justifyContent: "space-between" }}>
                     <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                      {seg.label} — {seg.days} day{seg.days === 1 ? "" : "s"}{(seg.runs?.length ?? 1) > 1 ? ` at ${seg.runs!.length} rates` : ` @ ${formatINR(Number(seg.dailyCharge))}`}
+                      {seg.label} - {seg.days} day{seg.days === 1 ? "" : "s"}{(seg.runs?.length ?? 1) > 1 ? ` at ${seg.runs!.length} rates` : ` @ ${formatINR(Number(seg.dailyCharge))}`}
                     </Typography>
                     <Typography variant="body2" sx={{ fontWeight: 700 }}>{formatINR(Number(seg.amount))}</Typography>
                   </Box>
                 ))}
                 <Divider sx={{ my: 0.5 }} />
                 <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-                  <Typography variant="body2" sx={{ fontWeight: 700 }}>Bed charges total ({detail?.days ?? "—"} days)</Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 700 }}>Bed charges total ({detail?.days ?? "-"} days)</Typography>
                   <Typography variant="body2" sx={{ fontWeight: 700 }}>{formatINR(bedCharge)}</Typography>
                 </Box>
               </Stack>
             ) : (
               <Box sx={{ display: "flex", justifyContent: "space-between" }}>
                 <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                  Bed charges ({detail?.days ?? "—"} day{detail?.days === 1 ? "" : "s"}{(bedSegments[0]?.runs?.length ?? 1) > 1 ? `, ${bedSegments[0].runs!.length} rates` : ""})
+                  Bed charges ({detail?.days ?? "-"} day{detail?.days === 1 ? "" : "s"}{(bedSegments[0]?.runs?.length ?? 1) > 1 ? `, ${bedSegments[0].runs!.length} rates` : ""})
                 </Typography>
                 <Typography variant="body2" sx={{ fontWeight: 700 }}>{formatINR(bedCharge)}</Typography>
               </Box>
@@ -213,12 +213,12 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
 
           {/* Requested but not dispensed, so correctly outside the total above.
               Left unsaid, though, a stay whose medicines are all still waiting
-              looks exactly like a stay that had none — and discharging on that
+              looks exactly like a stay that had none - and discharging on that
               figure means the pharmacy's confirmation lands after the bill. */}
           {awaitingPharmacy.length > 0 && (
             <Alert severity="warning" sx={{ borderRadius: 2 }}>
               <Typography variant="body2" sx={{ fontWeight: 700, mb: 0.5 }}>
-                {awaitingPharmacy.length} medicine{awaitingPharmacy.length === 1 ? "" : "s"} still awaiting pharmacy — not in this bill
+                {awaitingPharmacy.length} medicine{awaitingPharmacy.length === 1 ? "" : "s"} still awaiting pharmacy - not in this bill
               </Typography>
               <Stack spacing={0.25} sx={{ mb: 0.75 }}>
                 {awaitingPharmacy.map((m) => (
@@ -306,7 +306,7 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
             <Typography variant="body2" sx={{ fontWeight: 700 }}>{formatINR(total)}</Typography>
           </Box>
           <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>
-            Estimate up to now — bed days and any new orders are finalized when you discharge.
+            Estimate up to now - bed days and any new orders are finalized when you discharge.
           </Typography>
           {deposit > 0 && (
             <>
@@ -356,7 +356,7 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
       </DialogContent>
       <DialogActions sx={{ p: 2 }}>
         <Button onClick={onClose} color="inherit" disabled={saving}>Cancel</Button>
-        {/* Block discharge until the bill preview has actually loaded — otherwise the
+        {/* Block discharge until the bill preview has actually loaded - otherwise the
             operator could confirm on a misleading ₹0 total. */}
         {/* A leftover advance has to be dealt with explicitly: refund or hold,
             and a hold carries its reason. */}

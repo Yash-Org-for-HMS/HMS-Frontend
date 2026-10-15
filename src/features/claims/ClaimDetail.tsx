@@ -26,7 +26,7 @@ function Field({ label, value }: { label: string; value: any }) {
   return (
     <Box sx={{ py: 0.75 }}>
       <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, display: "block" }}>{label}</Typography>
-      <Typography variant="body2" sx={{ mt: 0.3 }}>{value ?? "—"}</Typography>
+      <Typography variant="body2" sx={{ mt: 0.3 }}>{value ?? "-"}</Typography>
     </Box>
   );
 }
@@ -60,7 +60,7 @@ export default function ClaimDetail() {
   if (isError || !claim) return <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />;
 
   const m = statusMeta(claim.status);
-  const inr = (v: any) => (v != null ? formatINR(Number(v)) : "—");
+  const inr = (v: any) => (v != null ? formatINR(Number(v)) : "-");
 
   return (
     <Box>
@@ -92,7 +92,7 @@ export default function ClaimDetail() {
               <Grid size={{ xs: 12, sm: 6 }} ><Field label="TPA" value={claim.tpaName} /></Grid>
               <Grid size={{ xs: 12, sm: 6 }} ><Field label="Patient relation" value={claim.patientRelation} /></Grid>
               <Grid size={{ xs: 12, sm: 6 }} ><Field label="Portal reference (CCN)" value={claim.portalReference} /></Grid>
-              <Grid size={{ xs: 12, sm: 6 }} ><Field label="Registered" value={claim.registeredAt ? dayjs(claim.registeredAt).format("DD MMM YYYY, hh:mm A") : "—"} /></Grid>
+              <Grid size={{ xs: 12, sm: 6 }} ><Field label="Registered" value={claim.registeredAt ? dayjs(claim.registeredAt).format("DD MMM YYYY, hh:mm A") : "-"} /></Grid>
               {claim.remarks && <Grid size={12} ><Field label="Remarks" value={claim.remarks} /></Grid>}
             </Grid>
           </Paper>
@@ -123,7 +123,7 @@ export default function ClaimDetail() {
                 Record settlement
               </Button>
             </Box>
-            {/* Reconciliation — what the payer owes vs what the patient must cover. */}
+            {/* Reconciliation - what the payer owes vs what the patient must cover. */}
             <Grid container spacing={1.5} sx={{ mb: 1 }}>
               {[
                 // Not "Billed": this is finalClaimedAmount, falling back to the
@@ -163,7 +163,7 @@ export default function ClaimDetail() {
                 <Alert severity="warning" sx={{ mt: 1.5 }}>
                   The room{claim.roomEligibility.roomClassName ? ` (${claim.roomEligibility.roomClassName})` : ""} is {inr(claim.roomEligibility.rent)} a day,
                   {" "}{inr(claim.roomEligibility.over)} over the policy's limit of {inr(claim.roomEligibility.limit)}. The insurer may cut the
-                  whole claim in the same proportion — offer a room within the limit, or tell the patient before it is billed.
+                  whole claim in the same proportion - offer a room within the limit, or tell the patient before it is billed.
                 </Alert>
               ) : (
                 <Alert severity="success" sx={{ mt: 1.5 }}>
@@ -275,7 +275,7 @@ function LinkInvoiceDialog({ open, onClose, claimId, currentInvoiceId, onDone }:
       <DialogTitle>Link hospital bill</DialogTitle>
       <DialogContent>
         <TextField select label="Invoice" value={invoiceId} onChange={(e) => setInvoiceId(e.target.value)} fullWidth sx={{ mt: 1 }}>
-          <MenuItem value="">— Not linked —</MenuItem>
+          <MenuItem value="">- Not linked -</MenuItem>
           {invoices.map((i) => (
             <MenuItem key={i.invoiceId} value={i.invoiceId}>{i.invoiceNumber} · {formatINR(Number(i.netAmount))} · {dayjs(i.invoiceDate).format("DD MMM YYYY")}</MenuItem>
           ))}

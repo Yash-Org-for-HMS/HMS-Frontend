@@ -18,7 +18,7 @@ const MODULE_LABELS: Record<string, string> = {
 /**
  * The "locked feature" upsell shown when a hospital's plan doesn't include a
  * module. Rather than hiding the feature, we show that it EXISTS and can be
- * unlocked by upgrading — so tenants discover what's available. Reusable: drop it
+ * unlocked by upgrading - so tenants discover what's available. Reusable: drop it
  * (or wrap a page in <ModuleGate>) anywhere a plan-gated feature lives.
  */
 export function ModuleLocked({ module, feature, description }: { module: string; feature?: string; description?: string }) {
@@ -42,7 +42,7 @@ export function ModuleLocked({ module, feature, description }: { module: string;
         {feature
           ? `It's part of the ${moduleLabel} module, which isn't included in your current plan. `
           : `The ${moduleLabel} module isn't included in your current plan. `}
-        Upgrade your plan to unlock it — contact your provider to enable it for your hospital.
+        Upgrade your plan to unlock it - contact your provider to enable it for your hospital.
       </Typography>
     </Box>
   );
@@ -54,7 +54,7 @@ export function ModuleLocked({ module, feature, description }: { module: string;
  *
  * While the answer is still in flight the children are HELD, not rendered. They
  * used to render immediately, which meant every gated page mounted, fired its
- * queries, collected 403s, and only then flipped to the upsell — and a page
+ * queries, collected 403s, and only then flipped to the upsell - and a page
  * whose error state catches faster than the gate flips showed "Something went
  * wrong" to a tenant whose only problem was not having bought the module.
  *

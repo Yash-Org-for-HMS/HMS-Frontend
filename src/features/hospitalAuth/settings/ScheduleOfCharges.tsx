@@ -17,7 +17,7 @@ import {
 import type { CatalogEntry } from "./socCatalog";
 import { useClientPage } from "@/components/table/useClientPage";
 
-// The predefined name catalog is large (~250 KB) — load it only when a dialog
+// The predefined name catalog is large (~250 KB) - load it only when a dialog
 // that needs it opens, and cache it after the first load.
 let _socCatalog: Record<string, CatalogEntry[]> | null = null;
 async function loadSocCatalog(): Promise<Record<string, CatalogEntry[]>> {
@@ -52,7 +52,7 @@ type RoomClass = { roomClassId: string; name: string; code: string; sortOrder: n
 
 // Hospital's Schedule of Charges (rate card): categories on the left (seeded from
 // a default template on first open, then editable), priced charges/procedures on
-// the right. Standalone price master — not yet wired into billing.
+// the right. Standalone price master - not yet wired into billing.
 type SearchItem = Item & { category: { chargeCategoryId: string; categoryName: string } };
 
 export default function ScheduleOfCharges() {
@@ -110,7 +110,7 @@ export default function ScheduleOfCharges() {
     return m;
   }, [categories]);
 
-  // Subtree charge totals — a category is "in use" if it or any descendant holds
+  // Subtree charge totals - a category is "in use" if it or any descendant holds
   // charges. Drives hiding the seeded-but-empty categories by default.
   const rollup = useMemo(() => {
     const m = new Map<string, number>();
@@ -213,7 +213,7 @@ export default function ScheduleOfCharges() {
     <Box>
       <PageHeader
         title="Schedule of Charges"
-        subtitle={canEdit ? "Your hospital's rate card — charges and prices, grouped by category." : "The group's rate card, set by the hospital admin — charges and prices, grouped by category."}
+        subtitle={canEdit ? "Your hospital's rate card - charges and prices, grouped by category." : "The group's rate card, set by the hospital admin - charges and prices, grouped by category."}
         actions={canEdit &&
           <>
             <Button variant="outlined" startIcon={<TuneRounded />} onClick={(e) => setManageAnchor(e.currentTarget)}
@@ -304,7 +304,7 @@ export default function ScheduleOfCharges() {
               <Box sx={{ minWidth: 0 }}>
                 <Typography sx={{ fontWeight: 700 }} noWrap>
                   {parentName && <Typography component="span" sx={{ fontWeight: 500, color: "text.disabled" }}>{parentName} › </Typography>}
-                  {selected?.categoryName ?? "—"}
+                  {selected?.categoryName ?? "-"}
                 </Typography>
                 {selected && !selected.isActive && <Chip label="Inactive category" size="small" sx={{ height: 18, fontSize: "0.625rem", bgcolor: "rgba(245,158,11,0.12)", color: "warning.main" }} />}
               </Box>
@@ -330,7 +330,7 @@ export default function ScheduleOfCharges() {
                   {activeRoomClasses.length > 0 && (
                     // Group row: OPD = the base price · IPD = the per-room-class columns.
                     // Kept static (non-sticky) so it scrolls away, leaving only the
-                    // column-name row pinned — avoids two overlapping sticky rows.
+                    // column-name row pinned - avoids two overlapping sticky rows.
                     <TableRow>
                       <TableCell sx={{ ...headCellSx, position: "static", borderBottom: "none" }} />
                       <TableCell align="right" sx={{ ...headCellSx, position: "static", borderBottom: "none" }}>OPD</TableCell>
@@ -390,7 +390,7 @@ export default function ScheduleOfCharges() {
                             const has = priced.has(rc.roomClassId);
                             return (
                               <TableCell key={rc.roomClassId} align="right" sx={{ whiteSpace: "nowrap", fontWeight: has ? 600 : 400, color: has ? ACCENT : "text.disabled", ...(i === 0 ? { borderLeft: "1px solid", borderColor: "divider" } : {}) }}>
-                                {has ? inr(priced.get(rc.roomClassId)!) : "—"}
+                                {has ? inr(priced.get(rc.roomClassId)!) : "-"}
                               </TableCell>
                             );
                           })}
@@ -401,7 +401,7 @@ export default function ScheduleOfCharges() {
                           <TableCell align="center" sx={{ whiteSpace: "nowrap" }}>
                             {it.itemType === "LAB" && <Tooltip title="Lab structure (single / profile parameters)"><IconButton size="small" onClick={() => setStructureItem(it)}><ScienceRounded fontSize="small" sx={{ color: "success.main" }} /></IconButton></Tooltip>}
                             <Tooltip title="Price history"><IconButton size="small" onClick={() => setHistoryItem(it)}><HistoryRounded fontSize="small" /></IconButton></Tooltip>
-                            {showBranchPrices && <Tooltip title="Branch exceptions — a different price at one branch"><IconButton size="small" onClick={() => setBranchPriceItem(it)}><ApartmentRounded fontSize="small" /></IconButton></Tooltip>}
+                            {showBranchPrices && <Tooltip title="Branch exceptions - a different price at one branch"><IconButton size="small" onClick={() => setBranchPriceItem(it)}><ApartmentRounded fontSize="small" /></IconButton></Tooltip>}
                             {canEdit && <Tooltip title={multiBranch ? "Edit prices (all branches)" : "Edit"}><IconButton size="small" onClick={() => setItemDialog({ mode: "edit", item: it })}><EditRounded fontSize="small" /></IconButton></Tooltip>}
                             {canEdit && <Tooltip title="Delete"><IconButton size="small" onClick={() => deleteItem(it)}><DeleteRounded fontSize="small" sx={{ color: "error.main" }} /></IconButton></Tooltip>}
                           </TableCell>
@@ -482,7 +482,7 @@ const CHANGE_META = {
 } as const;
 
 // The change delta as a compact pill: New / Removed, or ±amount·% with a direction
-// arrow (a rise reads amber, a cut reads green — cheaper).
+// arrow (a rise reads amber, a cut reads green - cheaper).
 function DeltaPill({ r }: { r: PriceHistoryRow }) {
   const base = { height: 20, fontSize: "0.6875rem", fontWeight: 700, "& .MuiChip-icon": { color: "inherit", ml: 0.5 } };
   if (r.changeType === "CREATE") return <Chip label="New" size="small" sx={{ ...base, bgcolor: "rgba(16,185,129,0.14)", color: "#0f9d78" }} />;
@@ -668,7 +668,7 @@ function CategoryDialog({ mode, cat, categories, defaultParentId, onClose, onDon
         <Stack spacing={2} sx={{ mt: 1 }}>
           <TextField label="Category name" value={name} onChange={(e) => setName(e.target.value)} fullWidth autoFocus />
           <TextField select label="Parent category" value={parentId} onChange={(e) => setParentId(e.target.value)} fullWidth helperText="Leave as top level, or nest under a parent">
-            <MenuItem value=""><em>— None (top level) —</em></MenuItem>
+            <MenuItem value=""><em>- None (top level) -</em></MenuItem>
             {parentOptions.map((c) => <MenuItem key={c.chargeCategoryId} value={c.chargeCategoryId}>{c.categoryName}</MenuItem>)}
           </TextField>
           <TextField label="Description (optional)" value={description} onChange={(e) => setDescription(e.target.value)} fullWidth multiline rows={2} />
@@ -689,7 +689,7 @@ function CategoryDialog({ mode, cat, categories, defaultParentId, onClose, onDon
 }
 
 // ── Charge item add/edit ─────────────────────────────────────────────────────
-// One catalog row — memoized so typing a price only re-renders the edited row,
+// One catalog row - memoized so typing a price only re-renders the edited row,
 // not the whole (up-to-50) list. Receives primitives + stable callbacks.
 const CatalogRow = memo(function CatalogRow({ entry, checked, price, onToggle, onPrice }: {
   entry: CatalogEntry; checked: boolean; price: string;
@@ -752,7 +752,7 @@ function CatalogDialog({ categoryId, categoryCode, categoryName, existing, onClo
         ) : candidates.length === 0 ? (
           <Box sx={{ flex: 1, display: "grid", placeItems: "center" }}>
             <Mascot pose="all-caught-up" title={catalog.length ? "All added" : "No predefined names"}
-              subtitle={catalog.length ? "Every predefined name for this category is already in your rate card." : "This category has no predefined name list — use Add Charge."} size={110} />
+              subtitle={catalog.length ? "Every predefined name for this category is already in your rate card." : "This category has no predefined name list - use Add Charge."} size={110} />
           </Box>
         ) : (
           <Stack spacing={1.25} sx={{ flex: 1, minHeight: 0 }}>
@@ -857,9 +857,9 @@ function ItemDialog({ mode, item, categoryId, categoryCode, categoryName, roomCl
           <TextField select label="Type" value={itemType} onChange={(e) => setItemType(e.target.value)} fullWidth
             helperText={itemType === "RADIOLOGY" ? "Appears in the radiology order pickers; radiology orders price from this charge."
               : itemType === "LAB" ? "Appears in the lab order pickers; lab orders price from this charge."
-              : itemType === "BED" ? "The daily room rent. Set a price per room class below — each bed's daily charge is filled from it. Billed automatically per stay day (not pickable as an extra charge)."
+              : itemType === "BED" ? "The daily room rent. Set a price per room class below - each bed's daily charge is filled from it. Billed automatically per stay day (not pickable as an extra charge)."
               : itemType === "PROCEDURE" ? "The surgical procedure itself. Priced per operation, and shown under Procedure in the revenue reports."
-              : itemType === "OT" ? "Theatre occupancy, charged separately from the procedure — per hour or per grade. Set a price per room class below if theatre is charged differently by room."
+              : itemType === "OT" ? "Theatre occupancy, charged separately from the procedure - per hour or per grade. Set a price per room class below if theatre is charged differently by room."
               : "A plain billable charge."}>
             <MenuItem value="GENERAL">General charge</MenuItem>
             <MenuItem value="RADIOLOGY">Radiology test</MenuItem>
@@ -885,7 +885,7 @@ function ItemDialog({ mode, item, categoryId, categoryCode, categoryName, roomCl
 
           {roomClasses.length > 0 && (
             <Box>
-              <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 0.5 }}>IPD pricing — by room class (optional)</Typography>
+              <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 0.5 }}>IPD pricing - by room class (optional)</Typography>
               <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 1.5 }}>
                 Rate for admitted (IPD) patients, per room class. Leave blank to use the OPD (base) price.
               </Typography>
@@ -950,7 +950,7 @@ function RoomClassesDialog({ roomClasses, onClose, onChanged }: { roomClasses: R
       <DialogTitle>Room Classes</DialogTitle>
       <DialogContent>
         <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 1.5 }}>
-          Room classes are your IPD room tiers — each becomes a per-room IPD price column when adding a charge (e.g. General, Semi-Private, Private, Deluxe, ICU). OPD bills use the base price.
+          Room classes are your IPD room tiers - each becomes a per-room IPD price column when adding a charge (e.g. General, Semi-Private, Private, Deluxe, ICU). OPD bills use the base price.
         </Typography>
         <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
           <TextField size="small" fullWidth placeholder="New room class name" value={newName}

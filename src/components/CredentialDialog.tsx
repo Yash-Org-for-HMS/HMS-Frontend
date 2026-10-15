@@ -8,7 +8,7 @@ interface CredentialDialogProps {
   onClose: () => void;
   /** The one-time password to display. */
   password: string;
-  /** Login email/username — omit for password-only resets. */
+  /** Login email/username - omit for password-only resets. */
   email?: string;
   /** Recipient name, shown in the "share with …" line. */
   name?: string;

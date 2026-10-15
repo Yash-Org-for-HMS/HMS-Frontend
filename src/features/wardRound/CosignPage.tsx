@@ -171,7 +171,7 @@ export default function CosignPage() {
       ) : (
         <>
           {!q.isLoading && !pending.length ? (
-            <Paper sx={{ p: 3 }}><Mascot pose="all-caught-up" title={resident ? "Nothing waiting — everything you wrote is co-signed" : "Nothing to co-sign"} /></Paper>
+            <Paper sx={{ p: 3 }}><Mascot pose="all-caught-up" title={resident ? "Nothing waiting - everything you wrote is co-signed" : "Nothing to co-sign"} /></Paper>
           ) : (
             <TableContainer component={Paper}>
               <Table>

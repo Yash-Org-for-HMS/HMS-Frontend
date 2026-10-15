@@ -17,7 +17,7 @@ const thBase: CSSProperties = { padding: "10px 8px", borderBottom: "2px solid #e
 const tdBase: CSSProperties = { padding: "10px 8px", borderBottom: "1px solid #f3f4f6", fontSize: 13 };
 
 /**
- * OPD payment receipt — now a thin composition of the shared <BillDocument> so
+ * OPD payment receipt - now a thin composition of the shared <BillDocument> so
  * it matches the IPD bill and invoice views. Only the line-item table is local.
  */
 export default function BillReceipt({ invoice, hospitalProfile, hospital, patientName, appointmentDate }: Props) {
@@ -48,7 +48,7 @@ export default function BillReceipt({ invoice, hospitalProfile, hospital, patien
           <div style={{ fontSize: 11, fontWeight: 800, color: "#6b7280", letterSpacing: 1, marginBottom: 8 }}>REFUNDS</div>
           {invoice.Refund.map((r: any, idx: number) => (
             <div key={idx} style={{ display: "flex", justifyContent: "space-between", marginBottom: 4, fontSize: 12, color: "#4b5563" }}>
-              <span>{r.processedAt ? formatDate(r.processedAt) : "—"} • {r.refundReason || "Refund"}</span>
+              <span>{r.processedAt ? formatDate(r.processedAt) : "-"} • {r.refundReason || "Refund"}</span>
               <span style={{ fontWeight: 700, color: "#8b5cf6" }}>- {formatINR(r.refundAmount)}</span>
             </div>
           ))}
@@ -79,7 +79,7 @@ export default function BillReceipt({ invoice, hospitalProfile, hospital, patien
         total: netAmount, paid: totalPaid, refunded: totalRefunded, balance,
         balanceNote: refundedBalance > 0.005
           ? (refundedBalance >= balance - 0.005
-              ? "This bill was paid and then refunded — the balance is the refund, not an unpaid amount."
+              ? "This bill was paid and then refunded - the balance is the refund, not an unpaid amount."
               : `Includes ${formatINR(refundedBalance)} returned by refund.`)
           : undefined,
       }}

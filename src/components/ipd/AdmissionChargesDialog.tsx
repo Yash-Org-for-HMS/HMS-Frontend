@@ -29,14 +29,14 @@ interface ChargeRow {
   voidReason?: string | null;
 }
 
-/** A line queued for recording. Price is display-only — the server re-prices. */
+/** A line queued for recording. Price is display-only - the server re-prices. */
 type Line = { chargeItemId: string; itemName: string; price: number; quantity: number };
 
 /**
  * What the ward used, recorded where it was used.
  *
  * Everything else on an IP bill accrues from an action somebody already
- * performs — ordering a lab, assigning a medicine. Opening a box of gloves has
+ * performs - ordering a lab, assigning a medicine. Opening a box of gloves has
  * no such action, so consumables reached the bill only if reception guessed at
  * them during discharge, having never been on the ward. This is that action.
  */
@@ -90,7 +90,7 @@ export default function AdmissionChargesDialog({
       /**
        * Recording an item now also takes it off the ward that held it, so the
        * screen has to say when that did not happen. A silent failure here is
-       * exactly how a bill and a cupboard start disagreeing — and nothing else
+       * exactly how a bill and a cupboard start disagreeing - and nothing else
        * reconciles the two.
        */
       const short = (res.data?.stock?.lines ?? []).filter((l: { note?: string | null }) => l.note);
@@ -120,7 +120,7 @@ export default function AdmissionChargesDialog({
       const res = await axiosInstance.put(`/ipd/admissions/${admission.admissionId}/charges/${voidTarget.admissionChargeId}/void`, { reason });
       toast.success("Item removed from the bill");
       // Taking a line off the bill puts its stock back on the ward, and says so
-      // — including when it could not, which is the case somebody has to act on.
+      // - including when it could not, which is the case somebody has to act on.
       if (res.data?.stockNote) toast.info(res.data.stockNote);
       setVoidTarget(null);
       refetch();
@@ -224,7 +224,7 @@ export default function AdmissionChargesDialog({
                   <Typography variant="body2" sx={{ width: 90, textAlign: "right", fontWeight: 600 }}>
                     {formatINR(r.totalPrice)}
                   </Typography>
-                  {/* Only an unbilled line can be pulled back — once it is on an
+                  {/* Only an unbilled line can be pulled back - once it is on an
                       invoice the invoice itself has to be amended. */}
                   {r.status === "ACTIVE" ? (
                     <Tooltip title="Remove from the bill">
@@ -260,7 +260,7 @@ export default function AdmissionChargesDialog({
         <ReasonDialog
           open
           title="Remove from the bill"
-          description={`${voidTarget.description} — ${formatINR(voidTarget.totalPrice)}. The item stays on the record with your reason.`}
+          description={`${voidTarget.description} - ${formatINR(voidTarget.totalPrice)}. The item stays on the record with your reason.`}
           reasonLabel="Reason"
           reasons={["Recorded in error", "Recorded twice", "Not actually used", "Wrong patient", "Wrong quantity"]}
           confirmLabel="Remove"

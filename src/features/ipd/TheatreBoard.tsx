@@ -29,7 +29,7 @@ type Theatre = {
   status: string;
   isActive: boolean;
   notes: string | null;
-  /** Who is in it right now — null unless the theatre is occupied. */
+  /** Who is in it right now - null unless the theatre is occupied. */
   occupant: {
     admissionId: string;
     admissionNumber: string;
@@ -64,8 +64,8 @@ const Tile = ({ label, value, color }: { label: string; value: number; color: st
 /**
  * The operating theatres, and what is in each one.
  *
- * `manage` turns on the configuration side — adding, editing and removing
- * theatres — which belongs to the Hospital Admin panel beside Ward & Bed Setup.
+ * `manage` turns on the configuration side - adding, editing and removing
+ * theatres - which belongs to the Hospital Admin panel beside Ward & Bed Setup.
  * Without it this is the day-to-day board: read the theatres, and mark one
  * cleaning or back in service once a case has finished.
  */
@@ -168,7 +168,7 @@ export default function TheatreBoard({ manage = false }: { manage?: boolean } = 
                     sx={{ bgcolor: `${color}1a`, color, fontWeight: 700, mb: 1 }}
                   />
                   {/* The board's whole question is "whose case is running in
-                      there" — a status chip on its own answers the easy half. */}
+                      there" - a status chip on its own answers the easy half. */}
                   {t.occupant && (
                     <Box sx={{ mb: 1 }}>
                       <Typography variant="body2" sx={{ fontWeight: 700, color: "text.primary", display: "flex", alignItems: "center", gap: 0.5 }} noWrap>
@@ -297,7 +297,7 @@ function TheatreDialog({ theatre, onClose, onSaved }: { theatre: Theatre | null;
           {theatre && (
             <FormControlLabel
               control={<Switch checked={form.isActive} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} />}
-              label="Active — an inactive theatre stays on record but cannot be scheduled"
+              label="Active - an inactive theatre stays on record but cannot be scheduled"
             />
           )}
         </Stack>

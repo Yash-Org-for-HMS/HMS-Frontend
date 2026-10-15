@@ -103,7 +103,7 @@ export function HospitalAuthProvider({ children }: { children: ReactNode }) {
       setAvailableBranches(branches);
       setIsOrgAdmin(Boolean(data?.isOrgAdmin));
       // What each role this login holds may open (backend lib/roleCatalog.ts),
-      // fresh on every load — so a session saved before a role's pages changed
+      // fresh on every load - so a session saved before a role's pages changed
       // follows the change without signing in again.
       if (data?.roleFeatures) {
         setUser((prev) => {
@@ -179,7 +179,7 @@ export function HospitalAuthProvider({ children }: { children: ReactNode }) {
     // Seed the active branch with the user's home branch, then refine from the
     // server's allowed-branch list.
     setActiveBranch(branchData?.id ?? null);
-    // A fresh sign-in starts as it always did — "All branches" is a choice made after it.
+    // A fresh sign-in starts as it always did - "All branches" is a choice made after it.
     sessionStorage.removeItem("activeBranchAll");
     void loadBranches();
 

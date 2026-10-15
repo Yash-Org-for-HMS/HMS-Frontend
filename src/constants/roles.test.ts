@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { menuPathsFor, pageOpenFor, homeForUser, panelHomeForUser, hasAction, featuresFor, heldRoles, type RoleHolder } from "./roles";
 
 /**
- * What each role opens — decided on the server (backend lib/roleCatalog.ts) and
+ * What each role opens - decided on the server (backend lib/roleCatalog.ts) and
  * sent with the login and on every load. The app only applies it: the menu, the
  * pages that open, where a role lands, and the things only some roles may do.
  */

@@ -32,7 +32,7 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
   // Billing Items
   const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(new Set());
 
-  // Invoice Calculator — GST is now computed per line from each charge's rate card
+  // Invoice Calculator - GST is now computed per line from each charge's rate card
   // (0 = exempt), mirroring the server. No manual flat rate.
   const [discount, setDiscount] = useState<number | "">("");
   
@@ -79,7 +79,7 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
   });
   const unbilledItems: UnbilledItem[] = unbilledData ?? [];
 
-  // This patient's existing invoices (paid + pending) — so staff can see what's
+  // This patient's existing invoices (paid + pending) - so staff can see what's
   // already billed/outstanding right here, and collect a pending one, instead of
   // accidentally raising a duplicate.
   const { data: billing, refetch: refetchBilling } = useQuery<PatientStatementResponse>({
@@ -92,8 +92,8 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
     .filter((i) => i.invoiceStatus !== "CANCELLED")
     .reduce((sum, i) => sum + Math.max(0, Number(i.balance) || 0), 0);
 
-  // The hospital's configured payment methods — the SAME list the reception
-  // BillingModal / InvoiceViewDialog use — so tender options (and the stored
+  // The hospital's configured payment methods - the SAME list the reception
+  // BillingModal / InvoiceViewDialog use - so tender options (and the stored
   // method) are consistent across every billing screen instead of a hardcoded four.
   const { data: paymentMethods = [] } = useQuery<PaymentMethodRef[]>({
     queryKey: ["billing-payment-methods"],
@@ -128,7 +128,7 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
   const netAmount = taxableAmount + taxAmount;
   // Amount the payment dialog collects against. Once the invoice is created the
   // selected items are refetched away (no longer "unbilled"), so the derived
-  // netAmount above collapses to 0 — read the created invoice's own net instead.
+  // netAmount above collapses to 0 - read the created invoice's own net instead.
   const payableNet = generatedInvoice ? Number(generatedInvoice.netAmount || 0) : netAmount;
 
   const handleGenerateInvoice = async () => {
@@ -322,7 +322,7 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
         </Grid>
       )}
 
-      {/* This patient's invoices — paid history + pending (collectible here) */}
+      {/* This patient's invoices - paid history + pending (collectible here) */}
       {selectedPatient && (
         <Paper elevation={0} sx={{ mt: 3, borderRadius: 3, overflow: "hidden", border: "1px solid", borderColor: "divider" }}>
           <Box sx={{ p: 2, borderBottom: "1px solid", borderColor: "divider", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
@@ -355,7 +355,7 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
                         <TableCell sx={{ color: "text.secondary" }}>{formatDate(inv.invoiceDate)}</TableCell>
                         <TableCell align="right" sx={{ fontWeight: 600 }}>{formatINR(inv.netAmount)}</TableCell>
                         <TableCell align="right" sx={{ fontWeight: 700, color: due ? SEMANTIC.danger : SEMANTIC.success }}>
-                          {due ? formatINR(inv.balance) : "—"}
+                          {due ? formatINR(inv.balance) : "-"}
                         </TableCell>
                         <TableCell><StatusChip label={inv.statusLabel} color={inv.statusColor} /></TableCell>
                         <TableCell align="right">

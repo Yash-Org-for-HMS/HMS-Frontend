@@ -16,13 +16,13 @@ import { useToast } from "@/providers/ToastContext";
 import dayjs from "dayjs";
 
 /**
- * Fluid balance — intake and output for the chart day.
+ * Fluid balance - intake and output for the chart day.
  *
  * Totals come from the server, computed, and are shown WITH THEIR WORKING the
  * way the paper does ("DNS 800 + RTB 76 = 876"). Nothing here is typed as a
  * running total, because a total kept by hand is a total that goes wrong.
  *
- * An entry can be a volume, a number of times, or both — a nappy counted four
+ * An entry can be a volume, a number of times, or both - a nappy counted four
  * times is a real observation, and forcing a millilitre figure onto it would
  * only make someone invent a number.
  */
@@ -138,7 +138,7 @@ export default function FluidBalanceDialog({ open, admission, onClose, readOnly 
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
             <WaterDropRounded sx={{ color: BRAND.action }} />
             <Box>
-              <Typography variant="h6" sx={{ fontWeight: 700 }}>Fluid balance — {admission?.patientName}</Typography>
+              <Typography variant="h6" sx={{ fontWeight: 700 }}>Fluid balance - {admission?.patientName}</Typography>
               <Typography variant="caption" sx={{ color: "text.secondary" }}>
                 {admission?.uhid} · chart day {chartDayStart} → {chartDayStart} next day
               </Typography>
@@ -261,7 +261,7 @@ export default function FluidBalanceDialog({ open, admission, onClose, readOnly 
 
         <DialogActions sx={{ px: 3, py: 2, justifyContent: "space-between" }}>
           <Typography variant="caption" sx={{ color: "text.secondary" }}>
-            Totals are calculated, never typed. Entries are never edited — a correction is recorded alongside.
+            Totals are calculated, never typed. Entries are never edited - a correction is recorded alongside.
           </Typography>
           <Box sx={{ display: "flex", gap: 1 }}>
             <Button onClick={onClose} sx={{ textTransform: "none" }}>Close</Button>
@@ -281,7 +281,7 @@ export default function FluidBalanceDialog({ open, admission, onClose, readOnly 
         <DialogContent dividers sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
           {correcting && (
             <Alert severity="warning" sx={{ borderRadius: 2 }}>
-              The original entry stays on the chart, struck through. This records a replacement — the
+              The original entry stays on the chart, struck through. This records a replacement - the
               totals will follow the new value.
             </Alert>
           )}
@@ -314,7 +314,7 @@ export default function FluidBalanceDialog({ open, admission, onClose, readOnly 
               onChange={(e) => setForm({ ...form, occurrences: e.target.value })} inputProps={{ inputMode: "numeric" }} sx={{ width: 160 }} />
           </Box>
           <Typography variant="caption" sx={{ color: "text.secondary", mt: -1 }}>
-            One or both. If a volume wasn't measured, record how many times instead — don't estimate.
+            One or both. If a volume wasn't measured, record how many times instead - don't estimate.
           </Typography>
 
           <TextField size="small" label="Notes" value={form.notes} fullWidth

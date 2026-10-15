@@ -178,7 +178,7 @@ export default function HospitalForm() {
         });
         // Creating a hospital also mints its admin login, and the API returns
         // that one-time password for the super admin to hand over. This is the
-        // only chance anyone gets to see it — it is hashed on save and is not
+        // only chance anyone gets to see it - it is hashed on save and is not
         // recoverable. The response used to be discarded, so every hospital
         // created here got an admin account whose password nobody ever knew.
         const admin = res.data?.data?.adminCredentials;
@@ -261,7 +261,7 @@ export default function HospitalForm() {
             {isConvert && (
               <Grid size={{ xs: 12 }}>
                 <Alert severity="info">
-                  Converting the trial for <b>{trialData?.lead?.hospitalName || "this prospect"}</b> — this provisions a live hospital on the selected plan and creates the admin login.
+                  Converting the trial for <b>{trialData?.lead?.hospitalName || "this prospect"}</b> - this provisions a live hospital on the selected plan and creates the admin login.
                 </Alert>
               </Grid>
             )}
@@ -379,7 +379,7 @@ export default function HospitalForm() {
                   helperText="The hospital's first branch starts on this plan."
                 >
                   {plans.length === 0 ? (
-                    <MenuItem value="" disabled>No plans available — create one under Plans first</MenuItem>
+                    <MenuItem value="" disabled>No plans available - create one under Plans first</MenuItem>
                   ) : (
                     plans.map((p: any) => (
                       <MenuItem key={p.planId} value={p.planId}>{p.planName}</MenuItem>
@@ -394,7 +394,7 @@ export default function HospitalForm() {
                 <Grid size={{ xs: 12 }}>
                   <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>Plan and branches</Typography>
                   <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                    Every branch starts on this plan. The first branch is the main one — the hospital admin's login starts there.
+                    Every branch starts on this plan. The first branch is the main one - the hospital admin's login starts there.
                   </Typography>
                 </Grid>
                 <Grid size={{ xs: 12, md: 6 }}>
@@ -437,7 +437,7 @@ export default function HospitalForm() {
                       </Tooltip>
                       {createLimit != null && (
                         <Typography variant="caption" sx={{ color: createOverLimit ? "error.main" : "text.secondary" }}>
-                          {newBranches.length} / {createLimit}{createOverLimit ? " — remove a branch or pick a bigger plan" : ""}
+                          {newBranches.length} / {createLimit}{createOverLimit ? " - remove a branch or pick a bigger plan" : ""}
                         </Typography>
                       )}
                     </Box>
@@ -539,7 +539,7 @@ export default function HospitalForm() {
                 <Chip size="small" label={`${branches.length} branch${branches.length === 1 ? "" : "es"}`} sx={{ fontWeight: 600 }} />
               )}
             </Box>
-            <Tooltip title={atBranchLimit ? `Branch limit reached for the ${governingPlan?.planName ?? "current"} plan — upgrade to add more.` : ""}>
+            <Tooltip title={atBranchLimit ? `Branch limit reached for the ${governingPlan?.planName ?? "current"} plan - upgrade to add more.` : ""}>
               <span>
                 <Button
                   variant="contained"
@@ -597,7 +597,7 @@ export default function HospitalForm() {
 
       {/* One-time admin credentials, after a trial conversion or a direct create.
           Was a plain Alert with the password as selectable text and no copy
-          button — a one-time secret you had to highlight by hand and risk
+          button - a one-time secret you had to highlight by hand and risk
           mistyping. The shared dialog copies each field, or both together. */}
       <CredentialDialog
         open={!!convertResult}
@@ -605,7 +605,7 @@ export default function HospitalForm() {
         title="Hospital created"
         email={convertResult?.email || ""}
         password={convertResult?.temporaryPassword || ""}
-        note="Share these one-time credentials with the hospital admin — they will set a new password on first login."
+        note="Share these one-time credentials with the hospital admin - they will set a new password on first login."
       />
     </Container>
   );

@@ -47,7 +47,7 @@ export interface TransferItem {
   receivedQuantity: number | null;
   onHandAtReceiver: number | null;
   batches: TransferBatch[];
-  /** The sending branch's batches to pick from — only for the one dispatching. */
+  /** The sending branch's batches to pick from - only for the one dispatching. */
   available: { inventoryId: string; batchNumber: string; expiryDate: string; availableQuantity: number }[];
 }
 

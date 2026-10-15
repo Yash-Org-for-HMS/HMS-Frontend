@@ -1,6 +1,6 @@
 /**
  * The hospital panels' shell on a desktop: the top bar and the sidebar float as
- * matching cards over the page — the same gap from the window's edges, the same
+ * matching cards over the page - the same gap from the window's edges, the same
  * corners, edge and shadow. One place, so the two can't drift apart.
  */
 

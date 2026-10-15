@@ -13,8 +13,8 @@ export interface StatusFilterOption {
 /**
  * The status filter row above a register, held in the URL.
  *
- * Registers previously either had no filter at all — so a link meaning "the
- * four pending ones" could only land on the whole table — or carried their own
+ * Registers previously either had no filter at all - so a link meaning "the
+ * four pending ones" could only land on the whole table - or carried their own
  * copy of this chip row. One implementation keeps them consistent and makes
  * every register linkable to a subset.
  */

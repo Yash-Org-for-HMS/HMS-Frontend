@@ -33,7 +33,7 @@ export default function MarChart({ admissionId, readOnly = false }: { admissionI
   });
 
   // An IV or NG dose is given IN a volume of fluid, and that volume is part of
-  // the patient's intake. Asking for it here — once, where the dose is charted —
+  // the patient's intake. Asking for it here - once, where the dose is charted -
   // is what stops the nurse recording the same event again in the fluid chart.
   const [askVolumeFor, setAskVolumeFor] = useState<any>(null);
   const [volume, setVolume] = useState("");
@@ -103,7 +103,7 @@ export default function MarChart({ admissionId, readOnly = false }: { admissionI
         </Box>
       ))}
       {/* Asked once, where the dose is charted. Leaving it blank still records
-          the dose — a nurse who does not know the volume must not be blocked
+          the dose - a nurse who does not know the volume must not be blocked
           from charting that the medicine was given. */}
       <Dialog open={!!askVolumeFor} onClose={() => setAskVolumeFor(null)} maxWidth="xs" fullWidth>
         <DialogTitle component="div">

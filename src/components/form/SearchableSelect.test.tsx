@@ -81,7 +81,7 @@ describe("SearchableSelect", () => {
     /**
      * The subtle one. MUI draws a select's field from the selected MenuItem's
      * contents, so once a search filters that row out of the DOM the field
-     * goes BLANK — the user appears to have lost their choice mid-search.
+     * goes BLANK - the user appears to have lost their choice mid-search.
      * renderValue reads from `options` instead, which is why it does not.
      */
     const user = userEvent.setup();
@@ -97,7 +97,7 @@ describe("SearchableSelect", () => {
   });
 
   it("reports a pick in the shape a form handler already expects", async () => {
-    // { target: { name, value } } — so an existing handleChange can be passed
+    // { target: { name, value } } - so an existing handleChange can be passed
     // straight in with no adapter, which is what made this swappable at all.
     const onChange = vi.fn();
     const user = userEvent.setup();

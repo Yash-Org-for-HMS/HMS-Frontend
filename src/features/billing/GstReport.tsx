@@ -44,7 +44,7 @@ function monthBounds() {
 }
 
 const HEAD_SX = { fontWeight: 700 } as const;
-/** Invoice-register rows per page. Display only — totals and exports use every row. */
+/** Invoice-register rows per page. Display only - totals and exports use every row. */
 const REGISTER_PAGE_SIZE = 50;
 
 // Quotes every field so a description containing a comma can't shift columns.
@@ -95,20 +95,20 @@ export default function GstReport() {
 
   const r = data?.readiness;
   // Only things that actually block or distort a filing. A medicine sitting at 0%
-  // is not listed — plenty of supplies are legitimately exempt, so flagging that
+  // is not listed - plenty of supplies are legitimately exempt, so flagging that
   // would cry wolf; it's only worth mentioning when NOTHING is rated.
   const issues: { text: string; to?: string }[] = [];
-  if (r && !r.gstinSet) issues.push({ text: "Your GSTIN is not set on the hospital profile — it must appear on every tax invoice.", to: "/hospital/profile" });
+  if (r && !r.gstinSet) issues.push({ text: "Your GSTIN is not set on the hospital profile - it must appear on every tax invoice.", to: "/hospital/profile" });
   if (r && r.taxedLinesMissingHsn > 0) issues.push({ text: `${r.taxedLinesMissingHsn} taxed invoice line${r.taxedLinesMissingHsn === 1 ? "" : "s"} in this range carry no HSN/SAC code, so they are missing from the HSN summary GSTR-1 Table 12 requires.` });
-  if (r && r.medicinesMissingHsn > 0) issues.push({ text: `${r.medicinesMissingHsn} of ${r.medicinesTotal} medicines have no HSN code — sales of these can't be reported HSN-wise.`, to: "/pharmacy/medicines" });
+  if (r && r.medicinesMissingHsn > 0) issues.push({ text: `${r.medicinesMissingHsn} of ${r.medicinesTotal} medicines have no HSN code - sales of these can't be reported HSN-wise.`, to: "/pharmacy/medicines" });
   if (r && r.taxableChargeItemsMissingHsn > 0) issues.push({ text: `${r.taxableChargeItemsMissingHsn} taxable charge item${r.taxableChargeItemsMissingHsn === 1 ? "" : "s"} have no SAC code.`, to: "/hospital/soc" });
-  if (r && r.medicinesTotal > 0 && r.medicinesZeroRated === r.medicinesTotal) issues.push({ text: `All ${r.medicinesTotal} medicines are set to 0% GST. Medicines are normally taxable (commonly 5% or 12%) even though healthcare services are exempt — if that's not deliberate, this report will under-state your liability.`, to: "/pharmacy/medicines" });
+  if (r && r.medicinesTotal > 0 && r.medicinesZeroRated === r.medicinesTotal) issues.push({ text: `All ${r.medicinesTotal} medicines are set to 0% GST. Medicines are normally taxable (commonly 5% or 12%) even though healthcare services are exempt - if that's not deliberate, this report will under-state your liability.`, to: "/pharmacy/medicines" });
 
   // Several registrations and none picked: the figures add them all up, which is
-  // not one return — the header must not name a single GSTIN.
+  // not one return - the header must not name a single GSTIN.
   const allGstins = (data?.registrations ?? []).map((x) => x.gstin).filter((x): x is string => !!x);
   const mixed = !gstin && allGstins.length > 1;
-  const gstinLabel = mixed ? `All ${allGstins.length} registrations (${allGstins.join(", ")}) — not one return` : data?.gstin ?? "(not set)";
+  const gstinLabel = mixed ? `All ${allGstins.length} registrations (${allGstins.join(", ")}) - not one return` : data?.gstin ?? "(not set)";
 
   const register = data?.register ?? [];
   const regPages = Math.ceil(register.length / REGISTER_PAGE_SIZE);
@@ -187,7 +187,7 @@ export default function GstReport() {
           </TextField>
         ) : null}
         {mixed
-          ? <Chip size="small" color="warning" variant="outlined" label={`All ${allGstins.length} GST registrations — pick one for a return`} sx={{ fontWeight: 700 }} />
+          ? <Chip size="small" color="warning" variant="outlined" label={`All ${allGstins.length} GST registrations - pick one for a return`} sx={{ fontWeight: 700 }} />
           : data?.gstin && <Chip size="small" label={`GSTIN ${data.gstin}`} sx={{ fontWeight: 700 }} />}
       </Box>
 
@@ -218,7 +218,7 @@ export default function GstReport() {
             {data.registerTruncated && " · register truncated to the first 10,000"}
           </Typography>
 
-          <SectionCard title="Tax collected by rate" subtitle="Taxable supplies only — exempt supplies are listed separately below">
+          <SectionCard title="Tax collected by rate" subtitle="Taxable supplies only - exempt supplies are listed separately below">
             <TableContainer sx={{ overflowX: "auto" }}>
               <Table size="small">
                 <TableHead>
@@ -234,7 +234,7 @@ export default function GstReport() {
                   {data.slabs.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={5} align="center" sx={{ color: "text.secondary", py: 4 }}>
-                        No taxable supplies in this range — every invoiced line was exempt (0%).
+                        No taxable supplies in this range - every invoiced line was exempt (0%).
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -262,7 +262,7 @@ export default function GstReport() {
             </TableContainer>
             <Box sx={{ px: 2, py: 1.5, bgcolor: alpha(SEMANTIC.info, 0.06), borderTop: "1px solid", borderColor: "divider", display: "flex", justifyContent: "space-between", gap: 2, flexWrap: "wrap" }}>
               <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                Exempt / nil-rated supplies (healthcare services — no GST charged)
+                Exempt / nil-rated supplies (healthcare services - no GST charged)
               </Typography>
               <Typography variant="body2" sx={{ fontWeight: 800 }}>{formatINR(data.exempt.amount)}</Typography>
             </Box>
@@ -270,7 +270,7 @@ export default function GstReport() {
 
           <SectionCard
             title="HSN / SAC summary"
-            subtitle="GSTR-1 Table 12 — taxed lines only; exempt supplies need no HSN"
+            subtitle="GSTR-1 Table 12 - taxed lines only; exempt supplies need no HSN"
           >
             <TableContainer sx={{ overflowX: "auto" }}>
               <Table size="small">
@@ -289,7 +289,7 @@ export default function GstReport() {
                   {data.hsnSummary.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={7} align="center" sx={{ color: "text.secondary", py: 4 }}>
-                        Nothing to summarise — no taxed line in this range carries an HSN/SAC code.
+                        Nothing to summarise - no taxed line in this range carries an HSN/SAC code.
                       </TableCell>
                     </TableRow>
                   ) : (

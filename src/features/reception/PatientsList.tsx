@@ -369,7 +369,7 @@ export default function PatientsList({ basePath = "/reception", readOnly = false
                       <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", py: 1.5 }}>
                         <Box>
                           <Typography variant="body2" sx={{ color: "text.secondary", fontWeight: 600 }}>
-                            {patient.age !== null ? `${patient.age} yrs` : "—"}
+                            {patient.age !== null ? `${patient.age} yrs` : "-"}
                           </Typography>
                           <Typography variant="caption" sx={{ color: "#334155" }}>
                             {formatDate(patient.dateOfBirth)}
@@ -395,7 +395,7 @@ export default function PatientsList({ basePath = "/reception", readOnly = false
                       <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", py: 1.5, color: "text.secondary", fontSize: "0.875rem" }}>
                         {patient.phone}
                       </TableCell>
-                      {/* Actions — primary quick-actions + overflow menu */}
+                      {/* Actions - primary quick-actions + overflow menu */}
                       <TableCell align="right" sx={{ borderBottom: "1px solid", borderColor: "divider", py: 1.5, whiteSpace: "nowrap" }} onClick={(e) => e.stopPropagation()}>
                         {!readOnly && <Tooltip title="Book appointment">
                           <IconButton size="small"

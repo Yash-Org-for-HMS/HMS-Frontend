@@ -34,7 +34,7 @@ import AdmissionChargesDialog from "@/components/ipd/AdmissionChargesDialog";
 import { apiErrorText } from "@/utils/apiError";
 
 /**
- * The ward, grouped by ward — a flat list made a nurse pick their patients out
+ * The ward, grouped by ward - a flat list made a nurse pick their patients out
  * of every other ward's.
  *
  * Two views answering different questions: cards name every action and have
@@ -67,7 +67,7 @@ export default function NurseWard() {
 
   const { data: admissions = [], isLoading, isError, error, refetch } = useQuery<AdmissionRow[]>({
     queryKey: ["nurse-ward-admissions"],
-    // Every inpatient, not the list endpoint's default first page of 20 — past
+    // Every inpatient, not the list endpoint's default first page of 20 - past
     // twenty, the rest were silently missing from the ward. 1000 is the API's cap.
     queryFn: async () => (await axiosInstance.get("/ipd/admissions", { params: { status: "ADMITTED", limit: 1000 } })).data.data,
   });
@@ -77,7 +77,7 @@ export default function NurseWard() {
     () =>
       s
         ? admissions.filter((a) =>
-            // A type guard rather than filter(Boolean), which TS does not narrow —
+            // A type guard rather than filter(Boolean), which TS does not narrow -
             // a patient with no bed label has a nullish entry here.
             [a.patientName, a.uhid, a.bed?.label]
               .filter((v): v is string => !!v)
@@ -86,7 +86,7 @@ export default function NurseWard() {
     [admissions, s],
   );
 
-  // Grouped by ward, each ward ordered by room then bed — the order a nurse
+  // Grouped by ward, each ward ordered by room then bed - the order a nurse
   // walks the ward in, rather than whatever order the API returned.
   const groups = useMemo(() => {
     const byWard = new Map<string, AdmissionRow[]>();
@@ -107,12 +107,12 @@ export default function NurseWard() {
       }));
   }, [filtered]);
 
-  // Split by what the action IS, not by guessed frequency — ten buttons a card
+  // Split by what the action IS, not by guessed frequency - ten buttons a card
   // meant four rows and nothing standing out:
   //
-  //   CHART   — recording what happened (the hourly work)
-  //   ORDER   — asking for something new, on the doctor's word
-  //   RECORD  — reference, read far more often than written
+  //   CHART   - recording what happened (the hourly work)
+  //   ORDER   - asking for something new, on the doctor's word
+  //   RECORD  - reference, read far more often than written
   //
   // Every action stays on the card one tap away; the grouping makes ten of them
   // readable, not to hide six behind a menu.
@@ -136,7 +136,7 @@ export default function NurseWard() {
     {
       group: "Order",
       items: [
-        // The ward asks; the pharmacy commits. A new order is created REQUESTED —
+        // The ward asks; the pharmacy commits. A new order is created REQUESTED -
         // it moves no stock and reaches no bill until the pharmacy confirms it.
         { key: "assign-meds", label: "Assign medicine", icon: <VaccinesRounded fontSize="small" />, open: setAssignMedsFor, tone: BRAND.action },
         // Ordering for an admitted patient goes through the IPD path, not the
@@ -144,7 +144,7 @@ export default function NurseWard() {
         // discharge bill rather than raising a separate OPD invoice.
         { key: "labs", label: "Investigations", icon: <ScienceRounded fontSize="small" />, open: setLabsFor, tone: BRAND.action },
         { key: "imaging", label: "Imaging", icon: <CameraAltRounded fontSize="small" />, open: setRadiologyFor, tone: BRAND.action },
-        // Consumables reach the bill only if the ward records them — nothing
+        // Consumables reach the bill only if the ward records them - nothing
         // else in the system knows a dressing pack was opened.
         { key: "charges", label: "Consumables", icon: <Inventory2Rounded fontSize="small" />, open: setChargesFor, tone: BRAND.action },
       ],
@@ -163,7 +163,7 @@ export default function NurseWard() {
   ];
 
   // The dense view keeps every icon in one strip, in group order, with a hair
-  // of space between groups instead of labels — there is no room for headings
+  // of space between groups instead of labels - there is no room for headings
   // in a table row and the order alone carries the grouping.
   const allActions = ACTION_GROUPS.flatMap((g) => g.items);
 
@@ -174,7 +174,7 @@ export default function NurseWard() {
     localStorage.setItem(VIEW_KEY, v);
   };
 
-  /** Room · bed, built from the parts — the API's composed label reads "Bed Bed 1". */
+  /** Room · bed, built from the parts - the API's composed label reads "Bed Bed 1". */
   const bedText = (a: AdmissionRow) => [a.bed?.roomNumber, a.bed?.bedNumber].filter(Boolean).join(" · ");
 
   const PatientCard = ({ a }: { a: AdmissionRow }) => (
@@ -266,13 +266,13 @@ export default function NurseWard() {
           <TableBody>
             {list.map((a) => (
               <TableRow key={a.admissionId} hover>
-                <TableCell sx={{ whiteSpace: "nowrap", fontWeight: 600, color: BRAND.action }}>{bedText(a) || "—"}</TableCell>
+                <TableCell sx={{ whiteSpace: "nowrap", fontWeight: 600, color: BRAND.action }}>{bedText(a) || "-"}</TableCell>
                 <TableCell>
                   <Typography variant="body2" sx={{ fontWeight: 600 }}>{a.patientName}</Typography>
                   <Typography variant="caption" sx={{ color: "text.secondary" }}>{a.uhid}</Typography>
                 </TableCell>
-                <TableCell sx={{ color: "text.secondary" }}>{a.doctorName || "—"}</TableCell>
-                <TableCell sx={{ color: "text.secondary", whiteSpace: "nowrap" }}>{a.days != null ? `Day ${a.days}` : "—"}</TableCell>
+                <TableCell sx={{ color: "text.secondary" }}>{a.doctorName || "-"}</TableCell>
+                <TableCell sx={{ color: "text.secondary", whiteSpace: "nowrap" }}>{a.days != null ? `Day ${a.days}` : "-"}</TableCell>
                 <TableCell align="right">
                   <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.5 }}>
                     <Button size="small" variant="contained" startIcon={<AssignmentRounded />}
@@ -280,7 +280,7 @@ export default function NurseWard() {
                       sx={{ textTransform: "none", whiteSpace: "nowrap", flexShrink: 0, mr: 0.5 }}>
                       Open chart
                     </Button>
-                    {/* The dense view trades labels for icons — that is the trade
+                    {/* The dense view trades labels for icons - that is the trade
                         it exists to make. The charting actions stay one tap; the
                         rest are one tap behind the same menu as the cards. */}
                     {allActions.map((act) => (
@@ -304,7 +304,7 @@ export default function NurseWard() {
 
   return (
     <Box sx={{ pb: 6 }}>
-      <PageHeader title="Ward" subtitle="Current in-patients — open a chart to record or read the day" />
+      <PageHeader title="Ward" subtitle="Current in-patients - open a chart to record or read the day" />
 
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 2, mb: 2.5, flexWrap: "wrap" }}>
         <Typography variant="body2" sx={{ color: "text.secondary" }}>
@@ -317,8 +317,8 @@ export default function NurseWard() {
             sx={{ minWidth: 280 }}
           />
           <ToggleButtonGroup exclusive size="small" value={view} onChange={chooseView}>
-            <ToggleButton value="cards" aria-label="Card view"><Tooltip title="Cards — every action named"><ViewModuleRounded fontSize="small" /></Tooltip></ToggleButton>
-            <ToggleButton value="list" aria-label="List view"><Tooltip title="List — denser, for a big ward"><ViewListRounded fontSize="small" /></Tooltip></ToggleButton>
+            <ToggleButton value="cards" aria-label="Card view"><Tooltip title="Cards - every action named"><ViewModuleRounded fontSize="small" /></Tooltip></ToggleButton>
+            <ToggleButton value="list" aria-label="List view"><Tooltip title="List - denser, for a big ward"><ViewListRounded fontSize="small" /></Tooltip></ToggleButton>
           </ToggleButtonGroup>
         </Box>
       </Box>

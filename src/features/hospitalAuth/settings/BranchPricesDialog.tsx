@@ -12,7 +12,7 @@ import HeartbeatLoader from "@/components/HeartbeatLoader";
 
 /**
  * A charge's prices at each branch. The group's price list stays as it is; a
- * branch fills in only the prices that differ — its base (OPD) price and any
+ * branch fills in only the prices that differ - its base (OPD) price and any
  * room-class cell. An empty cell follows the group's, shown as the placeholder.
  */
 
@@ -68,7 +68,7 @@ export default function BranchPricesDialog({ chargeItemId, itemName, onClose, on
   return (
     <Dialog open onClose={saving ? undefined : onClose} maxWidth="lg" fullWidth>
       <DialogTitle sx={{ pb: 0.5 }}>
-        Branch exceptions — {itemName}
+        Branch exceptions - {itemName}
         <Typography variant="body2" sx={{ color: "text.secondary" }}>
           Fill in only where a branch charges differently. An empty cell uses the all-branches price, shown in grey.
         </Typography>

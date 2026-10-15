@@ -85,7 +85,7 @@ export default function CreatePODialog({ open, onClose, suppliers, medicines, on
         {items.map((item, idx) => (
           <Box key={idx} sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
             <SearchableSelect
-              // The whole catalogue in one menu, with no way to type at it —
+              // The whole catalogue in one menu, with no way to type at it -
               // the worst case on this screen, since a PO names several.
               label="Medicine" name={`medicine-${idx}`}
               value={item.medicineId}

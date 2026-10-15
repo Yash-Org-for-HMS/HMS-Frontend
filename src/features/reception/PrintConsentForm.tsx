@@ -42,7 +42,7 @@ const isBlank = (v: unknown) => v === null || v === undefined || v === "";
 
 /** Checkboxes store booleans; a bare "true" on a signed document reads badly. */
 const show = (v: unknown, fieldType?: string | null): string => {
-  if (isBlank(v)) return "—";
+  if (isBlank(v)) return "-";
   if (typeof v === "boolean") return v ? "Yes" : "No";
   if (fieldType === "date") return formatDate(String(v));
   return String(v);
@@ -53,7 +53,7 @@ const show = (v: unknown, fieldType?: string | null): string => {
  *
  * A hospital hands a patient the unsigned form to complete by hand, so an
  * unanswered field has to be something you can write on. It used to print an
- * em dash, which made a blank consent a page of dashes — the paper route the
+ * em dash, which made a blank consent a page of dashes - the paper route the
  * upload-a-scan flow depends on did not actually work.
  */
 function AnswerCell({ value, fieldType }: { value: unknown; fieldType?: string | null }) {
@@ -82,7 +82,7 @@ function AnswerCell({ value, fieldType }: { value: unknown; fieldType?: string |
  * A signed consent as a document.
  *
  * The signature was captured and then only viewable as a loose image, so the
- * hospital had no way to produce the signed form itself — the one artefact a
+ * hospital had no way to produce the signed form itself - the one artefact a
  * consent exists to create. This prints the letterhead, who consented, what
  * they were asked and answered, and the signature block.
  */
@@ -107,7 +107,7 @@ export default function PrintConsentForm() {
     return () => { cancelled = true; };
   }, [id]);
 
-  // Waits for fonts and the hospital logo rather than a fixed 500ms — see
+  // Waits for fonts and the hospital logo rather than a fixed 500ms - see
   // useAutoPrint. The timer was enough locally and a coin-flip on a deployment.
   useAutoPrint(!loading && !!form);
 
@@ -151,7 +151,7 @@ export default function PrintConsentForm() {
       </Typography>
       {/* An unsigned copy must not be mistaken for a signed one. */}
       <Typography sx={{ fontSize: "9.5pt", textAlign: "center", color: signed ? "#166534" : "#92400e", mb: 2.5, fontWeight: 600 }}>
-        {signed ? "Signed copy" : form.status === "CANCELLED" ? "CANCELLED — not valid" : "Unsigned — for signature"}
+        {signed ? "Signed copy" : form.status === "CANCELLED" ? "CANCELLED - not valid" : "Unsigned - for signature"}
       </Typography>
 
       {/* Patient */}
@@ -163,7 +163,7 @@ export default function PrintConsentForm() {
         ] as [string, string | null | undefined][]).map(([k, v]) => (
           <Grid key={k} size={{ xs: 6 }}>
             <Typography sx={label}>{k}</Typography>
-            <Typography sx={value}>{v || "—"}</Typography>
+            <Typography sx={value}>{v || "-"}</Typography>
           </Grid>
         ))}
       </Grid>
@@ -185,7 +185,7 @@ export default function PrintConsentForm() {
         </Box>
       )}
 
-      {/* Declaration — the sentence the signature is against. */}
+      {/* Declaration - the sentence the signature is against. */}
       {/* Left-aligned, not justified: at this measure justification opens
           rivers of white space through a paragraph that has to read cleanly. */}
       <Typography sx={{ fontSize: "10.5pt", lineHeight: 1.75, mb: 3 }}>
@@ -206,7 +206,7 @@ export default function PrintConsentForm() {
           <Divider sx={{ borderColor: "#000" }} />
           <Typography sx={{ ...label, mt: 0.5 }}>Signature</Typography>
           {/* On an unsigned copy these are lines to write on, not values to
-              read — an em dash here left nowhere to put a name. */}
+              read - an em dash here left nowhere to put a name. */}
           {signed
             ? <Typography sx={value}>{form.signedByName}</Typography>
             : <Box sx={{ height: 15, borderBottom: "1px solid #999", mt: 1.4 }} />}
@@ -223,14 +223,14 @@ export default function PrintConsentForm() {
           <Divider sx={{ borderColor: "#000" }} />
           <Typography sx={{ ...label, mt: 0.5 }}>Witness</Typography>
           {signed
-            ? <Typography sx={value}>{form.witnessName || "—"}</Typography>
+            ? <Typography sx={value}>{form.witnessName || "-"}</Typography>
             : <Box sx={{ height: 15, borderBottom: "1px solid #999", mt: 1.4 }} />}
         </Grid>
       </Grid>
 
       <Box sx={{ mt: 5, pt: 1.5, borderTop: "1px solid #ddd", display: "flex", justifyContent: "space-between" }}>
         <Typography sx={{ fontSize: "8.5pt", color: "#777" }}>
-          Issued {form.createdAt ? formatDateTime(form.createdAt) : "—"}
+          Issued {form.createdAt ? formatDateTime(form.createdAt) : "-"}
           {form.issuedByName ? ` by ${form.issuedByName}` : ""}
         </Typography>
         <Typography sx={{ fontSize: "8.5pt", color: "#777", fontFamily: "monospace" }}>

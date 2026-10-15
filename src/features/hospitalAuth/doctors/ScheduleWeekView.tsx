@@ -3,7 +3,7 @@ import { CalendarViewWeekRounded } from "@mui/icons-material";
 import { SEMANTIC } from "@/styles/accents";
 
 /**
- * Where the doctor is, all week, at a glance — beside the per-day editor on the
+ * Where the doctor is, all week, at a glance - beside the per-day editor on the
  * schedule screen. One line per day, a block per session, coloured by branch;
  * it redraws as the hours are edited, so "Monday mornings at Kothrud, evenings
  * at Wakad" can be read off rather than worked out from rows of time fields.
@@ -56,7 +56,7 @@ export default function ScheduleWeekView({ windows, colourOf, nameOf }: {
       </Box>
 
       {valid.length === 0 ? (
-        <Typography variant="body2" sx={{ color: "text.secondary", py: 1 }}>No hours yet — switch a day on below.</Typography>
+        <Typography variant="body2" sx={{ color: "text.secondary", py: 1 }}>No hours yet - switch a day on below.</Typography>
       ) : (
         <Box sx={{ display: "grid", gridTemplateColumns: "44px 1fr", columnGap: 1.5, rowGap: 0.75, overflowX: "auto" }}>
           <Box />
@@ -81,7 +81,7 @@ export default function ScheduleWeekView({ windows, colourOf, nameOf }: {
                     // A session that runs into another is outlined: one place at a time.
                     const clashes = day.some((o, j) => j !== i && toMin(w.startTime) < toMin(o.endTime) && toMin(o.startTime) < toMin(w.endTime));
                     return (
-                      <Tooltip key={i} title={`${DAY[d]} · ${clock(w.startTime)} – ${clock(w.endTime)} · ${nameOf(w.branchId)}${clashes ? " — overlaps another session" : ""}`}>
+                      <Tooltip key={i} title={`${DAY[d]} · ${clock(w.startTime)} – ${clock(w.endTime)} · ${nameOf(w.branchId)}${clashes ? " - overlaps another session" : ""}`}>
                         <Box data-clash={clashes || undefined} sx={{
                           position: "absolute", left: pct(toMin(w.startTime)), width: `calc(${pct(toMin(w.startTime) + width)} - ${pct(toMin(w.startTime))} - 2px)`,
                           top: 3, bottom: 3, borderRadius: 1, bgcolor: colourOf(w.branchId), color: "#fff",

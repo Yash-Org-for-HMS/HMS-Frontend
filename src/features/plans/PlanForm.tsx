@@ -48,8 +48,8 @@ export default function PlanForm() {
     enabled: isEdit,
   });
 
-  // Module options come from the backend registry (single source of truth) —
-  // not a hardcoded list — so plans only ever reference real, built modules.
+  // Module options come from the backend registry (single source of truth) -
+  // not a hardcoded list - so plans only ever reference real, built modules.
   const { data: moduleList = [] } = useQuery({
     queryKey: ["modules-registry"],
     queryFn: async () => (await axiosInstance.get("/modules")).data.data as { key: string; label: string }[],

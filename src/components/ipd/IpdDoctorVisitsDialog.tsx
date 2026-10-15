@@ -98,7 +98,7 @@ export default function IpdDoctorVisitsDialog({ open, onClose, admission }: Prop
       </DialogTitle>
       <DialogContent dividers>
         <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
-          {admission?.patientName} — log each routine doctor visit during the stay. Every visit is billed at the doctor's IPD visit charge and added to the discharge bill.
+          {admission?.patientName} - log each routine doctor visit during the stay. Every visit is billed at the doctor's IPD visit charge and added to the discharge bill.
         </Typography>
 
         {/* Per-doctor summary */}
@@ -128,8 +128,8 @@ export default function IpdDoctorVisitsDialog({ open, onClose, admission }: Prop
                 {visits.filter((v) => v.status !== "CANCELLED").map((v) => (
                   <TableRow key={v.visitId}>
                     <TableCell><Typography variant="body2" sx={{ fontWeight: 600 }}>Dr. {v.doctorName || "Doctor"}</Typography></TableCell>
-                    <TableCell>{v.visitDate ? dayjs(v.visitDate).format("DD MMM · HH:mm") : "—"}</TableCell>
-                    <TableCell><Typography variant="caption" sx={{ color: "text.secondary" }}>{v.notes || "—"}</Typography></TableCell>
+                    <TableCell>{v.visitDate ? dayjs(v.visitDate).format("DD MMM · HH:mm") : "-"}</TableCell>
+                    <TableCell><Typography variant="caption" sx={{ color: "text.secondary" }}>{v.notes || "-"}</Typography></TableCell>
                     <TableCell align="right">{formatINR(v.charge)}</TableCell>
                     <TableCell>
                       {v.status === "BILLED"
@@ -189,7 +189,7 @@ export default function IpdDoctorVisitsDialog({ open, onClose, admission }: Prop
             <Typography variant="caption" sx={{ color: doctor.ipdVisitCharge > 0 ? "text.secondary" : SEMANTIC.danger }}>
               {doctor.ipdVisitCharge > 0
                 ? <>This visit will be billed at <strong>{formatINR(doctor.ipdVisitCharge)}</strong> and added to the discharge bill.</>
-                : <>This doctor has no IPD visit charge set — the visit will bill at ₹0. Set a charge in Doctor management.</>}
+                : <>This doctor has no IPD visit charge set - the visit will bill at ₹0. Set a charge in Doctor management.</>}
             </Typography>
           )}
         </Stack>

@@ -92,7 +92,7 @@ export default function LabOrderForm({ consultationId, patientId, onRequireSave 
         <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2 }}>Create New Lab Order</Typography>
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
           <Button fullWidth variant="outlined" startIcon={<ScienceRounded />} onClick={() => setPickerOpen(true)} sx={{ textTransform: "none", justifyContent: "flex-start" }}>
-            {items.length ? `${items.length} test${items.length === 1 ? "" : "s"} selected — add / change` : "Select lab tests"}
+            {items.length ? `${items.length} test${items.length === 1 ? "" : "s"} selected - add / change` : "Select lab tests"}
           </Button>
           <TextField
             select

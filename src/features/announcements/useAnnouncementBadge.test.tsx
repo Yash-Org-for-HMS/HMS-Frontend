@@ -7,7 +7,7 @@ import { ANNOUNCEMENT_FALLBACK_MS } from "@/constants/intervals";
 /**
  * The Announcements badge asks when something changes rather than every
  * minute: at the moment the server says its count changes by itself, on a
- * socket nudge, and on a REconnect — but not on the first connect, which lands
+ * socket nudge, and on a REconnect - but not on the first connect, which lands
  * a moment after the page's own first ask and used to repeat it.
  */
 
@@ -56,7 +56,7 @@ describe("useAnnouncementBadge", () => {
     expect(get).toHaveBeenCalledTimes(1);
   });
 
-  it("a reconnect after a while asks — a nudge may have been missed", async () => {
+  it("a reconnect after a while asks - a nudge may have been missed", async () => {
     const { result } = renderHook(() => useAnnouncementBadge(), { wrapper: wrap() });
     await waitFor(() => expect(result.current.unread).toBe(2));
     const later = Date.now() + 60_000;

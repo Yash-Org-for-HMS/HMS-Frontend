@@ -21,8 +21,8 @@ interface FreeBed { bedId: string; label: string; bedTypeName?: string }
 /**
  * Move an in-patient to another branch of the hospital.
  *
- * The stay here closes exactly as a discharge would — its bill to date, at
- * this branch's prices and GSTIN, with the advance applied — and a linked stay
+ * The stay here closes exactly as a discharge would - its bill to date, at
+ * this branch's prices and GSTIN, with the advance applied - and a linked stay
  * opens at the other branch, which bills its own days. What is left of the
  * advance goes across with the patient.
  */
@@ -49,7 +49,7 @@ export default function BranchTransferDialog({ admission, onClose, onDone }: {
   });
   const destination = options?.branches.find((b) => b.branchId === toBranchId);
   const here = options?.branches.find((b) => b.branchId === admission.branchId);
-  // The receiving branch's free beds — asked of that branch, which only
+  // The receiving branch's free beds - asked of that branch, which only
   // someone who works there may do.
   const { data: beds = [], isLoading: bedsLoading } = useQuery<FreeBed[]>({
     queryKey: ["ipd-transfer-beds", toBranchId],
@@ -78,7 +78,7 @@ export default function BranchTransferDialog({ admission, onClose, onDone }: {
         toBranchId, doctorId: chosenDoctor, toBedId: toBedId || undefined, reason: reason.trim() || undefined,
       });
       const d = r.data.data;
-      toast.success(`Transferred to ${destination?.branchName}${d.invoice ? ` — bill ${d.invoice.invoiceNumber} raised here` : ""}`);
+      toast.success(`Transferred to ${destination?.branchName}${d.invoice ? ` - bill ${d.invoice.invoiceNumber} raised here` : ""}`);
       onDone();
     } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Couldn't transfer the patient"));
@@ -119,7 +119,7 @@ export default function BranchTransferDialog({ admission, onClose, onDone }: {
                   <TextField id="transfer-bed" select label="Bed there" value={toBedId} onChange={(e) => setToBedId(e.target.value)}
                     SelectProps={{ displayEmpty: true }} InputLabelProps={{ shrink: true }}
                     helperText={bedsLoading ? "Loading free beds…" : beds.length ? undefined : "No bed is free there right now."}>
-                    <MenuItem value="">No bed yet — assign one when they arrive</MenuItem>
+                    <MenuItem value="">No bed yet - assign one when they arrive</MenuItem>
                     {beds.map((b) => <MenuItem key={b.bedId} value={b.bedId}>{b.label}{b.bedTypeName ? ` · ${b.bedTypeName}` : ""}</MenuItem>)}
                   </TextField>
                 ) : (

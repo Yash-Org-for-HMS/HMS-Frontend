@@ -4,7 +4,7 @@ import { renderWithProviders } from "@/test/renderWithProviders";
 
 /**
  * The lab queue asks the server again when its work changes: a lab or
- * radiology event, or a test paid for at another counter ("billing" — which
+ * radiology event, or a test paid for at another counter ("billing" - which
  * releases a pre-paid sample). An outpatient event (a check-in, vitals) and the
  * first connect do not; a reconnect after a while does. Both the list and the
  * backlog count follow.
@@ -28,7 +28,7 @@ beforeEach(() => {
   get.mockResolvedValue({ data: { data: [], pagination: { total: 0, totalPages: 1 } } });
 });
 
-describe("LabOrdersQueue — live updates", () => {
+describe("LabOrdersQueue - live updates", () => {
   it("lab and billing events refresh the list and the backlog; outpatient ones and the first connect do not", async () => {
     renderWithProviders(<LabOrdersQueue />);
     await waitFor(() => { expect(asks("today_pending")).toBe(1); expect(asks("past_pending")).toBe(1); });

@@ -91,7 +91,7 @@ export default function UsersList() {
   }, [orderBy, order, roleFilter]);
 
   // Roles are per-hospital rows, so the platform list gets one DOCTOR per
-  // tenant — nine of them here. Collapsed to one entry per role code: the
+  // tenant - nine of them here. Collapsed to one entry per role code: the
   // duplicates were not just noise, picking the wrong one silently filtered
   // to a single hospital's staff.
   const { data: allRoles = [] } = useQuery<{ roleId: string; roleName: string; roleCode: string }[]>({
@@ -127,7 +127,7 @@ export default function UsersList() {
   const handleResetPassword = async (user: User) => {
     const ok = await confirm({
       title: "Reset password",
-      message: `Reset the password for ${user.firstName} ${user.lastName} (${user.email})? Their current password stops working immediately — you'll get a new one-time password to share with them.`,
+      message: `Reset the password for ${user.firstName} ${user.lastName} (${user.email})? Their current password stops working immediately - you'll get a new one-time password to share with them.`,
       confirmText: "Reset password",
       destructive: true,
     });

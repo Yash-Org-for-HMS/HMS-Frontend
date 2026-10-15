@@ -4,7 +4,7 @@ import { renderWithProviders } from "@/test/renderWithProviders";
 
 /**
  * Co-signing: a consultant chooses and co-signs; a resident sees the same list
- * of their own, with nothing to press — only the consultant co-signs.
+ * of their own, with nothing to press - only the consultant co-signs.
  */
 
 const auth = vi.hoisted(() => ({ user: null as unknown }));

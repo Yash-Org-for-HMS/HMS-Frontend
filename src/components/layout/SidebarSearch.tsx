@@ -5,7 +5,7 @@ import { SEARCH_SHORTCUT } from "@/utils/shortcut";
 /**
  * Sidebar quick-search launcher. Opens the command palette (also reachable via
  * ⌘K / Ctrl+K). Shared across every panel's sidebar so search is discoverable
- * everywhere, not just Reception. Purely a trigger — it dispatches the global
+ * everywhere, not just Reception. Purely a trigger - it dispatches the global
  * `open-command-palette` event; the palette itself owns all data access and
  * permission/module gating, so this adds no new capability or exposure.
  */

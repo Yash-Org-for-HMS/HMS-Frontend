@@ -15,8 +15,8 @@ import IndentCard, { type Indent } from "./IndentCard";
 
 /**
  * The store's side of ward indents (Ward Stock → Indents): every indent still
- * open in the branch, oldest first. Issue what can be sent — through the same
- * issue as any issue to a ward, oldest-expiring batch first — and close what
+ * open in the branch, oldest first. Issue what can be sent - through the same
+ * issue as any issue to a ward, oldest-expiring batch first - and close what
  * cannot be supplied, saying why.
  */
 
@@ -114,7 +114,7 @@ function CloseDialog({ indent, onClose, onDone }: { indent: Indent; onClose: () 
         <Typography variant="body2" sx={{ color: "text.secondary", mb: 1.5 }}>
           {indent.wardName} will see this indent as closed short, with your reason.
         </Typography>
-        <TextField id="indent-close-reason" label="Reason" value={reason} onChange={(e) => setReason(e.target.value)} fullWidth autoFocus inputProps={{ maxLength: 300 }} placeholder="e.g. Out of stock — supplier delay" />
+        <TextField id="indent-close-reason" label="Reason" value={reason} onChange={(e) => setReason(e.target.value)} fullWidth autoFocus inputProps={{ maxLength: 300 }} placeholder="e.g. Out of stock - supplier delay" />
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} color="inherit" disabled={saving}>Cancel</Button>

@@ -140,7 +140,7 @@ export default function AnnouncementsAdmin() {
                         <TableCell>
                           {r.audienceScope === "ALL_TENANTS"
                             ? "All tenants"
-                            : r.tenants.map((t) => t.hospitalName).join(", ") || "—"}
+                            : r.tenants.map((t) => t.hospitalName).join(", ") || "-"}
                         </TableCell>
                         <TableCell>
                           {r.panelScope === "ALL_PANELS"

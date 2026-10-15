@@ -31,7 +31,7 @@ beforeEach(() => {
 const invalidated = (spy: { mock: { calls: unknown[][] } }) =>
   spy.mock.calls.map((c) => JSON.stringify((c[0] as { queryKey: unknown }).queryKey));
 
-describe("NurseLayout — live refresh of the worklists", () => {
+describe("NurseLayout - live refresh of the worklists", () => {
   it("an outpatient change refreshes the dashboard and the queue; a lab change does not", async () => {
     const { queryClient } = renderWithProviders(<NurseLayout />);
     const spy = vi.spyOn(queryClient, "invalidateQueries");

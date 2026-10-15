@@ -3,9 +3,9 @@ import { RefreshRounded } from "@mui/icons-material";
 import Mascot from "./Mascot";
 
 interface ErrorStateProps {
-  /** Headline — defaults to a friendly generic. */
+  /** Headline - defaults to a friendly generic. */
   title?: string;
-  /** Detail line — pass the backend message here so failures aren't silent. */
+  /** Detail line - pass the backend message here so failures aren't silent. */
   message?: string;
   /** When provided, renders a Retry button (e.g. react-query's refetch). */
   onRetry?: () => void;

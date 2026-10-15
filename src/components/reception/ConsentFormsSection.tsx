@@ -142,7 +142,7 @@ function IssueConsentDialog({ patientId, onClose, onIssued }: { patientId: strin
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Every active template the hospital has built. Filtering by category was
-  // what hid a hospital's own form from the desk meant to issue it — one of
+  // what hid a hospital's own form from the desk meant to issue it - one of
   // three templates was a consent form parked under "Other", unissuable.
   const { data: templates = [] } = useQuery<any[]>({
     queryKey: ["form-templates"],
@@ -195,7 +195,7 @@ function IssueConsentDialog({ patientId, onClose, onIssued }: { patientId: strin
         <Stack spacing={2.5} sx={{ pt: 0.5 }}>
           <TextField select fullWidth label="Form template" value={templateId}
             onChange={(e) => { setTemplateId(e.target.value); setValues({}); setErrors({}); const t = templates.find((x) => x.formTemplateId === e.target.value); if (t) setTitle(t.formName || ""); }}>
-            <MenuItem value="">— Custom (no template) —</MenuItem>
+            <MenuItem value="">- Custom (no template) -</MenuItem>
             {/* Every option is a Consent Form now, so the category suffix that
                 used to disambiguate them says nothing worth the space. */}
             {templates.map((t) => (
@@ -204,7 +204,7 @@ function IssueConsentDialog({ patientId, onClose, onIssued }: { patientId: strin
           </TextField>
           {templates.length === 0 && (
             <Typography variant="caption" sx={{ color: "text.secondary", mt: -1.5 }}>
-              No form templates yet — build one under Form Builder, or issue a
+              No form templates yet - build one under Form Builder, or issue a
               custom form below.
             </Typography>
           )}
@@ -318,7 +318,7 @@ function SignConsentDialog({ form, patientName, onClose, onSigned }: { form: any
   return (
     <Dialog open onClose={saving ? undefined : onClose} maxWidth="sm" fullWidth>
       <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        Capture consent — {form.title}
+        Capture consent - {form.title}
         <Button onClick={onClose} sx={{ minWidth: 0, p: 1, color: "text.secondary" }}><CloseRounded /></Button>
       </DialogTitle>
       <DialogContent dividers>
@@ -380,14 +380,14 @@ function SignConsentDialog({ form, patientName, onClose, onSigned }: { form: any
  * The answers on an issued form, as they were asked.
  *
  * This read the raw responseDataJson and printed its KEYS, so staff saw
- * "procedure_explained_to_patient_by" on screen while the printed document —
- * built from the same record — showed "Procedure explained to patient by".
+ * "procedure_explained_to_patient_by" on screen while the printed document -
+ * built from the same record - showed "Procedure explained to patient by".
  *
  * Rather than resolve labels a second time here, it asks the detail endpoint
  * the print view already uses: that pairs each answer with its template label
  * IN THE TEMPLATE'S ORDER, and includes fields nobody filled, so the dialog
  * now shows what was asked as well as what was answered. One resolver, one
- * answer — the alternative is two copies of the rule drifting apart.
+ * answer - the alternative is two copies of the rule drifting apart.
  */
 function ConsentResponsesDialog({ form, onClose }: { form: any; onClose: () => void }) {
   const { data, isLoading, isError } = useQuery({
@@ -397,16 +397,16 @@ function ConsentResponsesDialog({ form, onClose }: { form: any; onClose: () => v
   const rows: { label: string; fieldType?: string; value: unknown }[] = data?.responses ?? [];
 
   const show = (v: unknown, fieldType?: string) => {
-    if (v === null || v === undefined || v === "") return "—";
+    if (v === null || v === undefined || v === "") return "-";
     if (typeof v === "boolean") return v ? "Yes" : "No";
-    if (Array.isArray(v)) return v.length ? v.join(", ") : "—";
+    if (Array.isArray(v)) return v.length ? v.join(", ") : "-";
     if (fieldType === "date") { const d = dayjs(String(v)); return d.isValid() ? d.format("DD MMM YYYY") : String(v); }
     return String(v);
   };
 
   return (
     <Dialog open onClose={onClose} maxWidth="xs" fullWidth>
-      <DialogTitle>{form.title} — responses</DialogTitle>
+      <DialogTitle>{form.title} - responses</DialogTitle>
       <DialogContent dividers>
         {isLoading ? (
           <ListSkeleton rows={3} />

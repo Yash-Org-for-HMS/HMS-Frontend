@@ -19,7 +19,7 @@ import RefundReceiptDialog from "@/components/billing/RefundReceiptDialog";
  * Refunds waiting on an administrator.
  *
  * A refund at or above the hospital's approval threshold returns no money when
- * the desk raises it — it lands here first. Until someone acts on this page the
+ * the desk raises it - it lands here first. Until someone acts on this page the
  * patient has not been paid, so an empty queue is the healthy state and a
  * growing one is a backlog of people owed money.
  *
@@ -46,7 +46,7 @@ const inr = (v: unknown) =>
   `₹${Number(v ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 const when = (d?: string | null) =>
-  d ? new Date(d).toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "—";
+  d ? new Date(d).toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "-";
 
 export default function RefundApprovals() {
   const toast = useToast();
@@ -168,7 +168,7 @@ export default function RefundApprovals() {
                   rows.map((r) => (
                     <TableRow key={r.refundId} hover>
                       <TableCell>
-                        <Typography variant="body2" sx={{ fontWeight: 700 }}>{r.patientName || "—"}</Typography>
+                        <Typography variant="body2" sx={{ fontWeight: 700 }}>{r.patientName || "-"}</Typography>
                         <Typography variant="caption" sx={{ color: "text.secondary" }}>{r.uhidNumber || ""}</Typography>
                       </TableCell>
                       <TableCell><Typography variant="body2">{r.invoiceNumber}</Typography></TableCell>
@@ -186,8 +186,8 @@ export default function RefundApprovals() {
                         )}
                       </TableCell>
                       <TableCell sx={{ maxWidth: 240 }}>
-                        <Typography variant="body2" sx={{ color: "text.secondary" }}>{r.refundReason || "—"}</Typography>
-                        {/* Approving this one does more than release the money — the
+                        <Typography variant="body2" sx={{ color: "text.secondary" }}>{r.refundReason || "-"}</Typography>
+                        {/* Approving this one does more than release the money - the
                             desk asked for the charge itself to be cancelled, so the
                             bill is voided and its services go back to be re-billed.
                             That belongs in front of the approver, not after. */}
@@ -204,7 +204,7 @@ export default function RefundApprovals() {
                         )}
                       </TableCell>
                       <TableCell>
-                        <Typography variant="body2">{r.raisedBy || "—"}</Typography>
+                        <Typography variant="body2">{r.raisedBy || "-"}</Typography>
                         <Typography variant="caption" sx={{ color: "text.secondary" }}>{when(r.raisedAt)}</Typography>
                       </TableCell>
                       <TableCell align="right">

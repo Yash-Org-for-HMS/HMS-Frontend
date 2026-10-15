@@ -7,7 +7,7 @@
  * gives those failures one place to arrive.
  *
  * No service is wired up because none has been chosen, so the default sink
- * logs to the console — exactly what happened before. What changes is that
+ * logs to the console - exactly what happened before. What changes is that
  * every path now reports through one function, so adopting Sentry is
  * `setErrorReporter(...)` in main.tsx rather than an audit of the whole app.
  */
@@ -21,7 +21,7 @@ export interface ClientErrorContext {
   componentStack?: string;
   /**
    * The backend's x-request-id from the most recent failed API call. This is
-   * the join between a user's browser error and the server log line — without
+   * the join between a user's browser error and the server log line - without
    * it, the two records of the same failure can't be matched up.
    */
   requestId?: string | null;
@@ -74,7 +74,7 @@ export function reportClientError(error: unknown, context: ClientErrorContext): 
     ...context,
   };
 
-  // Always console — this is what the app did before, and losing it would make
+  // Always console - this is what the app did before, and losing it would make
   // local debugging worse in exchange for a reporter nobody has configured yet.
   console.error(`[${full.source}]`, error, full);
 

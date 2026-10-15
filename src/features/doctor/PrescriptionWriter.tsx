@@ -105,7 +105,7 @@ export default function PrescriptionWriter({ consultationId, patientId, patientA
   const [specialInstructions, setSpecialInstructions] = useState("");
   const [items, setItems] = useState<any[]>([]);
   const [dispensingStatus, setDispensingStatus] = useState<string | null>(null);
-  // Without the Pharmacy module there's no in-house dispensing — every Rx is
+  // Without the Pharmacy module there's no in-house dispensing - every Rx is
   // "buy outside" (a clinical record). The API also skips the pharmacy dispatch.
   const { isModuleEnabled } = useEnabledModules();
   const pharmacyEnabled = isModuleEnabled("Pharmacy");
@@ -140,7 +140,7 @@ export default function PrescriptionWriter({ consultationId, patientId, patientA
   const [medicineLoading, setMedicineLoading] = useState(false);
   // freeSolo: the Autocomplete hands back a raw string when the doctor types a
   // medicine that is not in the catalog. handleAddItem already branches on that
-  // (isCustom), so the state genuinely holds either — say so rather than widen to any.
+  // (isCustom), so the state genuinely holds either - say so rather than widen to any.
   const [selectedMedicine, setSelectedMedicine] = useState<PrescribableMedicine | string | null>(null);
 
   // A medicine picked off the list came FROM the catalogue, so the catalogue
@@ -148,13 +148,13 @@ export default function PrescriptionWriter({ consultationId, patientId, patientA
   const pickedFromCatalogue = !!selectedMedicine && typeof selectedMedicine !== "string";
 
   // A doctor at a new hospital types a drug name and, with an empty catalogue,
-  // sees NOTHING happen — freeSolo suppresses the no-options popper, so the
+  // sees NOTHING happen - freeSolo suppresses the no-options popper, so the
   // empty state written above never rendered. Silence reads as "the search is
   // broken", when in fact a custom name is prescribable; this says so.
   const noMedicineMatches = !pickedFromCatalogue
     && medicineQuery.trim().length >= 2 && !medicineLoading && medicineOptions.length === 0;
 
-  // New item state — dosage is entered as a numeric value + a unit picked from a
+  // New item state - dosage is entered as a numeric value + a unit picked from a
   // dropdown (no more typing "mg" by hand), then combined into "500 mg" on save.
   const [doseValue, setDoseValue] = useState("");
   const [doseUnit, setDoseUnit] = useState("mg");
@@ -269,7 +269,7 @@ export default function PrescriptionWriter({ consultationId, patientId, patientA
   // Compares a medicine name/dosage for the duplicate check below. This was
   // being CALLED without ever being defined, so "Repeat last Rx" threw a
   // ReferenceError the moment the patient actually had a previous prescription
-  // — and the catch reported it as "Failed to load the last prescription",
+  // - and the catch reported it as "Failed to load the last prescription",
   // which reads as a server problem or an empty history rather than a bug.
   // Dosage is optional, hence the null guard.
   const normalize = (s?: string | null) => (s ?? "").trim().toLowerCase();
@@ -385,13 +385,13 @@ export default function PrescriptionWriter({ consultationId, patientId, patientA
         <tr>
           <td style="padding:8px 6px;border-bottom:1px solid #e5e7eb;text-align:center;color:#64748b">${i + 1}</td>
           <td style="padding:8px 6px;border-bottom:1px solid #e5e7eb">
-            <span style="font-weight:700">${esc(it.medicineName || "—")}</span>
+            <span style="font-weight:700">${esc(it.medicineName || "-")}</span>
             ${it.genericName ? `<div style="font-size:11px;color:#64748b">${esc(it.genericName)}</div>` : ""}
             ${it.buyOutside ? `<span style="display:inline-block;margin-top:2px;font-size:10px;font-weight:700;color:#b45309;background:#fef3c7;border-radius:4px;padding:1px 6px">BUY OUTSIDE</span>` : ""}
           </td>
           <td style="padding:8px 6px;border-bottom:1px solid #e5e7eb">${esc(it.dosage)}</td>
           <td style="padding:8px 6px;border-bottom:1px solid #e5e7eb">${esc(it.frequency)}</td>
-          <td style="padding:8px 6px;border-bottom:1px solid #e5e7eb">${it.durationDays ? esc(it.durationDays) + " days" : "—"}</td>
+          <td style="padding:8px 6px;border-bottom:1px solid #e5e7eb">${it.durationDays ? esc(it.durationDays) + " days" : "-"}</td>
           <td style="padding:8px 6px;border-bottom:1px solid #e5e7eb">${esc(it.quantity)} ${esc(it.unit || "")}</td>
         </tr>`
       )
@@ -557,18 +557,18 @@ export default function PrescriptionWriter({ consultationId, patientId, patientA
             value={selectedMedicine}
             /* Only what the doctor TYPED may drive the search. On reason
                "reset" MUI writes the chosen option's own label back into the
-               input — "Telma 40 (Telmisartan 40 mg Tablet)" — and that
+               input - "Telma 40 (Telmisartan 40 mg Tablet)" - and that
                composite string matches neither medicineName nor genericName,
                which are searched separately with `contains`. So picking a
                medicine re-ran the search against a string nothing could match,
                got zero rows back, and the field announced that the catalogue
-               had nothing — about a medicine just picked out of it. */
+               had nothing - about a medicine just picked out of it. */
             onInputChange={(e, newInputValue, reason) => {
               if (reason === "input") {
                 setMedicineQuery(newInputValue);
                 /* Typing over a chosen medicine abandons it. MUI keeps `value`
                    as you type, so the field could read one drug while state
-                   still held the object for another — and handleAddItem takes
+                   still held the object for another - and handleAddItem takes
                    selectedMedicine first, prescribing the one no longer on
                    screen. On a prescription that is not a cosmetic bug. */
                 if (selectedMedicine) setSelectedMedicine(null);
@@ -596,7 +596,7 @@ export default function PrescriptionWriter({ consultationId, patientId, patientA
                 placeholder="e.g. Paracetamol"
                 size="small"
                 helperText={noMedicineMatches
-                  ? "Nothing in the medicine catalogue matches. You can still prescribe this by name — type it and press Add Medicine."
+                  ? "Nothing in the medicine catalogue matches. You can still prescribe this by name - type it and press Add Medicine."
                   : " "}
                 InputProps={{
                   ...params.InputProps,
@@ -680,16 +680,16 @@ export default function PrescriptionWriter({ consultationId, patientId, patientA
       </Paper>
 
       {/* Allergy clashes on what is currently on the prescription. This warns
-          and never blocks — overriding is a clinical judgement — and it names
+          and never blocks - overriding is a clinical judgement - and it names
           the exact salt so the doctor can weigh it rather than guess. */}
       {allergyCheck.warnings.length > 0 && (
         <Alert severity="error" icon={<WarningAmberRounded />} sx={{ borderRadius: 2 }}>
           <Typography variant="subtitle2" fontWeight={800} sx={{ mb: 0.5 }}>
-            Allergy warning — this patient is recorded as allergic to a salt in {allergyCheck.warnings.length === 1 ? "this medicine" : "these medicines"}
+            Allergy warning - this patient is recorded as allergic to a salt in {allergyCheck.warnings.length === 1 ? "this medicine" : "these medicines"}
           </Typography>
           {allergyCheck.warnings.map((w, i) => (
             <Typography key={i} variant="body2">
-              <b>{w.medicineName}</b> contains <b>{w.salt}</b> — recorded allergy: {w.allergen}
+              <b>{w.medicineName}</b> contains <b>{w.salt}</b> - recorded allergy: {w.allergen}
               {w.severity ? ` (${w.severity})` : ""}{w.reaction ? `, reaction: ${w.reaction}` : ""}
             </Typography>
           ))}
@@ -698,7 +698,7 @@ export default function PrescriptionWriter({ consultationId, patientId, patientA
       {allergyCheck.uncheckedFreeTextCount > 0 && (
         <Alert severity="info" sx={{ borderRadius: 2 }}>
           {allergyCheck.uncheckedFreeTextCount} recorded {allergyCheck.uncheckedFreeTextCount === 1 ? "allergy was" : "allergies were"} entered
-          as free text and could not be checked automatically — review them before prescribing.
+          as free text and could not be checked automatically - review them before prescribing.
         </Alert>
       )}
 

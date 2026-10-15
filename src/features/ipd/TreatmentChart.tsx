@@ -27,7 +27,7 @@ import dayjs from "dayjs";
 /**
  * The ward file: one page per admission, the whole chart day at once.
  *
- * The ward dialogs are for RECORDING at the bedside; this is for READING — the
+ * The ward dialogs are for RECORDING at the bedside; this is for READING - the
  * day on one surface in time order, the way the paper file works. It is also
  * what gets printed and signed at discharge, so print is a first-class output.
  */
@@ -35,12 +35,12 @@ import dayjs from "dayjs";
 const ROW_H = 34;
 
 /**
- * How a dose reads on the chart. A symbol AND a colour, never colour alone —
+ * How a dose reads on the chart. A symbol AND a colour, never colour alone -
  * this is printed, usually in black and white.
  *
  * "Not signed for" is the case worth having: a dose whose time has passed with
  * nothing recorded either way. Not "due" (that is still actionable) and not
- * "missed" (nobody has said so) — it is the gap a drug round should close.
+ * "missed" (nobody has said so) - it is the gap a drug round should close.
  */
 const doseMark = (d: MedicationDose): { mark: string; label: string; color: string } => {
   if (d.status === "GIVEN") return { mark: "✓", label: "given", color: SEMANTIC.success };
@@ -53,7 +53,7 @@ const doseMark = (d: MedicationDose): { mark: string; label: string; color: stri
 /**
  * Everything about a dose beyond its mark and due time.
  *
- * The note matters most — a dose missed or held without its reason is half a
+ * The note matters most - a dose missed or held without its reason is half a
  * record. Infused volume is here because it feeds the fluid intake total, which
  * otherwise has no working shown on paper.
  */
@@ -61,7 +61,7 @@ const doseDetail = (d: MedicationDose): string => {
   const bits: string[] = [];
   const due = dayjs(d.scheduledAt).format("HH:mm");
   const at = d.administeredAt ? dayjs(d.administeredAt).format("HH:mm") : null;
-  // Only when it differs — a dose given on time needs no second timestamp.
+  // Only when it differs - a dose given on time needs no second timestamp.
   if (at && at !== due) bits.push(`at ${at}`);
   if (d.infusedVolumeMl != null) bits.push(`${d.infusedVolumeMl} ml`);
   if (d.givenBy) bits.push(d.givenBy);
@@ -147,7 +147,7 @@ export default function TreatmentChart() {
 
   /**
    * The drug chart for this day. An order earns a row if a dose is due today OR
-   * it is still live — one ordered this morning belongs on the chart before its
+   * it is still live - one ordered this morning belongs on the chart before its
    * first dose, and one awaiting pharmacy must be visible or nobody notices it
    * never arrived. A cancelled order with no dose today is history, and drops.
    */
@@ -156,7 +156,7 @@ export default function TreatmentChart() {
   );
 
   // Oldest first: both read as a diary of the day, so they run the way the day
-  // ran — unlike the dialogs, which put the newest on top for writing.
+  // ran - unlike the dialogs, which put the newest on top for writing.
   const asc = <T extends Record<string, unknown>>(a: T, b: T, k: keyof T & string) =>
     dayjs(String(a[k])).valueOf() - dayjs(String(b[k])).valueOf();
   const visits: DoctorVisitRow[] = [...(visitData?.visits ?? [])]
@@ -258,7 +258,7 @@ export default function TreatmentChart() {
               {[header?.wardName, header?.bedLabel].filter(Boolean).join(" · ") || "No bed"}
             </Typography>
             <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>
-              {header?.admittingDoctor ?? "—"}
+              {header?.admittingDoctor ?? "-"}
               {header?.admissionDate ? ` · admitted ${dayjs(header.admissionDate).format("DD MMM")}` : ""}
               {header?.dayOfStay ? ` · day ${header.dayOfStay}` : ""}
             </Typography>
@@ -269,7 +269,7 @@ export default function TreatmentChart() {
         </Box>
 
         {/* Allergies belong at the top of a chart, where they are read before an
-            order is written — not buried in a patient profile. */}
+            order is written - not buried in a patient profile. */}
         <Divider sx={{ my: 1.5 }} />
         {allergies.length === 0 ? (
           <Typography variant="caption" sx={{ color: "text.secondary" }}>No known allergies recorded.</Typography>
@@ -306,7 +306,7 @@ export default function TreatmentChart() {
                     {[
                       "Time", "Temp", "Pulse", "Resp", "BP", "SpO₂", "RBS", "Pain",
                       // This hospital's own columns, in the order it set. They
-                      // print with the rest — a sheet in the folder has to be
+                      // print with the rest - a sheet in the folder has to be
                       // the whole chart, not the standard part of it.
                       ...obsFields.map((f) => (f.unit ? `${f.label} (${f.unit})` : f.label)),
                       "Remark", "By",
@@ -315,7 +315,7 @@ export default function TreatmentChart() {
                         sx={{
                           fontWeight: 700, fontSize: "0.6875rem", textTransform: "uppercase",
                           color: "text.secondary", whiteSpace: "nowrap",
-                          // Time stays put while a wide chart scrolls — see the
+                          // Time stays put while a wide chart scrolls - see the
                           // observation dialog for why. Released for print, where
                           // the whole width is on the page anyway.
                           ...(i === 0 ? STICKY_TIME : null),
@@ -357,7 +357,7 @@ export default function TreatmentChart() {
         {/* ── The drug chart ────────────────────────────────────────────────
             What was ORDERED and what happened to each dose. The fluid sheet
             below lists only doses that were given, because that is all a fluid
-            total can use — but a drug chart that shows only the doses that
+            total can use - but a drug chart that shows only the doses that
             went in is the one thing a drug chart must never be. A missed dose
             is the entry people are looking for. */}
         <Paper elevation={0} className="print-block" sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider", overflow: "hidden", mb: 2 }}>
@@ -396,11 +396,11 @@ export default function TreatmentChart() {
                           // Ordered but not dispensed. Invisible until now, which
                           // is how a drug quietly never reaches the patient.
                           <Typography variant="caption" sx={{ color: SEMANTIC.warning, fontWeight: 700 }}>
-                            Awaiting pharmacy — no doses scheduled yet
+                            Awaiting pharmacy - no doses scheduled yet
                           </Typography>
                         ) : (o.doses ?? []).length === 0 ? (
                           <Typography variant="caption" sx={{ color: NEUTRAL.muted }}>
-                            {o.status === "CANCELLED" ? "Stopped" : "As needed — no dose given today"}
+                            {o.status === "CANCELLED" ? "Stopped" : "As needed - no dose given today"}
                           </Typography>
                         ) : (
                           <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75 }}>
@@ -409,7 +409,7 @@ export default function TreatmentChart() {
                               const detail = doseDetail(d);
                               return (
                                 <Box key={d.ipMedAdminId} component="span"
-                                  title={`${m.label} — due ${dayjs(d.scheduledAt).format("HH:mm")}${detail ? ` · ${detail}` : ""}`}
+                                  title={`${m.label} - due ${dayjs(d.scheduledAt).format("HH:mm")}${detail ? ` · ${detail}` : ""}`}
                                   sx={{
                                     display: "inline-flex", alignItems: "baseline", gap: 0.4,
                                     fontSize: "0.75rem",
@@ -503,11 +503,11 @@ export default function TreatmentChart() {
                     <Typography variant="body2" sx={{ fontWeight: 700 }}>{dayjs(v.visitDate).format("HH:mm")}</Typography>
                     <Typography variant="body2" sx={{ fontWeight: 600 }}>{v.doctorName || "Doctor"}</Typography>
                   </Box>
-                  {/* A visit with nothing written is still a visit — the doctor
+                  {/* A visit with nothing written is still a visit - the doctor
                       saw the patient, and that is the entry. Saying so beats a
                       blank line the reader has to interpret. */}
                   <Typography variant="body2" sx={{ mt: 0.4, whiteSpace: "pre-wrap", color: v.notes ? "text.primary" : NEUTRAL.muted }}>
-                    {v.notes || "Seen — nothing written."}
+                    {v.notes || "Seen - nothing written."}
                   </Typography>
                 </Box>
               ))}
@@ -566,7 +566,7 @@ export default function TreatmentChart() {
                       ? <CheckCircleRounded sx={{ fontSize: 16, color: SEMANTIC.success }} />
                       : <RadioButtonUncheckedRounded sx={{ fontSize: 16, color: NEUTRAL.muted }} />}
                     <Typography variant="caption" sx={{ color: so.signed ? "text.primary" : "text.secondary", fontWeight: so.signed ? 600 : 400 }}>
-                      {so.role}{so.signed ? ` — ${so.by}, ${dayjs(so.at).format("HH:mm")}` : " — not signed"}
+                      {so.role}{so.signed ? ` - ${so.by}, ${dayjs(so.at).format("HH:mm")}` : " - not signed"}
                     </Typography>
                   </Box>
                 ))}

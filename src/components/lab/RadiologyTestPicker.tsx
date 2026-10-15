@@ -16,7 +16,7 @@ export type PickedRadTest = { chargeItemId: string; testName: string; price: num
 // Category-browse picker for radiology tests (mastered in the Schedule of Charges,
 // organized into categories like X-Ray / CT / MRI). Each host panel passes the
 // catalogue endpoint it already uses, so no new backend and no auth surprises.
-// The caller sends only the chargeItemId — the server prices the order from the catalogue.
+// The caller sends only the chargeItemId - the server prices the order from the catalogue.
 export default function RadiologyTestPicker({ open, onClose, onPick, accent = "#7c3aed", catalogUrl }: {
   open: boolean; onClose: () => void; onPick: (t: PickedRadTest) => void; accent?: string; catalogUrl: string;
 }) {
@@ -71,7 +71,7 @@ export default function RadiologyTestPicker({ open, onClose, onPick, accent = "#
         ) : filtered.length === 0 ? (
           <Typography variant="body2" sx={{ color: "text.secondary", py: 4, textAlign: "center" }}>
             {tests.length === 0
-              ? "No radiology tests configured — add them in Schedule of Charges (Type: Radiology test)."
+              ? "No radiology tests configured - add them in Schedule of Charges (Type: Radiology test)."
               : "No tests match."}
           </Typography>
         ) : (

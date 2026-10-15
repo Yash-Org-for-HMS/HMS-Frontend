@@ -3,7 +3,7 @@
  *
  * Split out from the component so the rule about one-export-per-file is
  * satisfied, and because this is a fact about the case rather than a way of
- * drawing it — the operating list may well want to read it too.
+ * drawing it - the operating list may well want to read it too.
  */
 export type CaseStage = "BOOKED" | "IN_THEATRE" | "IN_RECOVERY" | "BACK_IN_BED" | "CANCELLED";
 

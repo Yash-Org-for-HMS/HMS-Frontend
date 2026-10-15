@@ -42,7 +42,7 @@ function InfoRow({ label, value }: { label: string; value: any }) {
   return (
     <Box sx={{ display: "flex", justifyContent: "space-between", py: 1, borderBottom: "1px dashed", borderColor: "divider", gap: 2 }}>
       <Typography variant="body2" sx={{ color: "text.secondary" }}>{label}</Typography>
-      <Typography variant="body2" sx={{ fontWeight: 600, color: "text.primary", textAlign: "right" }}>{value ?? "—"}</Typography>
+      <Typography variant="body2" sx={{ fontWeight: 600, color: "text.primary", textAlign: "right" }}>{value ?? "-"}</Typography>
     </Box>
   );
 }
@@ -179,7 +179,7 @@ export default function DoctorPatientProfile() {
             </Box>
             <Stack direction="row" sx={{ flexWrap: "wrap", gap: { xs: 1, sm: 2.5 }, color: "text.secondary" }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, minWidth: 0 }}>
-                <LocalPhoneRounded sx={{ fontSize: 16 }} /><Typography variant="body2" noWrap>{p.phone || "—"}</Typography>
+                <LocalPhoneRounded sx={{ fontSize: 16 }} /><Typography variant="body2" noWrap>{p.phone || "-"}</Typography>
               </Box>
               {p.email && (
                 <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, minWidth: 0 }}>
@@ -195,7 +195,7 @@ export default function DoctorPatientProfile() {
           </Box>
         </Box>
 
-        {/* Allergy strip — clinically critical, always visible when present */}
+        {/* Allergy strip - clinically critical, always visible when present */}
         {hasAllergy && (
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, px: { xs: 2.5, sm: 3 }, py: 1.25, bgcolor: alpha(SEMANTIC.danger, 0.07), borderTop: "1px solid", borderColor: alpha(SEMANTIC.danger, 0.2) }}>
             <WarningAmberRounded sx={{ color: SEMANTIC.danger, fontSize: 20, flexShrink: 0 }} />
@@ -234,7 +234,7 @@ export default function DoctorPatientProfile() {
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2, 1fr)", md: totalDues > 0.005 ? "repeat(5, 1fr)" : "repeat(4, 1fr)" }, gap: 2, mb: 2 }}>
         <StatCard layout="horizontal" icon={<HistoryRounded />} label="Consultations" value={history.length} color={DOCTOR_BLUE} />
         <StatCard layout="horizontal" icon={<TodayRounded />} label="Last visit" color="#8b5cf6"
-          value={lastConsult ? new Date(lastConsult.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : "—"}
+          value={lastConsult ? new Date(lastConsult.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : "-"}
           sub={lastConsult ? lastConsult.doctorName : "no visits yet"} />
         <StatCard layout="horizontal" icon={<VaccinesRounded />} label="Doses due" value={dueRows.length} color={doseColor}
           sub={hasOverdueDose ? "overdue" : dueRows.length ? "due soon" : "up to date"} />
@@ -255,15 +255,15 @@ export default function DoctorPatientProfile() {
           {/* Details not already surfaced in the header (which carries name,
               phone, email, city, and the UHID/gender/blood/age chips). */}
           <Section title="Patient details" icon={<PersonRounded fontSize="small" />}>
-            <InfoRow label="Date of birth" value={p.dateOfBirth ? new Date(p.dateOfBirth).toLocaleDateString("en-GB") : "—"} />
-            <InfoRow label="Address" value={[p.addressLine1, p.addressLine2, p.city, p.district, p.state, p.postalCode].filter(Boolean).join(", ") || "—"} />
+            <InfoRow label="Date of birth" value={p.dateOfBirth ? new Date(p.dateOfBirth).toLocaleDateString("en-GB") : "-"} />
+            <InfoRow label="Address" value={[p.addressLine1, p.addressLine2, p.city, p.district, p.state, p.postalCode].filter(Boolean).join(", ") || "-"} />
             {(p.emergencyContactName || p.emergencyContactPhone) && (
               <InfoRow label="Emergency contact" value={[p.emergencyContactName, p.emergencyContactPhone, p.emergencyContactRelation ? `(${p.emergencyContactRelation})` : ""].filter(Boolean).join(" ")} />
             )}
-            <InfoRow label="Registered" value={p.createdAt ? new Date(p.createdAt).toLocaleDateString("en-GB") : "—"} />
+            <InfoRow label="Registered" value={p.createdAt ? new Date(p.createdAt).toLocaleDateString("en-GB") : "-"} />
           </Section>
 
-          {/* Read-only immunization snapshot — full schedule + administer/skip
+          {/* Read-only immunization snapshot - full schedule + administer/skip
               actions live on the Reception patient profile; this view only
               surfaces what's due/overdue so it doesn't act during consultation. */}
           <Section title="Immunization" icon={<VaccinesRounded fontSize="small" />}>
@@ -275,7 +275,7 @@ export default function DoctorPatientProfile() {
               dueRows.slice(0, 5).map((r) => (
                 <Box key={r.patientVaccinationId} sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", py: 0.75, borderBottom: "1px dashed", borderColor: "divider", gap: 1 }}>
                   <Box sx={{ minWidth: 0 }}>
-                    <Typography variant="body2" sx={{ fontWeight: 600 }} noWrap>{r.vaccineName} — {r.doseLabel}</Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }} noWrap>{r.vaccineName} - {r.doseLabel}</Typography>
                     <Typography variant="caption" sx={{ color: "text.secondary" }}>Due {new Date(r.dueDate).toLocaleDateString("en-GB")}</Typography>
                   </Box>
                   <Chip size="small" label={r.state === "OVERDUE" ? "Overdue" : "Due soon"} sx={{ bgcolor: `${VAX_STATE_COLOR[r.state]}1f`, color: VAX_STATE_COLOR[r.state], fontWeight: 700, flexShrink: 0 }} />
@@ -284,7 +284,7 @@ export default function DoctorPatientProfile() {
             )}
           </Section>
 
-          {/* Read-only surgery history — added/edited from the IPD Admissions
+          {/* Read-only surgery history - added/edited from the IPD Admissions
               page (Surgery Details), scoped to a specific admission; this is
               just the patient-wide read view for consultation reference. */}
           <Section title="Surgeries" icon={<MedicalServicesRounded fontSize="small" />}>
@@ -308,7 +308,7 @@ export default function DoctorPatientProfile() {
           </Section>
         </Box>
 
-        {/* Clinical narrative — tabbed so a long timeline/history doesn't run the
+        {/* Clinical narrative - tabbed so a long timeline/history doesn't run the
             column way past the sidebar. Body scrolls inside a bounded height. */}
         <Paper elevation={0} sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider", bgcolor: "background.paper" }}>
           <Tabs
@@ -373,7 +373,7 @@ function ConsultationHistoryBody({ history, loading }: { history: any[]; loading
                 <Typography variant="caption" sx={{ fontWeight: 700, display: "block", mb: 0.5 }}>Prescribed:</Typography>
                 {h.prescribedMedicines.map((med: any, idx: number) => (
                   <Typography key={idx} variant="caption" sx={{ color: "text.secondary", display: "block" }}>
-                    • {med.medicineName || "Medicine"} — {med.dosage} ({med.frequency}) × {med.durationDays}d
+                    • {med.medicineName || "Medicine"} - {med.dosage} ({med.frequency}) × {med.durationDays}d
                   </Typography>
                 ))}
               </Box>
@@ -387,7 +387,7 @@ function ConsultationHistoryBody({ history, loading }: { history: any[]; loading
 
 // Typed clinical documents (discharge summaries, referrals, external reports, …):
 // upload, list, open, and uploader-only soft-delete. Distinct from the timeline's
-// transactional events — these are files the workflow doesn't otherwise capture.
+// transactional events - these are files the workflow doesn't otherwise capture.
 function ClinicalDocuments({ patientId, bare = false }: { patientId: string; bare?: boolean }) {
   const toast = useToast();
   const confirm = useConfirm();
@@ -488,7 +488,7 @@ function ClinicalDocuments({ patientId, bare = false }: { patientId: string; bar
             <TextField select label="Document type" value={typeId} onChange={(e) => setTypeId(e.target.value)} fullWidth size="small">
               {types.map((t) => <MenuItem key={t.id} value={String(t.id)}>{t.name}</MenuItem>)}
             </TextField>
-            <TextField label="Title" value={title} onChange={(e) => setTitle(e.target.value)} fullWidth size="small" placeholder="e.g. Discharge summary — 04 Aug 2026" inputProps={{ maxLength: 300 }} />
+            <TextField label="Title" value={title} onChange={(e) => setTitle(e.target.value)} fullWidth size="small" placeholder="e.g. Discharge summary - 04 Aug 2026" inputProps={{ maxLength: 300 }} />
             <Button component="label" variant="outlined" startIcon={<UploadFileRounded />}>
               {file ? file.name : "Choose file"}
               <input hidden type="file" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />

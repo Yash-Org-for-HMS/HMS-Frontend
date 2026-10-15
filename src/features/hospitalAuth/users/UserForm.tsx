@@ -40,7 +40,7 @@ import ExtraRolesEditor, { type ExtraRoleRow } from "./ExtraRolesEditor";
 
 // Which licensable module a role belongs to (mirrors the backend
 // ROLE_REQUIRED_MODULE). A role is hidden when adding staff if the hospital's
-// plan doesn't include its module — the backend also rejects it, this is UX.
+// plan doesn't include its module - the backend also rejects it, this is UX.
 const ROLE_MODULE: Record<string, string> = {
   LAB_TECH: "Laboratory",
   PHARMACIST: "Pharmacy",
@@ -135,7 +135,7 @@ export default function UserForm() {
   // Roles beside the main one, each at one facility or all (15_System_Roles).
   const [extraRoles, setExtraRoles] = useState<ExtraRoleRow[]>([]);
   // The branches they also work at, beside the home branch (multi-branch plan,
-  // phase 5) — what they may switch between. Only shown, and only sent, when
+  // phase 5) - what they may switch between. Only shown, and only sent, when
   // the hospital has more than one branch.
   const [alsoWorksAt, setAlsoWorksAt] = useState<string[]>([]);
 

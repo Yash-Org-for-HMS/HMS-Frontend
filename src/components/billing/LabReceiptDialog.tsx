@@ -71,8 +71,8 @@ export default function LabReceiptDialog({ open, serviceId, onClose }: Props) {
                   { label: "Date", value: formatDate(invoice.invoiceDate) },
                 ]}
                 metaRight={[
-                  { label: "Patient", value: invoice.patient ? `${invoice.patient.firstName} ${invoice.patient.lastName}` : "—" },
-                  { label: "UHID", value: invoice.patient?.uhidNumber || "—" },
+                  { label: "Patient", value: invoice.patient ? `${invoice.patient.firstName} ${invoice.patient.lastName}` : "-" },
+                  { label: "UHID", value: invoice.patient?.uhidNumber || "-" },
                 ]}
                 totals={{
                   subtotal: Number(invoice.grossAmount || 0),
@@ -81,7 +81,7 @@ export default function LabReceiptDialog({ open, serviceId, onClose }: Props) {
                   total: Number(invoice.netAmount || 0), paid: totalPaid, refunded: totalRefunded, balance,
                   balanceNote: refundedBalance > 0.005
                     ? (refundedBalance >= balance - 0.005
-                        ? "This bill was paid and then refunded — the balance is the refund, not an unpaid amount."
+                        ? "This bill was paid and then refunded - the balance is the refund, not an unpaid amount."
                         : `Includes ${formatINR(refundedBalance)} returned by refund.`)
                     : undefined,
                 }}
@@ -91,7 +91,7 @@ export default function LabReceiptDialog({ open, serviceId, onClose }: Props) {
                     <div style={{ fontSize: 11, fontWeight: 700, color: "#6b7280", letterSpacing: 1, marginBottom: 6 }}>PAYMENTS</div>
                     {invoice.Payment.map((p: any, i: number) => (
                       <div key={i} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#4b5563", marginTop: 4 }}>
-                        <span>{formatDate(p.createdAt)} · {p.paymentMethod?.methodName || "—"}</span>
+                        <span>{formatDate(p.createdAt)} · {p.paymentMethod?.methodName || "-"}</span>
                         <span>{formatINR(p.paidAmount)}</span>
                       </div>
                     ))}

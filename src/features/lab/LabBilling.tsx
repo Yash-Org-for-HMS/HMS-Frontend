@@ -25,8 +25,8 @@ import SortableHeadCell from "@/components/table/SortableHeadCell";
 // A lab technician is NOT authorised for the reception invoice endpoints, so we
 // can't reuse the reception Billing page here. Instead we list the lab &
 // radiology ORDERS this panel already owns, surface their payment status, and
-// let staff collect outstanding payments via the shared POS (the one endpoint —
-// /billing/poc-payment — a LAB_TECH is authorised to call). Accurate amounts for
+// let staff collect outstanding payments via the shared POS (the one endpoint -
+// /billing/poc-payment - a LAB_TECH is authorised to call). Accurate amounts for
 // outstanding orders come from /billing/unbilled/:patientId, the only
 // lab-authorised price source; that same amount feeds the POS gross.
 
@@ -54,7 +54,7 @@ interface BillableOrder {
 const ACCENT = SEMANTIC.success;
 
 // The queue endpoint already returns both kinds in one shape, priced and
-// labelled — the two normalisers this replaces were doing that per source table
+// labelled - the two normalisers this replaces were doing that per source table
 // in the browser.
 /** One row of GET /lab/billing-queue, before the client adds its list key. */
 interface BillableOrderRow {
@@ -79,7 +79,7 @@ function normalizeRow(o: BillableOrderRow): BillableOrder {
     kind: o.kind,
     id: o.id,
     patientId: o.patientId,
-    patientName: o.patientName || "—",
+    patientName: o.patientName || "-",
     uhid: o.uhid ?? undefined,
     description: o.description,
     date: o.date,
@@ -101,7 +101,7 @@ export default function LabBilling() {
   // One page of the selected tab, filtered/sorted/priced server-side.
   //
   // This screen used to GET every lab order and every radiology order the
-  // hospital had ever recorded and do all four tabs in the browser — roughly
+  // hospital had ever recorded and do all four tabs in the browser - roughly
   // 1.7 KB per order, so ~48 MB per page load after a year at 80 orders a day.
   // It also made one /billing/unbilled call per patient to price them. The
   // server now returns 20 rows with their amounts already resolved.
@@ -118,7 +118,7 @@ export default function LabBilling() {
   const orders = useMemo<BillableOrder[]>(() => (queueQ.data?.rows || []).map(normalizeRow), [queueQ.data]);
   const totalPages = queueQ.data?.pagination?.totalPages ?? 1;
 
-  // The summary covers EVERY outstanding order, not this page — a headline
+  // The summary covers EVERY outstanding order, not this page - a headline
   // "Amount Due" that silently counted only the first 20 rows would be worse
   // than showing none. It is safe to compute in full because the outstanding
   // set is bounded by unpaid work rather than by history.
@@ -220,7 +220,7 @@ export default function LabBilling() {
                         />
                         {o.description}
                       </TableCell>
-                      <TableCell align="right">{amt != null ? formatINR(amt) : "—"}</TableCell>
+                      <TableCell align="right">{amt != null ? formatINR(amt) : "-"}</TableCell>
                       <TableCell>{statusChip(o)}</TableCell>
                       <TableCell align="right">
                         {o.billingLockActive ? (
@@ -232,7 +232,7 @@ export default function LabBilling() {
                             Receipt
                           </Button>
                         ) : (
-                          <Box sx={{ color: "text.disabled", fontSize: "0.75rem" }}>—</Box>
+                          <Box sx={{ color: "text.disabled", fontSize: "0.75rem" }}>-</Box>
                         )}
                       </TableCell>
                     </TableRow>

@@ -13,7 +13,7 @@ import RefundReceipt, { type RefundReceiptData } from "@/components/billing/Refu
  * View and print the receipt for one refund.
  *
  * Fetches the whole document from the server rather than assembling it from
- * whatever the calling screen happens to hold — the billing modal has most of
+ * whatever the calling screen happens to hold - the billing modal has most of
  * it, the approvals queue has almost none, and two assemblies of the same
  * document drift apart. The server also refuses a receipt for a refund that has
  * not completed, so a pending refund cannot be printed as though the patient

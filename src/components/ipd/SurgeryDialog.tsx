@@ -159,9 +159,9 @@ export default function SurgeryDialog({ open, onClose, admission }: Props) {
                         <Typography variant="caption" sx={{ display: "block" }}>{s.surgeryType === "MAJOR" ? "Major" : "Minor"}</Typography>
                         {s.gradeName && <Typography variant="caption" sx={{ color: "text.secondary" }}>{s.gradeName}</Typography>}
                       </TableCell>
-                      <TableCell>{s.surgeonName || "—"}</TableCell>
-                      <TableCell>{s.surgeryDate ? dayjs(s.surgeryDate).format("DD MMM YYYY") : "—"}</TableCell>
-                      <TableCell align="right">{s.price ? formatINR(s.price) : "—"}</TableCell>
+                      <TableCell>{s.surgeonName || "-"}</TableCell>
+                      <TableCell>{s.surgeryDate ? dayjs(s.surgeryDate).format("DD MMM YYYY") : "-"}</TableCell>
+                      <TableCell align="right">{s.price ? formatINR(s.price) : "-"}</TableCell>
                       <TableCell>
                         <Chip label={sm.label} size="small" sx={{ bgcolor: `${sm.color}22`, color: sm.color, fontWeight: 700, mb: s.invoiceNumber ? 0.5 : 0 }} />
                         {s.invoiceNumber && (
@@ -207,13 +207,13 @@ export default function SurgeryDialog({ open, onClose, admission }: Props) {
               <MenuItem value="MINOR">Minor</MenuItem>
             </TextField>
             <TextField select fullWidth label="Grade (optional)" value={form.gradeId} onChange={(e) => setForm({ ...form, gradeId: e.target.value })}>
-              <MenuItem value="">—</MenuItem>
+              <MenuItem value="">-</MenuItem>
               {grades.filter((g: any) => g.isActive).map((g: any) => <MenuItem key={g.surgeryGradeId} value={g.surgeryGradeId}>{g.gradeName}</MenuItem>)}
             </TextField>
           </Box>
           <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2 }}>
             <TextField select fullWidth label="Surgeon (optional)" value={form.surgeonId} onChange={(e) => setForm({ ...form, surgeonId: e.target.value })}>
-              <MenuItem value="">—</MenuItem>
+              <MenuItem value="">-</MenuItem>
               {(dropdowns?.doctors || []).map((d: any) => (
                 <MenuItem key={d.doctorId} value={d.doctorId}>Dr. {d.user?.firstName || "Unknown"} {d.user?.lastName || ""}</MenuItem>
               ))}

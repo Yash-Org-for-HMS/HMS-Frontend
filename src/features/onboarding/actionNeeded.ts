@@ -4,12 +4,12 @@
  * Extracted so two rules can be tested rather than eyeballed:
  *
  *   1. "Expiring soon" needs a lower bound. Without it a trial that lapsed a
- *      month ago — the status flip is a job, so there is a gap — rendered as
+ *      month ago - the status flip is a job, so there is a gap - rendered as
  *      "Expires today".
  *   2. The buckets are NOT disjoint: a tenant can be suspended and have an
  *      incomplete profile, so summing their lengths double-counts.
  *   3. A trial whose LEAD is already closed needs nobody. Marking a lead lost
- *      does not touch its trial row — and should not, because the trial really
+ *      does not touch its trial row - and should not, because the trial really
  *      did expire and overwriting that would lose the difference between
  *      "expired, then we gave up" and "lost before it ever expired". The
  *      outcome lives on the lead, so this list has to read it.
@@ -63,7 +63,7 @@ export interface ActionBuckets<T extends TrialLike, H extends HospitalLike> {
   incomplete: H[];
   /** Distinct trials across the trial buckets. */
   trialCount: number;
-  /** Distinct tenants across the tenant buckets — NOT the sum of their lengths. */
+  /** Distinct tenants across the tenant buckets - NOT the sum of their lengths. */
   hospitalCount: number;
   /** trialCount + hospitalCount. Zero means genuinely nothing to do. */
   total: number;
@@ -89,7 +89,7 @@ export function actionBuckets<T extends TrialLike, H extends HospitalLike>(
     })
     .sort((a, b) => daysUntil(a.trialEndDate, now) - daysUntil(b.trialEndDate, now));
 
-  // Lapsed trials join the expired list rather than falling off the page —
+  // Lapsed trials join the expired list rather than falling off the page -
   // dropping them would be worse than the mislabelling this replaces.
   const expired = trials
     .filter((t) => !leadClosed(t) && (t.trialStatus === "expired" || lapsed(t, now)))

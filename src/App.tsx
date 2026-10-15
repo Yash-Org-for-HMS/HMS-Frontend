@@ -178,7 +178,7 @@ const WardStock = lazy(() => import("@/features/pharmacy/WardStock"));
 
 // Wrap a lazy page in a Suspense boundary with the skeleton fallback. The
 // boundary sits at the page-content level (inside each layout's <Outlet/>), so
-// only the content area shows the skeleton while its chunk loads — the
+// only the content area shows the skeleton while its chunk loads - the
 // surrounding layout/sidebar stays rendered. `C` is a stable module-scope lazy
 // component, so this only builds an element (no React.lazy re-creation).
 const el = (C: ComponentType<any>) => (
@@ -187,7 +187,7 @@ const el = (C: ComponentType<any>) => (
   </Suspense>
 );
 
-// Like el(), but passes props — used to reuse a page under a different shell
+// Like el(), but passes props - used to reuse a page under a different shell
 // (e.g. the admin oversight routes render reception pages with basePath="/hospital").
 const elp = (C: ComponentType<any>, props: Record<string, unknown>) => (
   <Suspense fallback={<PageSkeleton />}>
@@ -196,7 +196,7 @@ const elp = (C: ComponentType<any>, props: Record<string, unknown>) => (
 );
 
 // Like el(), but shows the "upgrade to unlock" upsell when the hospital's plan
-// doesn't include `module` — so plan-gated pages advertise the feature instead
+// doesn't include `module` - so plan-gated pages advertise the feature instead
 // of 404ing or 403ing.
 const elGated = (C: ComponentType<any>, module: string, feature?: string, props: Record<string, unknown> = {}) => (
   <ModuleGate module={module} feature={feature}>
@@ -245,7 +245,7 @@ function App() {
             <Route path="/plans/new" element={el(PlanForm)} />
             <Route path="/plans/:id/edit" element={el(PlanForm)} />
             <Route path="/subscription-billing" element={el(SubscriptionBilling)} />
-            {/* Feature Flags routes removed — page hidden (see AdminLayout note). */}
+            {/* Feature Flags routes removed - page hidden (see AdminLayout note). */}
             <Route path="/leads" element={el(LeadsList)} />
             <Route path="/leads/new" element={el(LeadForm)} />
             <Route path="/leads/:id/edit" element={el(LeadForm)} />
@@ -263,8 +263,8 @@ function App() {
             <Route path="/super-admins/:id/edit" element={el(SuperAdminForm)} />
             <Route path="/rbac/roles" element={el(RolesList)} />
             {/* Role authoring is gone. These URLs may still be bookmarked, and
-                the router has no catch-all — an unmatched path renders a blank
-                page — so send them to the read-only list rather than nowhere. */}
+                the router has no catch-all - an unmatched path renders a blank
+                page - so send them to the read-only list rather than nowhere. */}
             <Route path="/rbac/roles/new" element={<Navigate to="/rbac/roles" replace />} />
             <Route path="/rbac/roles/:id/edit" element={<Navigate to="/rbac/roles" replace />} />
             <Route path="/rbac/users" element={el(UsersList)} />
@@ -316,7 +316,7 @@ function App() {
             <Route path="/hospital/refund-approvals" element={elGated(RefundApprovals, "Billing", "Refund Approvals")} />
             <Route path="/hospital/reports" element={el(Reports)} />
             {/* The Reports hub NOW carries both of these, as a "Nursing" and an
-                "Insurance" group — the arrangement lab and pharmacy already had,
+                "Insurance" group - the arrangement lab and pharmacy already had,
                 where the panel keeps its own screen and the hub re-presents the
                 same definitions. They were kept out of it originally because each
                 is a self-contained page with its own navigation; the hub folds
@@ -328,14 +328,14 @@ function App() {
                 are no longer in the admin sidebar.
 
                 Still ungated, for the reasons that have not changed: there is no
-                "Claims" module — the list is OPD, Doctor, IPD, Laboratory,
-                Pharmacy, Billing — so gating on one would lock the page for good.
+                "Claims" module - the list is OPD, Doctor, IPD, Laboratory,
+                Pharmacy, Billing - so gating on one would lock the page for good.
                 And nursing reports are mostly vitals, which a hospital without
                 IPD still records; the Ward & Beds group hides itself when IPD is
                 off, which is the right granularity and is what the hub reuses. */}
             {/* The list, not just its reports. The admin dashboard's attention
-                list points at queried and ageing claims — chasing a payer is an
-                administrator's job — and until now the only claims page on this
+                list points at queried and ageing claims - chasing a payer is an
+                administrator's job - and until now the only claims page on this
                 side was the report, so there was nowhere for those rows to go.
                 Ungated for the same reason the report is. */}
             <Route path="/hospital/claims" element={el(ClaimsList)} />
@@ -453,7 +453,7 @@ function App() {
             <Route path="/nurse/indents" element={elGated(WardIndents, "Pharmacy", "Indents")} />
             <Route path="/nurse/my-wards" element={elp(WardsHome, { mode: "mine" })} />
             <Route path="/nurse/all-wards" element={elp(WardsHome, { mode: "all" })} />
-            {/* Read-only view under the Nurse shell — a nurse opening a patient (e.g. via
+            {/* Read-only view under the Nurse shell - a nurse opening a patient (e.g. via
                 command-palette search) must not land inside the full Reception sidebar,
                 which would expose front desk/billing/admissions navigation they don't own. */}
             <Route path="/nurse/patients/:id" element={elp(PatientProfile, { readOnly: true, canRecordVaccinations: true, canRecordConsent: true })} />
@@ -490,7 +490,7 @@ function App() {
             <Route path="/lab/orders" element={el(LabOrdersQueue)} />
             <Route path="/lab/orders/:id" element={el(UpdateLabOrder)} />
             <Route path="/lab/radiology" element={el(RadiologyOrdersQueue)} />
-            {/* Same screen, with one scan open over it — radiology is edited in
+            {/* Same screen, with one scan open over it - radiology is edited in
                 a dialog, so the id addresses the dialog rather than a page. */}
             <Route path="/lab/radiology/:id" element={el(RadiologyOrdersQueue)} />
             <Route path="/lab/catalog" element={el(LabTestCatalog)} />
@@ -533,7 +533,7 @@ function App() {
         {/* Anything the router does not recognise. Without this a typo, a stale
             bookmark, or a link to a removed page rendered a blank white screen,
             which reads as "the app is down" rather than "wrong address".
-            Guarded because this is one of TWO sibling <Routes> trees — see
+            Guarded because this is one of TWO sibling <Routes> trees - see
             AdminOwnedFallback: a bare "*" here also matches every super-admin
             path, stacking a "page doesn't exist" panel under those pages. */}
         <Route path="*" element={<AdminOwnedFallback />} />

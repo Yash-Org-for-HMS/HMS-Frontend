@@ -4,7 +4,7 @@ import dayjs from "dayjs";
 import { renderWithProviders } from "@/test/renderWithProviders";
 
 /**
- * A nurse's own shifts: the next two weeks, day by day, from /roster/mine —
+ * A nurse's own shifts: the next two weeks, day by day, from /roster/mine -
  * the shift, its hours and the ward, or "Off".
  */
 

@@ -7,7 +7,7 @@ interface SidebarHeaderProps {
   logoUrl?: string | null;
   title: string;
   subtitle: string;
-  /** Glyph for a sidebar that is not a hospital — the platform console. */
+  /** Glyph for a sidebar that is not a hospital - the platform console. */
   fallbackIcon?: ReactNode;
 }
 

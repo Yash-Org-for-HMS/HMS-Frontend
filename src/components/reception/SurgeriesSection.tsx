@@ -21,7 +21,7 @@ const STATUS_META: Record<string, { label: string; color: string }> = {
   CANCELLED: { label: "Cancelled", color: NEUTRAL.muted },
 };
 
-// Read-only surgery history across ALL of the patient's admissions — surgeries
+// Read-only surgery history across ALL of the patient's admissions - surgeries
 // are added/edited from the IPD Admissions page (SurgeryDialog), scoped to a
 // specific admission; this tab is just the patient-wide view of that data.
 export default function SurgeriesSection({ patientId }: { patientId: string }) {
@@ -70,9 +70,9 @@ export default function SurgeriesSection({ patientId }: { patientId: string }) {
                       <Typography variant="caption" sx={{ display: "block" }}>{s.surgeryType === "MAJOR" ? "Major" : "Minor"}</Typography>
                       {s.gradeName && <Typography variant="caption" sx={{ color: "text.secondary" }}>{s.gradeName}</Typography>}
                     </TableCell>
-                    <TableCell>{s.surgeonName || "—"}</TableCell>
-                    <TableCell>{s.surgeryDate ? dayjs(s.surgeryDate).format("DD MMM YYYY") : "—"}</TableCell>
-                    <TableCell align="right">{s.price ? formatINR(s.price) : "—"}</TableCell>
+                    <TableCell>{s.surgeonName || "-"}</TableCell>
+                    <TableCell>{s.surgeryDate ? dayjs(s.surgeryDate).format("DD MMM YYYY") : "-"}</TableCell>
+                    <TableCell align="right">{s.price ? formatINR(s.price) : "-"}</TableCell>
                     <TableCell>
                       <Chip label={sm.label} size="small" sx={{ bgcolor: `${sm.color}22`, color: sm.color, fontWeight: 700 }} />
                       {s.invoiceNumber && (

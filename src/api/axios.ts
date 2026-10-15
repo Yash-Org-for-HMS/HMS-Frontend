@@ -1,7 +1,7 @@
 import axios, { AxiosError, type InternalAxiosRequestConfig } from "axios";
 import { noteFailedRequestId } from "@/utils/errorReporting";
 
-// Access Vite env variable — the single source of truth for the backend's
+// Access Vite env variable - the single source of truth for the backend's
 // base URL. Other modules that need it (asset URLs, the socket connection,
 // the AI summary stream) should import this rather than hardcoding their own
 // fallback, which can silently drift from this one.
@@ -37,7 +37,7 @@ const REALMS: Record<Realm, { access: string; refresh: string; refreshUrl: strin
 // super-admin token. (Same rule the request interceptor has always used.)
 //
 // The trailing \b is required: without it, "/hospital" as a bare PREFIX match
-// also matches the super-admin's own "/hospitals" (list/CRUD) endpoint — "l"
+// also matches the super-admin's own "/hospitals" (list/CRUD) endpoint - "l"
 // and "s" are both word characters, so there's no boundary between them and
 // the match slips through. That misclassified every /hospitals call as the
 // hospital-PORTAL realm, which sent the wrong (nonexistent) token, 401'd, and
@@ -48,7 +48,7 @@ const REALMS: Record<Realm, { access: string; refresh: string; refreshUrl: strin
 // ADD NEW HOSPITAL-PORTAL PREFIXES HERE. The fallback is the super-admin realm,
 // and it fails silently in the worst way: a hospital user has no super-admin
 // token, so no Authorization header is sent at all and the call 401s with
-// "Missing or malformed Authorization header" — which reads like a broken route
+// "Missing or malformed Authorization header" - which reads like a broken route
 // or an expired session rather than a missing word in this regex. A new mount
 // can pass every API check (those set the header themselves) and still be dead
 // in the browser. "clinical" was exactly that.
@@ -69,7 +69,7 @@ axiosInstance.interceptors.request.use(
     }
     // For hospital-portal requests, tell the backend which branch this request
     // targets. The backend validates it against the user's allowed branches.
-    // A request that names its own branch keeps it — the one case is asking
+    // A request that names its own branch keeps it - the one case is asking
     // about another branch the user also works at (a transfer's beds there).
     if (realm === "hospital" && config.headers && !config.headers["X-Branch-Id"]) {
       const activeBranchId = sessionStorage.getItem("activeBranchId");
@@ -97,7 +97,7 @@ function redirectToLogin(realm: Realm) {
   }
 }
 
-// One in-flight refresh per realm — concurrent 401s share the same attempt.
+// One in-flight refresh per realm - concurrent 401s share the same attempt.
 const refreshing: Partial<Record<Realm, Promise<string | null>>> = {};
 
 async function doRefresh(realm: Realm): Promise<string | null> {
@@ -141,7 +141,7 @@ axiosInstance.interceptors.response.use(
   async (error: AxiosError) => {
     const status = error.response?.status;
     // The join between a browser error report and the server log line for the
-    // same request — recorded here because this is the one place every failed
+    // same request - recorded here because this is the one place every failed
     // call passes through.
     noteFailedRequestId(error.response?.headers?.["x-request-id"] as string | undefined);
     const original = error.config as (InternalAxiosRequestConfig & { _retry?: boolean }) | undefined;

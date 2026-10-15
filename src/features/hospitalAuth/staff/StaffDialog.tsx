@@ -76,7 +76,7 @@ function initialForm(row: StaffRow | null, options: StaffOptions, startWithLogin
     additionalDepartmentIds: row?.additionalDepartments.map((d) => d.departmentId) ?? [],
     additionalRoles: Object.fromEntries((row?.additionalDepartments ?? []).map((d) => [d.departmentId, d.roleInDept])),
     posting: p?.wardId ? `ward:${p.wardId}` : p?.serviceUnitId ? `unit:${p.serviceUnitId}` : "",
-    // An existing person keeps what is on file — including no manager. Only a
+    // An existing person keeps what is on file - including no manager. Only a
     // new one starts from the suggestion.
     adminManagerId: row ? row.adminManager?.staffId ?? "" : undefined,
     functionalManagerId: row ? row.functionalManager?.staffId ?? "" : undefined,
@@ -98,7 +98,7 @@ function registrationLabel(council: string | null | undefined): string | null {
   return "Council reg. no. (if any)";
 }
 
-/** The login role a category usually gets — a starting point the admin can change. */
+/** The login role a category usually gets - a starting point the admin can change. */
 const DEFAULT_ROLE: Record<string, string> = { DOCTOR: "DOCTOR", NURSE: "NURSE", PHARMACIST: "PHARMACIST", TECHNICIAN: "LAB_TECH" };
 
 export default function StaffDialog({ row, options, onClose, onSaved, canGiveLogin = true, startWithLogin = false }: Props) {
@@ -162,7 +162,7 @@ export default function StaffDialog({ row, options, onClose, onSaved, canGiveLog
     const out: StaffIssue[] = [];
     if (row && (adminId === row.staffId || functionalId === row.staffId)) return [{ level: "error", code: "SELF", message: "Can't report to themselves" }];
     if (!adminId) {
-      if ((employmentType?.adminManagerRequired ?? true) && myGrade !== 1) out.push({ level: "warning", code: "NO_ADMIN_MANAGER", message: "Needs an administrative manager — you can save and add one later" });
+      if ((employmentType?.adminManagerRequired ?? true) && myGrade !== 1) out.push({ level: "warning", code: "NO_ADMIN_MANAGER", message: "Needs an administrative manager - you can save and add one later" });
     } else if (myGrade != null && gradeOf(adminId) != null && gradeOf(adminId)! >= myGrade) {
       out.push({ level: "error", code: "ADMIN_NOT_SENIOR", message: "The administrative manager must be more senior (a lower grade number)" });
     }
@@ -201,7 +201,7 @@ export default function StaffDialog({ row, options, onClose, onSaved, canGiveLog
         councilRegNo: f.councilRegNo.trim() || null,
         staffCategoryCode: f.staffCategoryCode, hospitalDesignationId: f.hospitalDesignationId || null,
         employmentTypeCode: f.employmentTypeCode, branchId: f.branchId || null, employeeCode: f.employeeCode.trim() || null,
-        // Where else they work — sent only where there is somewhere else to work.
+        // Where else they work - sent only where there is somewhere else to work.
         ...(options.branches.length > 1 ? { alsoWorksAt: f.alsoWorksAt.filter((b) => b !== f.branchId) } : {}),
         joiningDate: f.joiningDate || null, status: f.status, exitDate: f.status === "EXITED" ? f.exitDate || null : null,
         primaryDepartmentId: f.primaryDepartmentId || null, primaryRoleInDept: f.primaryRoleInDept,
@@ -234,8 +234,8 @@ export default function StaffDialog({ row, options, onClose, onSaved, canGiveLog
     if (!f.hospitalDesignationId) return undefined;
     // A new person: the suggestion is already filled in.
     if (field === undefined) {
-      if (list?.length) return "Suggested from the reporting rules — change it if it's someone else";
-      return rule && rule !== "-" ? `The rules say: ${rule} — nobody on file yet` : undefined;
+      if (list?.length) return "Suggested from the reporting rules - change it if it's someone else";
+      return rule && rule !== "-" ? `The rules say: ${rule} - nobody on file yet` : undefined;
     }
     // Someone on file with nobody set: offer the suggestion, don't impose it.
     if (field === "" && list?.length) {
@@ -273,7 +273,7 @@ export default function StaffDialog({ row, options, onClose, onSaved, canGiveLog
             </Grid>
             <Grid size={{ xs: 12, sm: 4 }}>
               <TextField select fullWidth label="Gender" value={f.gender} onChange={(e) => set("gender", e.target.value)}>
-                <MenuItem value="">—</MenuItem>
+                <MenuItem value="">-</MenuItem>
                 {GENDER_OPTIONS.map((g) => <MenuItem key={g.value} value={g.value}>{g.label}</MenuItem>)}
               </TextField>
             </Grid>
@@ -322,7 +322,7 @@ export default function StaffDialog({ row, options, onClose, onSaved, canGiveLog
             </Grid>
           </Grid>
 
-          {section("Job", "Pick the staff category first — the designations follow it.")}
+          {section("Job", "Pick the staff category first - the designations follow it.")}
           <Grid container spacing={2}>
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField select fullWidth required label="Staff category" value={f.staffCategoryCode} onChange={(e) => pickCategory(e.target.value)}
@@ -334,7 +334,7 @@ export default function StaffDialog({ row, options, onClose, onSaved, canGiveLog
               <SearchableSelect label="Designation" name="hospitalDesignationId" value={f.hospitalDesignationId} onChange={onSelect("hospitalDesignationId")}
                 disabled={!f.staffCategoryCode} placeholder={f.staffCategoryCode ? "Pick a designation" : "Pick a category first"} searchPlaceholder="Search designations…"
                 options={designations.map((d) => ({ value: d.id, label: d.displayName, secondary: `Grade ${d.grade}` }))}
-                helperText={designation ? `Grade ${designation.grade} — 1 is the most senior, 10 the most junior` : undefined} />
+                helperText={designation ? `Grade ${designation.grade} - 1 is the most senior, 10 the most junior` : undefined} />
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField select fullWidth label="Employment type" value={f.employmentTypeCode} onChange={(e) => set("employmentTypeCode", e.target.value)}
@@ -344,7 +344,7 @@ export default function StaffDialog({ row, options, onClose, onSaved, canGiveLog
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField select fullWidth label={options.branches.length > 1 ? "Home facility" : "Facility"} value={f.branchId} onChange={(e) => set("branchId", e.target.value)}>
-                {options.branches.length !== 1 && <MenuItem value="">—</MenuItem>}
+                {options.branches.length !== 1 && <MenuItem value="">-</MenuItem>}
                 {options.branches.map((b) => <MenuItem key={b.branchId} value={b.branchId}>{b.branchName}</MenuItem>)}
               </TextField>
             </Grid>
@@ -387,7 +387,7 @@ export default function StaffDialog({ row, options, onClose, onSaved, canGiveLog
             <Grid size={{ xs: 12, sm: 8 }}>
               <SearchableSelect label="Home department" name="primaryDepartmentId" value={f.primaryDepartmentId} onChange={onHomeDepartment}
                 emptyOption={{ value: "", label: "None yet" }} searchPlaceholder="Search departments…" options={deptOptions}
-                helperText="Departments you have switched on — switch more on under Departments." />
+                helperText="Departments you have switched on - switch more on under Departments." />
             </Grid>
             <Grid size={{ xs: 12, sm: 4 }}>
               <TextField select fullWidth label="Role in department" value={f.primaryRoleInDept} disabled={!f.primaryDepartmentId} onChange={(e) => set("primaryRoleInDept", e.target.value)}
@@ -419,7 +419,7 @@ export default function StaffDialog({ row, options, onClose, onSaved, canGiveLog
             ))}
           </Grid>
 
-          {section("Posting", "Where they work day to day — a ward or a unit. Nurses rotate; the old posting is kept as history.")}
+          {section("Posting", "Where they work day to day - a ward or a unit. Nurses rotate; the old posting is kept as history.")}
           <SearchableSelect label="Ward or unit" name="posting" value={f.posting} onChange={onSelect("posting")}
             emptyOption={{ value: "", label: "Not posted" }} searchPlaceholder="Search wards and units…" options={postingOptions} />
 
@@ -441,7 +441,7 @@ export default function StaffDialog({ row, options, onClose, onSaved, canGiveLog
           <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
             {issues.length === 0 ? (
               <Typography variant="body2" sx={{ display: "flex", alignItems: "center", gap: 0.75, color: SEMANTIC.success }}>
-                <CheckCircleRounded fontSize="small" /> {myGrade === 1 ? "OK — top of the hierarchy" : "OK"}
+                <CheckCircleRounded fontSize="small" /> {myGrade === 1 ? "OK - top of the hierarchy" : "OK"}
               </Typography>
             ) : issues.map((i) => (
               <Typography key={i.code} variant="body2" sx={{ display: "flex", alignItems: "center", gap: 0.75, color: i.level === "error" ? SEMANTIC.danger : SEMANTIC.warningDark }}>
@@ -455,7 +455,7 @@ export default function StaffDialog({ row, options, onClose, onSaved, canGiveLog
             <FormControlLabel control={<Checkbox checked={f.giveLogin} onChange={(e) => setF((prev) => ({ ...prev, giveLogin: e.target.checked, loginEmail: prev.loginEmail || prev.email.trim() }))} />}
               label="Give them a login now" />
             <Typography variant="caption" sx={{ color: "text.secondary", mt: -1.5 }}>
-              Not everyone needs one — housekeeping, drivers and visiting staff are often on the list without logging in. You can add one later.
+              Not everyone needs one - housekeeping, drivers and visiting staff are often on the list without logging in. You can add one later.
             </Typography>
             {f.giveLogin && (
               <Grid container spacing={2}>

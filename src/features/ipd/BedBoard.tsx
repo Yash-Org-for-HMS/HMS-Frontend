@@ -34,7 +34,7 @@ const OCCUPIED = ["OCCUPIED", "DISCHARGE_INITIATED"];
 const TO_CLEAN = ["VACATED", "CLEANING", "TERMINAL_CLEAN"];
 /** The hands-on moves, worded for the state a bed is leaving. */
 const MOVE_LABEL = (from: string, to: string): string => {
-  if (to === "AVAILABLE") return TO_CLEAN.includes(from) ? "Cleaned — make available" : from === "RESERVED" ? "Release reservation" : from === "BLOCKED" ? "Unblock" : "Back in use";
+  if (to === "AVAILABLE") return TO_CLEAN.includes(from) ? "Cleaned - make available" : from === "RESERVED" ? "Release reservation" : from === "BLOCKED" ? "Unblock" : "Back in use";
   return ({ RESERVED: "Reserve…", BLOCKED: "Block…", MAINTENANCE: "Under maintenance", INACTIVE: "Decommission", CLEANING: "Start cleaning", TERMINAL_CLEAN: "Terminal clean (after an infectious patient)" } as Record<string, string>)[to] ?? to;
 };
 const MOVE_ICON: Record<string, typeof CheckCircleRounded> = {
@@ -43,7 +43,7 @@ const MOVE_ICON: Record<string, typeof CheckCircleRounded> = {
 };
 const MANUAL = ["AVAILABLE", "RESERVED", "BLOCKED", "MAINTENANCE", "INACTIVE", "CLEANING", "TERMINAL_CLEAN"];
 
-// A bed as the board sees it. `location` is where the patient actually is —
+// A bed as the board sees it. `location` is where the patient actually is -
 // a held bed keeps its occupant while they are away in theatre.
 type BoardOccupant = {
   admissionId: string;
@@ -87,7 +87,7 @@ function awayText(o?: BoardOccupant | null): string {
 
 // Read-only structure + day-to-day bed STATUS changes only. Adding/editing
 // wards, rooms, and beds is hospital configuration, managed from the Hospital
-// Admin panel (Ward & Bed Setup) — not from Reception.
+// Admin panel (Ward & Bed Setup) - not from Reception.
 // `readOnly` renders a pure oversight view (hospital-admin Operations): bed
 // tiles still show live occupancy but are not clickable, so the admin can read
 // the ward census without opening the status-change menu (available / reserved /
@@ -112,7 +112,7 @@ export default function BedBoard({ readOnly = false, housekeeping = false }: { r
   const basePath = usePanelBase();
   const [moveDialog, setMoveDialog] = useState<{ mode: "send" | "return"; bed: BoardBed | null } | null>(null);
   const [placing, setPlacing] = useState<BedlessPatient | null>(null);
-  /** Reserve and block ask one more thing first — for how long, and why. */
+  /** Reserve and block ask one more thing first - for how long, and why. */
   const [asking, setAsking] = useState<{ bed: BoardBed; status: "RESERVED" | "BLOCKED" } | null>(null);
 
   const { data, isLoading, isError, error, refetch } = useQuery({
@@ -131,10 +131,10 @@ export default function BedBoard({ readOnly = false, housekeeping = false }: { r
     const next = (statusOf(code)?.allowedNext ?? []).filter((c) => MANUAL.includes(c));
     // A vacated bed is cleaned and released in one tap (the API records both steps).
     const all = code === "VACATED" ? ["AVAILABLE", ...next] : next;
-    // Housekeeping (15_System_Roles) only turns beds round — the API holds it to the same.
+    // Housekeeping (15_System_Roles) only turns beds round - the API holds it to the same.
     return housekeeping ? (HOUSEKEEPING_FROM.includes(code) ? all.filter((c) => HOUSEKEEPING_TO.includes(c)) : []) : all;
   };
-  /** Admitted with no bed — invisible on this board without their own strip. */
+  /** Admitted with no bed - invisible on this board without their own strip. */
   const awaitingBed = (data?.awaitingBed ?? []) as BedlessPatient[];
 
   const setBedStatus = async (bedId: string, status: string, extra: Record<string, unknown> = {}) => {
@@ -170,7 +170,7 @@ export default function BedBoard({ readOnly = false, housekeeping = false }: { r
         </Box>
       )}
 
-      {/* The key to the colours below — the platform's bed statuses (workbook 06). */}
+      {/* The key to the colours below - the platform's bed statuses (workbook 06). */}
       {statuses.length > 0 && (
         <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, mb: 3 }}>
           {statuses.map((st) => (
@@ -184,7 +184,7 @@ export default function BedBoard({ readOnly = false, housekeeping = false }: { r
         </Box>
       )}
 
-      {/* Admitted, but in no bed at all — most often just out of theatre with
+      {/* Admitted, but in no bed at all - most often just out of theatre with
           the bed released on the way in. This board draws patients through
           beds, so without this strip they appear nowhere on it: no bed, the
           theatre already freed, and a nurse looking for them has nothing to
@@ -252,8 +252,8 @@ export default function BedBoard({ readOnly = false, housekeeping = false }: { r
                         const color = colorOf(b.status);
                         const held = b.reservedUntil ? `held until ${new Date(b.reservedUntil).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}` : "";
                         const tip = b.occupant && !housekeeping
-                          ? `${b.occupant.patientName} (${b.occupant.uhid})${awayText(b.occupant) ? ` — ${awayText(b.occupant)}` : ""}${b.status === "DISCHARGE_INITIATED" ? " — discharge started" : ""}`
-                          : [nameOf(b.status), held, b.statusReason].filter(Boolean).join(" — ");
+                          ? `${b.occupant.patientName} (${b.occupant.uhid})${awayText(b.occupant) ? ` - ${awayText(b.occupant)}` : ""}${b.status === "DISCHARGE_INITIATED" ? " - discharge started" : ""}`
+                          : [nameOf(b.status), held, b.statusReason].filter(Boolean).join(" - ");
                         // Housekeeping opens only a bed it can do something with.
                         const clickable = !readOnly && (!housekeeping || movesFrom(b.status).length > 0);
                         return (
@@ -277,7 +277,7 @@ export default function BedBoard({ readOnly = false, housekeeping = false }: { r
                                     <Typography variant="caption" sx={{ color: SEMANTIC.warning, fontWeight: 700, display: "block" }} noWrap>Discharge started</Typography>
                                   )}
                                   {/* A patient in theatre is still admitted to this bed, and is not
-                                      in it. Saying so is the whole point of the movement work —
+                                      in it. Saying so is the whole point of the movement work -
                                       a nurse looking for them should not be sent to an empty bed. */}
                                   {awayText(b.occupant) && (
                                     <Typography variant="caption" sx={{ color: SEMANTIC.warning, fontWeight: 700, display: "flex", alignItems: "center", gap: 0.3 }} noWrap>
@@ -372,8 +372,8 @@ export default function BedBoard({ readOnly = false, housekeeping = false }: { r
  * the safe one: release it and the patient can come out of theatre to find
  * somebody else in it, which is the argument the ward has at six o'clock.
  *
- * Return asks where they are going — back to the bed being held, a different
- * bed, or recovery — because a post-operative patient often does not go back
+ * Return asks where they are going - back to the bed being held, a different
+ * bed, or recovery - because a post-operative patient often does not go back
  * to the ward they came from.
  */
 function TheatreMoveDialog({ mode, bed, onClose, onDone }: { mode: "send" | "return"; bed: BoardBed | null; onClose: () => void; onDone: () => void }) {
@@ -383,7 +383,7 @@ function TheatreMoveDialog({ mode, bed, onClose, onDone }: { mode: "send" | "ret
   const [reason, setReason] = useState("");
   const admissionId = bed?.occupant?.admissionId;
   // A patient shown on a bed tile while away in theatre is holding that bed,
-  // so it is the obvious place to bring them back to — and it is not in the
+  // so it is the obvious place to bring them back to - and it is not in the
   // free-bed list, since it is still marked occupied for them.
   const heldBedId = mode === "return" && bed?.bedId ? bed.bedId : "";
   const [toBedId, setToBedId] = useState(heldBedId);
@@ -426,7 +426,7 @@ function TheatreMoveDialog({ mode, bed, onClose, onDone }: { mode: "send" | "ret
           {mode === "send" ? (
             <>
               <TextField select label="Theatre" required fullWidth value={theatreId} onChange={(e) => setTheatreId(e.target.value)}
-                helperText={available.length ? "Only theatres that are free right now" : "No theatre is free — one may be in use, being cleaned, or under maintenance"}>
+                helperText={available.length ? "Only theatres that are free right now" : "No theatre is free - one may be in use, being cleaned, or under maintenance"}>
                 {available.map((t) => (
                   <MenuItem key={t.operatingTheatreId} value={t.operatingTheatreId}>{t.theatreName}</MenuItem>
                 ))}
@@ -434,15 +434,15 @@ function TheatreMoveDialog({ mode, bed, onClose, onDone }: { mode: "send" | "ret
               <FormControlLabel
                 control={<Switch checked={!releaseBed} onChange={(e) => setReleaseBed(!e.target.checked)} />}
                 label={releaseBed
-                  ? "Bed will be released — they will need a new one on the way back"
+                  ? "Bed will be released - they will need a new one on the way back"
                   : "Keep this bed for them"}
               />
             </>
           ) : (
             <TextField select label="Where to" fullWidth value={toBedId} onChange={(e) => setToBedId(e.target.value)}
               helperText={heldBedId
-                ? `Bed ${bed?.bedNumber} is being held for them either way — recovery just records that they are not in it yet`
-                : "No bed is being held — pick one, or send them to recovery"}>
+                ? `Bed ${bed?.bedNumber} is being held for them either way - recovery just records that they are not in it yet`
+                : "No bed is being held - pick one, or send them to recovery"}>
               {heldBedId && (
                 <MenuItem value={heldBedId}>Back to bed {bed?.bedNumber} (held for them)</MenuItem>
               )}
@@ -471,7 +471,7 @@ function TheatreMoveDialog({ mode, bed, onClose, onDone }: { mode: "send" | "ret
  * Giving a bed to a patient who has none.
  *
  * Reached from the strip at the top of the board. The usual case is a patient
- * just out of theatre whose bed was released on the way in — they are in
+ * just out of theatre whose bed was released on the way in - they are in
  * recovery and somebody has to decide where they go next, which is exactly the
  * decision releasing the bed deferred.
  */
@@ -519,7 +519,7 @@ function PlaceInBedDialog({ patient, onClose, onDone }: {
   );
 }
 
-/** Reserve (for how long, and for whom) or block (why) — the two moves that need a word first. */
+/** Reserve (for how long, and for whom) or block (why) - the two moves that need a word first. */
 function AskDialog({ kind, bedLabel, onClose, onSave }: { kind: "RESERVED" | "BLOCKED"; bedLabel: string; onClose: () => void; onSave: (extra: Record<string, unknown>) => void }) {
   const [reason, setReason] = useState("");
   const [hours, setHours] = useState("24");
@@ -531,12 +531,12 @@ function AskDialog({ kind, bedLabel, onClose, onSave }: { kind: "RESERVED" | "BL
         <Stack spacing={2.5} sx={{ pt: 0.5 }}>
           {reserving && (
             <TextField select fullWidth label="Hold for" value={hours} onChange={(e) => setHours(e.target.value)}
-              helperText="After this the bed reads as available again — nobody has to remember to release it.">
+              helperText="After this the bed reads as available again - nobody has to remember to release it.">
               {[["2", "2 hours"], ["4", "4 hours"], ["8", "8 hours"], ["24", "1 day"], ["48", "2 days"], ["72", "3 days"]].map(([v, l]) => <MenuItem key={v} value={v}>{l}</MenuItem>)}
             </TextField>
           )}
           <TextField fullWidth required={!reserving} label={reserving ? "For (optional)" : "Why is it blocked?"} value={reason}
-            onChange={(e) => setReason(e.target.value)} placeholder={reserving ? "Planned admission — Mr Shah, 4 pm" : "Cohorting / gender / staffing"}
+            onChange={(e) => setReason(e.target.value)} placeholder={reserving ? "Planned admission - Mr Shah, 4 pm" : "Cohorting / gender / staffing"}
             slotProps={{ htmlInput: { maxLength: 200 } }} />
         </Stack>
       </DialogContent>

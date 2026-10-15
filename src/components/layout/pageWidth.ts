@@ -6,7 +6,7 @@
  * used nine different values (600…1400), so moving between two pages of the
  * same kind shifted the left edge by up to 220px for no visible reason.
  *
- * Padding is deliberately NOT included — the panel layouts already apply p: 3
+ * Padding is deliberately NOT included - the panel layouts already apply p: 3
  * to <main>, and a wrapper adding its own sits lower and further in than every
  * other page.
  */
@@ -18,7 +18,7 @@
 export const FORM_PAGE_WIDTH = 1000;
 
 /**
- * Record detail pages — a patient profile, an order being worked on, the form
+ * Record detail pages - a patient profile, an order being worked on, the form
  * builder. Wider than a form because they carry tabs and side-by-side panels,
  * but still bounded so the eye doesn't have to track the full panel width.
  */

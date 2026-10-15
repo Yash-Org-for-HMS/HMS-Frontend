@@ -32,7 +32,7 @@ const inr = (v: unknown) => formatINR(Number(v || 0));
  * A claim list shown a page at a time. The full row set is already on the
  * client (one /claims/reports call), so this only slices the display: the
  * Excel/PDF export gets every row via `exportRows`, and the KPI tiles read the
- * full lists. `source` is the response object — a new range brings a
+ * full lists. `source` is the response object - a new range brings a
  * new object, which sends the reader back to page 1.
  */
 function PagedSimpleTable({ source, rows, ...rest }: Omit<React.ComponentProps<typeof SimpleTable>, "pagination" | "exportRows"> & { source: unknown }) {
@@ -182,7 +182,7 @@ export const CLAIM_REPORT_GROUPS: { heading: string; items: ReportItem[] }[] = [
  *
  * The report components render props and do not fetch, so they only work
  * inside something that supplies this. The hospital report hub folded them in
- * without it: nothing crashed — every one of them reads data?.x || {} — so
+ * without it: nothing crashed - every one of them reads data?.x || {} - so
  * the Insurance reports there rendered as empty tables while claims existed.
  * Pulled out so the hub can supply the same shell.
  *
@@ -221,7 +221,7 @@ function useClaimReportShell({ withBack }: { withBack: boolean }) {
   );
 
   // An empty range has nothing to slice, so the picker would offer a menu of
-  // blank reports — show the empty state in the content pane instead.
+  // blank reports - show the empty state in the content pane instead.
   const contentState =
     isLoading ? <ReportSkeleton />
       : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />
@@ -237,7 +237,7 @@ export default function ClaimReports() {
   return (
     <ReportNavLayout
       title="Claim Reports"
-      subtitle="Insurance & scheme analytics — turnaround, outstanding reimbursements, rejections. Every table is downloadable."
+      subtitle="Insurance & scheme analytics - turnaround, outstanding reimbursements, rejections. Every table is downloadable."
       groups={CLAIM_REPORT_GROUPS}
       accent={ACCENT}
       actions={shell.isFetching ? <HeartbeatLoader size={22} /> : undefined}
@@ -262,7 +262,7 @@ export function ClaimReportPanel({ report }: { report: string }) {
 }
 
 /**
- * The claim groups as the hub carries them — self-supplying, keys prefixed.
+ * The claim groups as the hub carries them - self-supplying, keys prefixed.
  * "register" collided with the nursing Vitals Register in the hub, which
  * resolves ?view= by the first match, so Claims Register was unreachable.
  */

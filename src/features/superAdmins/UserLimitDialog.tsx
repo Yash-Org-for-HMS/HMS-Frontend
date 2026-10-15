@@ -11,7 +11,7 @@ import type { UserCapacityQuota } from "./hospitalOverview.types";
 /**
  * The super admin sets how many logins one hospital may have: its own number,
  * or its plan's. Lowering it below the logins it already has switches nobody
- * off — it only stops more being added until some are removed.
+ * off - it only stops more being added until some are removed.
  */
 export default function UserLimitDialog({ hospitalId, hospitalName, capacity, onClose }: {
   hospitalId: string;
@@ -40,7 +40,7 @@ export default function UserLimitDialog({ hospitalId, hospitalName, capacity, on
 
   return (
     <Dialog open onClose={onClose} maxWidth="xs" fullWidth>
-      <DialogTitle sx={{ fontWeight: 700 }}>User limit — {hospitalName}</DialogTitle>
+      <DialogTitle sx={{ fontWeight: 700 }}>User limit - {hospitalName}</DialogTitle>
       <DialogContent sx={{ display: "grid", gap: 2, pt: "8px !important" }}>
         <Typography variant="body2" sx={{ color: "text.secondary" }}>
           {capacity.used} login{capacity.used === 1 ? "" : "s"} in use. Logins that are switched off don't count.

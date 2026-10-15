@@ -3,7 +3,7 @@ import { io, Socket } from "socket.io-client";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import { API_URL, refreshHospitalToken } from "@/api/axios";
 
-// How many of this tab's live connections are up — for a screen that relies on
+// How many of this tab's live connections are up - for a screen that relies on
 // its layout's connection (whose handlers refresh it) instead of opening one
 // of its own: every useSocket() call is a separate connection.
 let liveCount = 0;
@@ -35,7 +35,7 @@ export function useSocket(eventMap: Record<string, (...args: any[]) => void>): {
   useEffect(() => {
     if (!hospital?.id) return;
 
-    // Connect to the backend — VITE_API_URL usually includes `/api`, so strip
+    // Connect to the backend - VITE_API_URL usually includes `/api`, so strip
     // it to get the base domain the socket server listens on.
     const baseUrl = API_URL.replace(/\/api\/?$/, "");
 
@@ -46,7 +46,7 @@ export function useSocket(eventMap: Record<string, (...args: any[]) => void>): {
     if (!token) return;
 
     // The branch the screen is on, read the way the API client reads it, so
-    // live updates come from the same branch as the data on screen — the
+    // live updates come from the same branch as the data on screen - the
     // server checks it against the user's own branches, as it does for every
     // request. None (the hospital admin's "All branches") means every branch.
     socketRef.current = io(baseUrl, {
@@ -60,7 +60,7 @@ export function useSocket(eventMap: Record<string, (...args: any[]) => void>): {
 
     const socket = socketRef.current;
 
-    // The hospital room is joined server-side from the verified token — the
+    // The hospital room is joined server-side from the verified token - the
     // client no longer says which tenant it belongs to. Switching branch
     // reconnects (see the effect's dependencies), which moves the socket to
     // the new branch's room.
@@ -71,7 +71,7 @@ export function useSocket(eventMap: Record<string, (...args: any[]) => void>): {
       if (next !== up) { up = next; adjustLive(next ? 1 : -1); }
       setConnected(next);
     };
-    // A refused handshake (an expired token — a tab left idle past it, then a
+    // A refused handshake (an expired token - a tab left idle past it, then a
     // redeploy or a dropped connection) is final for socket.io-client: it gives
     // up on the socket and never retries. So refresh the token and connect again
     // here, a few times at most, so a server that keeps refusing doesn't loop.

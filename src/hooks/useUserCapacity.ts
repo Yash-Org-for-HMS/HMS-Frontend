@@ -12,7 +12,7 @@ export interface UserCapacity {
   planName: string | null;
 }
 
-/** The message the server sends when the limit is reached — the same words on screen. */
+/** The message the server sends when the limit is reached - the same words on screen. */
 export const USER_LIMIT_MESSAGE = "User limit reached. Please contact your Super Admin to increase your user capacity.";
 
 export const USER_CAPACITY_KEY = ["user-capacity"] as const;

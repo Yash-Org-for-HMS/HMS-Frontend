@@ -4,7 +4,7 @@ import { renderWithProviders } from "@/test/renderWithProviders";
 
 /**
  * The bar across the top of every hospital panel: which hospital, which
- * branch, who is signed in and as what — always in view — with search,
+ * branch, who is signed in and as what - always in view - with search,
  * announcements and the account menu (switch panel, sign out).
  */
 

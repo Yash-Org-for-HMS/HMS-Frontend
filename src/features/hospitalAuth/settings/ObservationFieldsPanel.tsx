@@ -17,7 +17,7 @@ import { NEUTRAL } from "@/styles/accents";
 /**
  * Observations this hospital charts that the standard seven do not cover.
  *
- * The types are deliberately few — a number, a set of choices, or free text.
+ * The types are deliberately few - a number, a set of choices, or free text.
  * Fewer types is fewer things to get wrong, and a number stays a number, so a
  * hospital's own observation can be trended and range-checked exactly like a
  * built-in one rather than being a note in a box.
@@ -49,7 +49,7 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 const TYPE_HELP: Record<string, string> = {
-  NUMBER: "A measurement — can be charted on a graph and range-checked.",
+  NUMBER: "A measurement - can be charted on a graph and range-checked.",
   CHOICE: "One of a fixed list, in order (e.g. None → Severe).",
   TEXT: "A short note. Cannot be graphed or range-checked.",
 };
@@ -92,7 +92,7 @@ export default function ObservationFieldsPanel() {
 
   const { data, isLoading } = useQuery({
     queryKey: ["observation-fields"],
-    // Switched-off fields are shown here (greyed) — this is the only screen
+    // Switched-off fields are shown here (greyed) - this is the only screen
     // from which one can be switched back on.
     queryFn: async () => (await axiosInstance.get("/ipd/observation-fields?includeInactive=true")).data.data,
   });
@@ -196,7 +196,7 @@ export default function ObservationFieldsPanel() {
         </Button>
       </Box>
       <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 2 }}>
-        Anything this hospital charts that the standard columns don't cover — retractions on a NICU
+        Anything this hospital charts that the standard columns don't cover - retractions on a NICU
         chart, fundal height on a maternity one. These appear on the chart after the standard columns,
         in the order below.
       </Typography>
@@ -206,7 +206,7 @@ export default function ObservationFieldsPanel() {
       ) : fields.length === 0 ? (
         <Alert severity="info" icon={false} sx={{ borderRadius: 2 }}>
           <Typography variant="body2">
-            None yet — the standard columns cover most wards. Add one only if your staff currently
+            None yet - the standard columns cover most wards. Add one only if your staff currently
             write it in the margin.
           </Typography>
         </Alert>
@@ -234,7 +234,7 @@ export default function ObservationFieldsPanel() {
                     <Chip key={w} size="small" label={typeLabel(w)} sx={{ height: 20, fontSize: 11 }} />
                   ))}
                   {!!f.valueCount && (
-                    <Tooltip title="Recorded readings. What kind of observation this is can no longer change, and it can no longer be deleted — only switched off.">
+                    <Tooltip title="Recorded readings. What kind of observation this is can no longer change, and it can no longer be deleted - only switched off.">
                       <Chip size="small" icon={<LockRounded sx={{ fontSize: 13 }} />} label={`${f.valueCount} recorded`}
                         variant="outlined" sx={{ height: 20, fontSize: 11 }} />
                     </Tooltip>
@@ -245,11 +245,11 @@ export default function ObservationFieldsPanel() {
                 </Typography>
               </Box>
 
-              <Tooltip title={f.isActive ? "Switch off — stops appearing on new charts; readings already taken stay" : "Switch back on"}>
+              <Tooltip title={f.isActive ? "Switch off - stops appearing on new charts; readings already taken stay" : "Switch back on"}>
                 <Switch size="small" checked={f.isActive} onChange={() => toggle.mutate(f)} disabled={toggle.isPending} />
               </Tooltip>
               <IconButton size="small" onClick={() => openEdit(f)}><EditRounded fontSize="small" /></IconButton>
-              <Tooltip title={f.valueCount ? "Has readings recorded — switch it off instead" : "Delete"}>
+              <Tooltip title={f.valueCount ? "Has readings recorded - switch it off instead" : "Delete"}>
                 <span>
                   <IconButton size="small" disabled={!!f.valueCount || remove.isPending} onClick={() => remove.mutate(f)}>
                     <DeleteOutlineRounded fontSize="small" />
@@ -283,7 +283,7 @@ export default function ObservationFieldsPanel() {
               label="Name" size="small" fullWidth autoFocus
               value={form.label} onChange={(e) => set({ label: e.target.value })}
               placeholder="e.g. Retractions"
-              helperText={editing?.keyLocked ? "Renaming is safe — readings already taken follow the name." : "What the nurse sees at the top of the column."}
+              helperText={editing?.keyLocked ? "Renaming is safe - readings already taken follow the name." : "What the nurse sees at the top of the column."}
             />
 
             <TextField
@@ -310,7 +310,7 @@ export default function ObservationFieldsPanel() {
                     <TextField label="Highest" size="small" type="number" value={form.maxValue} onChange={(e) => set({ maxValue: e.target.value })} />
                   </Stack>
                   <Typography variant="caption" sx={{ color: NEUTRAL.muted, display: "block", mt: 0.75 }}>
-                    Set these wide. They exist to catch a mis-key, not to argue with a genuine reading —
+                    Set these wide. They exist to catch a mis-key, not to argue with a genuine reading -
                     a nurse who cannot enter the truth has nowhere to put it. Leave blank for no limit.
                   </Typography>
                 </Box>
@@ -355,7 +355,7 @@ export default function ObservationFieldsPanel() {
                   Add option
                 </Button>
                 <Typography variant="caption" sx={{ color: NEUTRAL.muted, display: "block", mt: 0.75 }}>
-                  Order matters — put them least to most severe so the chart reads in one direction.
+                  Order matters - put them least to most severe so the chart reads in one direction.
                   {!!editing?.valueCount && " An option already recorded against a patient cannot be removed."}
                 </Typography>
               </Box>
@@ -378,7 +378,7 @@ export default function ObservationFieldsPanel() {
               </Box>
               <Typography variant="caption" sx={{ color: NEUTRAL.muted, display: "block", mt: 0.75 }}>
                 {form.wardTypes.length === 0 || form.wardTypes.length === wardTypes.length
-                  ? "Every ward. Narrow it if only some wards chart this — a column nobody fills is a column people stop reading."
+                  ? "Every ward. Narrow it if only some wards chart this - a column nobody fills is a column people stop reading."
                   : `Only ${form.wardTypes.map((w: string) => typeLabel(w)).join(", ")}.`}
               </Typography>
             </Box>

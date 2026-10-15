@@ -11,7 +11,7 @@ import { exportTableToExcel } from "@/utils/exportExcel";
  * Pull the PDF writer in only when someone asks for a PDF.
  *
  * Imported statically it is reachable from the eager graph, and Vite adds a
- * modulepreload for its ~116 kB jspdf chunk — downloaded by every visitor,
+ * modulepreload for its ~116 kB jspdf chunk - downloaded by every visitor,
  * including the many who never export anything.
  */
 const loadPdfExport = async (...args: Parameters<typeof import("@/utils/exportPdf")["exportTableToPdf"]>) => {
@@ -54,7 +54,7 @@ export default function SimpleTable({
   accent?: string;
   /**
    * Where a row leads. Given the row and its index, return a path to the
-   * register that explains it — or null for a row with nothing behind it.
+   * register that explains it - or null for a row with nothing behind it.
    *
    * A summary row states a count and stops there, leaving the reader to go and
    * work out which records it counted. When this is set the row becomes the
@@ -64,7 +64,7 @@ export default function SimpleTable({
   /**
    * The period the figures cover, printed under the title in the PDF. A
    * filed report page with no date range on it is how a correct number turns
-   * into a wrong one — on screen the filter bar says it, on paper nothing does.
+   * into a wrong one - on screen the filter bar says it, on paper nothing does.
    */
   period?: string;
   /**
@@ -89,8 +89,8 @@ export default function SimpleTable({
   };
   /**
    * For a short table of names (branches) beside many figure columns: each
-   * row's label stays on one line — a squeezed label column broke "Main
-   * Branch" across two — and cells sit a little closer so the columns still
+   * row's label stays on one line - a squeezed label column broke "Main
+   * Branch" across two - and cells sit a little closer so the columns still
    * fit a desktop-width card. Off by default, so every other table lays out
    * exactly as before.
    */
@@ -115,7 +115,7 @@ export default function SimpleTable({
   return (
     <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: "1px solid", borderColor: "divider", height: "100%" }}>
       {/* The title and the two export buttons shared a row that could not wrap,
-          and the buttons do not shrink — so in a third-width card the title was
+          and the buttons do not shrink - so in a third-width card the title was
           squeezed to its minimum and broke across three lines ("Leads / by /
           stage"). The row wraps now: when the title and the buttons cannot sit
           side by side, the buttons drop to their own line instead of crushing
@@ -152,7 +152,7 @@ export default function SimpleTable({
                     key={ri}
                     hover
                     onClick={href ? () => navigate(href) : undefined}
-                    // Reachable by keyboard, and announced as a link — which is
+                    // Reachable by keyboard, and announced as a link - which is
                     // what activating it does.
                     tabIndex={href ? 0 : undefined}
                     role={href ? "link" : undefined}

@@ -1,7 +1,7 @@
 import type { Money } from "@/types";
 
 /**
- * GET /hospitals/:id/overview — the platform's view of one tenant, mirrored
+ * GET /hospitals/:id/overview - the platform's view of one tenant, mirrored
  * from backend/src/modules/hospitals/hospitals.service.ts.
  *
  * The endpoint spreads the whole Hospital row and decorates it; declared here
@@ -31,7 +31,7 @@ export interface OverviewUser {
   createdAt?: string | null;
 }
 
-/** The tenant's own subscription invoice — not a patient bill. */
+/** The tenant's own subscription invoice - not a patient bill. */
 export interface SubscriptionInvoiceRow {
   subscriptionInvoiceId: string;
   invoiceNumber?: string | null;
@@ -46,7 +46,7 @@ export interface SubscriptionInvoiceRow {
 
 export interface OverviewBilling {
   cycle?: string | null;
-  /** Keys the billing-state chip map — always set by the server. */
+  /** Keys the billing-state chip map - always set by the server. */
   state: string;
   /** Billed per cycle; `mrr` normalises an annual plan to a month. */
   cycleAmount: Money;

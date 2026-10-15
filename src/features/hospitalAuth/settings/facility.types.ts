@@ -5,7 +5,7 @@ import type { Money } from "@/types";
  * backend/src/modules/ipd/beds.controller.ts and the room-class rent routes.
  */
 
-/** Set only on an OCCUPIED bed — the admission currently in it. */
+/** Set only on an OCCUPIED bed - the admission currently in it. */
 export interface BedOccupant {
   admissionId: string;
   patientName: string;
@@ -18,7 +18,7 @@ export interface BedNode {
   bedNumber: string;
   bedType?: string | null;
   status: string;
-  /** A Prisma Decimal — Number() it before arithmetic. */
+  /** A Prisma Decimal - Number() it before arithmetic. */
   dailyCharge?: Money | null;
   /** Null means the bed is priced by its own dailyCharge, not by a class. */
   roomClassId?: string | null;
@@ -28,7 +28,7 @@ export interface BedNode {
   bedCode?: string | null;
   hospitalBedTypeId?: string | null;
   bedTypeName?: string | null;
-  /** False for an attendant bed — never allocated, never counted. */
+  /** False for an attendant bed - never allocated, never counted. */
   isPatientBed?: boolean;
   isTemporary?: boolean;
   isActive?: boolean;
@@ -97,7 +97,7 @@ export interface IpdStructure {
   summary: StructureSummary;
 }
 
-/** A room class from the SOC catalogue — the same list the price matrix uses. */
+/** A room class from the SOC catalogue - the same list the price matrix uses. */
 export interface RoomClass {
   roomClassId: string;
   name: string;
@@ -118,7 +118,7 @@ export interface RoomClassRent {
  *
  * `configured` is false until the hospital has a room-rent charge in the SOC at
  * all; `baseRent` is that charge's own price, the fallback for a bed with no
- * class. The per-class rates override it — the hospital genuinely bills the
+ * class. The per-class rates override it - the hospital genuinely bills the
  * same night differently by class, so this is a matrix, not one number.
  */
 export interface RoomClassRentsResponse {
@@ -164,7 +164,7 @@ export type FacilityKind = "ward" | "room" | "bed";
 
 /**
  * The node the setup dialog is editing. Which kind it is comes from `kind`
- * alongside it, not from the shape, so every field is optional — a union would
+ * alongside it, not from the shape, so every field is optional - a union would
  * only force a cast at every read.
  */
 export interface FacilityEditTarget {

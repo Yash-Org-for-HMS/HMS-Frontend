@@ -89,7 +89,7 @@ describe("BillDocument letterhead", () => {
 
   it("omits the identity on pre-printed stationery, but keeps the GSTIN", () => {
     renderDoc(HOSPITAL, "letterhead");
-    // The paper already carries the name and address — printing them again
+    // The paper already carries the name and address - printing them again
     // would overlap. The GSTIN is repeated because the paper rarely has it.
     expect(screen.queryByText("City Care Hospital")).not.toBeInTheDocument();
     expect(screen.getByText(/GSTIN: 27AABCC1234M1Z5/)).toBeInTheDocument();

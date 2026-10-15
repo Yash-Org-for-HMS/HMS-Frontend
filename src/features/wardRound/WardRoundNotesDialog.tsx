@@ -58,7 +58,7 @@ export default function WardRoundNotesDialog({ open, onClose, admission, residen
     try {
       await axiosInstance.post(`/ward-round/admissions/${admission.admissionId}/notes`, { noteText: text.trim() });
       setText("");
-      toast.success(resident ? "Note saved — sent to the consultant to co-sign" : "Note saved");
+      toast.success(resident ? "Note saved - sent to the consultant to co-sign" : "Note saved");
       qc.invalidateQueries({ queryKey: key });
       qc.invalidateQueries({ queryKey: ["role-home", "ward-round"] });
       qc.invalidateQueries({ queryKey: ["ward-round-cosign"] });

@@ -19,7 +19,7 @@ const queryClient = new QueryClient({
  * Every weight the UI actually asks for.
  *
  * 800 was missing while the theme sets h1 and h2 to 800 and 131 places ask for
- * 800 or 900 by hand — so no file existed for the weight every page title uses.
+ * 800 or 900 by hand - so no file existed for the weight every page title uses.
  */
 import "@fontsource/inter/300.css";
 import "@fontsource/inter/400.css";
@@ -69,7 +69,7 @@ createRoot(document.getElementById("root")!).render(
              * Page titles are set at 800. Windows 11 has Segoe UI Variable
              * Text, which covers that weight, so a title renders properly
              * heavy. Windows 10 does not have it and falls through to static
-             * Segoe UI, whose heaviest face is Bold (700) — the same heading
+             * Segoe UI, whose heaviest face is Bold (700) - the same heading
              * came out visibly thinner, on the same build and browser.
              *
              * Windows 10 does ship Segoe UI Black as its own family, so the
@@ -77,7 +77,7 @@ createRoot(document.getElementById("root")!).render(
              * it. This maps it in under a name of its own, used only for
              * 800-900.
              *
-             * `local()` only — no font is downloaded or redistributed, which
+             * `local()` only - no font is downloaded or redistributed, which
              * matters because the Segoe faces are Microsoft's and cannot be
              * served as web fonts. On a machine without them this rule matches
              * nothing and the stack behaves exactly as before.

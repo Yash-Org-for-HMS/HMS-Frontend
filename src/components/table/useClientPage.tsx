@@ -4,7 +4,7 @@ import { Box, Pagination } from "@mui/material";
 /**
  * Pages a list that is already held in full in the browser (search and counts
  * still run over every row). `resetKey` is anything that changes when the list
- * is re-filtered — search text, a tab, a category — and sends the view back to
+ * is re-filtered - search text, a tab, a category - and sends the view back to
  * page 1. A list that shrinks under the current page shows its last page.
  */
 export function useClientPage<T>(list: T[], { size = 25, resetKey }: { size?: number; resetKey?: unknown } = {}): {

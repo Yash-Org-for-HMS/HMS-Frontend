@@ -218,7 +218,7 @@ export function IpAdvances() {
               <TrendChart title="Advance collected per day" data={trend} xKey="date" series={[{ key: "amount", label: "Advance", type: "bar" }]} valueFormatter={inr} />
             </Box>
           )}
-          {/* Which tender the money came through and who took it — the two
+          {/* Which tender the money came through and who took it - the two
               questions the Day Book answers for counter collections, and this
               register could answer for neither. */}
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
@@ -300,7 +300,7 @@ export function Occupancy() {
 }
 
 // Patient safety: scheduled medication doses that are past due and still
-// uncharted (PENDING) for current + recently-closed inpatients — surfacing
+// uncharted (PENDING) for current + recently-closed inpatients - surfacing
 // missed/undocumented administrations so the ward can act. Snapshot.
 export function OverdueDoses() {
   const { data, isLoading, isError, error, refetch } = useQuery({
@@ -320,7 +320,7 @@ export function OverdueDoses() {
           <ReportTable
             title="Overdue / uncharted medication doses"
             filename="overdue_doses"
-            emptyText="No overdue doses — every scheduled dose is charted."
+            emptyText="No overdue doses - every scheduled dose is charted."
             columns={[
               { key: "patientName", label: "Patient" },
               { key: "uhid", label: "UHID" },
@@ -329,7 +329,7 @@ export function OverdueDoses() {
               { key: "medicine", label: "Medicine" },
               { key: "dosage", label: "Dose" },
               { key: "route", label: "Route" },
-              { key: "scheduledAt", label: "Scheduled", format: (v) => (v ? dayjs(v).format("DD MMM HH:mm") : "—"), value: (r) => ts(r.scheduledAt) },
+              { key: "scheduledAt", label: "Scheduled", format: (v) => (v ? dayjs(v).format("DD MMM HH:mm") : "-"), value: (r) => ts(r.scheduledAt) },
               { key: "hoursOverdue", label: "Overdue (h)", align: "right", value: (r) => Number(r.hoursOverdue) },
             ]}
             rows={rows}

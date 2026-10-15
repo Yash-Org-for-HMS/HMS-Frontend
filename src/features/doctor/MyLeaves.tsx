@@ -28,7 +28,7 @@ export default function MyLeaves() {
   const [toDate, setToDate] = useState("");
   const [reason, setReason] = useState("");
   const [scope, setScope] = useState<LeaveScope>(EMPTY_LEAVE_SCOPE);
-  // The branches this doctor signs in to — the ones leave can be for.
+  // The branches this doctor signs in to - the ones leave can be for.
   const { availableBranches } = useHospitalAuth();
   const branchName = (b: string) => availableBranches.find((x) => x.branchId === b)?.branchName;
   // Leave can only be for today onward (the backend enforces this too).

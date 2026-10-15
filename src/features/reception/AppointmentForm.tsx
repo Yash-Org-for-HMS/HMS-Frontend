@@ -25,16 +25,16 @@ import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 export interface AppointmentFormProps {
   isEmbedded?: boolean;
   prefilledPatientId?: string;
-  /** Prefill the doctor (e.g. booking from a doctor's card) — takes precedence over the ?doctorId= URL param. */
+  /** Prefill the doctor (e.g. booking from a doctor's card) - takes precedence over the ?doctorId= URL param. */
   initialDoctorId?: string;
-  /** Prefill the date (e.g. the date currently selected on Doctor Availability) — takes precedence over the ?date= URL param. */
+  /** Prefill the date (e.g. the date currently selected on Doctor Availability) - takes precedence over the ?date= URL param. */
   initialDate?: string;
   onSuccess?: (apptId?: string, patientName?: string, apptDate?: string) => void;
   onCancel?: () => void;
 }
 
 // Stable reference (module scope, not re-created per render) so it doesn't
-// change identity while the dropdowns query is loading — an inline object
+// change identity while the dropdowns query is loading - an inline object
 // literal here would make the slot-generation effect below (which depends on
 // `dropdowns`) re-run and re-render every tick until the query resolves.
 /** A department as the booking dropdowns serve it. */
@@ -43,14 +43,14 @@ interface BookingDepartment { departmentId: string; departmentName: string; hasO
 const EMPTY_DROPDOWNS = { departments: [], doctors: [], statuses: [], doctorSchedules: [] };
 
 // The underlying slot value stays 24h "HH:mm" (used for sorting, comparisons,
-// and the submitted datetime) — this only formats it for display.
+// and the submitted datetime) - this only formats it for display.
 const fmt12h = (hhmm: string) => dayjs(`2000-01-01T${hhmm}`).format("h:mm A");
 
 /**
  * Today as the date input writes it: LOCAL calendar date, not UTC.
  *
  * Three places in this form worked this out for themselves and one of them
- * used toISOString(), which is UTC — so east of Greenwich, every booking made
+ * used toISOString(), which is UTC - so east of Greenwich, every booking made
  * before 05:30 IST disagreed with the other two about what day it was.
  */
 function todayLocal(): string {
@@ -90,7 +90,7 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
     staleTime: 2 * 60_000,
   });
 
-  // Patient search options — hits the paginated /reception/patients endpoint so
+  // Patient search options - hits the paginated /reception/patients endpoint so
   // we never load every patient just to book one appointment.
   const { data: patientOptions = [], isFetching: patientsLoading } = useQuery<any[]>({
     queryKey: ["appointment-patient-search", debouncedPatientQuery],
@@ -182,7 +182,7 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
     let cancelled = false;
     axiosInstance.get(`/reception/patients/${pid}`)
       .then((res) => { if (!cancelled && res.data?.data) setSelectedPatient(res.data.data); })
-      .catch(() => { /* ignore — user can still search */ });
+      .catch(() => { /* ignore - user can still search */ });
     return () => { cancelled = true; };
   }, [formData.patientId]);
 
@@ -204,11 +204,11 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
     const schedules = (dropdowns?.doctorSchedules || []).filter((s: any) => s.doctorId === formData.doctorId && s.dayOfWeek === dayOfWeek);
 
     // Every window of the day (a doctor in 10–2 and again 4–7 was offered 10–2
-    // only), or — with no hours set for this weekday — the default working day,
+    // only), or - with no hours set for this weekday - the default working day,
     // which comes from the server so the Doctor Availability page and this form
     // cannot disagree about whether a doctor can be seen.
     const def = dropdowns?.defaultHours ?? { startTime: "09:00", endTime: "19:30", slotDurationMinutes: 30 };
-    // The branch the booking is at: the one being worked at, or — rescheduling —
+    // The branch the booking is at: the one being worked at, or - rescheduling -
     // the appointment's own (it stays at its branch).
     const bookingBranch = (id ? apptData?.branchId : null) ?? activeBranchId;
     const hereWindows = windowsFor(schedules, dayOfWeek, def, bookingBranch);
@@ -219,11 +219,11 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
     const lengthOf = new Map(daySlots.map((s) => [s.time, s.minutes]));
     let rawSlots = daySlots.map((s) => s.time);
 
-    // How many slots the schedule/fallback yielded, before the "today" cut — used
+    // How many slots the schedule/fallback yielded, before the "today" cut - used
     // to tell "today's times have passed" apart from "no schedule at all".
     const scheduledCount = rawSlots.length;
 
-    // For today, drop slots that have already passed — booking a 9:00 AM slot
+    // For today, drop slots that have already passed - booking a 9:00 AM slot
     // at 2:00 PM makes no sense. Other dates are unaffected. A currently-selected
     // slot stays selectable regardless (see the render-time fallback below), so
     // editing an existing today-dated appointment never breaks. Uses the LOCAL
@@ -235,7 +235,7 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
       rawSlots = rawSlots.filter((s) => s > nowHM);
     }
 
-    // Remove times the doctor is already booked for, at any branch — every slot
+    // Remove times the doctor is already booked for, at any branch - every slot
     // a booking overlaps, which is what the server refuses. The appointment
     // being edited is excluded server-side, so its own slot stays selectable.
     const busy: Busy[] = availability?.busy
@@ -268,7 +268,7 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
 
       // Block booking a past slot before the round-trip. Uses the same 2-min
       // grace as the backend guard so the client never rejects something the
-      // server would accept. Only for new bookings — editing an existing (older)
+      // server would accept. Only for new bookings - editing an existing (older)
       // appointment must not be blocked by its own past date.
       if (!id && datetime.getTime() < Date.now() - 2 * 60 * 1000) {
         toast.error("Cannot book an appointment in the past. Please pick a future date and time.");
@@ -302,7 +302,7 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
       }
       
       const pName = selectedPatient ? `${selectedPatient.firstName} ${selectedPatient.lastName}` : "Patient";
-      setDirty(false); // booked successfully — release the unsaved-changes guard
+      setDirty(false); // booked successfully - release the unsaved-changes guard
 
       if (isEmbedded && onSuccess) {
         onSuccess(apptId, pName, payload.appointmentDate);
@@ -326,18 +326,18 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
   if (isError) return <Box sx={{ p: 4 }}><ErrorState message={getApiErrorMessage(error, "Failed to initialize form")} onRetry={refetch} /></Box>;
 
   // A doctor is offered in their home department and in any they also work in
-  // (additional departments on their staff record — what specialization became).
+  // (additional departments on their staff record - what specialization became).
   const filteredDoctors = (dropdowns?.doctors || []).filter((d: any) => !formData.departmentId || d.departmentId === formData.departmentId || (d.additionalDepartmentIds || []).includes(formData.departmentId));
   // Only departments that run an out-patient clinic are booked into (standard list: hasOpd).
   // The one already on an appointment being edited stays, so the field never blanks.
   const bookableDepartments = ((dropdowns?.departments || []) as BookingDepartment[]).filter((d) => d.hasOpd !== false || d.departmentId === formData.departmentId);
 
   // Department on the second line, and searchable by it as well as by name
-  // — "who takes orthopaedics?" is as common a question at the desk as a name.
+  // - "who takes orthopaedics?" is as common a question at the desk as a name.
   const deptName = (id: string | null | undefined) => ((dropdowns?.departments || []) as BookingDepartment[]).find((x) => x.departmentId === id)?.departmentName || "";
   const doctorOptions = filteredDoctors.map((d: any) => ({
     value: d.doctorId,
-    // Exactly the string the old MenuItem rendered — this change is about how
+    // Exactly the string the old MenuItem rendered - this change is about how
     // the list is navigated, not about what a doctor is called.
     label: `Dr. ${d.user?.firstName || "Unknown"} ${d.user?.lastName || ""}`.trim(),
     secondary: deptName(d.departmentId) || undefined,
@@ -372,7 +372,7 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
         <Grid container spacing={3}>
           {followUpOf && !id && (
             <Grid size={{ xs: 12 }}>
-              <Alert severity="info">Booking a follow-up visit for this patient — linked to their previous appointment.</Alert>
+              <Alert severity="info">Booking a follow-up visit for this patient - linked to their previous appointment.</Alert>
             </Grid>
           )}
           <Grid size={{ xs: 12 }}>
@@ -457,12 +457,12 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
               error={!!availability?.onLeave}
               helperText={
                 availability?.onLeave
-                  ? "Doctor is on leave on this date — pick another date or doctor."
+                  ? "Doctor is on leave on this date - pick another date or doctor."
                   : (formData.doctorId && formData.appointmentDate && availableSlots.length === 0
                       ? (elsewhereNote
-                          ? `The doctor is not at this branch on this day — they are at ${elsewhereNote}.`
+                          ? `The doctor is not at this branch on this day - they are at ${elsewhereNote}.`
                           : allSlotsPassedToday
-                          ? "Today's remaining slots are all past or booked — pick a later time today or another date."
+                          ? "Today's remaining slots are all past or booked - pick a later time today or another date."
                           : "No open slots for this doctor on this date.")
                       : "")
               }
@@ -500,7 +500,7 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
             />
           </Grid>
           <Grid size={{ xs: 12 }} sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: 2 }}>
-            {/* Only for a booking made for today — nobody is standing at the
+            {/* Only for a booking made for today - nobody is standing at the
                 desk for a date that has not arrived. Offered on every date, it
                 put patients into TODAY's live queue for next week's
                 appointment, where the doctor saw them among the people actually

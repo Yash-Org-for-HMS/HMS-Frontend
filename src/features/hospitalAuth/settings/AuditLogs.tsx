@@ -21,7 +21,7 @@ import { useToast } from "@/providers/ToastContext";
 
 const EMPTY_FILTERS = { moduleName: "", actionType: "", userId: "", branchId: "", startDate: "", endDate: "" };
 
-/** Plain-language labels — an admin should not have to decode SCREAMING_CASE. */
+/** Plain-language labels - an admin should not have to decode SCREAMING_CASE. */
 const ACTION_LABEL: Record<string, string> = {
   CREATE: "Created",
   UPDATE: "Updated",
@@ -53,7 +53,7 @@ const toneOf = (action: string) => ACTION_TONE[action] ?? NEUTRAL.muted;
 const labelOf = (action: string) => ACTION_LABEL[action] ?? action;
 
 const pretty = (v: unknown): string => {
-  if (v == null) return "—";
+  if (v == null) return "-";
   if (typeof v === "string") return v;
   if (typeof v === "object") return JSON.stringify(v);
   return String(v);
@@ -70,7 +70,7 @@ interface ChangeRow { field: string; before: unknown; after: unknown }
  *
  * Two shapes arrive: entries written by a service carry real before/after
  * values, and entries written by the router middleware carry the request that
- * was made. Both are rendered as a field list rather than as raw JSON — the old
+ * was made. Both are rendered as a field list rather than as raw JSON - the old
  * dialog printed two JSON blobs side by side and called it a diff.
  */
 function describeChange(log: any): { rows: ChangeRow[]; note?: string } {
@@ -208,7 +208,7 @@ export default function AuditLogs() {
         sx={{ mb: 2.5, borderRadius: 2 }}
       >
         This record is <strong>read-only</strong>. Entries are written automatically when something
-        changes and cannot be edited or deleted from anywhere in the application — including here.
+        changes and cannot be edited or deleted from anywhere in the application - including here.
       </Alert>
 
       <Paper component="form" onSubmit={handleSearch} elevation={0}
@@ -311,7 +311,7 @@ export default function AuditLogs() {
                           />
                         </TableCell>
                         <TableCell sx={{ borderColor: "divider", color: "text.secondary", fontFamily: "monospace", fontSize: "0.75rem" }}>
-                          {log.ipAddress || "—"}
+                          {log.ipAddress || "-"}
                         </TableCell>
                         <TableCell align="right" sx={{ borderColor: "divider" }}>
                           <Tooltip title="What changed">
@@ -341,7 +341,7 @@ export default function AuditLogs() {
             inside it nests a heading in a heading. */}
         <DialogTitle component="div" sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
           <Typography variant="h6" sx={{ fontWeight: 700 }}>
-            {selectedLog ? `${labelOf(selectedLog.actionType)} — ${selectedLog.moduleName}` : ""}
+            {selectedLog ? `${labelOf(selectedLog.actionType)} - ${selectedLog.moduleName}` : ""}
           </Typography>
           <Typography variant="body2" sx={{ color: "text.secondary" }}>
             {selectedLog && `${selectedLog.user ? `${selectedLog.user.firstName} ${selectedLog.user.lastName}` : selectedLog.userId} · ${formatDateTime(selectedLog.createdAt)}`}
@@ -351,8 +351,8 @@ export default function AuditLogs() {
           <Box sx={{ display: "flex", flexWrap: "wrap", gap: 3, px: 3, py: 2.5, borderBottom: "1px solid", borderColor: "divider" }}>
             {[
               ["Record type", selectedLog?.tableName],
-              ["IP address", selectedLog?.ipAddress || "—"],
-              ["Device", selectedLog?.deviceInfo || "—"],
+              ["IP address", selectedLog?.ipAddress || "-"],
+              ["Device", selectedLog?.deviceInfo || "-"],
               ["Entry id", selectedLog?.auditLogId],
             ].map(([label, value]) => (
               <Box key={String(label)} sx={{ minWidth: 0 }}>

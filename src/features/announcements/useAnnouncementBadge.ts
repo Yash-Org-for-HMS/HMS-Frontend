@@ -29,10 +29,10 @@ export function nextBadgeAskIn(nextAt: string | null | undefined, now = Date.now
  *
  * It asks when something changes, not every minute in case:
  *  - the socket's ANNOUNCEMENT_PUBLISHED nudge (published or withdrawn), and its
- *    connect event — which also covers a dropped connection, since this socket
+ *    connect event - which also covers a dropped connection, since this socket
  *    layer has no replay;
  *  - the moment the count changes by itself, which the server sends as nextAt
- *    (a scheduled one going live, an unread one running out) — nothing is
+ *    (a scheduled one going live, an unread one running out) - nothing is
  *    pushed then;
  *  - window focus, and a slow fallback in case all of those are missed.
  */
@@ -58,7 +58,7 @@ export function useAnnouncementBadge() {
 
   // For the socket's connect event. The first connect lands a moment after the
   // badge's own first ask, and asking again then was a second call on every
-  // page load. A reconnect — or a first connect long after that ask — may have
+  // page load. A reconnect - or a first connect long after that ask - may have
   // missed a nudge while it was down, so that one asks.
   const onConnect = useCallback(() => {
     const state = queryClient.getQueryState(ANNOUNCEMENT_BADGE_KEY);

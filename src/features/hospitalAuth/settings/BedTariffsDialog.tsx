@@ -14,13 +14,13 @@ import { ListSkeleton } from "@/components/TableRowsSkeleton";
 import { BRAND } from "@/styles/accents";
 
 /**
- * Bed tariffs: what a bed-day costs, per room class and payer type — room rent
- * plus a nursing charge — from a date (workbook data model: bed_tariffs).
+ * Bed tariffs: what a bed-day costs, per room class and payer type - room rent
+ * plus a nursing charge - from a date (workbook data model: bed_tariffs).
  *
  * Saving never overwrites a price: the tariff in force is closed the day the
  * new one starts, so a stay is billed at the rate of each of its days. With no
  * tariff for a payer, the cash tariff applies; with no tariff at all, a bed's
- * own daily charge — exactly how billing worked before tariffs existed.
+ * own daily charge - exactly how billing worked before tariffs existed.
  *
  * Replaces the old per-class "room rent" box: a cash rent saved here is also
  * the Schedule-of-Charges room rent and each bed's daily charge.
@@ -111,7 +111,7 @@ export default function BedTariffsDialog({ onClose, onDone }: { onClose: () => v
   return (
     <Dialog open onClose={saving ? undefined : onClose} maxWidth="lg" fullWidth>
       <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-        <PaymentsRounded sx={{ color: BRAND.action }} /> Bed tariffs — room rent and nursing, per day
+        <PaymentsRounded sx={{ color: BRAND.action }} /> Bed tariffs - room rent and nursing, per day
       </DialogTitle>
       <DialogContent dividers>
         {isLoading || !data ? <ListSkeleton rows={4} /> : (

@@ -55,7 +55,7 @@ export default function RadiologyCatalog() {
       <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, p: 1.5, mb: 2, borderRadius: 2, bgcolor: alpha(theme.palette.info.main, 0.08), border: "1px solid", borderColor: alpha(theme.palette.info.main, 0.25) }}>
         <InfoOutlined fontSize="small" color="info" />
         <Typography variant="body2" sx={{ color: "text.secondary" }}>
-          Radiology tests are managed in <b>Schedule of Charges</b> — add a charge with <b>Type: Radiology test</b> under a category and it appears here and in the order screens, priced from the rate card.
+          Radiology tests are managed in <b>Schedule of Charges</b> - add a charge with <b>Type: Radiology test</b> under a category and it appears here and in the order screens, priced from the rate card.
         </Typography>
       </Box>
 
@@ -101,7 +101,7 @@ export default function RadiologyCatalog() {
                     ] : []),
                     <TableRow key={scan.chargeItemId || scan.testName} hover>
                       <TableCell sx={{ fontWeight: 500 }}>{scan.testName}</TableCell>
-                      <TableCell sx={{ fontFamily: "monospace", color: "text.secondary" }}>{scan.testCode || "—"}</TableCell>
+                      <TableCell sx={{ fontFamily: "monospace", color: "text.secondary" }}>{scan.testCode || "-"}</TableCell>
                       <TableCell align="right" sx={{ fontWeight: 600 }}>{formatINR(Number(scan.price))}</TableCell>
                     </TableRow>,
                   ])}

@@ -150,7 +150,7 @@ export default function ReceptionLayout() {
       {/* Product mark up top; the hospital identifies itself at the foot. */}
       <SidebarProductHeader compact />
 
-      {/* Navigation — module-gated items (e.g. IPD) aren't hidden; they show with
+      {/* Navigation - module-gated items (e.g. IPD) aren't hidden; they show with
           a lock so staff can see the feature exists, and the page shows an upsell. */}
       {/* ScrollFade owns the scrolling, so the list can admit with a soft edge
           that there is more below it. */}

@@ -8,7 +8,7 @@
  * Every windowed report follows the same envelope: `range`, `totals`, its own
  * `previous` totals for the period-on-period delta, a zero-filled `trend`, and
  * `rows` with a truncation triple. Zero-filled means a quiet day is a row with
- * a zero in it, not a gap — the charts depend on that.
+ * a zero in it, not a gap - the charts depend on that.
  */
 
 export interface ReportRange {
@@ -86,7 +86,7 @@ export interface IpAdvanceRow {
   patientName: string;
   uhid: string;
   date: string;
-  /** A Prisma Decimal on the wire — Number() before arithmetic. */
+  /** A Prisma Decimal on the wire - Number() before arithmetic. */
   amount: string | number;
   method?: string | null;
 }
@@ -132,7 +132,7 @@ export interface OverdueDoseRow {
   route?: string | null;
   scheduledAt: string;
   hoursOverdue: number;
-  /** The admission's status — a dose can outlive the stay it belongs to. */
+  /** The admission's status - a dose can outlive the stay it belongs to. */
   admissionStatus?: string | null;
 }
 

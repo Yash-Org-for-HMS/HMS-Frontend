@@ -26,7 +26,7 @@ import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 /**
  * Tomorrow's operating list.
  *
- * One column per theatre, cases in running order — the shape of the sheet that
+ * One column per theatre, cases in running order - the shape of the sheet that
  * gets printed and stuck on the theatre wall, because that is what this screen
  * has to replace to be used at all.
  *
@@ -93,7 +93,7 @@ const CANCEL_REASONS: { value: string; label: string }[] = [
 const isoDay = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 const clock = (s: string | null) =>
-  s ? new Date(s).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "—";
+  s ? new Date(s).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "-";
 /** "09:00 – 11:00", or the date alone for a case recorded without times. */
 const caseWindow = (c: OtCase) =>
   c.scheduledStart ? `${clock(c.scheduledStart)} – ${clock(c.scheduledEnd)}` : "No time set";
@@ -159,7 +159,7 @@ const Tile = ({ label, value, color }: { label: string; value: number; color: st
  * identity on every render, so React treated it as a different component type
  * and remounted every row whenever any state changed. That included the row
  * holding the button the actions menu was anchored to: by the time the menu
- * opened, its anchor was a detached node, and MUI — with nothing to measure —
+ * opened, its anchor was a detached node, and MUI - with nothing to measure -
  * dropped the menu in the top-left corner of the screen.
  */
 function CaseRow({ c, showTheatre = false, readOnly, onOpen, onMenu }: {
@@ -327,8 +327,8 @@ export default function OtSchedule({ readOnly = false }: { readOnly?: boolean } 
       ) : (
         <Grid container spacing={2}>
           {lists.map((l) => {
-            // A cancelled case still belongs on the sheet — it is why the slot
-            // is free — but it is not work the theatre is doing, so the count
+            // A cancelled case still belongs on the sheet - it is why the slot
+            // is free - but it is not work the theatre is doing, so the count
             // is of live cases and says separately what was called off.
             const live = l.cases.filter((c) => c.status !== "CANCELLED").length;
             const called = l.cases.length - live;
@@ -384,7 +384,7 @@ export default function OtSchedule({ readOnly = false }: { readOnly?: boolean } 
       )}
 
       <Menu anchorEl={menu.anchor} open={Boolean(menu.anchor)} onClose={() => setMenu({ anchor: null, row: null })}>
-        {/* "Mark wheeled in" used to live here and set the status only — the
+        {/* "Mark wheeled in" used to live here and set the status only - the
             list said "In theatre" while the patient was still in bed and the
             theatre still read free. Wheeling in and out is one action with one
             implementation, and it lives on the case record where the rest of
@@ -392,7 +392,7 @@ export default function OtSchedule({ readOnly = false }: { readOnly?: boolean } 
         <MenuItem onClick={() => { navigate(`${basePath}/ipd/ot-cases/${menu.row!.surgeryId}`); }}>
           {basePath === "/reception"
             ? "Open the bill for this case"
-            : menu.row?.status === "SCHEDULED" ? "Open the case — wheel in, record, sign out" : "Open the record"}
+            : menu.row?.status === "SCHEDULED" ? "Open the case - wheel in, record, sign out" : "Open the record"}
         </MenuItem>
         {/* Before the case, not after it: what this patient has been treated
             for, admitted with and reacted to is a pre-op question.
@@ -443,7 +443,7 @@ export default function OtSchedule({ readOnly = false }: { readOnly?: boolean } 
  * Booking a case.
  *
  * The patient can be an inpatient (pick their admission) or a day case (pick
- * the patient, no admission) — day-care surgery is a real thing that the old
+ * the patient, no admission) - day-care surgery is a real thing that the old
  * admission-only model could not represent at all.
  */
 function BookCaseDialog({ date, theatreId, onClose, onDone }: {
@@ -471,7 +471,7 @@ function BookCaseDialog({ date, theatreId, onClose, onDone }: {
     queryFn: async () => (await axiosInstance.get("/ipd/theatres")).data.data,
   });
   // Admitted patients are searched on the server (name, UHID, admission no.) as
-  // the user types — a fixed first-200 list silently dropped everyone past it.
+  // the user types - a fixed first-200 list silently dropped everyone past it.
   const [admissionQuery, setAdmissionQuery] = useState("");
   const [admissionPick, setAdmissionPick] = useState<Record<string, unknown> | null>(null);
   const debouncedAdmissionQuery = useDebouncedValue(admissionQuery);
@@ -487,7 +487,7 @@ function BookCaseDialog({ date, theatreId, onClose, onDone }: {
     // re-downloaded (5+ server queries) on every dialog open.
     staleTime: 2 * 60_000,
   });
-  // The request waits until typing pauses — it fired on every keystroke.
+  // The request waits until typing pauses - it fired on every keystroke.
   const debouncedPatientQuery = useDebouncedValue(patientQuery);
   const { data: patients, isFetching: searchingPatients } = useQuery({
     queryKey: ["ot-patient-search", debouncedPatientQuery],
@@ -526,7 +526,7 @@ function BookCaseDialog({ date, theatreId, onClose, onDone }: {
   // in from the axios body.
   const admissionRows = (admissions?.data ?? []) as Record<string, unknown>[];
   const doctors = (dropdowns?.doctors ?? []) as { doctorId: string; user?: { firstName?: string; lastName?: string } }[];
-  // Doctors first, then nursing and technical staff — an assistant is usually a
+  // Doctors first, then nursing and technical staff - an assistant is usually a
   // doctor and an anaesthetist always is, so they should not be scrolled past.
   const teamOptions: TeamOption[] = [
     ...((teamOpts?.doctors ?? []) as { doctorId: string; name: string }[])
@@ -545,10 +545,10 @@ function BookCaseDialog({ date, theatreId, onClose, onDone }: {
             Two named choices, not a switch.
 
             This was one Switch whose LABEL changed with its own state: off read
-            "In-patient — pick the admission", on read "Day case — no
+            "In-patient - pick the admission", on read "Day case - no
             admission". So the label described the current state while a switch
             label conventionally describes what turning it on does, and there
-            was no way to tell which — with the field underneath swapping at the
+            was no way to tell which - with the field underneath swapping at the
             same moment. Both options are now always on screen and neither
             caption moves.
           */}
@@ -572,7 +572,7 @@ function BookCaseDialog({ date, theatreId, onClose, onDone }: {
             </ToggleButtonGroup>
             <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 0.75 }}>
               {dayCase
-                ? "A day case has no admission — they come in and go home the same day, so pick the patient."
+                ? "A day case has no admission - they come in and go home the same day, so pick the patient."
                 : "Pick the admission this case belongs to."}
             </Typography>
           </Box>
@@ -643,7 +643,7 @@ function BookCaseDialog({ date, theatreId, onClose, onDone }: {
             placeholder="Not decided"
             emptyOption={{ value: "", label: "Not decided" }}
             searchPlaceholder="Search surgeons…"
-            // The name lives on the nested user, not on the doctor row —
+            // The name lives on the nested user, not on the doctor row -
             // reading d.name gives every surgeon the label "Doctor".
             options={doctors.map((d) => ({
               value: d.doctorId,
@@ -653,7 +653,7 @@ function BookCaseDialog({ date, theatreId, onClose, onDone }: {
             helperText="Checked against their other cases, their OPD list and their leave"
           />
 
-          {/* The rest of the team. Pick from the list or just type a name — a
+          {/* The rest of the team. Pick from the list or just type a name - a
               visiting anaesthetist has no login here and still has to be on the
               record. Anyone else (scrub nurse, second assistant) is added on
               the case's Team tab once it is booked. */}
@@ -688,7 +688,7 @@ function BookCaseDialog({ date, theatreId, onClose, onDone }: {
 
           <FormControlLabel
             control={<Switch checked={form.isEmergency} onChange={(e) => setForm({ ...form, isEmergency: e.target.checked })} />}
-            label="Emergency — added out of order, and may already have happened"
+            label="Emergency - added out of order, and may already have happened"
           />
 
           <TextField label="Price" fullWidth value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })}

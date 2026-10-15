@@ -25,7 +25,7 @@ import {
 
 /**
  * The organisation chart (organogram): who reports to whom, and how the
- * departments sit under the people who oversee them — read from the Staff
+ * departments sit under the people who oversee them - read from the Staff
  * Directory, so changing a reporting line or a department there changes it
  * here. No fixed shape: whoever has no manager is a top.
  */
@@ -62,7 +62,7 @@ function DeptLine({ p }: { p: OrgPerson }) {
         </Typography>
       )}
       {others.length > 0 && (
-        <Tooltip title={<Box>{others.map((d) => <div key={d.departmentId}>{d.departmentName} — {ROLE_SHORT[d.roleInDept] ?? d.roleInDept}</div>)}</Box>}>
+        <Tooltip title={<Box>{others.map((d) => <div key={d.departmentId}>{d.departmentName} - {ROLE_SHORT[d.roleInDept] ?? d.roleInDept}</div>)}</Box>}>
           <Chip
             size="small" icon={<SyncAltRounded sx={{ fontSize: "14px !important" }} />} label={`+${others.length}`}
             aria-label={`Also in ${others.map((d) => d.departmentName).join(", ")}`}
@@ -356,7 +356,7 @@ function PersonPanel({ p, data, line, canEdit, onClose, onPick }: { p: OrgPerson
     <MemberRow key={x.staffId} m={{ person: x, roleInDept: "MEMBER", isHome: true }} onOpen={onPick} note={label ?? x.designation ?? x.category} />
   );
   return (
-    <Box sx={{ width: { xs: "100vw", sm: 380 }, p: 2.5 }} role="dialog" aria-label={`${p.name} — details`}>
+    <Box sx={{ width: { xs: "100vw", sm: 380 }, p: 2.5 }} role="dialog" aria-label={`${p.name} - details`}>
       <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>
         <Avatar p={p} size={52} />
         <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -368,7 +368,7 @@ function PersonPanel({ p, data, line, canEdit, onClose, onPick }: { p: OrgPerson
       </Box>
       <Divider sx={{ my: 2 }} />
       <Typography variant="overline" sx={{ color: "text.secondary" }}>Reports to</Typography>
-      {hr ? person(hr, `HR manager · ${hr.designation ?? hr.category}`) :<Typography variant="body2" sx={{ color: p.managerLeft ? SEMANTIC.warningDark : "text.secondary", px: 1 }}>{p.managerLeft ? "Their manager has left — set a new one" : "Nobody — top of the organisation"}</Typography>}
+      {hr ? person(hr, `HR manager · ${hr.designation ?? hr.category}`) :<Typography variant="body2" sx={{ color: p.managerLeft ? SEMANTIC.warningDark : "text.secondary", px: 1 }}>{p.managerLeft ? "Their manager has left - set a new one" : "Nobody - top of the organisation"}</Typography>}
       {daily && daily.staffId !== hr?.staffId && person(daily, `Day to day · ${daily.designation ?? daily.category}`)}
       <Typography variant="overline" sx={{ color: "text.secondary", display: "block", mt: 1.5 }}>Departments</Typography>
       {p.departments.length ? p.departments.map((d) => (
@@ -449,7 +449,7 @@ export default function Organogram() {
     <Box sx={{ pb: 4 }}>
       <PageHeader
         title="Organisation chart"
-        subtitle={data ? `${people.length} people · ${deptsInUse.length} departments${crossDept ? ` · ${crossDept} cross-department` : ""} · built from the Staff Directory` : "Who reports to whom — built from the Staff Directory."}
+        subtitle={data ? `${people.length} people · ${deptsInUse.length} departments${crossDept ? ` · ${crossDept} cross-department` : ""} · built from the Staff Directory` : "Who reports to whom - built from the Staff Directory."}
         actions={canEdit && <Button variant="outlined" startIcon={<AccountTreeRounded />} onClick={() => navigate("/hospital/staff")} sx={{ textTransform: "none", fontWeight: 700 }}>Staff Directory</Button>}
       />
 
@@ -457,7 +457,7 @@ export default function Organogram() {
         : q.isLoading || !data ? <Box sx={{ py: 8, display: "grid", placeItems: "center" }}><HeartbeatLoader /></Box>
           : !people.length ? (
             <Paper sx={{ p: 4 }}>
-              <Mascot pose="nothing-here-yet" title="Nobody in the Staff Directory yet" subtitle="Add people there, with their department and who they report to — the chart draws itself."
+              <Mascot pose="nothing-here-yet" title="Nobody in the Staff Directory yet" subtitle="Add people there, with their department and who they report to - the chart draws itself."
                 action={canEdit ? <Button variant="contained" onClick={() => navigate("/hospital/staff")}>Open the Staff Directory</Button> : undefined} />
             </Paper>
           ) : (
@@ -521,7 +521,7 @@ export default function Organogram() {
                     // Nobody has a manager on file yet: say how the chart starts, not an empty canvas.
                     <Paper variant="outlined" sx={{ p: 4, borderRadius: 3, textAlign: "center" }}>
                       <Mascot pose="nothing-here-yet" title="No reporting lines yet"
-                        subtitle="Nobody has a manager on file. In the Staff Directory, set who each person reports to — start with the heads reporting to your CEO or medical director — and the chart draws itself."
+                        subtitle="Nobody has a manager on file. In the Staff Directory, set who each person reports to - start with the heads reporting to your CEO or medical director - and the chart draws itself."
                         action={canEdit ? <Button variant="contained" startIcon={<EditRounded />} onClick={() => navigate("/hospital/staff")} sx={{ textTransform: "none", fontWeight: 700 }}>Set reporting lines</Button> : undefined} />
                     </Paper>
                   )}

@@ -3,7 +3,7 @@ import { screen, waitFor } from "@testing-library/react";
 import { renderWithProviders } from "@/test/renderWithProviders";
 
 /**
- * The branch a hospital admin is looking at survives a refresh — including
+ * The branch a hospital admin is looking at survives a refresh - including
  * "All branches", which used to fall back to their home branch on reload.
  */
 

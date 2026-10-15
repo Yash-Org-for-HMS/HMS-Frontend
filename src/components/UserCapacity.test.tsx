@@ -4,7 +4,7 @@ import { renderWithProviders } from "@/test/renderWithProviders";
 
 /**
  * Where people are added: the logins in use against the hospital's capacity,
- * and — once it is reached — the super admin's message, word for word.
+ * and - once it is reached - the super admin's message, word for word.
  */
 
 const api = vi.hoisted(() => ({ get: vi.fn() }));

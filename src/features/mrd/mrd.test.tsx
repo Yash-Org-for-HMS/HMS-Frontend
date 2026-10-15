@@ -99,7 +99,7 @@ describe("Medical records", () => {
   it("a cancelled certificate is shown as cancelled and never printed or counted", async () => {
     api.get.mockResolvedValue({ data: { data: sheet("CANCELLED") } });
     renderPrint();
-    expect(await screen.findByText(/CANCELLED — not valid/)).toBeInTheDocument();
+    expect(await screen.findByText(/CANCELLED - not valid/)).toBeInTheDocument();
     expect(api.post).not.toHaveBeenCalled();
     expect(printed).not.toHaveBeenCalled();
   });

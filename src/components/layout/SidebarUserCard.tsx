@@ -25,7 +25,7 @@ interface SidebarUserCardProps {
    * Announcements, as a bell rather than a menu row.
    *
    * It used to be the last entry in the nav list, which on a 768px laptop was
-   * below the fold in EVERY panel — so the unread badge existed to draw
+   * below the fold in EVERY panel - so the unread badge existed to draw
    * attention to something nobody could see without scrolling past everything
    * else. There is no desktop topbar to move it to (every AppBar is
    * md:none), so it lives here, in the one band that is always pinned.
@@ -88,8 +88,8 @@ export function badgeFor(roleCode: string | null | undefined, roleName: string):
 }
 
 /**
- * The shared bottom-of-sidebar profile block — avatar, who you are, and a way
- * out — used by every panel layout. Theme-tokened so all panels match.
+ * The shared bottom-of-sidebar profile block - avatar, who you are, and a way
+ * out - used by every panel layout. Theme-tokened so all panels match.
  *
  * It is pinned below a scrolling nav, so every pixel here is one permanently
  * removed from the menu.
@@ -122,7 +122,7 @@ export default function SidebarUserCard({
             >
               {name}
             </Typography>
-            {/* Only where nothing follows this row — which is the platform
+            {/* Only where nothing follows this row - which is the platform
                 console, the one panel with no hospital line beneath and no
                 bell beside. Everywhere else the role sits on the hospital
                 line: with a bell added, four controls plus a badge left 52px

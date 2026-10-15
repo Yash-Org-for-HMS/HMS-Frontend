@@ -6,7 +6,7 @@ import { SEMANTIC, NEUTRAL } from "@/styles/accents";
  *
  * This used to live in `features/reports/kit/chartTheme`, which meant a shared
  * component in `src/components` could not use it without importing from a
- * feature — so the dashboards showed bare counts with no baseline while the
+ * feature - so the dashboards showed bare counts with no baseline while the
  * reports right next door showed deltas. It lives here now; chartTheme
  * re-exports it, so existing imports are unaffected.
  */
@@ -22,7 +22,7 @@ export interface Delta {
   /** Absolute change (current − previous), for baselines too small for a %. */
   abs: number | null;
   /**
-   * How this should be shown. A percentage off a tiny baseline is misleading —
+   * How this should be shown. A percentage off a tiny baseline is misleading -
    * two orders growing to twelve is "+500%", which reads like a surge rather
    * than ten orders. Below MIN_PCT_BASELINE the absolute change is the honest
    * figure.
@@ -42,7 +42,7 @@ export const MIN_PCT_BASELINE = 10;
 /**
  * Percentage change of `current` vs `previous`, plus the direction and whether
  * that direction is "good" (given whether higher is better for this metric).
- * Returns a null pct when there's no comparable baseline — callers should show
+ * Returns a null pct when there's no comparable baseline - callers should show
  * nothing rather than a meaningless "0%" or "∞".
  */
 export function computeDelta(
@@ -51,7 +51,7 @@ export function computeDelta(
   higherIsBetter = true,
 ): Delta {
   // Money reaches the UI as a decimal STRING (Prisma Decimal), and
-  // `Number.isFinite("120.50")` is false — so a string baseline used to fall
+  // `Number.isFinite("120.50")` is false - so a string baseline used to fall
   // through the guard below and return mode "none", silently dropping the delta
   // chip rather than failing. Every call site happens to wrap in Number() today;
   // coercing here means the next one that forgets still works.

@@ -5,7 +5,7 @@ import { renderWithProviders } from "@/test/renderWithProviders";
 
 /**
  * Which branch each session of a doctor's week is at. A doctor at two or more
- * branches names the branch of every session — "Every branch" let each branch
+ * branches names the branch of every session - "Every branch" let each branch
  * book the same hours and nobody knew where the doctor would be. A doctor at
  * one branch has nothing to choose, and a one-branch hospital is as before.
  */
@@ -41,7 +41,7 @@ beforeEach(() => {
   schedules = [];
 });
 
-describe("DoctorSchedule — the branch of each session", () => {
+describe("DoctorSchedule - the branch of each session", () => {
   it("a doctor at two branches: no 'Every branch', and a session without one must be given one", async () => {
     schedules = [
       { dayOfWeek: 1, startTime: "10:00", endTime: "14:00", slotDurationMinutes: 15, branchId: null }, // saved before branches

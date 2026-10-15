@@ -4,7 +4,7 @@
  * as each token's `statusCode`.
  *
  * Named because the Nursing Station filtered on codes that do not exist
- * ("WAITING", "IN_PROGRESS"). Nothing errored — the filters simply never
+ * ("WAITING", "IN_PROGRESS"). Nothing errored - the filters simply never
  * matched, so the vitals worklist sat empty while patients waited. Compare
  * against these rather than a bare string.
  */
@@ -23,7 +23,7 @@ export type QueueStatusCode = (typeof QUEUE_STATUS)[keyof typeof QUEUE_STATUS];
 /** Nothing further happens to a token in these states. */
 export const TERMINAL_QUEUE_STATUSES: string[] = [QUEUE_STATUS.COMPLETED, QUEUE_STATUS.CANCELLED];
 
-/** Before the doctor — still on the nurse's / front desk's plate. */
+/** Before the doctor - still on the nurse's / front desk's plate. */
 export const WAITING_QUEUE_STATUSES: string[] = [
   QUEUE_STATUS.WAITING_FOR_VITALS,
   QUEUE_STATUS.READY_FOR_DOCTOR,

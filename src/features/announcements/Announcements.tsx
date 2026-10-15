@@ -26,7 +26,7 @@ interface Announcement {
   publishAt: string;
   expiresAt: string | null;
   readAt: string | null;
-  /** The platform team's, or the hospital's own to its staff — then for which branches (none named: every branch). */
+  /** The platform team's, or the hospital's own to its staff - then for which branches (none named: every branch). */
   from?: "platform" | "hospital";
   toBranches?: string[];
 }

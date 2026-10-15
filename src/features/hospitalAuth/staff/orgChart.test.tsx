@@ -110,7 +110,7 @@ describe("the organisation chart page", () => {
   it("shows a person's managers, reports and departments", async () => {
     renderWithProviders(<Organogram />);
     fireEvent.click(await screen.findByRole("button", { name: "Farhan Ortho, D-ortho" }));
-    const panel = await screen.findByRole("dialog", { name: "Farhan Ortho — details" });
+    const panel = await screen.findByRole("dialog", { name: "Farhan Ortho - details" });
     expect(within(panel).getByText("ORTHO")).toBeInTheDocument();
     expect(within(panel).getByText("JOINT")).toBeInTheDocument();
     expect(within(panel).getAllByText("Head")).toHaveLength(2);
@@ -122,7 +122,7 @@ describe("the organisation chart page", () => {
     me.role = "B_ADMIN";
     renderWithProviders(<Organogram />);
     fireEvent.click(await screen.findByRole("button", { name: "Farhan Ortho, D-ortho" }));
-    const panel = await screen.findByRole("dialog", { name: "Farhan Ortho — details" });
+    const panel = await screen.findByRole("dialog", { name: "Farhan Ortho - details" });
     expect(within(panel).queryByRole("button", { name: "Change in the Staff Directory" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Staff Directory" })).not.toBeInTheDocument();
   });

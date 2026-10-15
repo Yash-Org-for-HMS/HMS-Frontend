@@ -27,7 +27,7 @@ import { SEMANTIC, BRAND, NEUTRAL } from "@/styles/accents";
  * Reception's answer to "who can see this patient, and how soon?".
  *
  * The page used to report the opposite: a headcount of appointments and the time
- * of the doctor's NEXT one — when they are busy, not when they are free — which
+ * of the doctor's NEXT one - when they are busy, not when they are free - which
  * is the wrong half of the question for somebody holding a walk-in. Every card
  * now leads with the earliest free slot, and the list is ordered by it, so the
  * first card is the answer.
@@ -59,7 +59,7 @@ const fmtTime = (hhmm: string) => {
 
 /**
  * "10:00 AM – 1:00 PM · 30-min", or for a split day "10:00 AM – 1:00 PM, 4:00 PM –
- * 7:00 PM · 30-min" — each session with its own length when they differ.
+ * 7:00 PM · 30-min" - each session with its own length when they differ.
  */
 function hoursLabel(windows: { startTime: string; endTime: string; slotDurationMinutes: number }[]) {
   const span = (w: (typeof windows)[number]) => `${fmtTime(w.startTime)} – ${fmtTime(w.endTime)}`;
@@ -98,13 +98,13 @@ export default function DoctorAvailability() {
   const [date, setDate] = useState(dayjs().format("YYYY-MM-DD"));
   const [search, setSearch] = useState("");
   // Seeded from the URL so the Department Directory can hand a department
-  // straight over — "who is free in Cardiology" is one click from finding
+  // straight over - "who is free in Cardiology" is one click from finding
   // Cardiology, rather than finding it again here.
   const [params] = useSearchParams();
   const [dept, setDept] = useState(params.get("dept") ?? "");
   // Booking from a doctor's card opens the SAME appointment form used everywhere
   // else (Front Desk, Appointments list) inline here, rather than navigating
-  // away — one booking flow regardless of entry point.
+  // away - one booking flow regardless of entry point.
   const [bookingDoctorId, setBookingDoctorId] = useState<string | null>(null);
   const [billingDialog, setBillingDialog] = useState({ open: false, apptId: "", patientName: "", apptDate: "" });
 
@@ -183,7 +183,7 @@ export default function DoctorAvailability() {
           ) : (
             <Typography variant="body2" sx={{ color: "text.secondary" }}>
               No free slots left {dayjs(date).isSame(dayjs(), "day") ? "today" : `on ${dayjs(date).format("D MMM")}`}
-              {shown.length ? " — every doctor shown is booked out or on leave." : "."}
+              {shown.length ? " - every doctor shown is booked out or on leave." : "."}
             </Typography>
           )}
         </Paper>
@@ -295,7 +295,7 @@ const minuteOf = (hhmm: string) => Number(hhmm.slice(0, 2)) * 60 + Number(hhmm.s
 const placeNames = (ws: { branchName: string }[]) => [...new Set(ws.map((w) => w.branchName))].join(" & ");
 
 /**
- * The badge says what reception can do with this doctor now — the same thing
+ * The badge says what reception can do with this doctor now - the same thing
  * the card says under it. It used to say "Available" for anyone working at
  * this branch today, so a doctor whose hours had ended, or who had no slot
  * left, wore a green "Available" over "Day finished" and "Book anyway"; and
@@ -322,7 +322,7 @@ function DoctorCard({ doc, isPast, onBook }: { doc: DoctorRow; isPast: boolean; 
   const badge = badgeFor(doc, isPast, notHere, laterElsewhere);
   const tone = badge?.color ?? NEUTRAL.muted;
   const load = doc.slotsTotal > 0 ? Math.round((doc.slotsBooked / doc.slotsTotal) * 100) : 0;
-  // Amber once the day is mostly gone, red when there is nothing left — the two
+  // Amber once the day is mostly gone, red when there is nothing left - the two
   // moments a receptionist needs to notice before promising a time.
   // A finished day is nothing to act on, so it is grey rather than an alarm.
   const loadColor = doc.dayState === "FINISHED" ? NEUTRAL.muted : doc.nextFreeSlot === null ? SEMANTIC.danger : load >= 75 ? SEMANTIC.warning : SEMANTIC.success;
@@ -345,7 +345,7 @@ function DoctorCard({ doc, isPast, onBook }: { doc: DoctorRow; isPast: boolean; 
         <Box sx={{ minWidth: 0, flex: 1 }}>
           <Typography variant="subtitle1" sx={{ fontWeight: 700, color: "text.primary" }} noWrap>{doc.name}</Typography>
           <Typography variant="caption" component="div" sx={{ color: "text.secondary" }} noWrap title={`${doc.department || ""}${doc.qualification ? ` • ${doc.qualification}` : ""}`}>
-            {doc.department || "—"}{doc.qualification ? ` • ${doc.qualification}` : ""}
+            {doc.department || "-"}{doc.qualification ? ` • ${doc.qualification}` : ""}
           </Typography>
         </Box>
         {badge && <Chip icon={badge.icon} label={badge.label} size="small" sx={{ flexShrink: 0, bgcolor: `${badge.color}1f`, color: badge.color, fontWeight: 700, "& .MuiChip-icon": { color: "inherit" } }} />}
@@ -356,7 +356,7 @@ function DoctorCard({ doc, isPast, onBook }: { doc: DoctorRow; isPast: boolean; 
       {/* The line the page exists for. */}
       {doc.onLeave ? (
         <Typography variant="body2" sx={{ color: SEMANTIC.danger, fontWeight: 700 }}>
-          On leave{doc.leaveReason ? ` — ${doc.leaveReason}` : ""}
+          On leave{doc.leaveReason ? ` - ${doc.leaveReason}` : ""}
         </Typography>
       ) : notHere ? (
         <Box>
@@ -393,7 +393,7 @@ function DoctorCard({ doc, isPast, onBook }: { doc: DoctorRow; isPast: boolean; 
         </Box>
       )}
 
-      {/* How full the day is — the difference between "can fit one more" and
+      {/* How full the day is - the difference between "can fit one more" and
           "you would be overbooking them". */}
       {!away && doc.slotsTotal > 0 && (
         <Box>
@@ -411,7 +411,7 @@ function DoctorCard({ doc, isPast, onBook }: { doc: DoctorRow; isPast: boolean; 
       )}
 
       {/* Hours and fee are what you quote when booking, so they are irrelevant on
-          a day the doctor is away — and pushing them to the bottom of an
+          a day the doctor is away - and pushing them to the bottom of an
           otherwise empty leave card left a hole where the load bar would be. */}
       {!away && (
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mt: "auto" }}>
@@ -428,10 +428,10 @@ function DoctorCard({ doc, isPast, onBook }: { doc: DoctorRow; isPast: boolean; 
                 hours anyone chose for this doctor. */}
             {doc.usingDefaultHours && (
               <Typography variant="caption" sx={{ color: SEMANTIC.warning, fontWeight: 600, display: "block" }}>
-                Default hours — no weekly schedule set
+                Default hours - no weekly schedule set
               </Typography>
             )}
-            {/* The rest of the day at another branch — what to tell a patient who asks. */}
+            {/* The rest of the day at another branch - what to tell a patient who asks. */}
             {otherBranches.length > 0 && doc.dayState !== "FINISHED" && (
               <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>
                 Also at {otherBranches.map((w) => `${w.branchName} ${fmtTime(w.startTime)} – ${fmtTime(w.endTime)}`).join(", ")}

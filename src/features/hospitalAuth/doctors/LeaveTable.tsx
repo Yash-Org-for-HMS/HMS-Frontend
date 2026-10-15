@@ -90,7 +90,7 @@ export default function LeaveTable({
                       <Typography variant="caption" sx={{ display: "block", color: "text.secondary", fontWeight: 500 }}>{scope}</Typography>
                     )}
                   </TableCell>
-                  <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}>{leave.leaveReason || "—"}</TableCell>
+                  <TableCell sx={{ color: "text.secondary", borderBottom: "1px solid", borderColor: "divider" }}>{leave.leaveReason || "-"}</TableCell>
                   <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
                     <Chip label={leave.status} size="small"
                       sx={{ bgcolor: inactive ? "rgba(148,163,184,0.15)" : "rgba(16,185,129,0.15)", color: inactive ? "text.secondary" : "#16a34a", fontWeight: 600 }} />

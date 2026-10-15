@@ -82,7 +82,7 @@ export default function DepartmentsList() {
   const groups = useMemo(() => groupDepartments(departments), [departments]);
 
   // In use: every group open (it's short). Switched off: groups closed until
-  // opened — or while searching, when the matching groups open by themselves.
+  // opened - or while searching, when the matching groups open by themselves.
   const [toggled, setToggled] = useState<Record<string, boolean>>({});
   const isOpen = (key: string) => (term ? true : toggled[`${view}:${key}`] ?? view === "active");
   const toggle = (key: string) => setToggled((t) => ({ ...t, [`${view}:${key}`]: !isOpen(key) }));
@@ -106,7 +106,7 @@ export default function DepartmentsList() {
     <Box>
       <PageHeader
         title="Departments"
-        subtitle="The departments your hospital runs, by group. The standard list holds every department a hospital might have — switch on the ones you use."
+        subtitle="The departments your hospital runs, by group. The standard list holds every department a hospital might have - switch on the ones you use."
         actions={
           <Button
             variant="contained"

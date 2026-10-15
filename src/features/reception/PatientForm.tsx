@@ -392,7 +392,7 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
         </Grid>
         <Grid size={{ xs: 12 }}>
           {/* Picking from the list is what makes an allergy checkable when a
-              medicine is prescribed — those entries are stored against the
+              medicine is prescribed - those entries are stored against the
               hospital's salt vocabulary. Anything typed freehand is still
               accepted and shown to clinicians, but is deliberately never
               matched, because guessing at free text is what got the previous

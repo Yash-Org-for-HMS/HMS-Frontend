@@ -1,5 +1,5 @@
 /**
- * Colour tokens — the single source of truth for accent and semantic colours.
+ * Colour tokens - the single source of truth for accent and semantic colours.
  *
  * `SEMANTIC` is meaning-based and identical in every panel (success = emerald,
  * danger = red, warning = amber, info = blue), mirroring the MUI palette so the
@@ -10,7 +10,7 @@
 // ── Per-panel accents ─────────────────────────────────────────────────────
 // SUPERSEDED for theming: every panel themes from BRAND below, so chrome is
 // identical app-wide and a panel is identified by title and logo, not colour.
-// Seven accents across ~700 literals drifted badly — panels shipped each
+// Seven accents across ~700 literals drifted badly - panels shipped each
 // other's colours. Kept because non-layout code still imports these; the first
 // seven values must not change.
 export const ACCENTS = {
@@ -28,7 +28,7 @@ export const ACCENTS = {
   hospital: "#6366f1",
   hospitalDark: "#4f46e5",
 
-  // Provisional — final values for pharmacy / lab / ipd are confirmed before
+  // Provisional - final values for pharmacy / lab / ipd are confirmed before
   // those panels are migrated (color-system Phase 3). Nothing references them
   // yet, so these are inert placeholders and change nothing on screen.
   pharmacy: "#0d9488",
@@ -41,7 +41,7 @@ export const ACCENTS = {
 
 /**
  * The one action colour. Every button in every panel is painted with this, so
- * "save" looks like "save" whether you're in Pharmacy or Reception — a primary
+ * "save" looks like "save" whether you're in Pharmacy or Reception - a primary
  * action shouldn't change colour just because of which screen you're on.
  *
  * Panel accents above still brand each area (sidebar, icons, headings), so you
@@ -60,7 +60,7 @@ export const ACCENTS = {
 export const BRAND = {
   action: "#0C73B5",
   actionDark: "#095B90",
-  /** Light step for tints, gradient starts and icon washes — decorative only;
+  /** Light step for tints, gradient starts and icon washes - decorative only;
    *  at 2.5:1 on white it must never carry text. */
   actionLight: "#4FA3D6",
 } as const;
@@ -101,7 +101,7 @@ export const NEUTRAL = {
  */
 export const DISABLED_CONTAINED = {
   background: "rgba(15, 23, 42, 0.08)",
-  // 3.8:1 on that ground — muted enough to read as inert, dark enough to read.
+  // 3.8:1 on that ground - muted enough to read as inert, dark enough to read.
   color: "rgba(15, 23, 42, 0.55)",
   boxShadow: "none",
 } as const;

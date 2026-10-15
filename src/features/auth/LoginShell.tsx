@@ -9,7 +9,7 @@ import { loginSubmitSx, loginSubmitBusySx } from "./loginDesign";
  */
 
 interface LoginShellProps {
-  /** The portal's name — the one thing that says which door you are at. */
+  /** The portal's name - the one thing that says which door you are at. */
   title: string;
   children: ReactNode;
 }
@@ -78,7 +78,7 @@ export function LoginSubmitButton({ busy, label = "Login" }: { busy: boolean; la
 
 /**
  * Page frame: the soft background, the centred column, the mark and the portal
- * badge. The form sits directly on the background — no card.
+ * badge. The form sits directly on the background - no card.
  */
 export function LoginShell({ title, children }: LoginShellProps) {
   return (

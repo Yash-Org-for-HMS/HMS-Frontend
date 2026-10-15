@@ -131,7 +131,7 @@ export default function OnboardingForm() {
             </Grid>
 
             {/* Billing evidence: "Payment Verified" is a manual attestation with no
-                audit trail — this cross-references it against the platform's own
+                audit trail - this cross-references it against the platform's own
                 subscription billing records so it's an informed check, not a blind
                 toggle. Informational only; doesn't change what's allowed to save. */}
             {onboardingData && (
@@ -169,8 +169,8 @@ export default function OnboardingForm() {
                       <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>Last payment</Typography>
                       <Typography sx={{ fontWeight: 700 }}>
                         {onboardingData.billing?.lastPaymentAt
-                          ? `${formatDate(onboardingData.billing.lastPaymentAt)} · ${onboardingData.billing.lastPaymentMethod || "—"}`
-                          : "—"}
+                          ? `${formatDate(onboardingData.billing.lastPaymentAt)} · ${onboardingData.billing.lastPaymentMethod || "-"}`
+                          : "-"}
                       </Typography>
                     </Grid>
                     <Grid size={{ xs: 12, sm: 6 }}>
@@ -193,7 +193,7 @@ export default function OnboardingForm() {
                     </Grid>
                     <Grid size={{ xs: 12, sm: 6 }}>
                       <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>Primary admin</Typography>
-                      <Typography sx={{ fontWeight: 700 }}>{onboardingData.primaryAdmin?.name || "—"}</Typography>
+                      <Typography sx={{ fontWeight: 700 }}>{onboardingData.primaryAdmin?.name || "-"}</Typography>
                       {onboardingData.primaryAdmin?.email && (
                         <Typography variant="caption" sx={{ color: "text.secondary" }}>{onboardingData.primaryAdmin.email}</Typography>
                       )}

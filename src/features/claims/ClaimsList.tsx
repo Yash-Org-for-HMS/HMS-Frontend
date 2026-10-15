@@ -24,11 +24,11 @@ export default function ClaimsList() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
 
-  // Any filter change resets to the first page — otherwise a narrowed result set
+  // Any filter change resets to the first page - otherwise a narrowed result set
   // could leave you stranded on a now-empty high page.
   useEffect(() => { setPage(1); }, [status, search]);
 
-  // The request waits until typing pauses — it fired on every keystroke.
+  // The request waits until typing pauses - it fired on every keystroke.
   const debouncedSearch = useDebouncedValue(search);
   const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
     queryKey: ["claims", status, debouncedSearch, page],
@@ -98,11 +98,11 @@ export default function ClaimsList() {
                     <TableRow key={c.claimId} hover sx={{ cursor: "pointer", opacity: isFetching ? 0.7 : 1 }} onClick={() => navigate(`/reception/claims/${c.claimId}`)}>
                       <TableCell sx={{ fontWeight: 600 }}>{c.claimNumber}</TableCell>
                       <TableCell>{c.patientName}<Box component="span" sx={{ color: "text.secondary", fontSize: "0.75rem", display: "block" }}>{c.uhid}</Box></TableCell>
-                      <TableCell>{c.payerName || "—"}</TableCell>
-                      <TableCell>{c.schemeType || "—"}</TableCell>
+                      <TableCell>{c.payerName || "-"}</TableCell>
+                      <TableCell>{c.schemeType || "-"}</TableCell>
                       <TableCell><Chip size="small" label={m.label} sx={{ bgcolor: `${m.color}22`, color: m.color, fontWeight: 700 }} /></TableCell>
-                      <TableCell align="right">{c.estimatedCost != null ? formatINR(Number(c.estimatedCost)) : "—"}</TableCell>
-                      <TableCell>{c.registeredAt ? dayjs(c.registeredAt).format("DD MMM YYYY") : "—"}</TableCell>
+                      <TableCell align="right">{c.estimatedCost != null ? formatINR(Number(c.estimatedCost)) : "-"}</TableCell>
+                      <TableCell>{c.registeredAt ? dayjs(c.registeredAt).format("DD MMM YYYY") : "-"}</TableCell>
                     </TableRow>
                   );
                 })

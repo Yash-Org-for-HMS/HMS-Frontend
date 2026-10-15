@@ -39,7 +39,7 @@ type SectionKey = "discount" | "charge" | "void";
  * One collapsible action in the right-hand column.
  *
  * These three used to sit open at once, each in a dashed box of its own colour
- * — green, blue, red — stacked down a 370px column. That put five headings and
+ * - green, blue, red - stacked down a 370px column. That put five headings and
  * nine inputs on screen permanently for actions a receptionist takes rarely,
  * and left the fields sharing a half-column each with nowhere to breathe. One
  * open at a time gives whichever is in use the full width, and collapses the
@@ -97,7 +97,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
   const [invoice, setInvoice] = useState<InvoiceDetail | null>(null);
   // This appointment's invoice only covers the consultation. If the patient has
   // OTHER unbilled charges (lab / pharmacy / radiology), surface them here so the
-  // front desk doesn't silently miss them — with a one-click route to the full
+  // front desk doesn't silently miss them - with a one-click route to the full
   // consolidated billing screen that captures everything they owe.
   const [otherCharges, setOtherCharges] = useState<UnbilledItem[]>([]);
   
@@ -189,7 +189,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
 
       // Surface the patient's OTHER unbilled charges (lab / pharmacy / radiology)
       // that this consultation invoice does NOT include. Consultation-type items
-      // are excluded — those are what this modal already bills. Best-effort: a
+      // are excluded - those are what this modal already bills. Best-effort: a
       // failure here must never block the core billing flow.
       if (currentInvoice?.patientId) {
         try {
@@ -292,7 +292,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
     }
   };
 
-  // Add a charge picked from the Schedule of Charges — the server prices it from
+  // Add a charge picked from the Schedule of Charges - the server prices it from
   // the rate card (we send only the id), so no amount is trusted from the client.
   const handleAddSocCharge = async (chargeItemId: string) => {
     if (!invoice) return;
@@ -352,8 +352,8 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
     if (!receiptRef.current) return;
     const printContents = receiptRef.current.innerHTML;
 
-    /* Page setup only. This used to carry a full receipt stylesheet —
-       .hospital-name, .receipt-title, .totals-box, .watermark and the rest —
+    /* Page setup only. This used to carry a full receipt stylesheet -
+       .hospital-name, .receipt-title, .totals-box, .watermark and the rest -
        written when the receipt was local markup. The receipt has been a
        <BillReceipt>/<BillDocument> composition for a while now, and those use
        inline styles because printing copies innerHTML into a bare iframe where
@@ -441,7 +441,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
                   {`₹${otherCharges.reduce((s, c) => s + Number(c.amount || 0), 0).toFixed(2)}`}) not on this invoice.
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  {[...new Set(otherCharges.map((c) => c.type))].join(", ")} — this consultation bill won't collect
+                  {[...new Set(otherCharges.map((c) => c.type))].join(", ")} - this consultation bill won't collect
                   them. Use “Bill all charges” to invoice everything together.
                 </Typography>
               </Alert>

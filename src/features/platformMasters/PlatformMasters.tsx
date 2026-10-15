@@ -19,12 +19,12 @@ import { useConfirm } from "@/providers/ConfirmContext";
 import { BRAND, SEMANTIC, NEUTRAL } from "@/styles/accents";
 
 /**
- * The platform's master lists — the departments, ward/room/bed types, bed
+ * The platform's master lists - the departments, ward/room/bed types, bed
  * categories, designations and the rest from HMS_Platform_Master_Data.xlsx.
  *
  * Everything on this screen is described by the API: each master sends its own
  * column definitions, so the table and the edit form are built from them and a
- * new column needs no change here. Locked masters are shown but never editable —
+ * new column needs no change here. Locked masters are shown but never editable -
  * code depends on their codes.
  *
  * Changes here reach hospitals through "Push to hospitals" (and automatically for
@@ -53,7 +53,7 @@ const STAFF_MAP = "__deptStaffMap";
 
 /** The help under a field: its own hint, then what the product does with it. */
 function fieldNote(c: { hint?: string; usage?: string; reference?: boolean }): string | undefined {
-  const use = c.usage ? `Used for: ${c.usage}.` : c.reference ? "Reference only — nothing in the product acts on this." : "";
+  const use = c.usage ? `Used for: ${c.usage}.` : c.reference ? "Reference only - nothing in the product acts on this." : "";
   return [c.hint, use].filter(Boolean).join(" ") || undefined;
 }
 
@@ -94,7 +94,7 @@ export default function PlatformMasters() {
     <PageContainer>
       <PageHeader
         title="Master Data"
-        subtitle="The standard lists every hospital is set up from — departments, wards, rooms, beds and staff."
+        subtitle="The standard lists every hospital is set up from - departments, wards, rooms, beds and staff."
         actions={
           <Button variant="contained" startIcon={<CloudSyncRounded />} onClick={onSync} disabled={sync.isPending}
             sx={{ textTransform: "none", fontWeight: 600 }}>
@@ -192,7 +192,7 @@ function MasterTable({ masterKey }: { masterKey: string }) {
                 {tableCols.map((c) => (
                   <TableCell key={c.key} sx={{ fontWeight: 700, color: c.reference ? "text.disabled" : "text.secondary", bgcolor: "background.paper", whiteSpace: "nowrap" }}>
                     {c.usage || c.reference ? (
-                      <Tooltip title={c.usage ? `Used for: ${c.usage}` : "Reference only — nothing in the product acts on this"}>
+                      <Tooltip title={c.usage ? `Used for: ${c.usage}` : "Reference only - nothing in the product acts on this"}>
                         <span style={{ borderBottom: "1px dotted", cursor: "help" }}>{c.label}{c.reference ? " ·ref" : ""}</span>
                       </Tooltip>
                     ) : c.label}
@@ -231,11 +231,11 @@ function MasterTable({ masterKey }: { masterKey: string }) {
 
 function Cell({ col, value }: { col: Column; value: unknown }) {
   if (col.type === "bool") {
-    return value ? <CheckRounded sx={{ fontSize: 18, color: SEMANTIC.success }} /> : <Typography variant="body2" sx={{ color: "text.disabled" }}>—</Typography>;
+    return value ? <CheckRounded sx={{ fontSize: 18, color: SEMANTIC.success }} /> : <Typography variant="body2" sx={{ color: "text.disabled" }}>-</Typography>;
   }
   if (col.type === "list") {
     const items = (value as string[] | null) ?? [];
-    return <Typography variant="body2" sx={{ color: "text.secondary" }}>{items.join(", ") || "—"}</Typography>;
+    return <Typography variant="body2" sx={{ color: "text.secondary" }}>{items.join(", ") || "-"}</Typography>;
   }
   if (col.key === "colorHex" && typeof value === "string") {
     return (
@@ -247,10 +247,10 @@ function Cell({ col, value }: { col: Column; value: unknown }) {
   }
   if (col.type === "select" && col.options) {
     const opt = col.options.find((o) => o.value === value);
-    return <Typography variant="body2">{opt ? opt.label.split(" — ")[0] : String(value ?? "—")}</Typography>;
+    return <Typography variant="body2">{opt ? opt.label.split(" - ")[0] : String(value ?? "-")}</Typography>;
   }
   if (col.key === "code") return <Typography variant="body2" sx={{ fontFamily: "monospace", fontWeight: 600 }}>{String(value ?? "")}</Typography>;
-  return <Typography variant="body2" sx={{ color: col.key === "name" ? "text.primary" : "text.secondary" }}>{value === null || value === undefined || value === "" ? "—" : String(value)}</Typography>;
+  return <Typography variant="body2" sx={{ color: col.key === "name" ? "text.primary" : "text.secondary" }}>{value === null || value === undefined || value === "" ? "-" : String(value)}</Typography>;
 }
 
 function EditDialog({ master, row, onClose }: { master: MasterDetail; row: Record<string, unknown> | null; onClose: () => void }) {

@@ -160,16 +160,16 @@ export default function SubscriptionBilling() {
       {/* Metrics */}
       <Grid container spacing={2.5} sx={{ mb: 3 }}>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard label="MRR" value={metrics ? formatINR(metrics.mrr) : "—"} icon={<TrendingUpRounded sx={{ color: BRAND.action }} />} color={BRAND.action} sub={metrics ? `${formatINR(metrics.arr)} ARR` : undefined} />
+          <StatCard label="MRR" value={metrics ? formatINR(metrics.mrr) : "-"} icon={<TrendingUpRounded sx={{ color: BRAND.action }} />} color={BRAND.action} sub={metrics ? `${formatINR(metrics.arr)} ARR` : undefined} />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard label="Collected" value={metrics ? formatINR(metrics.collected) : "—"} icon={<AccountBalanceWalletRounded sx={{ color: SEMANTIC.success }} />} color={SEMANTIC.success} />
+          <StatCard label="Collected" value={metrics ? formatINR(metrics.collected) : "-"} icon={<AccountBalanceWalletRounded sx={{ color: SEMANTIC.success }} />} color={SEMANTIC.success} />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard label="Outstanding" value={metrics ? formatINR(metrics.outstanding) : "—"} icon={<PendingActionsRounded sx={{ color: SEMANTIC.warning }} />} color={SEMANTIC.warning} sub={metrics ? `${metrics.unpaidCount} unpaid` : undefined} />
+          <StatCard label="Outstanding" value={metrics ? formatINR(metrics.outstanding) : "-"} icon={<PendingActionsRounded sx={{ color: SEMANTIC.warning }} />} color={SEMANTIC.warning} sub={metrics ? `${metrics.unpaidCount} unpaid` : undefined} />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard label="Overdue" value={metrics ? metrics.overdueCount : "—"} icon={<WarningAmberRounded sx={{ color: SEMANTIC.danger }} />} color={SEMANTIC.danger} />
+          <StatCard label="Overdue" value={metrics ? metrics.overdueCount : "-"} icon={<WarningAmberRounded sx={{ color: SEMANTIC.danger }} />} color={SEMANTIC.danger} />
         </Grid>
       </Grid>
 
@@ -269,7 +269,7 @@ export default function SubscriptionBilling() {
       </>
       )}
 
-      {/* Invoice detail — what was billed and, for a paid one, exactly how it
+      {/* Invoice detail - what was billed and, for a paid one, exactly how it
           was paid. Reachable from the row so checking a reference does not mean
           opening a print tab. */}
       <SubscriptionInvoiceDialog invoiceId={detailFor} open={!!detailFor} onClose={() => setDetailFor(null)} />
@@ -309,7 +309,7 @@ export default function SubscriptionBilling() {
         <DialogTitle>Billing identity</DialogTitle>
         <DialogContent dividers>
           <Box sx={{ color: "text.secondary", fontSize: "0.875rem", mb: 2 }}>
-            Your company's details — printed as the seller at the top of every subscription invoice.
+            Your company's details - printed as the seller at the top of every subscription invoice.
           </Box>
           <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
             {([

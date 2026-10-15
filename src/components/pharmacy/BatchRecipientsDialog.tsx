@@ -39,7 +39,7 @@ interface WardHolding {
   quantity: number;
   issued: number;
   returned: number;
-  /** Used on patients out of this cupboard — those people are in the list below. */
+  /** Used on patients out of this cupboard - those people are in the list below. */
   consumed: number;
   /** What a stocktake corrected, signed. A shortfall also shows under untraced. */
   adjusted: number;
@@ -77,7 +77,7 @@ function Stat({ label, value, color }: { label: string; value: number; color: st
 }
 
 /**
- * Who is holding medicine from this batch — the question a recall asks.
+ * Who is holding medicine from this batch - the question a recall asks.
  *
  * The stock ledger records which batch every dispense drew from and against
  * which document, so this can be assembled from what already happened. Nothing
@@ -168,13 +168,13 @@ export default function BatchRecipientsDialog({
                       <Typography variant="body2" sx={{ fontWeight: 700 }} noWrap>{w.wardName}</Typography>
                       {/* Where the rest of it went, so the number on the right
                           reads as a remainder rather than a mystery. Units used
-                          on patients are not missing — the people who got them
+                          on patients are not missing - the people who got them
                           are in the call list below. */}
                       <Typography variant="caption" sx={{ color: "text.secondary" }} noWrap>
                         {w.issued} issued
                         {w.consumed > 0 ? `, ${w.consumed} used on patients` : ""}
                         {w.returned > 0 ? `, ${w.returned} sent back` : ""}
-                        {/* A stocktake shortfall is not a rounding error — it is
+                        {/* A stocktake shortfall is not a rounding error - it is
                             stock that left with nobody recorded against it, and
                             it is counted again under "cannot be traced". */}
                         {w.adjusted < 0 ? `, ${Math.abs(w.adjusted)} missing at a count` : ""}
@@ -228,7 +228,7 @@ export default function BatchRecipientsDialog({
                 attached. This list cannot be complete for that portion.
                 {data.untraced.map((u) => (
                   <Typography key={u.reason} variant="caption" sx={{ display: "block", mt: 0.5 }}>
-                    · {u.quantity} across {u.events} movement{u.events === 1 ? "" : "s"} — {u.reason.toLowerCase()}
+                    · {u.quantity} across {u.events} movement{u.events === 1 ? "" : "s"} - {u.reason.toLowerCase()}
                   </Typography>
                 ))}
               </Alert>

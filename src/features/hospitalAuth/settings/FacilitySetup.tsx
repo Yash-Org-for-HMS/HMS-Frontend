@@ -31,22 +31,22 @@ const STATUS_COLOR: Record<string, string> = {
 };
 
 const GENDER_LABEL: Record<string, string> = { MIXED: "Mixed", MALE: "Male only", FEMALE: "Female only" };
-/** Room status (workbook 07) — each one sets every bed in the room. */
+/** Room status (workbook 07) - each one sets every bed in the room. */
 const ROOM_STATUS_LABEL: Record<string, string> = {
   ACTIVE: "In use", UNDER_MAINTENANCE: "Under maintenance (beds → maintenance)", FUMIGATION: "Fumigation (beds → terminal clean)",
   CLOSED: "Temporarily closed (beds → blocked)", DECOMMISSIONED: "Decommissioned (beds → inactive)",
 };
-const WARD_STATUS_LABEL: Record<string, string> = { ACTIVE: "Open", TEMP_CLOSED: "Temporarily closed — no admissions", INACTIVE: "Decommissioned" };
+const WARD_STATUS_LABEL: Record<string, string> = { ACTIVE: "Open", TEMP_CLOSED: "Temporarily closed - no admissions", INACTIVE: "Decommissioned" };
 /** A bed status as words: DISCHARGE_INITIATED → "Discharge initiated". */
 const bedStatusLabel = (status: string) => status.charAt(0) + status.slice(1).toLowerCase().replace(/_/g, " ");
-/** Which ward genders a ward type allows — mirrors facility.rules.ts allowedGenders. */
+/** Which ward genders a ward type allows - mirrors facility.rules.ts allowedGenders. */
 const gendersFor = (rule?: string | null) => (rule === "FEMALE_ONLY" ? ["FEMALE"] : rule === "ALLOWED" ? ["MIXED", "MALE", "FEMALE"] : ["MIXED"]);
 const UNIT_KIND_LABEL: Record<string, string> = { OT: "Operation theatre", LAB: "Laboratory / imaging", OPD: "Outpatient clinic", COUNTER: "Desk / counter", UNIT: "Other service unit" };
 /** Mirrors facility.rules.ts makeBedCode, for the preview under the field. */
 const codePart = (s?: string | null) => String(s ?? "").toUpperCase().replace(/[^A-Z0-9]/g, "");
 const previewBedCode = (ward?: string | null, room?: string | null, bed?: string | null) => [codePart(ward) || "W", codePart(room) || "R", codePart(bed) || "B"].join("-");
 
-// Ward/room/bed SETUP lives here (Hospital Admin) — day-to-day bed STATUS
+// Ward/room/bed SETUP lives here (Hospital Admin) - day-to-day bed STATUS
 // changes (available/reserved/maintenance) remain in the Reception panel's
 // Bed Management screen, since that's operational, not configuration.
 const Tile = ({ label, value, color }: { label: string; value: number; color: string }) => (
@@ -74,7 +74,7 @@ export default function FacilitySetup() {
     queryKey: ["ipd-structure", "setup"],
     queryFn: async () => (await axiosInstance.get("/ipd/structure", { params: { view: "setup" } })).data.data,
   });
-  // The hospital's ward / room / bed types, departments and floors — what the forms pick from.
+  // The hospital's ward / room / bed types, departments and floors - what the forms pick from.
   const { data: options, refetch: refetchOptions } = useQuery<FacilityOptions>({
     queryKey: ["ipd-facility-options"],
     queryFn: async () => (await axiosInstance.get("/ipd/facility-options")).data.data,
@@ -94,7 +94,7 @@ export default function FacilitySetup() {
     (n, w) => n + (w.rooms ?? []).reduce(
       (m, r) => m + (r.beds ?? []).filter((b) => !b.roomClassName && b.isPatientBed !== false && b.isActive !== false).length, 0), 0);
 
-  // Active room classes (Schedule of Charges) — pickable per bed to drive room-wise
+  // Active room classes (Schedule of Charges) - pickable per bed to drive room-wise
   // pricing of charges on the discharge bill.
   const { data: roomClasses = [] } = useQuery<RoomClass[]>({
     queryKey: ["soc-room-classes"],
@@ -165,7 +165,7 @@ export default function FacilitySetup() {
           default the discharge screen starts from, so an unclassed bed quietly
           charges a Private patient the General rate unless someone remembers to
           pick a class during discharge. Counted here because it is invisible
-          otherwise — the bed cards looked normal. */}
+          otherwise - the bed cards looked normal. */}
       {unclassedBeds > 0 && (
         <Alert severity="warning" sx={{ mb: 3, borderRadius: 2 }}>
           <strong>{unclassedBeds}</strong> of {summary?.totalBeds ?? "?"} beds have no room class, so
@@ -188,7 +188,7 @@ export default function FacilitySetup() {
                   <Chip label={w.wardTypeName ?? w.wardType} size="small" sx={{ bgcolor: "action.hover", fontWeight: 600, height: 22 }} />
                   {w.isCriticalCare && <Chip label="Critical care" size="small" sx={{ height: 22, fontWeight: 600, bgcolor: `${SEMANTIC.danger}14`, color: SEMANTIC.danger }} />}
                   {w.countsInCensus === false && (
-                    <Tooltip title="Beds here are bed-spaces, not licensed capacity — they do not count toward occupancy.">
+                    <Tooltip title="Beds here are bed-spaces, not licensed capacity - they do not count toward occupancy.">
                       <Chip label="Not in census" size="small" sx={{ height: 22, fontWeight: 600 }} />
                     </Tooltip>
                   )}
@@ -228,7 +228,7 @@ export default function FacilitySetup() {
                         const off = b.isActive === false;
                         const color = notForPatients || off ? NEUTRAL.muted : STATUS_COLOR[b.status] || NEUTRAL.muted;
                         return (
-                          <Tooltip key={b.bedId} title={b.occupant ? "Occupied — edit details" : `${off ? "Decommissioned" : notForPatients ? "Not for patients" : b.status} — click to edit details`}>
+                          <Tooltip key={b.bedId} title={b.occupant ? "Occupied - edit details" : `${off ? "Decommissioned" : notForPatients ? "Not for patients" : b.status} - click to edit details`}>
                             <Box onClick={() => setDialog({ kind: "bed", edit: { ...b, roomId: r.roomId, wardId: w.wardId } })}
                               sx={{ cursor: "pointer", width: 140, p: 1.25, borderRadius: 2, border: "1px solid", borderColor: `${color}55`, bgcolor: `${color}12`, position: "relative", opacity: off ? 0.55 : 1, "&:hover": { borderColor: color } }}>
                               <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -307,7 +307,7 @@ function BuildingsPanel({ options, onEditBuilding, onEditFloor }: { options?: Fa
         Optional. A single-building hospital can skip this and give each ward a floor number.
       </Typography>
       {buildings.length === 0 && floors.length === 0 ? (
-        <Typography variant="body2" sx={{ color: "text.disabled" }}>None set up — wards use a plain floor number.</Typography>
+        <Typography variant="body2" sx={{ color: "text.disabled" }}>None set up - wards use a plain floor number.</Typography>
       ) : (
         <Stack spacing={1}>
           {buildings.map((b) => (
@@ -340,7 +340,7 @@ function ServiceUnitsPanel({ units, onEdit }: { units: ServiceUnit[]; onEdit: (u
     <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: "1px solid", borderColor: "divider", height: "100%" }}>
       <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>Service units</Typography>
       <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 1.5 }}>
-        Places staff are posted that are not wards — imaging suites, the lab, pharmacies, OPDs, billing counters, CSSD, the kitchen.
+        Places staff are posted that are not wards - imaging suites, the lab, pharmacies, OPDs, billing counters, CSSD, the kitchen.
       </Typography>
       {units.length === 0 ? (
         <Typography variant="body2" sx={{ color: "text.disabled" }}>None yet. Use Add → Add service unit.</Typography>
@@ -405,7 +405,7 @@ function SetupDialog({ kind, edit, wards, roomClasses, options, onClose, onDone 
     enabled: kind === "ward",
   });
 
-  // SOC-driven daily rent per room class — used to auto-fill the bed's daily charge.
+  // SOC-driven daily rent per room class - used to auto-fill the bed's daily charge.
   const { data: rentInfo } = useQuery<RoomClassRentsResponse>({
     queryKey: ["room-class-rents"],
     queryFn: async () => (await axiosInstance.get("/ipd/room-class-rents")).data.data,
@@ -508,14 +508,14 @@ function SetupDialog({ kind, edit, wards, roomClasses, options, onClose, onDone 
             <SearchableSelect label="In-charge" name="inChargeStaffId" value={f.inChargeStaffId} onChange={onSelect("inChargeStaffId")}
               emptyOption={{ value: "", label: "None" }} searchPlaceholder="Search nurses…"
               options={inChargeOptions.map((p) => ({ value: p.staffId, label: p.name, secondary: p.designationName ?? undefined }))}
-              helperText="The sister in charge — nurses posted here report to them day to day. People come from the Staff Directory." />
+              helperText="The sister in charge - nurses posted here report to them day to day. People come from the Staff Directory." />
             <TextField select fullWidth label="Patients" value={f.genderRestriction} disabled={genders.length === 1} onChange={(e) => set("genderRestriction", e.target.value)}
               helperText={genders.length === 1 ? (genders[0] === "FEMALE" ? "This ward type is female-only." : "This ward type is always mixed.") : "Male-only or female-only wards stop the wrong patient being admitted here."}>
               {genders.map((g) => <MenuItem key={g} value={g}>{GENDER_LABEL[g]}</MenuItem>)}
             </TextField>
             {floors.length > 0 ? (
               <TextField select fullWidth label="Floor" value={f.floorId} onChange={(e) => set("floorId", e.target.value)}>
-                <MenuItem value=""><em>No floor set up — use a number</em></MenuItem>
+                <MenuItem value=""><em>No floor set up - use a number</em></MenuItem>
                 {floors.filter((x) => x.isActive || x.floorId === f.floorId).map((x) => <MenuItem key={x.floorId} value={x.floorId}>{[x.building?.name, x.name].filter(Boolean).join(" · ")}</MenuItem>)}
               </TextField>
             ) : null}
@@ -543,7 +543,7 @@ function SetupDialog({ kind, edit, wards, roomClasses, options, onClose, onDone 
               placeholder="Pick a room type" searchPlaceholder="Search room types…"
               options={typeOptions(options?.roomTypes, f.hospitalRoomTypeId, (t) => [`${t.typicalCapacity} bed${t.typicalCapacity === "1" ? "" : "s"}`, t.isolationCapable && "isolation", t.pressureType !== "NONE" && `${t.pressureType.toLowerCase()} pressure`, t.isProcedureRoom && "procedure room"].filter(Boolean).join(" · "))} />
             <TextField fullWidth type="number" label="Capacity (beds)" value={f.capacity} onChange={(e) => set("capacity", e.target.value)} />
-            <TextField fullWidth label="Amenities" value={f.amenities} onChange={(e) => set("amenities", e.target.value)} helperText="Comma-separated — AC, TV, attendant sofa, oxygen point." />
+            <TextField fullWidth label="Amenities" value={f.amenities} onChange={(e) => set("amenities", e.target.value)} helperText="Comma-separated - AC, TV, attendant sofa, oxygen point." />
             {editingRoom && (
               <TextField select fullWidth label="Room status" value={status} onChange={(e) => setStatus(e.target.value)}
                 helperText="Changes every bed in the room. Not possible while a patient is in it.">
@@ -557,20 +557,20 @@ function SetupDialog({ kind, edit, wards, roomClasses, options, onClose, onDone 
             <TextField fullWidth required label="Bed number" value={f.bedNumber || ""} onChange={(e) => set("bedNumber", e.target.value)} />
             <SearchableSelect label="Bed type" name="hospitalBedTypeId" required value={f.hospitalBedTypeId} onChange={onSelect("hospitalBedTypeId")}
               placeholder="Pick a bed type" searchPlaceholder="Search bed types…"
-              options={typeOptions(options?.bedTypes, f.hospitalBedTypeId, (t) => (!t.isPatientBed ? "not for patients — never allocated" : t.countsAsLicensedBed ? "licensed bed" : "not a licensed bed"))}
+              options={typeOptions(options?.bedTypes, f.hospitalBedTypeId, (t) => (!t.isPatientBed ? "not for patients - never allocated" : t.countsAsLicensedBed ? "licensed bed" : "not a licensed bed"))}
               helperText={bedType && !bedType.isPatientBed ? "Attendant beds are never allocated to a patient or counted in occupancy." : undefined} />
             <TextField fullWidth label="Bed code" value={f.bedCode} onChange={(e) => set("bedCode", e.target.value.toUpperCase())}
               helperText={f.bedCode ? "Must be unique in this branch." : `Leave blank for ${previewBedCode(ward?.wardCode, room?.roomNumber, f.bedNumber)}`}
               slotProps={{ htmlInput: { maxLength: 50 } }} />
             <TextField select fullWidth label="Room class (pricing)" value={f.roomClassId || ""} onChange={(e) => pickClass(e.target.value)}
-              helperText="Sets the price tier for this bed's charges — and fills the daily rent from the Schedule of Charges.">
+              helperText="Sets the price tier for this bed's charges - and fills the daily rent from the Schedule of Charges.">
               <MenuItem value=""><em>None (base price)</em></MenuItem>
               {/* Active classes, plus the bed's current class even if later deactivated. */}
               {roomClasses.filter((rc) => rc.isActive || rc.roomClassId === f.roomClassId).map((rc) => <MenuItem key={rc.roomClassId} value={rc.roomClassId}>{rc.name}{rc.isActive ? "" : " (inactive)"}</MenuItem>)}
             </TextField>
             <TextField fullWidth type="number" label="Daily charge (₹)" value={f.dailyCharge || ""} onChange={(e) => set("dailyCharge", e.target.value)}
               helperText={rentInfo?.configured
-                ? (rentFor(f.roomClassId) != null ? `Auto-filled from Schedule of Charges (₹${rentFor(f.roomClassId)}) — editable` : "Editable")
+                ? (rentFor(f.roomClassId) != null ? `Auto-filled from Schedule of Charges (₹${rentFor(f.roomClassId)}) - editable` : "Editable")
                 : "Tip: add a 'Room rent' charge (type Bed) in the Schedule of Charges to auto-fill this."}
               InputProps={rentInfo?.configured && rentFor(f.roomClassId) != null ? {
                 endAdornment: (
@@ -588,7 +588,7 @@ function SetupDialog({ kind, edit, wards, roomClasses, options, onClose, onDone 
             {editingBed && (
               <Box>
                 <FormControlLabel control={<Switch checked={f.isActive} onChange={(e) => set("isActive", e.target.checked)} />} label="In use" />
-                <Typography variant="caption" sx={{ display: "block", color: "text.secondary", ml: 6, mt: -0.5 }}>Switch off to decommission — the bed stays in history but is never offered or counted.</Typography>
+                <Typography variant="caption" sx={{ display: "block", color: "text.secondary", ml: 6, mt: -0.5 }}>Switch off to decommission - the bed stays in history but is never offered or counted.</Typography>
               </Box>
             )}
           </>)}
@@ -733,7 +733,7 @@ function FloorDialog({ edit, options, onClose, onDone }: { edit?: Floor; options
         </TextField>
       )}
       <TextField fullWidth required type="number" label="Floor number" value={floorNumber} onChange={(e) => setFloorNumber(e.target.value)} helperText="0 = ground, -1 = basement 1." />
-      <TextField fullWidth label="Name" value={name} onChange={(e) => setName(e.target.value)} placeholder={floorNumber === "0" ? "Ground floor" : floorNumber ? `Floor ${floorNumber}` : "Floor 3 — Critical care"} helperText={edit ? undefined : "Leave blank for “Floor 3”, “Ground floor”…"} />
+      <TextField fullWidth label="Name" value={name} onChange={(e) => setName(e.target.value)} placeholder={floorNumber === "0" ? "Ground floor" : floorNumber ? `Floor ${floorNumber}` : "Floor 3 - Critical care"} helperText={edit ? undefined : "Leave blank for “Floor 3”, “Ground floor”…"} />
       {edit && <FormControlLabel control={<Switch checked={active} onChange={(e) => setActive(e.target.checked)} />} label="In use" />}
     </SimpleDialog>
   );
@@ -754,7 +754,7 @@ function ServiceUnitDialog({ edit, options, onClose, onDone }: { edit?: ServiceU
   const kinds = options?.postingTypes?.length ? options.postingTypes : Object.keys(UNIT_KIND_LABEL).map((c) => ({ code: c, meaning: UNIT_KIND_LABEL[c] }));
   return (
     <SimpleDialog title={edit ? "Edit service unit" : "Add service unit"} saving={saving} valid={!!name.trim() && !!code.trim() && !!postingType} onClose={onClose} onSave={save}>
-      <TextField fullWidth required label="Name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Radiology — CT / MRI Suite" />
+      <TextField fullWidth required label="Name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Radiology - CT / MRI Suite" />
       <TextField fullWidth required label="Code" value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="CTMRI" slotProps={{ htmlInput: { maxLength: 20 } }} />
       <TextField select fullWidth required label="Kind" value={postingType} onChange={(e) => setPostingType(e.target.value)}>
         {kinds.map((k) => <MenuItem key={k.code} value={k.code}>{UNIT_KIND_LABEL[k.code] ?? k.meaning}</MenuItem>)}

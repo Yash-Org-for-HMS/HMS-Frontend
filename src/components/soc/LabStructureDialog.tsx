@@ -94,7 +94,7 @@ export default function LabStructureDialog({ chargeItemId, itemName, onClose }: 
           </Box>
         ) : (
           <>
-            {/* Mode picker — two selectable cards */}
+            {/* Mode picker - two selectable cards */}
             <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1.5 }}>
               <ModeCard
                 selected={!isProfile} onClick={() => setIsProfile(false)}
@@ -104,7 +104,7 @@ export default function LabStructureDialog({ chargeItemId, itemName, onClose }: 
               <ModeCard
                 selected={isProfile} onClick={() => setIsProfile(true)}
                 icon={<FormatListBulletedRounded />} title="Profile / Panel"
-                desc="Several parameters — each becomes its own result line."
+                desc="Several parameters - each becomes its own result line."
               />
             </Box>
 
@@ -123,7 +123,7 @@ export default function LabStructureDialog({ chargeItemId, itemName, onClose }: 
                     {unit.trim() && <Typography variant="body2" sx={{ color: "text.secondary" }}>{unit.trim()}</Typography>}
                     <Box sx={{ flex: 1 }} />
                     <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                      Normal: <b style={{ color: normalRange.trim() ? undefined : "var(--mui-palette-text-disabled)" }}>{normalRange.trim() || "—"}</b>
+                      Normal: <b style={{ color: normalRange.trim() ? undefined : "var(--mui-palette-text-disabled)" }}>{normalRange.trim() || "-"}</b>
                     </Typography>
                   </Box>
                 </Box>
@@ -141,7 +141,7 @@ export default function LabStructureDialog({ chargeItemId, itemName, onClose }: 
                   <Box sx={{ flex: 1, display: "grid", placeItems: "center", border: "1px dashed", borderColor: "divider", borderRadius: 2, p: 3, textAlign: "center" }}>
                     <Box>
                       <FormatListBulletedRounded sx={{ fontSize: 34, color: "text.disabled", mb: 0.5 }} />
-                      <Typography variant="body2" sx={{ color: "text.secondary", mb: 1.5 }}>No parameters yet — a panel needs at least one.</Typography>
+                      <Typography variant="body2" sx={{ color: "text.secondary", mb: 1.5 }}>No parameters yet - a panel needs at least one.</Typography>
                       <Button variant="outlined" size="small" startIcon={<AddRounded />} onClick={addParam} sx={{ textTransform: "none", color: ACCENT, borderColor: alpha(ACCENT, 0.5) }}>Add first parameter</Button>
                     </Box>
                   </Box>

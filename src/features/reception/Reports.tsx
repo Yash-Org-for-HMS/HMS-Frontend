@@ -58,11 +58,11 @@ export default function Reports() {
 }
 
 // ── OP Registration ──────────────────────────────────────────────────────────
-/** One registered patient as a table row — shared by the page on screen and by
+/** One registered patient as a table row - shared by the page on screen and by
  *  the export, so a downloaded file can't be shaped differently from the report. */
 const toRegistrationRow = (r: any) => [
-  r.uhid, r.name, r.gender ?? "—", r.age == null ? "—" : String(r.age),
-  r.phone, r.city ?? "—",
+  r.uhid, r.name, r.gender ?? "-", r.age == null ? "-" : String(r.age),
+  r.phone, r.city ?? "-",
   dayjs(r.registeredOn).format("DD MMM YYYY"),
   r.referrerName ?? r.referral,
 ];
@@ -96,7 +96,7 @@ export function OpRegistration() {
           <Grid container spacing={2} sx={{ mb: 2.5 }}>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PersonAddRounded />} label="Registrations" value={String(data.totals.registrations)} accent={ACCENT} /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CallSplitRounded />} label="Referred in" value={String(data.totals.withReferral ?? 0)} sub={`${data.totals.registrations - (data.totals.withReferral ?? 0)} walk-in`} accent={SEMANTIC.info} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<GroupRounded />} label="Average age" value={data.totals.avgAge == null ? "—" : `${data.totals.avgAge}`} accent="#8b5cf6" /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<GroupRounded />} label="Average age" value={data.totals.avgAge == null ? "-" : `${data.totals.avgAge}`} accent="#8b5cf6" /></Grid>
           </Grid>
 
           {/* Who registered, not just how many. Age, gender and city were on
@@ -112,7 +112,7 @@ export function OpRegistration() {
                 rows={(data.byAgeBand ?? []).map((a: Tally) => [a.label, String(a.count)])} />
             </Grid>
             <Grid size={{ xs: 12, md: 3 }}>
-              {/* Names the referrer where there is one — "Doctor" said a
+              {/* Names the referrer where there is one - "Doctor" said a
                   referral existed without saying whose. */}
               <SimpleTable title="By referral source" head={["Source", "Patients"]}
                 rows={(data.bySource ?? []).map((s: Tally) => [s.label, String(s.count)])} />
@@ -135,7 +135,7 @@ export function OpRegistration() {
 }
 
 // ── OP Bills ─────────────────────────────────────────────────────────────────
-/** One invoice as a table row — used for the page on screen and for exports,
+/** One invoice as a table row - used for the page on screen and for exports,
  *  so a downloaded file cannot be formatted differently from the report. */
 const toRow = (r: any) => [
   r.invoiceNumber, r.patientName, r.uhid, dayjs(r.invoiceDate).format("DD MMM YYYY"),
@@ -186,7 +186,7 @@ export function OpBills() {
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PaymentsRounded />} label="Collected" value={inr(data.totals.collected)} accent={SEMANTIC.success} /></Grid>
             {/* What is still owed. Every row already carried a balance and
                 nothing added it up, so the report showed billed and collected
-                and left the reader to subtract — which is the one figure a
+                and left the reader to subtract - which is the one figure a
                 desk actually chases. */}
             <Grid size={{ xs: 6, md: 3 }}>
               <KpiCard
@@ -249,11 +249,11 @@ export function DiagnosisWise() {
             rows={rows.map((r) => [
               r.diagnosis, String(r.count), String(r.patients ?? 0),
               `${Number(r.sharePct ?? 0).toFixed(1)}%`,
-              r.topDoctor ?? "—",
-              r.genderSplit || "—",
-              r.avgAge == null ? "—" : String(r.avgAge),
+              r.topDoctor ?? "-",
+              r.genderSplit || "-",
+              r.avgAge == null ? "-" : String(r.avgAge),
               String(r.followUps ?? 0),
-              r.lastSeen ? dayjs(r.lastSeen).format("DD MMM YYYY") : "—",
+              r.lastSeen ? dayjs(r.lastSeen).format("DD MMM YYYY") : "-",
             ])} />
         </Box>
       )}
@@ -365,7 +365,7 @@ export function Census() {
           )}
 
           <SimpleTable title="Ward detail" head={["Ward", "Beds", "Occupied", "Available", "Occupancy"]}
-            rows={data.byWard.map((w: any) => [w.wardName || "—", String(w.totalBeds), String(w.occupied), String(w.available), `${w.occupancyRate}%`])} />
+            rows={data.byWard.map((w: any) => [w.wardName || "-", String(w.totalBeds), String(w.occupied), String(w.available), `${w.occupancyRate}%`])} />
         </Box>
       )}
     </Box>
@@ -421,7 +421,7 @@ export function DailyOpd() {
           )}
 
           {/* By doctor and by status came back with every request and neither
-              was rendered — the summary said how many appointments there were
+              was rendered - the summary said how many appointments there were
               without saying who saw them or where they ended up. */}
           <Grid container spacing={2.5}>
             <Grid size={{ xs: 12, md: 4 }}>
@@ -447,7 +447,7 @@ export function DailyOpd() {
 // Who attended OPD, on which day. Daily OPD Summary answers "how many" for one
 // day and OP Registration lists only NEWLY registered patients, so a returning
 // patient's visit appeared in neither. This is the OPD counterpart to IPD's
-// "IP Registrations" — same shape, so the two read alike.
+// "IP Registrations" - same shape, so the two read alike.
 export function OpdVisitRegister() {
   const [range, setRange] = useState<DateRange>({
     from: dayjs().subtract(29, "day").format("YYYY-MM-DD"),
@@ -474,7 +474,7 @@ export function OpdVisitRegister() {
     placeholderData: (prev) => prev,
   });
 
-  // The day-wise summary and every KPI above cover the whole period — only the
+  // The day-wise summary and every KPI above cover the whole period - only the
   // visit detail below is a page, and its export goes back for all of it.
   const allVisitRows = async () =>
     ((await axiosInstance.get("/reception/reports/opd-visits", { params: visitParams })).data.data?.rows ?? []) as Record<string, unknown>[];
@@ -531,7 +531,7 @@ export function OpdVisitRegister() {
             filename={`opd_visits_${range.from}_${range.to}`}
             columns={[
               { key: "visitDate", label: "Date", format: (v: string) => dayjs(v).format("DD MMM YYYY"), value: (r: any) => new Date(r.visitDate).getTime() },
-              { key: "token", label: "Token", align: "right", format: (v: number | null) => (v ?? "—") },
+              { key: "token", label: "Token", align: "right", format: (v: number | null) => (v ?? "-") },
               { key: "patientName", label: "Patient" },
               { key: "uhid", label: "UHID" },
               { key: "phone", label: "Phone" },
@@ -588,7 +588,7 @@ export function Analytics() {
 
           {/* When the clinic is busy, which is what this report is for and what
               it used to leave out: the endpoint already returns the hour-of-day
-              and weekday distributions, and nothing rendered them. Hour first —
+              and weekday distributions, and nothing rendered them. Hour first -
               it is the one that drives how a day is staffed. */}
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
             <Grid size={{ xs: 12, lg: 7 }}>
@@ -670,7 +670,7 @@ export function Collection() {
 
           {/* The endpoint returns four breakdowns and only the collector one
               was rendered. Method is the one a desk actually reconciles
-              against — the cash drawer has to match the cash line, and there
+              against - the cash drawer has to match the cash line, and there
               was no cash line. */}
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
             <Grid size={{ xs: 12, md: 6 }}>
@@ -682,7 +682,7 @@ export function Collection() {
                 rows={data.byCollector.map((c: any) => [c.collector, String(c.count), inr(c.amount)])} />
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
-              {/* Which shift took the money — the handover question. */}
+              {/* Which shift took the money - the handover question. */}
               <SimpleTable title="By shift" head={["Shift", "Txns", "Amount"]}
                 rows={(data.byShift ?? []).map((s: { shift: string; count: number; amount: number }) => [s.shift, String(s.count), inr(s.amount)])} />
             </Grid>
@@ -704,7 +704,7 @@ type FilterOptions = {
   paymentMethods: Opt[]; collectors: Opt[]; wards: Opt[]; referralTypes: Opt[];
 };
 
-// Shared across tabs — react-query dedupes by key, so it's fetched once.
+// Shared across tabs - react-query dedupes by key, so it's fetched once.
 function useFilterOptions() {
   return useQuery<FilterOptions>({
     queryKey: ["report-filter-options"],

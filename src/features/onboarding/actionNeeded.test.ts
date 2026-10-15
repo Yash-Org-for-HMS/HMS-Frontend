@@ -42,7 +42,7 @@ describe("trial buckets", () => {
 
   // THE regression. The status flip is a job, so an active trial can sit past
   // its end date. With no lower bound it appeared under "expiring soon", where
-  // the row template renders any non-positive day count as "Expires today" —
+  // the row template renders any non-positive day count as "Expires today" -
   // a trial that lapsed a month ago read as expiring today.
   it("puts a lapsed-but-still-active trial in expired, not expiring", () => {
     const r = actionBuckets([trial("lapsed", "active", -30)], [], NOW);
@@ -50,7 +50,7 @@ describe("trial buckets", () => {
     expect(r.expired.map((t) => t.hospitalTrialId)).toEqual(["lapsed"]);
   });
 
-  // Bounding the window above must not make these vanish — off the page is
+  // Bounding the window above must not make these vanish - off the page is
   // worse than mislabelled.
   it("never drops a lapsed trial from both buckets", () => {
     const r = actionBuckets([trial("lapsed", "active", -1)], [], NOW);

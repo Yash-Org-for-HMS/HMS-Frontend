@@ -19,7 +19,7 @@ export function getApiErrorMessage(err: unknown, fallback = "Something went wron
 }
 
 /**
- * Like {@link getApiErrorMessage} but WITHOUT a fallback — returns `undefined`
+ * Like {@link getApiErrorMessage} but WITHOUT a fallback - returns `undefined`
  * when the server sent no message, so the caller (e.g. `<ErrorState message=…>`)
  * can supply its own default. Replaces the raw inline error-message expression
  * that was duplicated at the ErrorState sites.

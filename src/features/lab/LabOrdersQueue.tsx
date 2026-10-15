@@ -35,7 +35,7 @@ export default function LabOrdersQueue() {
   useEffect(() => { setPage(1); }, [tabValue]);
 
   // Real-time updates: lab and radiology work, and a test or scan paid for at
-  // the counter (which releases a pre-paid sample) — the list and the backlog
+  // the counter (which releases a pre-paid sample) - the list and the backlog
   // count both. An outpatient change (a check-in, vitals) touches neither. A
   // reconnect re-asks, since changes may have been missed while it was down;
   // the first connect does not, the screen has only just asked.
@@ -67,10 +67,10 @@ export default function LabOrdersQueue() {
   const totalPages: number = data?.pagination?.totalPages ?? 1;
 
   // How many samples are still waiting from BEFORE today. The queue opens on
-  // Today's Queue, so on a quiet morning it showed "No lab orders — all caught
+  // Today's Queue, so on a quiet morning it showed "No lab orders - all caught
   // up" while samples from previous days sat unlogged: nothing on the screen
   // said the backlog existed, and finding it meant knowing to click a tab. One
-  // count fixes both halves — the tab carries it, and the empty state points at
+  // count fixes both halves - the tab carries it, and the empty state points at
   // it instead of claiming there is nothing to do.
   const { data: pastPending } = useQuery({
     queryKey: ["lab-orders-queue-past-count"],
@@ -225,7 +225,7 @@ export default function LabOrdersQueue() {
                 <TableRow key={order.labOrderId} hover sx={urgentRowSx(order.priorityId)}>
                   <TableCell sx={{ fontWeight: 600 }}>
                     {order.sampleBarcode}
-                    {/* The colour is never the only signal — a red edge alone is
+                    {/* The colour is never the only signal - a red edge alone is
                         invisible to anyone who cannot separate it from the row. */}
                     {isUrgent(order.priorityId) && (
                       <Chip
@@ -283,7 +283,7 @@ export default function LabOrdersQueue() {
                         Collect Sample
                       </Button>
                     ) : order.status === "COMPLETED" && !order.verified ? (
-                      // Results in, but nobody has signed off — make verification the
+                      // Results in, but nobody has signed off - make verification the
                       // obvious next action instead of a plain "View".
                       <Button
                         variant="contained"
@@ -330,7 +330,7 @@ export default function LabOrdersQueue() {
           )}
           {collectOrder?.admissionNumber && (
             <Alert severity="info" sx={{ mb: 2 }}>
-              Inpatient order ({collectOrder.admissionNumber}) — covered on the IP bill, settled at discharge. No pre-payment needed.
+              Inpatient order ({collectOrder.admissionNumber}) - covered on the IP bill, settled at discharge. No pre-payment needed.
             </Alert>
           )}
           {errorMsg && <Alert severity="error" sx={{ mb: 2 }}>{errorMsg}</Alert>}

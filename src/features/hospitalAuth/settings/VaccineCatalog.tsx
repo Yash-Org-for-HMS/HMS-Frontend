@@ -29,7 +29,7 @@ type Vaccine = { vaccineId: string; vaccineCode: string; vaccineName: string; de
 const inr = formatINRAuto;
 
 // The catalog every "+ Add Vaccine" picker (Reception patient profile) draws
-// from. The shared/global UIP list (isGlobal) is read-only here — a hospital
+// from. The shared/global UIP list (isGlobal) is read-only here - a hospital
 // can only add/edit/deactivate ITS OWN vaccines, never the shared catalog.
 export default function VaccineCatalog() {
   const qc = useQueryClient();
@@ -201,7 +201,7 @@ function AddVaccineDialog({ onClose, onDone }: { onClose: () => void; onDone: ()
               label="Add to every child&apos;s schedule automatically"
             />
             <Typography variant="caption" sx={{ display: "block", color: "text.secondary" }}>
-              Leave off for an optional or private vaccine — it stays in the catalogue and can
+              Leave off for an optional or private vaccine - it stays in the catalogue and can
               still be added to a patient by hand, without showing as a due dose for every child.
             </Typography>
           </Box>
@@ -252,7 +252,7 @@ function EditVaccineDialog({ vaccine, onClose, onDone }: { vaccine: Vaccine; onC
               />
           <TextField fullWidth multiline minRows={2} label="Description" value={description} onChange={(e) => setDescription(e.target.value)} />
           <FormControlLabel control={<Switch checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />}
-            label={isActive ? "Active — assignable to patients" : "Inactive — hidden from the assign picker"} />
+            label={isActive ? "Active - assignable to patients" : "Inactive - hidden from the assign picker"} />
           <Box>
             <FormControlLabel
               control={<Switch checked={autoSchedule} onChange={(e) => setAutoSchedule(e.target.checked)} />}
@@ -324,17 +324,17 @@ function DosesDialog({ vaccine, readOnly, onClose, onChanged }: { vaccine: Vacci
 
   return (
     <Dialog open onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}><ListAltRounded sx={{ color: ACCENT }} /> {vaccine.vaccineName} — doses</DialogTitle>
+      <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}><ListAltRounded sx={{ color: ACCENT }} /> {vaccine.vaccineName} - doses</DialogTitle>
       <DialogContent dividers>
         {vaccine.isGlobal && (
           <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
-            This is part of the shared catalog — its dose schedule can't be changed here.
+            This is part of the shared catalog - its dose schedule can't be changed here.
           </Typography>
         )}
         <Stack spacing={1.5}>
           {items.length === 0 && (
             <Typography variant="body2" sx={{ color: "text.secondary" }}>
-              No fixed schedule — this vaccine is only ever assigned ad-hoc via "+ Add Vaccine" on a patient's profile.
+              No fixed schedule - this vaccine is only ever assigned ad-hoc via "+ Add Vaccine" on a patient's profile.
             </Typography>
           )}
           {items.map((it) => (

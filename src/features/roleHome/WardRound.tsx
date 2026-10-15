@@ -21,7 +21,7 @@ import { useRoleHome } from "./useRoleHome";
 import Freshness from "./Freshness";
 
 /**
- * The ward round — a resident's home (15_System_Roles DOCTOR_RESIDENT: "notes,
+ * The ward round - a resident's home (15_System_Roles DOCTOR_RESIDENT: "notes,
  * orders (co-sign), ward rounds"). The patients in hospital under their
  * department: admitted under one of its consultants, or in a ward it owns.
  * Longest stay first, with what needs a look flagged. From each row the
@@ -91,14 +91,14 @@ export default function WardRound() {
                     <Typography variant="caption" sx={{ color: "text.secondary" }}>{p.uhid}{p.admissionNumber ? ` · ${p.admissionNumber}` : ""}</Typography>
                   </TableCell>
                   <TableCell>{p.bed ?? "Awaiting a bed"}</TableCell>
-                  <TableCell>{p.consultant ?? "—"}</TableCell>
-                  <TableCell align="right" sx={{ fontVariantNumeric: "tabular-nums" }}>{p.days != null ? p.days + 1 : "—"}</TableCell>
+                  <TableCell>{p.consultant ?? "-"}</TableCell>
+                  <TableCell align="right" sx={{ fontVariantNumeric: "tabular-nums" }}>{p.days != null ? p.days + 1 : "-"}</TableCell>
                   <TableCell>
                     <Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap" }}>
                       {p.overdueDoses > 0 && <Chip size="small" label={`${p.overdueDoses} dose${p.overdueDoses === 1 ? "" : "s"} overdue`} sx={{ bgcolor: `${SEMANTIC.danger}1f`, color: SEMANTIC.danger, fontWeight: 700 }} />}
                       {p.dischargeStarted && <Chip size="small" label="Discharge started" sx={{ bgcolor: `${SEMANTIC.warning}22`, color: SEMANTIC.warningDark, fontWeight: 700 }} />}
                       {p.awaitingCosign > 0 && <Chip size="small" label={`${p.awaitingCosign} awaiting co-sign`} sx={{ bgcolor: `${SEMANTIC.info}1f`, color: SEMANTIC.info, fontWeight: 700 }} />}
-                      {!p.overdueDoses && !p.dischargeStarted && !p.awaitingCosign && <Typography variant="body2" sx={{ color: "text.disabled" }}>—</Typography>}
+                      {!p.overdueDoses && !p.dischargeStarted && !p.awaitingCosign && <Typography variant="body2" sx={{ color: "text.disabled" }}>-</Typography>}
                     </Box>
                   </TableCell>
                   <TableCell align="right" sx={{ whiteSpace: "nowrap" }} onClick={(e) => e.stopPropagation()}>

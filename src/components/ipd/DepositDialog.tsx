@@ -15,7 +15,7 @@ import { useToast } from "@/providers/ToastContext";
 import HeartbeatLoader from "../HeartbeatLoader";
 
 
-/** Only what the dialog reads — see DepositTarget below. */
+/** Only what the dialog reads - see DepositTarget below. */
 export type DepositTarget = Pick<AdmissionRow, "admissionId" | "patientName" | "depositBalance">;
 
 interface Props {
@@ -89,7 +89,7 @@ export default function DepositDialog({ open, mode, admission, onClose, onDone }
             } : undefined} />
           {!isRefund && (
             <TextField select fullWidth label="Payment method" value={methodId} onChange={(e) => setMethodId(e.target.value)}>
-              <MenuItem value="">—</MenuItem>
+              <MenuItem value="">-</MenuItem>
               {(lookups?.methods || []).map((m) => <MenuItem key={m.paymentMethodId} value={m.paymentMethodId}>{m.methodName}</MenuItem>)}
             </TextField>
           )}

@@ -21,7 +21,7 @@ interface Props {
   colSpan?: number;
   /**
    * Which address fields are mandatory. A boolean marks all of them; a list
-   * marks only those named. Per-field because forms differ on this — a patient
+   * marks only those named. Per-field because forms differ on this - a patient
    * must have a city but needs no state, district or pincode, and marking all
    * four required to get the asterisk onto one of them would be a lie about the
    * other three.
@@ -32,7 +32,7 @@ interface Props {
   /**
    * Per-field messages from the parent form's validator. Without this the
    * address fields were the only ones on a form that could fail validation
-   * silently — the submit was blocked but State/City showed nothing, so the
+   * silently - the submit was blocked but State/City showed nothing, so the
    * user saw a form that simply refused to save.
    */
   errors?: { state?: string; district?: string; city?: string; pincode?: string };
@@ -42,7 +42,7 @@ interface Props {
  * Address helper: State → District cascading dropdowns (from /api/geo) + a
  * free-text City + Pincode that auto-fills state & district. Works for id-based
  * forms (Hospital: stateId/cityId) and name-based forms (state/district/city
- * strings) — the onChange patch always includes both ids and names.
+ * strings) - the onChange patch always includes both ids and names.
  * Renders <Grid> items; use inside a <Grid container>.
  */
 export default function GeoAddressPicker({ value, onChange, colSpan = 3, required, showPincode = true, disabled = false, errors = {} }: Props) {
@@ -76,7 +76,7 @@ export default function GeoAddressPicker({ value, onChange, colSpan = 3, require
   // Pincode autofill: 6 digits → set State + District (city stays user-entered).
   const lastLookup = useRef<string>("");
   // Must be state, not a ref: the spinner is read during render, and mutating a
-  // ref doesn't re-render — as a ref it could never actually appear.
+  // ref doesn't re-render - as a ref it could never actually appear.
   const [lookingUp, setLookingUp] = useState(false);
   useEffect(() => {
     const code = pincode.trim();
@@ -84,7 +84,7 @@ export default function GeoAddressPicker({ value, onChange, colSpan = 3, require
     lastLookup.current = code;
     setLookingUp(true);
     // Which state and district a pincode is in never changes, so each one is
-    // asked once a session — not every time a saved address is opened.
+    // asked once a session - not every time a saved address is opened.
     queryClient
       .fetchQuery({
         queryKey: ["geo-pincode", code],
@@ -98,7 +98,7 @@ export default function GeoAddressPicker({ value, onChange, colSpan = 3, require
           pincode: code,
         });
       })
-      .catch(() => { /* unknown pincode — leave as-is */ })
+      .catch(() => { /* unknown pincode - leave as-is */ })
       .finally(() => { setLookingUp(false); });
   }, [pincode]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -150,7 +150,7 @@ export default function GeoAddressPicker({ value, onChange, colSpan = 3, require
             value={pincode}
             inputProps={{ inputMode: "numeric", maxLength: 6 }}
             onChange={(e) => onChange({ pincode: e.target.value.replace(/\D/g, "").slice(0, 6) })}
-            helperText="6 digits — auto-fills state & district"
+            helperText="6 digits - auto-fills state & district"
             InputProps={{ endAdornment: lookingUp ? <InputAdornment position="end"><CircularProgress size={16} /></InputAdornment> : undefined }}
           />
         </Grid>

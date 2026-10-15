@@ -53,7 +53,7 @@ export default function HospitalModules() {
     queryFn: async () => (await axiosInstance.get(`/plans?limit=100`)).data.data as { planId: string; planName: string; featuresJson?: unknown }[],
   });
 
-  // Module keys a plan includes — featuresJson is either an array of keys or a
+  // Module keys a plan includes - featuresJson is either an array of keys or a
   // { key: true } map (same parsing the backend uses).
   const planModuleKeys = (plan: { featuresJson?: unknown } | undefined): string[] => {
     const f = plan?.featuresJson;
@@ -98,7 +98,7 @@ export default function HospitalModules() {
 
   const labelOf = (key: string) => modules.find((m) => m.key === key)?.label || key;
 
-  // Cards just flip LOCAL selection — nothing happens until Save, so confirming
+  // Cards just flip LOCAL selection - nothing happens until Save, so confirming
   // per-click would fire while someone's still deciding. The real point of
   // consequence is Save, so confirm there instead, summarizing exactly what
   // changes. Removing a module is the entitlement CEILING for the hospital (the
@@ -112,12 +112,12 @@ export default function HospitalModules() {
     const lines: string[] = [];
     if (toEnable.length) lines.push(`Enable: ${toEnable.join(", ")}`);
     if (toDisable.length) lines.push(`Disable: ${toDisable.join(", ")}`);
-    if (planChanged) lines.push(`Plan: ${plans.find((p) => p.planId === planId)?.planName || "— No plan —"}`);
+    if (planChanged) lines.push(`Plan: ${plans.find((p) => p.planId === planId)?.planName || "- No plan -"}`);
 
     const ok = await confirm({
       title: toDisable.length ? "Confirm module access changes" : "Confirm module access",
       message: toDisable.length
-        ? `${lines.join(". ")}. Disabling a module removes it as an option hospital-wide — their admin won't be able to turn it back on themselves.`
+        ? `${lines.join(". ")}. Disabling a module removes it as an option hospital-wide - their admin won't be able to turn it back on themselves.`
         : `${lines.join(". ")}.`,
       confirmText: "Save changes",
       destructive: toDisable.length > 0,
@@ -129,7 +129,7 @@ export default function HospitalModules() {
   // the plan actually drives the entitlement (you can still fine-tune afterwards).
   const onPlanChange = (newPlanId: string) => {
     setPlanId(newPlanId);
-    if (!newPlanId) return; // "— No plan —": leave the current selection untouched
+    if (!newPlanId) return; // "- No plan -": leave the current selection untouched
     const plan = plans.find((p) => p.planId === newPlanId);
     if (plan) {
       const valid = planModuleKeys(plan).filter((k) => modules.some((m) => m.key === k));
@@ -144,7 +144,7 @@ export default function HospitalModules() {
       </Button>
       <PageHeader
         title="Module Access"
-        subtitle={`${data?.hospitalName ? `${data.hospitalName} — ` : ""}assign the modules this hospital may use. Its admin can enable/disable within this set; anything else they must request from you.`}
+        subtitle={`${data?.hospitalName ? `${data.hospitalName} - ` : ""}assign the modules this hospital may use. Its admin can enable/disable within this set; anything else they must request from you.`}
         actions={
           <Button
             variant="contained"
@@ -171,12 +171,12 @@ export default function HospitalModules() {
               onChange={(e) => onPlanChange(e.target.value)} sx={{ minWidth: 260 }}
               helperText="Choosing a plan sets the modules below to what it includes."
             >
-              <MenuItem value="">— No plan —</MenuItem>
+              <MenuItem value="">- No plan -</MenuItem>
               {plans.map((p) => <MenuItem key={p.planId} value={p.planId}>{p.planName}</MenuItem>)}
             </TextField>
             <Chip
               size="small"
-              label={data?.entitlementSource === "hospital" ? "Custom module set" : `Following plan (${data?.planName || "—"})`}
+              label={data?.entitlementSource === "hospital" ? "Custom module set" : `Following plan (${data?.planName || "-"})`}
               sx={{ fontWeight: 600, bgcolor: data?.entitlementSource === "hospital" ? "rgba(139,92,246,0.12)" : "rgba(148,163,184,0.15)", color: data?.entitlementSource === "hospital" ? "#8b5cf6" : "text.secondary" }}
             />
           </Paper>

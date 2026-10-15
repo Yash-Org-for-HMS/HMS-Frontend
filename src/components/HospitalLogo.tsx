@@ -6,7 +6,7 @@ import { assetUrl } from "@/utils/assetUrl";
  * A hospital's logo, or the default mark when there isn't one.
  *
  * Two cases must both land on the mark: no logo was ever uploaded, and a logo
- * was uploaded but the file is gone — the host's filesystem is ephemeral, so
+ * was uploaded but the file is gone - the host's filesystem is ephemeral, so
  * /uploads empties on deploy while logoUrl stays in the database and the
  * request 404s. Without onError the browser draws a broken-image glyph.
  *
@@ -15,7 +15,7 @@ import { assetUrl } from "@/utils/assetUrl";
  * never chose.
  */
 
-// One rounded path rather than two crossing bars — overlapping rectangles go
+// One rounded path rather than two crossing bars - overlapping rectangles go
 // blocky at the inner corners at sidebar size, where this is mostly seen.
 const CROSS_PATH =
   "M20.6 11.4h6.8a2 2 0 0 1 2 2v5.2h5.2a2 2 0 0 1 2 2v6.8a2 2 0 0 1-2 2h-5.2v5.2a2 2 0 0 1-2 2h-6.8a2 2 0 0 1-2-2v-5.2h-5.2a2 2 0 0 1-2-2v-6.8a2 2 0 0 1 2-2h5.2v-5.2a2 2 0 0 1 2-2z";
@@ -50,7 +50,7 @@ export default function HospitalLogo({
         alt={`${title} logo`}
         width={size}
         height={size}
-        // The file can be missing without the record knowing — see above.
+        // The file can be missing without the record knowing - see above.
         onError={() => setBroken(true)}
         style={{
           width: size,

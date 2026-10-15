@@ -81,7 +81,7 @@ export default function UserForm() {
 
   // Show only the selected hospital's roles. System roles are seeded per-hospital
   // (each tenant has its own H_ADMIN/Doctor/… with its hospitalId), so scoping by
-  // hospitalId already includes them — once each. The old `|| r.isSystemRole`
+  // hospitalId already includes them - once each. The old `|| r.isSystemRole`
   // pulled every tenant's system roles, duplicating the list across hospitals.
   useEffect(() => {
     if (formData.hospitalId && roles.length > 0) {

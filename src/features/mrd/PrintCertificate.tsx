@@ -11,7 +11,7 @@ import DetailSkeleton from "@/components/skeletons/DetailSkeleton";
 /**
  * A numbered certificate, printed (backend /mrd/certificates/:id). Opening
  * this page is a print: the first is the original, every later one carries
- * "DUPLICATE" — so a second copy can never pass as the first. A cancelled
+ * "DUPLICATE" - so a second copy can never pass as the first. A cancelled
  * certificate shows as cancelled and is not printed.
  */
 
@@ -65,7 +65,7 @@ export default function PrintCertificate() {
   const age = p ? ageOn(p.dateOfBirth, sheet.issuedAt) : null;
   const body = { fontSize: "11.5pt", lineHeight: 1.9 } as const;
   const strong = { fontWeight: 700 } as const;
-  const who = <><Box component="span" sx={strong}>{p?.name || "—"}</Box>{age != null ? `, aged ${age} years` : ""}{p?.gender ? `, ${p.gender.toLowerCase()}` : ""}, UHID <Box component="span" sx={strong}>{p?.uhid}</Box></>;
+  const who = <><Box component="span" sx={strong}>{p?.name || "-"}</Box>{age != null ? `, aged ${age} years` : ""}{p?.gender ? `, ${p.gender.toLowerCase()}` : ""}, UHID <Box component="span" sx={strong}>{p?.uhid}</Box></>;
 
   return (
     <Box sx={{
@@ -99,31 +99,31 @@ export default function PrintCertificate() {
 
       <Typography sx={{ fontSize: "14pt", fontWeight: 700, textAlign: "center", textTransform: "uppercase", letterSpacing: 0.6, mb: 0.5 }}>{TITLE[sheet.certType]}</Typography>
       <Typography sx={{ fontSize: "9.5pt", textAlign: "center", fontWeight: 600, mb: 3, color: sheet.status === "CANCELLED" ? "#b91c1c" : duplicate ? "#92400e" : "#166534" }}>
-        {sheet.status === "CANCELLED" ? `CANCELLED — not valid (${sheet.cancelReason ?? ""})` : duplicate ? "Duplicate copy" : "Original"}
+        {sheet.status === "CANCELLED" ? `CANCELLED - not valid (${sheet.cancelReason ?? ""})` : duplicate ? "Duplicate copy" : "Original"}
       </Typography>
 
       {sheet.certType === "MEDICAL" && (
         <Typography sx={body}>
           This is to certify that {who}, was examined and treated at this hospital for <Box component="span" sx={strong}>{d.diagnosis}</Box>.
-          {" "}In my opinion, rest is advised from <Box component="span" sx={strong}>{d.restFrom ? formatDate(d.restFrom) : "—"}</Box> to <Box component="span" sx={strong}>{d.restTo ? formatDate(d.restTo) : "—"}</Box>, both days inclusive.
+          {" "}In my opinion, rest is advised from <Box component="span" sx={strong}>{d.restFrom ? formatDate(d.restFrom) : "-"}</Box> to <Box component="span" sx={strong}>{d.restTo ? formatDate(d.restTo) : "-"}</Box>, both days inclusive.
           {d.remarks ? <><br />Remarks: {d.remarks}</> : null}
         </Typography>
       )}
       {sheet.certType === "FITNESS" && (
         <Typography sx={body}>
-          This is to certify that I have examined {who}, and find them medically fit to <Box component="span" sx={strong}>{d.purpose}</Box> with effect from <Box component="span" sx={strong}>{d.fitFrom ? formatDate(d.fitFrom) : "—"}</Box>.
+          This is to certify that I have examined {who}, and find them medically fit to <Box component="span" sx={strong}>{d.purpose}</Box> with effect from <Box component="span" sx={strong}>{d.fitFrom ? formatDate(d.fitFrom) : "-"}</Box>.
           {d.remarks ? <><br />Remarks: {d.remarks}</> : null}
         </Typography>
       )}
       {sheet.certType === "DEATH" && (
         <Box sx={body}>
-          <Typography sx={body}>This is to certify that {who}, {p?.address ? `of ${p.address}, ` : ""}died at this hospital on <Box component="span" sx={strong}>{d.dateOfDeath ? formatDateTime(d.dateOfDeath) : "—"}</Box>.</Typography>
+          <Typography sx={body}>This is to certify that {who}, {p?.address ? `of ${p.address}, ` : ""}died at this hospital on <Box component="span" sx={strong}>{d.dateOfDeath ? formatDateTime(d.dateOfDeath) : "-"}</Box>.</Typography>
           <Box component="table" sx={{ width: "100%", borderCollapse: "collapse", mt: 1.5, "& td": { border: "1px solid #999", p: "6px 8px", fontSize: "10.5pt", verticalAlign: "top" } }}>
             <tbody>
               <tr><td style={{ width: "42%" }}>I. (a) Immediate cause</td><td><b>{d.causeImmediate}</b></td></tr>
-              <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;(b) Antecedent cause, due to</td><td>{d.causeAntecedent || "—"}</td></tr>
-              <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;(c) Underlying cause</td><td>{d.causeUnderlying || "—"}</td></tr>
-              <tr><td>II. Other significant conditions</td><td>{d.otherConditions || "—"}</td></tr>
+              <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;(b) Antecedent cause, due to</td><td>{d.causeAntecedent || "-"}</td></tr>
+              <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;(c) Underlying cause</td><td>{d.causeUnderlying || "-"}</td></tr>
+              <tr><td>II. Other significant conditions</td><td>{d.otherConditions || "-"}</td></tr>
               <tr><td>Manner of death</td><td><b>{MANNER[d.mannerOfDeath ?? ""] ?? d.mannerOfDeath}</b></td></tr>
             </tbody>
           </Box>

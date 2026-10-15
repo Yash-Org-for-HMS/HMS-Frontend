@@ -4,7 +4,7 @@ import { renderWithProviders } from "@/test/renderWithProviders";
 
 /**
  * My desk: each desk role held gets its section; someone at no desk in
- * particular sees all four; a section whose figures failed is left out — never
+ * particular sees all four; a section whose figures failed is left out - never
  * drawn empty, which would read as "nothing to do".
  */
 

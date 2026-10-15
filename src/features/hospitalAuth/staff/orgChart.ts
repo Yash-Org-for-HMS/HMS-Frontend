@@ -4,7 +4,7 @@ import { NEUTRAL } from "@/styles/accents";
  * The organisation chart's shapes and the pure logic behind it (backend
  * staff/orgChart.service): the reporting tree, the way to a person, and the
  * departments grouped under whoever oversees them. Nothing here assumes a
- * fixed hierarchy — the tops are whoever has no manager.
+ * fixed hierarchy - the tops are whoever has no manager.
  */
 
 export interface OrgDept { departmentId: string; departmentName: string; roleInDept: string; isHome: boolean }
@@ -27,7 +27,7 @@ export interface OrgPerson {
 export interface OrgDepartment { departmentId: string; departmentName: string; group: string | null; headStaffIds: string[] }
 export interface OrgChartData { people: OrgPerson[]; departments: OrgDepartment[]; branchCount: number }
 
-/** HR (administrative) lines, or day-to-day (functional) — the latter falls back to HR where none is set. */
+/** HR (administrative) lines, or day-to-day (functional) - the latter falls back to HR where none is set. */
 export type Line = "hr" | "daily";
 
 export const managerOf = (p: OrgPerson, line: Line) => (line === "daily" ? p.functionalManagerId ?? p.adminManagerId : p.adminManagerId);
@@ -39,7 +39,7 @@ const byRank = (a: OrgPerson, b: OrgPerson) => (a.grade ?? 99) - (b.grade ?? 99)
 /**
  * The reporting tree: a forest, because an organisation may have several tops.
  * A loop in the data (the server refuses them, but old rows could hold one)
- * cannot hang it — whoever closes a loop becomes a top.
+ * cannot hang it - whoever closes a loop becomes a top.
  * `size` is everyone under a node, the node not counted.
  */
 export function buildForest(people: OrgPerson[], line: Line): OrgNode[] {
@@ -73,7 +73,7 @@ export function buildForest(people: OrgPerson[], line: Line): OrgNode[] {
 
 /**
  * Tops worth drawing as tops: someone with people under them, or the most
- * senior grades. Everyone else without a manager is "not placed yet" — listed
+ * senior grades. Everyone else without a manager is "not placed yet" - listed
  * apart, so the chart is not a row of loose cards.
  */
 export function splitUnplaced(forest: OrgNode[]): { tops: OrgNode[]; unplaced: OrgPerson[] } {
@@ -86,7 +86,7 @@ export function splitUnplaced(forest: OrgNode[]): { tops: OrgNode[]; unplaced: O
   return { tops, unplaced };
 }
 
-/** The managers above someone, nearest first — to open the tree down to them. */
+/** The managers above someone, nearest first - to open the tree down to them. */
 export function ancestorsOf(people: OrgPerson[], staffId: string, line: Line): string[] {
   const byId = new Map(people.map((p) => [p.staffId, p]));
   const out: string[] = [];

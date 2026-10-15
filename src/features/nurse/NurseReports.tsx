@@ -30,7 +30,7 @@ const PRESETS = [
 ];
 
 
-// Downloadable table — every report on this page ends in one of these.
+// Downloadable table - every report on this page ends in one of these.
 
 /**
  * What every report on this page is handed. The two vitals registers come from
@@ -82,17 +82,17 @@ function SummaryReport({ data }: { data: NurseReportsData }) {
 // sugar), and || would blank it as though it were never taken.
 const toVitalsRow = (v: VitalsRow) => [
   formatDateTime(v.date), v.patientName, v.uhid,
-  v.bp ?? "—", v.pulse ?? "—", v.temperatureC ?? "—", v.oxygenSaturation ?? "—", v.weightKg ?? "—",
-  v.recordedBy ?? "—",
+  v.bp ?? "-", v.pulse ?? "-", v.temperatureC ?? "-", v.oxygenSaturation ?? "-", v.weightKg ?? "-",
+  v.recordedBy ?? "-",
 ];
 // flags is what puts a row on the abnormal list, but it is still nullable on
-// the wire — joining it unguarded would throw on the one row that arrived
+// the wire - joining it unguarded would throw on the one row that arrived
 // without it, taking the whole register down.
 const toAbnormalRow = (v: VitalsRow) => [
   formatDateTime(v.date), v.patientName, v.uhid,
-  v.bp ?? "—", v.pulse ?? "—", v.temperatureC ?? "—", v.oxygenSaturation ?? "—",
-  (v.flags ?? []).join(", ") || "—",
-  v.recordedBy ?? "—",
+  v.bp ?? "-", v.pulse ?? "-", v.temperatureC ?? "-", v.oxygenSaturation ?? "-",
+  (v.flags ?? []).join(", ") || "-",
+  v.recordedBy ?? "-",
 ];
 
 /** The whole (unpaged) payload, for an export. Asking for no page is what gets it. */
@@ -119,7 +119,7 @@ function AbnormalVitalsReport({ data, from, to, abnormalPaging, busy }: ReportPr
   const total = data?.abnormalMeta?.totalRows ?? abnormalList.length;
   return (
     <SimpleTable
-      title="Abnormal vitals — needs review"
+      title="Abnormal vitals - needs review"
       head={["Date", "Patient", "UHID", "BP", "Pulse", "Temp (°C)", "SpO2 (%)", "Flags", "Recorded by"]}
       rows={abnormalList.map(toAbnormalRow)}
       exportRows={async () => ((await fetchWholeReport(from, to)).abnormalList ?? []).map(toAbnormalRow)}
@@ -138,7 +138,7 @@ function StaffWorkloadReport({ data }: { data: NurseReportsData }) {
 }
 
 // ── Reports fed by the existing IPD reports endpoints (ward/bed/admission
-// data already lives there — reused rather than duplicated). Each is its own
+// data already lives there - reused rather than duplicated). Each is its own
 // query since it's a different backend module, mirroring ReportsHub. ────────
 
 function InpatientsReport({ to }: { to: string }) {
@@ -151,7 +151,7 @@ function InpatientsReport({ to }: { to: string }) {
   if (isLoading) return <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}><HeartbeatLoader size={22} /></Box>;
   return (
     <SimpleTable title="Current inpatients" head={["Patient", "UHID", "Bed", "Admitted", "Days"]}
-      rows={rows.map((r) => [r.patientName, r.uhid, r.bed || "—", formatDate(r.admissionDate), Number(r.days)])} />
+      rows={rows.map((r) => [r.patientName, r.uhid, r.bed || "-", formatDate(r.admissionDate), Number(r.days)])} />
   );
 }
 
@@ -165,7 +165,7 @@ function DischargesReport({ from, to }: { from: string; to: string }) {
   if (isLoading) return <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}><HeartbeatLoader size={22} /></Box>;
   return (
     <SimpleTable title="Discharges" head={["Patient", "UHID", "Bed", "Admitted", "Discharged", "Length of stay"]}
-      rows={rows.map((r) => [r.patientName, r.uhid, r.bed || "—", formatDate(r.admissionDate), r.dischargeDate ? formatDate(r.dischargeDate) : "—", Number(r.lengthOfStay)])} />
+      rows={rows.map((r) => [r.patientName, r.uhid, r.bed || "-", formatDate(r.admissionDate), r.dischargeDate ? formatDate(r.dischargeDate) : "-", Number(r.lengthOfStay)])} />
   );
 }
 
@@ -179,11 +179,11 @@ function AdmissionsReport({ from, to }: { from: string; to: string }) {
   if (isLoading) return <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}><HeartbeatLoader size={22} /></Box>;
   return (
     <SimpleTable title="Admissions" head={["Patient", "UHID", "Bed", "Admitted", "Status"]}
-      rows={rows.map((r) => [r.patientName, r.uhid, r.bed || "—", formatDate(r.admissionDate), r.status])} />
+      rows={rows.map((r) => [r.patientName, r.uhid, r.bed || "-", formatDate(r.admissionDate), r.status])} />
   );
 }
 
-// ── Report catalogue — one entry per sidebar item, grouped like ReportsHub. ──
+// ── Report catalogue - one entry per sidebar item, grouped like ReportsHub. ──
 
 type ReportItem = { key: string; label: string; Comp: React.ComponentType<ReportProps> };
 type ReportGroup = { heading: string; module?: string; items: ReportItem[] };
@@ -219,8 +219,8 @@ export const NURSE_REPORT_GROUPS: ReportGroup[] = [
  * What every nursing report needs from the screen around it: the date range,
  * the two registers' paging, and the one fetch that feeds them.
  *
- * The report components are deliberately dumb — they render props, they do
- * not fetch — so they only work inside something that supplies this. The
+ * The report components are deliberately dumb - they render props, they do
+ * not fetch - so they only work inside something that supplies this. The
  * hospital report hub folded them in WITHOUT it, and got nothing: Abnormal
  * Vitals called abnormalPaging.bind on undefined and crashed the page, and
  * the rest rendered empty. Pulled out so the hub can supply the same shell.
@@ -231,7 +231,7 @@ function useNurseReportShell() {
   const [from, setFrom] = useState(dayjs().subtract(29, "day").format("YYYY-MM-DD"));
   const [to, setTo] = useState(dayjs().format("YYYY-MM-DD"));
 
-  // Each register pages on its own keys — see ReportProps.
+  // Each register pages on its own keys - see ReportProps.
   const vitalsPaging = useReportPaging({ prefix: "vitals" });
   const abnormalPaging = useReportPaging({ prefix: "abnormal" });
 
@@ -246,7 +246,7 @@ function useNurseReportShell() {
     setTo(p.to().format("YYYY-MM-DD"));
   };
 
-  // One fetch powers the Overview/Vitals/Staff groups — switching between
+  // One fetch powers the Overview/Vitals/Staff groups - switching between
   // those reports just changes which slice of this same payload is rendered.
   // The Ward & Beds group calls the existing IPD reports endpoints directly
   // (no point duplicating that data/logic in a new nurse-side query).
@@ -258,7 +258,7 @@ function useNurseReportShell() {
     placeholderData: keepPreviousData,
   });
 
-  // Date range — shared across every report below.
+  // Date range - shared across every report below.
   const toolbar = (
     <Paper elevation={0} sx={{ p: 1.5, borderRadius: 3, border: "1px solid", borderColor: "divider", mb: 2, display: "flex", gap: 2, alignItems: "center", flexWrap: "wrap" }}>
       <ButtonGroup size="small" variant="outlined">
@@ -298,7 +298,7 @@ export default function NurseReports() {
   return (
     <ReportNavLayout
       title="Reports"
-      subtitle="Nursing analytics — pick a report on the left. Every table is downloadable."
+      subtitle="Nursing analytics - pick a report on the left. Every table is downloadable."
       groups={visibleGroups}
       accent={NURSE_PURPLE}
       actions={shell.isFetching ? <HeartbeatLoader size={22} /> : undefined}
@@ -310,7 +310,7 @@ export default function NurseReports() {
 }
 
 /**
- * One nursing report with its own date range and data — for a screen that
+ * One nursing report with its own date range and data - for a screen that
  * lists it among others, as the hospital report hub does. The same shape the
  * hub already uses for theatre reports: mount the real thing, pinned.
  */
@@ -328,7 +328,7 @@ export function NurseReportPanel({ report }: { report: string }) {
 
 /**
  * The nursing groups as the hub carries them: every item self-supplying, and
- * every key prefixed. The prefix is not decoration — the hub resolves ?view=
+ * every key prefixed. The prefix is not decoration - the hub resolves ?view=
  * by the FIRST item with that key, and "register" (Vitals Register) and
  * "discharges" collided with Insurance's Claims Register and the hub's own
  * IPD Discharges, making whichever came second unreachable.

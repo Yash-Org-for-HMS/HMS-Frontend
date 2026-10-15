@@ -20,7 +20,7 @@ export interface ClaimSummary {
   totalSettled: Money;
   /** Approved but not yet received from the payer. */
   outstandingFromPayer: Money;
-  /** Billed minus approved — what the patient is left carrying. */
+  /** Billed minus approved - what the patient is left carrying. */
   patientShortfall: Money;
 }
 

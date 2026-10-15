@@ -32,7 +32,7 @@ export default function ExtraRolesEditor({ rows, onChange, roles, branches, prim
     <Box>
       <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>Additional roles</Typography>
       <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 1.5 }}>
-        Someone who does more than one job — a doctor who is also an admin, a clerk on both billing and the TPA desk. Each role can be
+        Someone who does more than one job - a doctor who is also an admin, a clerk on both billing and the TPA desk. Each role can be
         for every facility or just one. Changes apply when they next sign in.
       </Typography>
       {rows.map((r, i) => {

@@ -36,8 +36,8 @@ import { useTableSort } from "@/components/table/useTableSort";
 import SortableHeadCell from "@/components/table/SortableHeadCell";
 
 // Specializations were removed (Sept 2026): a doctor's other departments are
-// now kept on their staff record — "Also works in" on the doctor form, from the
-// hospital's own department list — as HMS_Platform_Master_Data.xlsx models it.
+// now kept on their staff record - "Also works in" on the doctor form, from the
+// hospital's own department list - as HMS_Platform_Master_Data.xlsx models it.
 // The table stays; nothing reads it for new work.
 //
 // Department Types went the same way (Oct 2026): a department's group now
@@ -61,7 +61,7 @@ const LOOKUP_CONFIGS: Record<string, any> = {
       { field: "gradeName", label: "Grade Name" }
     ],
   },
-  // NOTE: Appointment Statuses were removed here — they are a SYSTEM state
+  // NOTE: Appointment Statuses were removed here - they are a SYSTEM state
   // machine (code depends on globally-unique status codes), not per-hospital
   // master data, so they are no longer hospital-editable.
 };

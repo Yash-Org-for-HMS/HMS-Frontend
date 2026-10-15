@@ -68,7 +68,7 @@ export default function TrialsList() {
   // Server-side column sorting (the list is paginated, so sorting happens in the DB).
   const { orderBy, order, onSort } = useServerSort();
 
-  // The request waits until typing pauses — it fired on every keystroke.
+  // The request waits until typing pauses - it fired on every keystroke.
   const debouncedSearch = useDebouncedValue(search);
   const { data: trialsData, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["trials", page, debouncedSearch, statusFilter, orderBy, order],
@@ -120,7 +120,7 @@ export default function TrialsList() {
 /**
  * What the row should SAY this trial's outcome is.
  *
- * "lost" lives on the LEAD — TrialStatus only has active / expired /
+ * "lost" lives on the LEAD - TrialStatus only has active / expired /
  * converted, and marking a prospect lost deliberately leaves the trial at
  * "expired" because it really did expire. Reading only the trial column meant
  * cancelling a prospect changed nothing on this screen: the chip still said
@@ -154,7 +154,7 @@ function outcomeOf(trial: { trialStatus: string; lead?: { leadStatus?: string | 
     }
   };
 
-  // Convert through the single "Add Organization" flow, in trial-convert mode —
+  // Convert through the single "Add Organization" flow, in trial-convert mode -
   // the hospital form opens prefilled from this trial and finalizes the convert.
   const openConvert = () => {
     const trial = selectedTrial;
@@ -222,7 +222,7 @@ function outcomeOf(trial: { trialStatus: string; lead?: { leadStatus?: string | 
           <MenuItem value="active">{t("trials.statusActive")}</MenuItem>
           <MenuItem value="expired">{t("trials.statusExpired")}</MenuItem>
           <MenuItem value="converted">{t("trials.statusConverted")}</MenuItem>
-          {/* Not a TrialStatus — it lives on the lead. Without it the cancelled
+          {/* Not a TrialStatus - it lives on the lead. Without it the cancelled
               prospects were only reachable under "Expired", which is the label
               their row no longer carries. */}
           <MenuItem value="lost">Lost</MenuItem>
@@ -334,7 +334,7 @@ function outcomeOf(trial: { trialStatus: string; lead?: { leadStatus?: string | 
           ? [<MenuItem key="done" disabled>Already converted to a hospital</MenuItem>]
           : selectedTrial && outcomeOf(selectedTrial).key === "lost"
             // Already cancelled. Only "they came back" is left: offering
-            // "Cancel (mark as lost)" again was the bug — it re-wrote a lead
+            // "Cancel (mark as lost)" again was the bug - it re-wrote a lead
             // that was already lost and appeared to do nothing. Extend and
             // Expire are gone too; reviving the trial while the lead stays
             // lost would just create a new disagreement between the two.

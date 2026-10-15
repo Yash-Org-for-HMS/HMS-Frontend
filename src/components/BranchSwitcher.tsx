@@ -49,7 +49,7 @@ export default function BranchSwitcher({ variant = "sidebar" }: { variant?: "sid
 
   const ALL = "__ALL__";
   const hint = shared
-    ? "This page is shared by every branch — the branch picked doesn't change it."
+    ? "This page is shared by every branch - the branch picked doesn't change it."
     : isOrgAdmin && !activeBranchId ? "Viewing every branch. Pick one to add or change records." : null;
   const inBar = variant === "bar";
 
@@ -64,7 +64,7 @@ export default function BranchSwitcher({ variant = "sidebar" }: { variant?: "sid
         onChange={(e) => {
           const v = e.target.value;
           // setActiveBranch writes activeBranchId to sessionStorage synchronously,
-          // and the axios interceptor reads it per-request — so the new X-Branch-Id
+          // and the axios interceptor reads it per-request - so the new X-Branch-Id
           // is live immediately.
           //
           // The cache is DROPPED, not just invalidated: invalidating kept showing

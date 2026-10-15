@@ -7,7 +7,7 @@ import {
 } from "@mui/icons-material";
 import { useNavigate, useLocation } from "react-router-dom";
 
-// Super-admin console destinations. NAVIGATION ONLY — this palette never calls
+// Super-admin console destinations. NAVIGATION ONLY - this palette never calls
 // an API or searches any records, so it exposes no patient or tenant data
 // (patient search lives strictly in the hospital-realm CommandPalette). It just
 // mirrors the admin sidebar for keyboard-driven navigation.

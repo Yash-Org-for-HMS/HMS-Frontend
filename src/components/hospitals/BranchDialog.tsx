@@ -24,7 +24,7 @@ const SELECT_MENU_PROPS = {
 } as const;
 
 /**
- * Add / edit a hospital branch. Extracted from HospitalForm — owns its own form
+ * Add / edit a hospital branch. Extracted from HospitalForm - owns its own form
  * + loading state, seeded from `editingBranch` when opened. Behavior identical:
  * same POST/PUT endpoints, validation, error toast, and parent refresh via
  * `onSaved`.
@@ -48,7 +48,7 @@ export default function BranchDialog({ open, onClose, hospitalId, plans, editing
     setLoading(true);
     try {
       if (editingBranch) {
-        // Branch code is auto-assigned and immutable — not sent on edit.
+        // Branch code is auto-assigned and immutable - not sent on edit.
         await axiosInstance.put(`/hospitals/${hospitalId}/branches/${editingBranch.branchId}`, {
           branchName: branch.name,
           // null, not undefined: "No Subscription Plan" takes the plan off.
@@ -56,7 +56,7 @@ export default function BranchDialog({ open, onClose, hospitalId, plans, editing
           status: branch.status,
         });
       } else {
-        // No branchCode sent — the server generates a unique one.
+        // No branchCode sent - the server generates a unique one.
         await axiosInstance.post(`/hospitals/${hospitalId}/branches`, {
           branchName: branch.name,
           subscriptionPlanId: branch.subscriptionPlanId || undefined,

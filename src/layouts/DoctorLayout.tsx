@@ -41,7 +41,7 @@ export default function DoctorLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   // Sidebar notification counts (unread results, patients waiting), and the
-  // dashboard, refresh on queue/order socket events — both kinds: the results
+  // dashboard, refresh on queue/order socket events - both kinds: the results
   // count and the dashboard's critical results are lab work. The lab desk tells
   // the ordering doctor wherever they are working (lib/realtime.ts), so while
   // connected the poll is only a safety net; without the connection, every

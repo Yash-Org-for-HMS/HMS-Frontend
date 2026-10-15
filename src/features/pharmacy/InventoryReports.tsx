@@ -19,7 +19,7 @@ import { KpiCard, ReportFilters, ReportTable, type DateRange } from "@/features/
 const inr = formatINRAuto;
 const rangeFrom = (days: number): DateRange => ({ from: dayjs().subtract(days, "day").format("YYYY-MM-DD"), to: dayjs().format("YYYY-MM-DD") });
 const ts = (v: any) => (v ? new Date(v).getTime() : 0);
-const money = (key: string, label: string) => ({ key, label, align: "right" as const, format: (v: any) => (v == null ? "—" : inr(v)), value: (r: any) => Number(r[key] ?? 0) });
+const money = (key: string, label: string) => ({ key, label, align: "right" as const, format: (v: any) => (v == null ? "-" : inr(v)), value: (r: any) => Number(r[key] ?? 0) });
 const num = (key: string, label: string) => ({ key, label, align: "right" as const, value: (r: any) => Number(r[key] ?? 0) });
 
 // ── Stock Valuation (snapshot) ────────────────────────────────────────────────
@@ -55,7 +55,7 @@ export function StockValuation() {
               money("sellingPrice", "Selling price"),
               money("retailValue", "Retail value"),
               money("unitCost", "Unit cost"),
-              { key: "costSource", label: "Cost from", format: (v) => (v === "invoiced" ? "Supplier invoice" : v === "entered" ? "Entered" : "—"), value: (r) => r.costSource ?? "" },
+              { key: "costSource", label: "Cost from", format: (v) => (v === "invoiced" ? "Supplier invoice" : v === "entered" ? "Entered" : "-"), value: (r) => r.costSource ?? "" },
               money("costValue", "Cost value"),
             ]}
             rows={rows}
@@ -110,7 +110,7 @@ export function ExpiryLoss() {
             columns={[
               { key: "medicine", label: "Medicine" },
               { key: "batchNumber", label: "Batch" },
-              { key: "expiryDate", label: "Expiry", format: (v) => (v ? dayjs(v).format("DD MMM YYYY") : "—"), value: (r) => ts(r.expiryDate) },
+              { key: "expiryDate", label: "Expiry", format: (v) => (v ? dayjs(v).format("DD MMM YYYY") : "-"), value: (r) => ts(r.expiryDate) },
               num("quantity", "Qty"),
               money("value", "Value"),
               { key: "status", label: "Status" },

@@ -4,7 +4,7 @@ import { renderHook, act } from "@testing-library/react";
 /**
  * Whether the tab is live. A screen that relies on its layout's connection
  * (the doctor dashboard) polls slowly only while that connection is up, so the
- * count must follow every connect, drop and unmount exactly — a count stuck
+ * count must follow every connect, drop and unmount exactly - a count stuck
  * at "live" would leave a screen with no updates and a slow poll.
  */
 
@@ -37,7 +37,7 @@ beforeEach(() => {
 });
 
 describe("useSocket / useLiveConnected", () => {
-  it("follows connect, drop, reconnect and unmount — across two connections", () => {
+  it("follows connect, drop, reconnect and unmount - across two connections", () => {
     const live = renderHook(() => useLiveConnected());
     const a = renderHook(() => useSocket({ QUEUE_UPDATED: () => {} }));
     const b = renderHook(() => useSocket({}));

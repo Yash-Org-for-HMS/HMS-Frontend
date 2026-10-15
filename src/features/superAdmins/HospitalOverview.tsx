@@ -72,7 +72,7 @@ const InfoRow = ({ label, value }: { label: string; value: ReactNode }) => (
   <Grid size={{ xs: 12, sm: 6 }}>
     <Typography variant="caption" sx={{ color: "text.secondary" }}>{label}</Typography>
     <Typography variant="body1" sx={{ color: "text.primary", fontWeight: 500, wordBreak: "break-word" }}>
-      {value === 0 ? 0 : value || "—"}
+      {value === 0 ? 0 : value || "-"}
     </Typography>
   </Grid>
 );
@@ -159,7 +159,7 @@ export default function HospitalOverview() {
     PAID: "success", PENDING: "default", OVERDUE: "warning", SUSPENDED: "error", VOID: "secondary",
   };
   const quotaText = (q: { used: number | null; limit: number | null } | undefined) =>
-    !q ? "—" : q.limit != null ? `of ${q.limit} allowed` : "no limit";
+    !q ? "-" : q.limit != null ? `of ${q.limit} allowed` : "no limit";
 
   const lifecycle =
     data.status === "suspended" ? { label: "Suspended", color: SEMANTIC.danger }
@@ -215,7 +215,7 @@ export default function HospitalOverview() {
           <Grid size={{ xs: 6, md: 3 }}><StatCard layout="horizontal" icon={<MedicalServicesRounded />} label="Doctors" value={quotas?.doctors?.used ?? data._count?.doctors ?? 0} sub={quotaText(quotas?.doctors)} color={SEMANTIC.success} /></Grid>
           <Grid size={{ xs: 6, md: 3 }}><StatCard layout="horizontal" icon={<PeopleRounded />} label="Patients" value={data._count?.patients || 0} color={SEMANTIC.warning} /></Grid>
           <Grid size={{ xs: 6, md: 3 }}>
-            {/* Logins that can sign in, against this hospital's user capacity — which the super admin sets here. */}
+            {/* Logins that can sign in, against this hospital's user capacity - which the super admin sets here. */}
             <StatCard layout="horizontal" icon={<AccountCircleRounded />} label="Logins"
               value={quotas?.users?.used ?? data._count?.users ?? 0}
               sub={quotas?.users ? `of ${quotas.users.limit} allowed · ${quotas.users.source === "hospital" ? "set for this hospital" : quotas.users.source === "plan" ? "plan's limit" : "standard limit"}` : undefined}
@@ -355,7 +355,7 @@ export default function HospitalOverview() {
                     <TableRow key={b.branchId} hover>
                       <TableCell sx={{ fontFamily: "monospace", fontWeight: 600 }}>{b.branchCode}</TableCell>
                       <TableCell>{b.branchName}</TableCell>
-                      <TableCell>{[b.city, b.state, b.country].filter(Boolean).join(", ") || "—"}</TableCell>
+                      <TableCell>{[b.city, b.state, b.country].filter(Boolean).join(", ") || "-"}</TableCell>
                       <TableCell><Chip size="small" label={b.subscriptionPlan?.planName || "None"} sx={{ bgcolor: "rgba(139,92,246,0.1)", color: "#8b5cf6", fontWeight: 600 }} /></TableCell>
                       <TableCell><Chip size="small" label={b.status} color={b.status === "active" ? "success" : "default"} sx={{ fontWeight: 600, textTransform: "capitalize" }} /></TableCell>
                     </TableRow>
@@ -383,9 +383,9 @@ export default function HospitalOverview() {
                 <TableBody>
                   {users.map((u) => (
                     <TableRow key={u.userId} hover>
-                      <TableCell sx={{ fontWeight: 500 }}>{[u.firstName, u.lastName].filter(Boolean).join(" ") || "—"}</TableCell>
+                      <TableCell sx={{ fontWeight: 500 }}>{[u.firstName, u.lastName].filter(Boolean).join(" ") || "-"}</TableCell>
                       <TableCell sx={{ color: "text.secondary" }}>{u.email}</TableCell>
-                      <TableCell>{u.role?.roleName || u.role?.roleCode || "—"}</TableCell>
+                      <TableCell>{u.role?.roleName || u.role?.roleCode || "-"}</TableCell>
                       <TableCell>
                         <Chip size="small" label={u.isActive && u.status === "active" ? "Active" : "Inactive"} color={u.isActive && u.status === "active" ? "success" : "default"} sx={{ fontWeight: 600 }} />
                       </TableCell>
@@ -498,7 +498,7 @@ export default function HospitalOverview() {
               ))}
 
               {/* This checklist is where an unverified payment is SEEN, and it used
-                  to be the end of the road — the toggle that clears it lives on the
+                  to be the end of the road - the toggle that clears it lives on the
                   onboarding record, which you had to know to go and find. */}
               {onboarding.hospitalOnboardingId && (
                 <Button
@@ -575,7 +575,7 @@ export default function HospitalOverview() {
             ) : (
               plans.map((p) => (
                 <MenuItem key={p.planId} value={p.planId} disabled={p.planId === billing?.currentPlanId}>
-                  {p.planName} — ₹{billing?.cycle === "ANNUAL" ? `${p.annualPrice}/yr` : `${p.monthlyPrice}/mo`}
+                  {p.planName} - ₹{billing?.cycle === "ANNUAL" ? `${p.annualPrice}/yr` : `${p.monthlyPrice}/mo`}
                   {p.planId === billing?.currentPlanId ? " (current)" : ""}
                 </MenuItem>
               ))
@@ -598,7 +598,7 @@ export default function HospitalOverview() {
         <DialogTitle sx={{ fontWeight: 800 }}>New admin credentials</DialogTitle>
         <DialogContent>
           <Alert severity="warning" sx={{ mb: 2 }}>
-            This password is shown only once. Copy it and hand it to the hospital admin — they'll be asked to change it on first login.
+            This password is shown only once. Copy it and hand it to the hospital admin - they'll be asked to change it on first login.
           </Alert>
           {resetCreds && (
             <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>

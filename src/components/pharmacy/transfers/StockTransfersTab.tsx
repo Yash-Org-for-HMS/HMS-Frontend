@@ -25,7 +25,7 @@ function Stat({ label, value, color }: { label: string; value: string; color: st
 
 /**
  * Stock moving between this hospital's branches. Incoming and outgoing sit on
- * one list, because the question is always the same: what is waiting on me —
+ * one list, because the question is always the same: what is waiting on me -
  * a request to pick and send, or a box to count in.
  */
 export default function StockTransfersTab({ branches, shortReasons, here, medicines, onStockChanged }: {
@@ -54,7 +54,7 @@ export default function StockTransfersTab({ branches, shortReasons, here, medici
       <Box sx={{ display: "flex", gap: 1.5, mb: 2, flexWrap: "wrap" }}>
         <Stat label="Waiting to be sent" value={String(data.totals.awaitingDispatch)} color={SEMANTIC.warning} />
         <Stat label="On the road" value={String(data.totals.inTransit)} color={SEMANTIC.info} />
-        {/* Off the sending shelf and not yet on the receiving one — on neither
+        {/* Off the sending shelf and not yet on the receiving one - on neither
             branch's stock count until someone signs for it. */}
         <Stat label="Units in transit" value={String(data.totals.unitsInTransit)} color={NEUTRAL.muted} />
       </Box>

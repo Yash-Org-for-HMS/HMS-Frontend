@@ -29,7 +29,7 @@ import { hasRole } from "@/constants/roles";
 import { useSearchParams } from "react-router-dom";
 
 /**
- * Everyone who works at the hospital — with a login or without — with their
+ * Everyone who works at the hospital - with a login or without - with their
  * designation and grade, home department, posting and who they report to
  * (HMS_Platform_Master_Data.xlsx, 17_Staff_Onboarding). People with a login
  * appear here on their own; the Issues column is the sheet's validation column.
@@ -95,7 +95,7 @@ function GiveLoginDialog({ row, options, onClose, onDone }: {
 export default function StaffDirectory() {
   const toast = useToast();
   const { user } = useHospitalAuth();
-  // Logins carry roles — only the Hospital Admin hands them out (HR Admin runs the rest).
+  // Logins carry roles - only the Hospital Admin hands them out (HR Admin runs the rest).
   const canGiveLogins = hasRole(user, "H_ADMIN");
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
@@ -116,7 +116,7 @@ export default function StaffDirectory() {
     queryKey: ["staff-directory"],
     queryFn: async () => { const d = (await axiosInstance.get("/hospital/staff")).data; return { data: d.data, summary: d.summary }; },
   });
-  // The chart is the whole group; the list is the branch picked — someone from
+  // The chart is the whole group; the list is the branch picked - someone from
   // another branch is fetched on their own.
   const listed = editId ? list.data?.data.find((r) => r.staffId === editId) ?? null : null;
   const editOne = useQuery<StaffRow>({
@@ -151,7 +151,7 @@ export default function StaffDirectory() {
     const q = search.trim().toLowerCase();
     return rows.filter((r) =>
       (!category || r.staffCategoryCode === category) &&
-      // Someone who works at the facility, as home or also — or at none in particular.
+      // Someone who works at the facility, as home or also - or at none in particular.
       (!branch || !(r.worksAt ?? []).length || (r.worksAt ?? []).some((w) => w.branchId === branch)) &&
       (!attention || r.issues.length > 0) &&
       (!q || [r.name, r.employment?.employeeCode, r.employment?.designationName, r.primaryDepartment?.departmentName, r.login?.email]
@@ -183,7 +183,7 @@ export default function StaffDirectory() {
       <Box>
         <PageHeader
           title="Staff Directory"
-          subtitle="Everyone who works here — with or without a login — their designation, department, posting and who they report to."
+          subtitle="Everyone who works here - with or without a login - their designation, department, posting and who they report to."
           actions={
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
               <UserCapacityChip />
@@ -246,7 +246,7 @@ export default function StaffDirectory() {
                 <TableRow><TableCell colSpan={7} sx={{ py: 3, borderBottom: "none" }}><ErrorState message={apiErrorText(list.error)} onRetry={() => list.refetch()} /></TableCell></TableRow>
               ) : sorted.length === 0 ? (
                 <TableRow><TableCell colSpan={7} sx={{ py: 3, borderBottom: "none" }}>
-                  <Mascot pose="nothing-here-yet" subtitle={rows.length ? "Nobody matches these filters." : "No staff yet — add the first person."} size={120} />
+                  <Mascot pose="nothing-here-yet" subtitle={rows.length ? "Nobody matches these filters." : "No staff yet - add the first person."} size={120} />
                 </TableCell></TableRow>
               ) : shown.map((r) => {
                 const exited = r.status === "EXITED";
@@ -275,14 +275,14 @@ export default function StaffDirectory() {
                       </Box>
                     </TableCell>
                     <TableCell sx={CELL_SX}>
-                      <Typography variant="body2">{r.employment?.designationName ?? "—"}</Typography>
+                      <Typography variant="body2">{r.employment?.designationName ?? "-"}</Typography>
                       <Typography variant="caption" sx={{ color: "text.secondary" }}>
                         {[r.employment?.grade != null ? `Grade ${r.employment.grade}` : null, r.employment && r.employment.employmentTypeCode !== "FULL_TIME" ? r.employment.employmentTypeName : null].filter(Boolean).join(" · ")}
                       </Typography>
                     </TableCell>
                     <TableCell sx={CELL_SX}>
                       <Typography variant="body2" component="div">
-                        {r.primaryDepartment?.departmentName ?? "—"}
+                        {r.primaryDepartment?.departmentName ?? "-"}
                         {r.primaryDepartment?.roleInDept === "HOD" && <Chip size="small" label="HOD" sx={{ height: 18, ml: 0.75, fontSize: "0.7rem", fontWeight: 700 }} />}
                       </Typography>
                       {r.additionalDepartments.length > 0 && (
@@ -290,10 +290,10 @@ export default function StaffDirectory() {
                       )}
                     </TableCell>
                     <TableCell sx={CELL_SX}>
-                      <Typography variant="body2">{r.posting?.label || "—"}</Typography>
+                      <Typography variant="body2">{r.posting?.label || "-"}</Typography>
                     </TableCell>
                     <TableCell sx={CELL_SX}>
-                      <Typography variant="body2">{r.adminManager?.name ?? "—"}</Typography>
+                      <Typography variant="body2">{r.adminManager?.name ?? "-"}</Typography>
                       {r.functionalManager && <Typography variant="caption" sx={{ color: "text.secondary" }}>day to day: {r.functionalManager.name}</Typography>}
                     </TableCell>
                     <TableCell sx={CELL_SX}>

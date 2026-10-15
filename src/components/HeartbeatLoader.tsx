@@ -3,7 +3,7 @@ import { Suspense, lazy } from "react";
 
 // The dotLottie player is heavy (player lib + wasm binding); load it lazily so
 // it never lands in the first-paint bundle. A tiny CSS pulse stands in until the
-// chunk arrives — which for brief loaders is often all the user ever sees.
+// chunk arrives - which for brief loaders is often all the user ever sees.
 const HeartbeatLottie = lazy(() => import("./HeartbeatLottie"));
 
 interface HeartbeatLoaderProps {

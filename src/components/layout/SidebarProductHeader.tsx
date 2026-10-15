@@ -7,11 +7,11 @@ import { Toolbar, Box } from "@mui/material";
  * hospital identifies itself at the bottom next to the person signed in.
  *
  * Taller than the 70px header the other panels use, because a wordmark needs
- * air on both sides to read as placed rather than wedged — at 70px the mark
+ * air on both sides to read as placed rather than wedged - at 70px the mark
  * cleared the rules above and below by 11px and looked jammed in.
  */
 /**
- * compact: the hospital panels, where the top bar beside it is 64px — the mark
+ * compact: the hospital panels, where the top bar beside it is 64px - the mark
  * sits on the same line as the bar instead of overhanging it.
  */
 export default function SidebarProductHeader({ compact = false }: { compact?: boolean } = {}) {

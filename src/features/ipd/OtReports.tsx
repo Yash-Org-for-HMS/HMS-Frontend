@@ -35,7 +35,7 @@ export type OtReportKey = typeof REPORTS[number]["key"];
 const isoDay = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 const inr = (n: string | number | null | undefined) =>
-  n == null ? "—" : `₹${Number(n).toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
+  n == null ? "-" : `₹${Number(n).toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
 
 const Tile = ({ label, value, sub, color }: { label: string; value: string | number; sub?: string; color?: string }) => (
   <Paper elevation={0} sx={{ p: 2, borderRadius: 3, border: "1px solid", borderColor: "divider", height: "100%" }}>
@@ -56,7 +56,7 @@ const Bar = ({ pct, color }: { pct: number; color: string }) => (
  *
  * Two ways in, one implementation. As its own page it keeps its title and its
  * strip of six tabs. Given a `report`, it renders just that one without either
- * — which is how the reports hub mounts them, one entry per report alongside
+ * - which is how the reports hub mounts them, one entry per report alongside
  * every other report in the hospital, rather than sending people to a separate
  * page to find six of them.
  *
@@ -187,7 +187,7 @@ function Utilisation({ d }: { d: Any }) {
         <Grid size={{ xs: 6, md: 3 }}><Tile label="Cases" value={totals?.cases ?? 0} /></Grid>
         <Grid size={{ xs: 6, md: 3 }}><Tile label="Hours used" value={totals?.actualHours ?? 0} /></Grid>
         <Grid size={{ xs: 6, md: 3 }}><Tile label="Hours available" value={totals?.availableHours ?? 0} sub={`${val(d, ["openHoursPerDay"])} h a day × ${val(d, ["days"])} days`} /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><Tile label="Utilisation" value={totals?.utilisationPct == null ? "—" : `${totals.utilisationPct}%`}
+        <Grid size={{ xs: 6, md: 3 }}><Tile label="Utilisation" value={totals?.utilisationPct == null ? "-" : `${totals.utilisationPct}%`}
           sub={totals?.utilisationPct == null ? "Nothing measurable yet" : undefined}
           color={totals?.utilisationPct == null ? undefined : SEMANTIC.success} /></Grid>
       </Grid>
@@ -226,11 +226,11 @@ function Utilisation({ d }: { d: Any }) {
                   <TableCell>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       <Box sx={{ flex: 1 }}><Bar pct={Number(r.utilisationPct ?? 0)} color={BRAND.action} /></Box>
-                      <Typography variant="caption" sx={{ fontWeight: 700, minWidth: 34 }}>{r.utilisationPct == null ? "—" : `${r.utilisationPct}%`}</Typography>
+                      <Typography variant="caption" sx={{ fontWeight: 700, minWidth: 34 }}>{r.utilisationPct == null ? "-" : `${r.utilisationPct}%`}</Typography>
                     </Box>
                   </TableCell>
                   <TableCell align="right">
-                    {r.planAccuracyPct == null ? "—" : (
+                    {r.planAccuracyPct == null ? "-" : (
                       <Chip size="small" label={`${r.planAccuracyPct}%`}
                         sx={{
                           height: 20, fontWeight: 700,
@@ -261,7 +261,7 @@ function Turnaround({ d }: { d: Any }) {
     <>
       <Grid container spacing={2} sx={{ mb: 2 }}>
         <Grid size={{ xs: 6, md: 4 }}><Tile label="Gaps measured" value={overall?.gaps ?? 0} /></Grid>
-        <Grid size={{ xs: 6, md: 4 }}><Tile label="Average turnaround" value={overall?.averageMinutes == null ? "—" : `${overall.averageMinutes} min`} /></Grid>
+        <Grid size={{ xs: 6, md: 4 }}><Tile label="Average turnaround" value={overall?.averageMinutes == null ? "-" : `${overall.averageMinutes} min`} /></Grid>
       </Grid>
       <Card title="By theatre">
         {t.length === 0 ? <Empty what="back-to-back cases" /> : (
@@ -286,7 +286,7 @@ function Turnaround({ d }: { d: Any }) {
           </Table>
         )}
       </Card>
-      <Card title="The longest gaps — the ones worth asking about">
+      <Card title="The longest gaps - the ones worth asking about">
         {longest.length === 0 ? <Empty what="gaps" /> : (
           <Table size="small">
             <TableHead><TableRow>
@@ -368,7 +368,7 @@ function Cancellations({ d }: { d: Any }) {
       <Grid container spacing={2} sx={{ mb: 2 }}>
         <Grid size={{ xs: 4, md: 3 }}><Tile label="Booked" value={Number(val(d, ["booked"]) ?? 0)} /></Grid>
         <Grid size={{ xs: 4, md: 3 }}><Tile label="Cancelled" value={Number(val(d, ["cancelled"]) ?? 0)} color={SEMANTIC.danger} /></Grid>
-        <Grid size={{ xs: 4, md: 3 }}><Tile label="Cancellation rate" value={rate == null ? "—" : `${rate}%`} color={SEMANTIC.danger} /></Grid>
+        <Grid size={{ xs: 4, md: 3 }}><Tile label="Cancellation rate" value={rate == null ? "-" : `${rate}%`} color={SEMANTIC.danger} /></Grid>
       </Grid>
       <Card title="Why cases were cancelled">
         {byReason.length === 0 ? <Empty what="cancellations" /> : (
@@ -393,8 +393,8 @@ function Cancellations({ d }: { d: Any }) {
               {casePage.shown.map((c) => (
                 <TableRow key={String(c.surgeryId)}>
                   <TableCell sx={{ fontWeight: 600 }}>{String(c.procedureName)}</TableCell>
-                  <TableCell>{c.scheduledStart ? new Date(String(c.scheduledStart)).toLocaleString() : "—"}</TableCell>
-                  <TableCell>{String(c.reason ?? "—").replace(/_/g, " ").toLowerCase()}</TableCell>
+                  <TableCell>{c.scheduledStart ? new Date(String(c.scheduledStart)).toLocaleString() : "-"}</TableCell>
+                  <TableCell>{String(c.reason ?? "-").replace(/_/g, " ").toLowerCase()}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -420,7 +420,7 @@ function Complications({ d }: { d: Any }) {
       <Grid container spacing={2} sx={{ mb: 2 }}>
         <Grid size={{ xs: 6, md: 3 }}><Tile label="Cases" value={cases} /></Grid>
         <Grid size={{ xs: 6, md: 3 }}><Tile label="With complications" value={list.length} color={SEMANTIC.danger} /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><Tile label="Rate" value={val(d, ["complicationRatePct"]) == null ? "—" : `${val(d, ["complicationRatePct"])}%`} color={SEMANTIC.danger} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><Tile label="Rate" value={val(d, ["complicationRatePct"]) == null ? "-" : `${val(d, ["complicationRatePct"])}%`} color={SEMANTIC.danger} /></Grid>
         <Grid size={{ xs: 6, md: 3 }}><Tile label="Unplanned returns" value={returns.length} sub="Back in theatre within 30 days" color={SEMANTIC.warning} /></Grid>
       </Grid>
 
@@ -440,7 +440,7 @@ function Complications({ d }: { d: Any }) {
                 <TableRow key={String(c.surgeryId)}>
                   <TableCell sx={{ fontWeight: 600 }}>{c.patientName} <Typography component="span" variant="caption" sx={{ color: "text.secondary" }}>{c.uhid}</Typography></TableCell>
                   <TableCell>{c.procedureName}</TableCell>
-                  <TableCell>{c.at ? new Date(String(c.at)).toLocaleDateString() : "—"}</TableCell>
+                  <TableCell>{c.at ? new Date(String(c.at)).toLocaleDateString() : "-"}</TableCell>
                   <TableCell>{c.detail}</TableCell>
                 </TableRow>
               ))}

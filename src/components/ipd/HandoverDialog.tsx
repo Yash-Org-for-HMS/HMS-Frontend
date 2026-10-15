@@ -18,7 +18,7 @@ import { useToast } from "@/providers/ToastContext";
 import dayjs from "dayjs";
 
 /**
- * The shift handover sheet — what one shift leaves for the next.
+ * The shift handover sheet - what one shift leaves for the next.
  *
  * Its value is that named people put their name to it, so every signature shows
  * WHO signed and WHEN, and an unsigned role is visible as unsigned rather than
@@ -76,8 +76,8 @@ export default function HandoverDialog({ open, admission, onClose, readOnly = fa
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
           <SwapHorizRounded sx={{ color: BRAND.action }} />
           <Box>
-            <Typography variant="h6" sx={{ fontWeight: 700 }}>Shift handover — {admission?.patientName}</Typography>
-            <Typography variant="caption" sx={{ color: "text.secondary" }}>{admission?.uhid} · {admission?.bed?.label || "—"}</Typography>
+            <Typography variant="h6" sx={{ fontWeight: 700 }}>Shift handover - {admission?.patientName}</Typography>
+            <Typography variant="caption" sx={{ color: "text.secondary" }}>{admission?.uhid} · {admission?.bed?.label || "-"}</Typography>
           </Box>
         </Box>
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
@@ -151,7 +151,7 @@ export default function HandoverDialog({ open, admission, onClose, readOnly = fa
 
                   <Divider sx={{ my: 2 }} />
 
-                  {/* Every configured role gets a slot, signed or not — an
+                  {/* Every configured role gets a slot, signed or not - an
                       unsigned handover has to be visible as unsigned. */}
                   <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, display: "block", mb: 1 }}>
                     Sign-off
@@ -161,7 +161,7 @@ export default function HandoverDialog({ open, admission, onClose, readOnly = fa
                       so.signed ? (
                         <Tooltip key={so.role} title={`Signed ${dayjs(so.at).format("DD MMM, HH:mm")}`}>
                           <Chip
-                            icon={<CheckCircleRounded />} label={`${so.role} — ${so.by}`}
+                            icon={<CheckCircleRounded />} label={`${so.role} - ${so.by}`}
                             sx={{ bgcolor: alpha(SEMANTIC.success, 0.12), color: SEMANTIC.success, fontWeight: 600 }}
                           />
                         </Tooltip>

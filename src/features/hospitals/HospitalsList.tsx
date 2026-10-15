@@ -74,7 +74,7 @@ export default function HospitalsList() {
   // Server-side column sorting (the list is paginated, so sorting happens in the DB).
   const { orderBy, order, onSort } = useServerSort();
 
-  // The request waits until typing pauses — it fired on every keystroke.
+  // The request waits until typing pauses - it fired on every keystroke.
   const debouncedSearch = useDebouncedValue(search);
   const { data, isLoading: loading, isError, error, refetch } = useQuery({
     queryKey: ["hospitals", page, debouncedSearch, activeTab, orderBy, order],

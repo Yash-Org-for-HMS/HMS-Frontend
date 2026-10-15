@@ -44,7 +44,7 @@ const METHODS = ["", "Cash", "Bank Transfer", "UPI", "Card", "Other"];
 const dt = (d: string) =>
   new Date(d).toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
 
-/** Default window: this month to date — the period a reconciliation usually covers. */
+/** Default window: this month to date - the period a reconciliation usually covers. */
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 const monthStart = () => { const d = new Date(); d.setDate(1); return iso(d); };
 
@@ -101,7 +101,7 @@ export default function PaymentsRegister() {
                 <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 700, letterSpacing: 0.4 }}>TOTAL RECEIVED</Typography>
                 <Typography variant="h5" sx={{ fontWeight: 800, color: SEMANTIC.success }}>{formatINR(Number(data?.totals.amount ?? 0))}</Typography>
               </Box>
-              {/* The split a bank statement is reconciled by — cash never appears on
+              {/* The split a bank statement is reconciled by - cash never appears on
                   one, so separating it from transfers is the first thing you need. */}
               <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
                 {(data?.totals.byMethod ?? []).map((m) => (
@@ -149,7 +149,7 @@ export default function PaymentsRegister() {
                       <TableCell><Typography variant="body2" sx={{ fontWeight: 700 }}>{r.hospitalName}</Typography></TableCell>
                       <TableCell>
                         <Typography variant="body2">{r.invoiceNumber}</Typography>
-                        {/* A payment against a voided invoice still happened — flag the
+                        {/* A payment against a voided invoice still happened - flag the
                             pair rather than let it look like an ordinary receipt. */}
                         {r.invoiceStatus === "VOID" && (
                           <Chip size="small" label="Invoice voided" color="warning" sx={{ height: 18, fontSize: "0.625rem", fontWeight: 700 }} />
@@ -161,10 +161,10 @@ export default function PaymentsRegister() {
                       <TableCell><Typography variant="body2">{r.method}</Typography></TableCell>
                       <TableCell>
                         <Typography variant="body2" sx={{ color: r.reference ? "text.primary" : "text.disabled" }}>
-                          {r.reference || "—"}
+                          {r.reference || "-"}
                         </Typography>
                       </TableCell>
-                      <TableCell><Typography variant="body2">{r.recordedByName || "—"}</Typography></TableCell>
+                      <TableCell><Typography variant="body2">{r.recordedByName || "-"}</Typography></TableCell>
                     </TableRow>
                   ))
                 )}

@@ -29,7 +29,7 @@ export interface StaffUser {
 
 
 /** Fields present on every role-consuming screen. Screens that need more (or need
- *  an optional here to be required) `extend` this — never re-declare it. */
+ *  an optional here to be required) `extend` this - never re-declare it. */
 export interface Role {
   roleId: string;
   roleName: string;
@@ -78,7 +78,7 @@ export interface PharmacyOrder {
   pharmacyOrderId: string;
   patientId?: string | null;
   status: string;
-  /** A Prisma Decimal — always a string on the wire. Number() before arithmetic. */
+  /** A Prisma Decimal - always a string on the wire. Number() before arithmetic. */
   totalAmount: string;
   createdAt: string;
   /** Set when the sale was cancelled; shown beside the row. */
@@ -120,7 +120,7 @@ export interface Refund {
   refundReason?: string | null;
   /** "PENDING" | "COMPLETED" | "REJECTED". Only COMPLETED is money returned. */
   refundStatus: string;
-  /** Null while PENDING — set at the moment the refund completes. */
+  /** Null while PENDING - set at the moment the refund completes. */
   processedAt?: string | null;
   /** Receipt number, REF-{year}-{NNNN}. Only a COMPLETED refund has one. */
   refundNumber?: string | null;
@@ -132,7 +132,7 @@ export interface Refund {
 }
 
 /** The status lookup rows carry their own label + colour, which the UI renders
- *  directly — see the status-lookup-table decision. */
+ *  directly - see the status-lookup-table decision. */
 export interface InvoiceStatusRef {
   statusCode?: string;
   statusLabel?: string;
@@ -141,7 +141,7 @@ export interface InvoiceStatusRef {
 
 export interface InvoiceItem {
   invoiceItemId: string;
-  /** The line's label. NOT `itemName` — that is ChargeItem, the SOC catalogue. */
+  /** The line's label. NOT `itemName` - that is ChargeItem, the SOC catalogue. */
   description?: string | null;
   quantity: number;
   unitPrice: Money;
@@ -192,7 +192,7 @@ export interface RefundablePayment extends Payment {
 }
 
 /**
- * One row of GET /reception/billing/invoices — the billing LIST, which is a
+ * One row of GET /reception/billing/invoices - the billing LIST, which is a
  * different projection from the detail below: it denormalises the patient and
  * carries a pre-computed balance, and has no line items.
  */
@@ -212,12 +212,12 @@ export interface InvoiceListRow {
   invoiceStatus: string;
   statusLabel: string;
   statusColor: string;
-  /** Refund raised but not yet released — no money has moved. */
+  /** Refund raised but not yet released - no money has moved. */
   refundPending: Money;
   /**
    * This department's share of the bill, when the list was asked by department
    * (the pharmacy and lab billing-history mounts). Null on an unfiltered list,
-   * where there is no such thing as "the share" — reading `netAmount` under that
+   * where there is no such thing as "the share" - reading `netAmount` under that
    * name is how a department totals the hospital's revenue instead of its own.
    */
   categoryAmount?: Money | null;
@@ -230,7 +230,7 @@ export interface InvoiceListRow {
 }
 
 /**
- * GET /reception/billing/invoices/:id/detail — the invoice row plus everything
+ * GET /reception/billing/invoices/:id/detail - the invoice row plus everything
  * a bill or receipt needs to render, resolved server-side.
  */
 export interface InvoiceDetail extends Invoice {
@@ -278,7 +278,7 @@ export interface InvoiceDetail extends Invoice {
   deposits?: { collected: number; applied: number; refunded: number; available: number } | null;
 }
 
-/** GET /reception/billing/lookups — the payment methods a receipt can offer. */
+/** GET /reception/billing/lookups - the payment methods a receipt can offer. */
 export interface PaymentMethodRef {
   paymentMethodId: number;
   methodName: string;
@@ -288,7 +288,7 @@ export interface BillingLookups {
 }
 
 /**
- * GET /billing/unbilled/:patientId — work done but not yet on any invoice.
+ * GET /billing/unbilled/:patientId - work done but not yet on any invoice.
  * Mirrors UnbilledItem in backend/src/modules/billing/billing.service.ts.
  */
 export interface UnbilledItem {
@@ -300,9 +300,9 @@ export interface UnbilledItem {
   chargeItemId?: string | null;
   taxPercent: number;
   hsnCode?: string | null;
-  /** Authoritative when set — pharmacy orders mix GST rates across medicines. */
+  /** Authoritative when set - pharmacy orders mix GST rates across medicines. */
   taxAmount?: number;
-  /** When the work was done — what the picker lists the line under. */
+  /** When the work was done - what the picker lists the line under. */
   date?: string | null;
   /** Source links, so the invoice can be tied back to the order or stay. */
   metadata?: { admissionId?: string | null; consultationId?: string | null } | null;
@@ -313,7 +313,7 @@ export interface UnbilledItem {
  *
  * Kept field-for-field with HOSPITAL_DOCUMENT_IDENTITY on the server and with
  * BillHospital in the shared bill template, so a profile can be handed to a
- * document whole rather than copied key by key — which is how the logo and the
+ * document whole rather than copied key by key - which is how the logo and the
  * city went missing from printed receipts in the first place.
  */
 export interface HospitalBillingProfile {
@@ -378,7 +378,7 @@ export interface PrescriptionItem {
   medicineName: string;
   genericName?: string | null;
   dosage?: string | null;
-  /** Free text today ("twice daily", "TDS") — not yet a structured schedule. */
+  /** Free text today ("twice daily", "TDS") - not yet a structured schedule. */
   frequency?: string | null;
   durationDays?: number | string | null;
   quantity?: number | null;
@@ -392,7 +392,7 @@ export interface PendingPrescription {
   /** The payload spells this `uhidNumber`, not `uhid`. */
   uhidNumber?: string | null;
   doctorName?: string | null;
-  /** When it was written — the endpoint spreads the prescription row. */
+  /** When it was written - the endpoint spreads the prescription row. */
   prescriptionDate?: string | null;
   createdAt?: string;
   items: PrescriptionItem[];
@@ -408,7 +408,7 @@ export interface PharmacyOrderLine {
 // ── IPD medication administration ────────────────────────────────────────────
 
 /**
- * One scheduled or administered dose on the treatment chart (MAR) — a
+ * One scheduled or administered dose on the treatment chart (MAR) - a
  * MedicationAdministration row plus the resolved staff name the API adds.
  * PENDING | GIVEN | MISSED | HELD; a PENDING dose whose scheduledAt is in the
  * past is the unsigned-for gap a drug round is meant to close.
@@ -422,7 +422,7 @@ export interface MedicationDose {
   administeredBy?: string | null;
   /** Resolved display name for administeredBy; null when never given. */
   givenBy?: string | null;
-  /** Fluid given with an infused dose — counted in the patient's intake total. */
+  /** Fluid given with an infused dose - counted in the patient's intake total. */
   infusedVolumeMl?: number | null;
   notes?: string | null;
 }
@@ -436,7 +436,7 @@ export interface MedicationOrder {
   ipMedOrderId: string;
   medicineName: string | null;
   dosage?: string | null;
-  /** Free text today ("TDS", "twice daily") — not a structured schedule. */
+  /** Free text today ("TDS", "twice daily") - not a structured schedule. */
   frequency?: string | null;
   route?: string | null;
   durationDays?: number | null;
@@ -464,7 +464,7 @@ export interface PatientAllergyRow {
 /**
  * A hit from the doctor's prescription medicine search: a narrow Medicine
  * projection plus stock summed across batches. Deliberately not the full
- * catalog row — the search only selects these four fields.
+ * catalog row - the search only selects these four fields.
  */
 export interface PrescribableMedicine {
   medicineId: string;

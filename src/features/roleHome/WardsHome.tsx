@@ -12,13 +12,13 @@ import { useRoleHome } from "./useRoleHome";
 import Freshness from "./Freshness";
 
 /**
- * The wards, one row each — for a ward in-charge (the wards they run) and for
+ * The wards, one row each - for a ward in-charge (the wards they run) and for
  * nursing administration (every ward). 15_System_Roles: "Nurse + bed status,
  * ward roster, indents" and "All wards: roster, postings, nurse reports".
  *
  * Per ward: census, beds to turn round, doses overdue, shifts not signed off,
  * ward stock below par, and nurses posted against the ward type's planning
- * ratio (workbook 03 — indicative, to be confirmed against NABH / state norms).
+ * ratio (workbook 03 - indicative, to be confirmed against NABH / state norms).
  */
 
 export interface WardFigures {
@@ -46,7 +46,7 @@ const plannedPatients = (ratio: string | null) => {
 
 /** A figure that is fine at zero and needs someone otherwise. */
 function Count({ n, severity = "warning" }: { n: number; severity?: "warning" | "critical" }) {
-  if (!n) return <Typography variant="body2" sx={{ color: "text.disabled" }}>—</Typography>;
+  if (!n) return <Typography variant="body2" sx={{ color: "text.disabled" }}>-</Typography>;
   const color = severity === "critical" ? SEMANTIC.danger : SEMANTIC.warningDark;
   return <Chip label={n} size="small" sx={{ bgcolor: `${color}1f`, color, fontWeight: 800 }} />;
 }
@@ -54,7 +54,7 @@ function Count({ n, severity = "warning" }: { n: number; severity?: "warning" | 
 function Staffing({ w }: { w: WardFigures }) {
   const planned = plannedPatients(w.plannedRatio);
   if (!w.nursesPosted) {
-    return <Typography variant="body2" sx={{ color: w.occupied ? SEMANTIC.warningDark : "text.disabled", fontWeight: w.occupied ? 700 : 400 }}>{w.occupied ? "No nurse posted" : "—"}</Typography>;
+    return <Typography variant="body2" sx={{ color: w.occupied ? SEMANTIC.warningDark : "text.disabled", fontWeight: w.occupied ? 700 : 400 }}>{w.occupied ? "No nurse posted" : "-"}</Typography>;
   }
   const over = planned != null && w.patientsPerNurse != null && w.patientsPerNurse > planned;
   return (
@@ -72,7 +72,7 @@ export default function WardsHome({ mode }: { mode: "mine" | "all" }) {
   const wards = q.data?.wards ?? [];
   const title = mode === "mine" ? "My wards" : "All wards";
   const subtitle = mode === "mine"
-    ? q.data?.basis === "posting" ? "The ward you are posted to — you are not set as in-charge of a ward."
+    ? q.data?.basis === "posting" ? "The ward you are posted to - you are not set as in-charge of a ward."
       : q.data?.basis === "in-charge" ? "The wards you are in charge of." : "The wards you run."
     : "Every ward side by side, with the nurses posted against the planning ratio.";
 

@@ -71,7 +71,7 @@ export default function AuditLogsList() {
     setPage(1);
   }, [orderBy, order]);
 
-  // The request waits until typing pauses — it fired on every keystroke.
+  // The request waits until typing pauses - it fired on every keystroke.
   const debouncedSearch = useDebouncedValue(search);
   const { data, isLoading: loading, isError, error, refetch } = useQuery({
     queryKey: ["audit-logs", page, debouncedSearch, showMyActions, user?.id, orderBy, order],
@@ -200,7 +200,7 @@ export default function AuditLogsList() {
                         <span style={{ fontFamily: "monospace", fontSize: "0.75rem", color: "text.secondary" }}>{log.tableName}</span>
                       </TableCell>
                       <TableCell sx={{ color: "text.secondary", fontFamily: "monospace", fontSize: "0.875rem" }}>
-                        {log.ipAddress || "—"}
+                        {log.ipAddress || "-"}
                       </TableCell>
                       <TableCell align="right">
                         <IconButton onClick={() => setSelectedLog(log)} sx={{ color: "text.secondary" }} size="small">
@@ -265,7 +265,7 @@ export default function AuditLogsList() {
                 <Typography sx={{ mb: 2, fontFamily: "monospace", color: "text.primary" }}>{selectedLog.userId}</Typography>
                 
                 <Typography variant="overline" sx={{ color: "text.secondary" }}>Device Info</Typography>
-                <Typography sx={{ mb: 2, fontSize: "0.875rem", color: "text.secondary" }}>{selectedLog.deviceInfo || "—"}</Typography>
+                <Typography sx={{ mb: 2, fontSize: "0.875rem", color: "text.secondary" }}>{selectedLog.deviceInfo || "-"}</Typography>
               </Grid>
               
               {detail.isLoading && (

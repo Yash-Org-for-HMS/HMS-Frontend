@@ -1,5 +1,5 @@
 /**
- * The times a doctor can be booked on a day — the browser's copy of the rules
+ * The times a doctor can be booked on a day - the browser's copy of the rules
  * in HMS-Backend/src/modules/reception/doctorSlots.ts, which the server checks
  * every booking against. Keep the two in step.
  *
@@ -8,7 +8,7 @@
  * - A window can name its branch. At a branch, the day is that branch's windows
  *   (and any at every branch); windows only at other branches mean the doctor is
  *   not here that day.
- * - A slot is taken when any of the doctor's bookings — at any branch — overlaps
+ * - A slot is taken when any of the doctor's bookings - at any branch - overlaps
  *   it, or part-day leave does, not only one starting the same minute.
  */
 export interface HoursWindow { startTime: string; endTime: string; slotDurationMinutes: number }
@@ -34,7 +34,7 @@ export function windowsFor(rows: ScheduleRow[], dayOfWeek: number, fallback: Hou
   return day.filter((r) => !r.branchId || r.branchId === branchId).sort(earliestFirst);
 }
 
-/** The doctor's windows that day at other branches — where they are instead. */
+/** The doctor's windows that day at other branches - where they are instead. */
 export function elsewhereOn(rows: ScheduleRow[], dayOfWeek: number, branchId?: string | null): ScheduleRow[] {
   if (!branchId) return [];
   return rows.filter((r) => r.dayOfWeek === dayOfWeek && r.branchId && r.branchId !== branchId).sort(earliestFirst);

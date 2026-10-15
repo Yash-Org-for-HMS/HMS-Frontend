@@ -93,12 +93,12 @@ interface Operations {
 }
 
 // How many audit rows the activity rail shows. It used to render ten full-width
-// rows and was the largest thing on the page — mostly setup chatter from the
+// rows and was the largest thing on the page - mostly setup chatter from the
 // day the hospital was created, which is history, not news.
 const ACTIVITY_ROWS = 6;
 
 // First word of the humanized action ("Added Doctor" / "Updated Onboarding" /
-// "Removed Nursing Note") picks the feed icon + colour — advisory, not a status.
+// "Removed Nursing Note") picks the feed icon + colour - advisory, not a status.
 const ACTIVITY_ICON: Record<string, { icon: typeof AddCircleRounded; color: string }> = {
   Added: { icon: AddCircleRounded, color: SEMANTIC.success },
   Updated: { icon: EditRounded, color: SEMANTIC.info },
@@ -109,7 +109,7 @@ const ACTIVITY_ICON: Record<string, { icon: typeof AddCircleRounded; color: stri
 // tiles sit beside each other so a stray ".1" breaks the column of numbers.
 const inr = (v: number | null | undefined) => formatINR(v, 0);
 
-/** "just now" / "4 min ago" / "2 hr ago" — how old the figures on screen are. */
+/** "just now" / "4 min ago" / "2 hr ago" - how old the figures on screen are. */
 const updatedAgo = (at: number, now: number) => {
   const m = Math.floor((now - at) / 60_000);
   if (m < 1) return "just now";
@@ -134,24 +134,24 @@ export default function HospitalDashboard() {
     queryFn: async () => (await axiosInstance.get("/hospital/dashboard/stats", { params: freshParams() })).data.data,
   });
 
-  // The operational half — money, capacity, flow, attention. Deliberately a
+  // The operational half - money, capacity, flow, attention. Deliberately a
   // separate query from /stats: that one answers "how is this hospital set up"
   // and rarely changes, this one is what the page is actually for.
   const { data: ops, isLoading: opsLoading, dataUpdatedAt: opsUpdatedAt, isFetching: opsFetching, refetch: refetchOps } = useQuery<Operations>({
     queryKey: ["hospital-dashboard-operations"],
     queryFn: async () => (await axiosInstance.get("/hospital/dashboard/operations", { params: freshParams() })).data.data,
     // The attention rows are derived live from current state, so a resolved
-    // problem is already gone server-side — but a dashboard left open never
+    // problem is already gone server-side - but a dashboard left open never
     // asked again (window-focus refetch is off app-wide) and a bill paid or a
     // refund approved elsewhere stayed listed until a reload. Re-ask when the
-    // tab comes back and every few minutes while it is open — the header says
+    // tab comes back and every few minutes while it is open - the header says
     // how old the figures are and Refresh asks now. A background refetch keeps
     // the current rows on screen, so nothing flashes.
     refetchOnWindowFocus: true,
     refetchInterval: ADMIN_DASHBOARD_REFRESH_MS,
   });
 
-  // Every branch side by side — only in the hospital admin's All-branches view
+  // Every branch side by side - only in the hospital admin's All-branches view
   // of a hospital with more than one branch (multi-branch plan, phase 7).
   const groupView = isOrgAdmin && !activeBranchId && availableBranches.length > 1;
   const { data: branchComparison, isFetching: branchesFetching, refetch: refetchBranches } = useQuery<BranchComparisonData>({
@@ -198,7 +198,7 @@ export default function HospitalDashboard() {
     );
   }
 
-  // Once every setup step is done the guide has served its purpose — hide it so
+  // Once every setup step is done the guide has served its purpose - hide it so
   // it doesn't permanently occupy the dashboard.
   const setupComplete = stats.pendingTasks.length > 0 && stats.pendingTasks.every((t) => t.completed);
 
@@ -206,7 +206,7 @@ export default function HospitalDashboard() {
 
   /**
    * Each row goes to the register that explains it, not to the panel it vaguely
-   * belongs to — stock and purchase-order rows used to land on the reports hub
+   * belongs to - stock and purchase-order rows used to land on the reports hub
    * with no report chosen.
    *
    * And each row lands somewhere an administrator can ACT. Unacknowledged
@@ -270,7 +270,7 @@ export default function HospitalDashboard() {
           Money first. This page previously carried no financial figure at all,
           which made it the one screen a hospital owner opens that couldn't tell
           them how the day was going. Each tile compares against the same
-          weekday last week — a Monday against a Sunday is noise about which day
+          weekday last week - a Monday against a Sunday is noise about which day
           it is, not about the business. */}
       <Typography variant="overline" sx={{ color: "text.secondary", fontWeight: 700, letterSpacing: 0.6, display: "block", mb: 1 }}>
         Today {ops && <Box component="span" sx={{ textTransform: "none", letterSpacing: 0, fontWeight: 500 }}>· compared with {ops.comparedTo}</Box>}
@@ -304,7 +304,7 @@ export default function HospitalDashboard() {
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
             label="Bed occupancy"
-            value={occupancy?.occupancyPct == null ? "—" : `${occupancy.occupancyPct}%`}
+            value={occupancy?.occupancyPct == null ? "-" : `${occupancy.occupancyPct}%`}
             sub={occupancy?.totalBeds ? `${occupancy.occupied} of ${occupancy.totalBeds} beds` : "No beds configured"}
             icon={<HotelRounded />} color={BRAND.action} loading={opsLoading}
             onClick={() => navigate("/hospital/ipd/beds")}
@@ -329,16 +329,16 @@ export default function HospitalDashboard() {
         <Grid size={{ xs: 12, lg: 7 }}>
           <AttentionList
             title="Needs attention"
-            // Describes severity order, not a fixed running order of kinds —
+            // Describes severity order, not a fixed running order of kinds -
             // the list is sorted by how urgent a row is, so naming the kinds in
             // sequence would go stale the moment the mix changes. Which is what
             // happened to the line this replaces: it still promised
             // "unacknowledged critical results first" after those moved to the
             // doctor and lab dashboards.
-            subtitle="Most urgent first — stock, unpaid bills, claims waiting on us, and refunds needing a second approval"
+            subtitle="Most urgent first - stock, unpaid bills, claims waiting on us, and refunds needing a second approval"
             items={attentionItems}
             loading={opsLoading}
-            emptyText="Nothing outstanding — stock is healthy, bills are settled and no claim is waiting on us."
+            emptyText="Nothing outstanding - stock is healthy, bills are settled and no claim is waiting on us."
             scrollHeight={384}
             actionLabel="All reports"
             onAction={() => navigate("/hospital/reports")}
@@ -351,7 +351,7 @@ export default function HospitalDashboard() {
                 agrees with the Collected Today tile and the Day Book. That
                 reassurance existed because this codebase has shipped real bugs
                 where two money screens computed "revenue" differently and
-                disagreed with each other — but it is implementation detail, not
+                disagreed with each other - but it is implementation detail, not
                 something a reader needs parsed to understand the chart. The
                 computation itself (net of refunds, same as those two) is
                 unchanged; only the caption is shorter. */}
@@ -360,7 +360,7 @@ export default function HospitalDashboard() {
             </Typography>
             {/* Loading is not the same answer as none.
                 `ops` is undefined until the request lands, and the ternary below
-                treated that as "no collections" — so the panel stated, as a
+                treated that as "no collections" - so the panel stated, as a
                 fact, that the hospital had taken no money in thirty days while
                 it was still asking. Against this database a single query has
                 measured 1-5s, so that claim was on screen long enough to be
@@ -375,7 +375,7 @@ export default function HospitalDashboard() {
                 <ResponsiveContainer width="100%" height="100%">
                 {/* left: 0, not -12. The negative margin pulled the plot over
                     the y-axis gutter, and a full rupee label ("₹1,00,000") no
-                    longer fitted the 52px left to it — every tick rendered
+                    longer fitted the 52px left to it - every tick rendered
                     clipped, as "00,000". An axis nobody can read is not an
                     axis; the ticks are compact now and the gutter is honest. */}
                 <AreaChart data={ops.money.trend} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
@@ -415,7 +415,7 @@ export default function HospitalDashboard() {
               <AssignmentRounded sx={{ color: "text.secondary" }} />
               <Box>
                 <Typography variant="h6" sx={{ color: "text.primary", fontWeight: 600 }}>Setup Guide</Typography>
-                <Typography variant="caption" sx={{ color: "text.secondary" }}>A recommended order to get your hospital running — most links are optional and can be revisited anytime.</Typography>
+                <Typography variant="caption" sx={{ color: "text.secondary" }}>A recommended order to get your hospital running - most links are optional and can be revisited anytime.</Typography>
               </Box>
             </Box>
             <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 700, whiteSpace: "nowrap" }}>

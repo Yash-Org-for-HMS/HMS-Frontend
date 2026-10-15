@@ -6,7 +6,7 @@ import { DROPDOWN_MAX_HEIGHT } from "./components/form/dropdown";
 /**
  * The font stack for text set at weight 800.
  *
- * "Segoe UI Heavy" is declared in main.tsx from LOCAL Segoe faces only —
+ * "Segoe UI Heavy" is declared in main.tsx from LOCAL Segoe faces only -
  * nothing is downloaded, and the Segoe fonts are Microsoft's and cannot be
  * served as web fonts. It carries 800-900 and nothing else, which is exactly
  * why it must not go in the global stack: a family that matches is chosen
@@ -15,7 +15,7 @@ import { DROPDOWN_MAX_HEIGHT } from "./components/form/dropdown";
  *
  * It maps to Segoe UI Black, which ships on Windows 10 AND 11, so both render
  * the same heading. Segoe UI Variable Display would be the natural choice on
- * 11, but it exists only there — naming it is what split the two machines in
+ * 11, but it exists only there - naming it is what split the two machines in
  * the first place, and the point here is that they stop differing.
  */
 export const HEADING_FONT =
@@ -25,8 +25,8 @@ const themeOptions: ThemeOptions = {
   palette: {
     mode: "light",
     // The logo blue. Panels override primary via createPanelTheme, so this is
-    // what the screens OUTSIDE a panel shell use — login, error pages, the
-    // command palette — and it has to be the same family or those pages look
+    // what the screens OUTSIDE a panel shell use - login, error pages, the
+    // command palette - and it has to be the same family or those pages look
     // like a different product.
     primary: {
       main: BRAND.action,
@@ -70,7 +70,7 @@ const themeOptions: ThemeOptions = {
     /**
      * `-apple-system` first, not "SF Pro Display".
      *
-     * SF Pro Display is Apple's DISPLAY cut — drawn for large text, and
+     * SF Pro Display is Apple's DISPLAY cut - drawn for large text, and
      * optically lighter and tighter at body sizes than the Text cut. Apple's
      * own guidance is to use Text below ~20pt, and naming Display explicitly
      * asked for the headline face to set 14px table cells. `-apple-system`
@@ -79,13 +79,13 @@ const themeOptions: ThemeOptions = {
      *
      * "Segoe UI Variable Text" is deliberately absent. It was added in the
      * theme rework and exists only on Windows 11, so the same build rendered
-     * one face on a Windows 11 desktop and another on a Windows 10 laptop —
+     * one face on a Windows 11 desktop and another on a Windows 10 laptop -
      * which is exactly the difference that was reported. Plain Segoe UI is on
      * both.
      *
      * Inter is deliberately NOT here. It ships for the printed documents,
      * which name it explicitly. Putting it in this stack changed the face on
-     * every machine in order to fix a difference on one — replacing what was
+     * every machine in order to fix a difference on one - replacing what was
      * right rather than repairing what was not. The weight-800 gap on Windows
      * 10 is closed by HEADING_FONT above instead.
      */
@@ -99,7 +99,7 @@ const themeOptions: ThemeOptions = {
      * faces at 800-900 and nothing else. Putting it in the stack above put it
      * in front of every word on the page: a family that matches is chosen
      * before weight is considered, so the browser then picked its nearest
-     * face — 800 — for placeholders, table cells and body copy alike. The
+     * face - 800 - for placeholders, table cells and body copy alike. The
      * login page rendered in black.
      *
      * So it is applied only where 800 is actually wanted, and it names a face
@@ -112,7 +112,7 @@ const themeOptions: ThemeOptions = {
      * (see HEADING_FONT, exported below, for the 800-only stack)
      *
      * Only h1–h6 and button were declared, so body1/body2/subtitle/caption fell
-     * through to MUI's default 400 — while styles/typography.ts declares the
+     * through to MUI's default 400 - while styles/typography.ts declares the
      * same text at 500. The result was two weights for one job: a component
      * spreading `typeScale.body` rendered at 500, and the far more common
      * `<Typography variant="body2">` rendered at 400. Most of the product was
@@ -211,14 +211,14 @@ const themeOptions: ThemeOptions = {
           padding: "10px 24px",
           // Body size, not a rung up. The old 0.95rem was between rungs and the
           // nearest was 1rem, but 16px button text against 14px body reads as
-          // oversized in a dense clinical screen — and growing every button in
+          // oversized in a dense clinical screen - and growing every button in
           // the product is the one change here that could push a tight row of
           // them off the edge. Matching body is both safer and more usual.
           fontSize: "0.875rem",
           boxShadow: "none",
         },
         // ONE action colour for every panel. Buttons deliberately do NOT follow
-        // palette.primary (the panel accent) — a primary action should look the
+        // palette.primary (the panel accent) - a primary action should look the
         // same everywhere, so "Save" in Pharmacy matches "Save" in Reception.
         // Panel identity still comes through the sidebar, icons and headings,
         // which keep their own accent.
@@ -305,7 +305,7 @@ const themeOptions: ThemeOptions = {
         },
       }
     },
-    // Every dropdown and menu — a select's list, an action menu — scrolls past
+    // Every dropdown and menu - a select's list, an action menu - scrolls past
     // DROPDOWN_MAX_HEIGHT instead of growing to the window's height, and a
     // long one can be searched (components/form/MenuListWithSearch). In the
     // theme, so a select added anywhere behaves the same without being told.
@@ -326,7 +326,7 @@ const themeOptions: ThemeOptions = {
           border: "1px solid rgba(15, 23, 42, 0.05)",
           boxShadow: "0 2px 12px rgba(0, 0, 0, 0.02)",
           // Reserve the vertical scrollbar's space so it can't appear/disappear as
-          // rows repaint on hover — the "scrollbar dance" that flickers scrollable
+          // rows repaint on hover - the "scrollbar dance" that flickers scrollable
           // tables (same trick already used for the page scrollbar).
           scrollbarGutter: "stable",
         }
@@ -381,7 +381,7 @@ export const theme = createTheme(themeOptions);
  * Build a panel-scoped theme whose primary accent is the given realm colour.
  * Each layout wraps its subtree in a ThemeProvider with one of these, so all
  * interactive elements (contained buttons, tab indicators, toggles, focused
- * inputs, links, progress) adopt that panel's accent — while semantic colours
+ * inputs, links, progress) adopt that panel's accent - while semantic colours
  * (success/error/warning) and everything else stay exactly as in the base theme.
  */
 export function createPanelTheme(main: string, dark: string) {

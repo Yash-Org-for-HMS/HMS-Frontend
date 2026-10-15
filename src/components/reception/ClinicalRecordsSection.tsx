@@ -70,7 +70,7 @@ export default function ClinicalRecordsSection({ patientId }: { patientId: strin
           {tab === 0 && <DocList items={prescriptions} empty="No prescriptions on record"
             render={(p) => ({
               title: `Prescription • ${dayjs(p.prescriptionDate).format("DD MMM YYYY")}`,
-              sub: `${p.doctorName || "—"} • ${p.items.length} medicine${p.items.length === 1 ? "" : "s"}`,
+              sub: `${p.doctorName || "-"} • ${p.items.length} medicine${p.items.length === 1 ? "" : "s"}`,
               chip: { label: p.dispensingStatus, color: p.dispensingStatus === "dispensed" ? SEMANTIC.success : SEMANTIC.warning },
             })}
             onView={(p) => setPreview({ kind: "prescription", doc: p })} />}
@@ -78,7 +78,7 @@ export default function ClinicalRecordsSection({ patientId }: { patientId: strin
           {tab === 1 && <DocList items={labOrders} empty="No lab orders on record"
             render={(o) => ({
               title: `Lab order • ${dayjs(o.orderDate).format("DD MMM YYYY")}`,
-              sub: `${o.doctorName || "—"} • ${o.tests.length} test${o.tests.length === 1 ? "" : "s"} • ${o.sampleBarcode}`,
+              sub: `${o.doctorName || "-"} • ${o.tests.length} test${o.tests.length === 1 ? "" : "s"} • ${o.sampleBarcode}`,
               chip: o.resultsReady ? { label: "Results ready", color: SEMANTIC.success } : { label: "Pending", color: SEMANTIC.warning },
             })}
             onView={(o) => setPreview({ kind: "lab", doc: o })} />}
@@ -86,7 +86,7 @@ export default function ClinicalRecordsSection({ patientId }: { patientId: strin
           {tab === 2 && <DocList items={radiologyOrders} empty="No radiology orders on record"
             render={(o) => ({
               title: `${o.scanType} • ${dayjs(o.orderDate).format("DD MMM YYYY")}`,
-              sub: `${o.doctorName || "—"} • ${o.status}`,
+              sub: `${o.doctorName || "-"} • ${o.status}`,
               chip: o.findings || o.impression ? { label: "Report ready", color: SEMANTIC.success } : { label: o.status || "Pending", color: SEMANTIC.warning },
               extra: o.reportUrl ? { href: assetUrl(o.reportUrl) } : undefined,
             })}
@@ -174,7 +174,7 @@ function PrescriptionView({ doc }: { doc: any }) {
   return (
     <Box>
       <Typography variant="body2" sx={{ color: "#6b7280", mb: 1 }}>
-        {dayjs(doc.prescriptionDate).format("DD MMM YYYY")} • {doc.doctorName || "—"}
+        {dayjs(doc.prescriptionDate).format("DD MMM YYYY")} • {doc.doctorName || "-"}
       </Typography>
       <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 1 }}>℞ Prescription</Typography>
       <table style={{ width: "100%", borderCollapse: "collapse" }}>
@@ -182,7 +182,7 @@ function PrescriptionView({ doc }: { doc: any }) {
         <tbody>
           {doc.items.map((it: any, i: number) => (
             <tr key={i}>
-              <td style={cell}>{it.medicineName || it.genericName || "—"}</td>
+              <td style={cell}>{it.medicineName || it.genericName || "-"}</td>
               <td style={cell}>{it.dosage}</td>
               <td style={cell}>{it.frequency}</td>
               <td style={cell}>{it.durationDays} days</td>
@@ -202,7 +202,7 @@ function LabView({ doc }: { doc: any }) {
   return (
     <Box>
       <Typography variant="body2" sx={{ color: "#6b7280", mb: 1 }}>
-        {dayjs(doc.orderDate).format("DD MMM YYYY")} • {doc.doctorName || "—"} • {doc.sampleBarcode}
+        {dayjs(doc.orderDate).format("DD MMM YYYY")} • {doc.doctorName || "-"} • {doc.sampleBarcode}
       </Typography>
       <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 1 }}>Lab Report</Typography>
       <table style={{ width: "100%", borderCollapse: "collapse" }}>
@@ -211,9 +211,9 @@ function LabView({ doc }: { doc: any }) {
           {doc.tests.map((t: any, i: number) => (
             <tr key={i}>
               <td style={cell}>{t.testName}{t.isCritical ? " ⚠" : ""}</td>
-              <td style={{ ...cell, fontWeight: 700, color: t.isCritical ? SEMANTIC.danger : "#111827" }}>{t.resultValue || "—"}</td>
-              <td style={cell}>{t.unit || "—"}</td>
-              <td style={cell}>{t.normalRange || "—"}</td>
+              <td style={{ ...cell, fontWeight: 700, color: t.isCritical ? SEMANTIC.danger : "#111827" }}>{t.resultValue || "-"}</td>
+              <td style={cell}>{t.unit || "-"}</td>
+              <td style={cell}>{t.normalRange || "-"}</td>
             </tr>
           ))}
         </tbody>
@@ -226,14 +226,14 @@ function RadiologyView({ doc }: { doc: any }) {
   return (
     <Box>
       <Typography variant="body2" sx={{ color: "#6b7280", mb: 1 }}>
-        {dayjs(doc.orderDate).format("DD MMM YYYY")} • {doc.doctorName || "—"}
+        {dayjs(doc.orderDate).format("DD MMM YYYY")} • {doc.doctorName || "-"}
       </Typography>
-      <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 1 }}>{doc.scanType} — Radiology Report</Typography>
+      <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 1 }}>{doc.scanType} - Radiology Report</Typography>
       {doc.findings && (<Box sx={{ mb: 1.5 }}><Typography variant="caption" sx={{ fontWeight: 700, color: "#4b5563", display: "block" }}>FINDINGS</Typography><Typography variant="body2" sx={{ color: "#374151", whiteSpace: "pre-wrap" }}>{doc.findings}</Typography></Box>)}
       {doc.impression && (<Box><Typography variant="caption" sx={{ fontWeight: 700, color: "#4b5563", display: "block" }}>IMPRESSION</Typography><Typography variant="body2" sx={{ color: "#374151", whiteSpace: "pre-wrap" }}>{doc.impression}</Typography></Box>)}
       {!doc.findings && !doc.impression && (
         <Typography variant="body2" sx={{ color: "#6b7280", fontStyle: "italic" }}>
-          No written report yet{doc.reportUrl ? " — an uploaded file is available." : "."}
+          No written report yet{doc.reportUrl ? " - an uploaded file is available." : "."}
         </Typography>
       )}
     </Box>

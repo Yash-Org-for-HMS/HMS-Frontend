@@ -22,7 +22,7 @@ import { apiErrorText, getApiErrorMessage } from "@/utils/apiError";
  * day, ward by ward. The in-charge plans the wards they run; nursing
  * administration and admins every ward. The shifts are the hospital's own ward
  * shifts (Morning / Evening / Night until it sets them in the chart settings).
- * A nurse is on one ward a shift — a shift they work elsewhere shows greyed.
+ * A nurse is on one ward a shift - a shift they work elsewhere shows greyed.
  */
 
 interface WardChoice { wardId: string; wardName: string; wardCode: string | null; canPlan: boolean }
@@ -214,7 +214,7 @@ export default function DutyRoster() {
             </TableHead>
             <TableBody>
               {q.isLoading || !w ? <TableRowsSkeleton rows={4} columns={8} /> : !rows.length ? (
-                <TableRow><TableCell colSpan={8}><Typography variant="body2" sx={{ color: "text.secondary", py: 2 }}>No nurse is posted to this ward{canPlan ? " — add one above" : ""}.</Typography></TableCell></TableRow>
+                <TableRow><TableCell colSpan={8}><Typography variant="body2" sx={{ color: "text.secondary", py: 2 }}>No nurse is posted to this ward{canPlan ? " - add one above" : ""}.</Typography></TableCell></TableRow>
               ) : rows.map((n) => (
                 <TableRow key={n.staffId} hover>
                   <TableCell>

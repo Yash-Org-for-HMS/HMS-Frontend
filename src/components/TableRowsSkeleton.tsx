@@ -2,7 +2,7 @@ import { Skeleton, TableRow, TableCell, Box, Paper } from "@mui/material";
 
 /**
  * Shimmering placeholder rows to drop straight inside an existing <TableBody>
- * while the first page of data loads — reads as "instant + loading" instead of
+ * while the first page of data loads - reads as "instant + loading" instead of
  * a centred spinner. Uses MUI <Skeleton> (theme-aware shimmer) so it's visible
  * in light mode (unlike the old hardcoded translucent-white placeholders).
  *

@@ -15,7 +15,7 @@ import { SEMANTIC } from "@/styles/accents";
  */
 
 /**
- * Mirrors HOSPITAL_DOCUMENT_IDENTITY on the server — the one select every
+ * Mirrors HOSPITAL_DOCUMENT_IDENTITY on the server - the one select every
  * document endpoint now uses. Previously this type stopped at six fields, so
  * the logo the lab receipt endpoint had always sent was dropped on the floor,
  * and `landmark`/`city` never reached the address line: printed receipts named
@@ -34,7 +34,7 @@ export interface BillHospital {
   officialEmail?: string | null;
   gstNumber?: string | null;
   logoUrl?: string | null;
-  /** The branch the document was made at — sent only when the hospital has more
+  /** The branch the document was made at - sent only when the hospital has more
    *  than one. The address, contacts and GSTIN above are already that branch's
    *  where it has its own. */
   branchName?: string | null;
@@ -60,7 +60,7 @@ export interface BillTotals {
    * Why the balance is outstanding, when a refund is the reason.
    *
    * A bill paid in full and then refunded in full shows "Balance Due ₹850",
-   * which is arithmetically right — nothing is paid any more — but on screen and
+   * which is arithmetically right - nothing is paid any more - but on screen and
    * on paper it is indistinguishable from a bill that was never paid, so the
    * desk is invited to collect it a second time. This line says which it is.
    */
@@ -160,7 +160,7 @@ export default function BillDocument({
 }
 
 /**
- * The hospital's identity block — the top of every printed document.
+ * The hospital's identity block - the top of every printed document.
  *
  * Exported because not every document is a <BillDocument>: the in-patient bill
  * groups its lines by category and has a totals panel of its own (deposits,
@@ -171,8 +171,8 @@ export function BillLetterhead({ hospital, variant = "receipt" }: { hospital?: B
   /**
    * One address line, without saying anything twice.
    *
-   * Hospitals routinely type the whole address into line 1 — the live tenant's
-   * reads "…Kudasan, Gandhinagar, Gujarat 382419" — and then fill `city` and
+   * Hospitals routinely type the whole address into line 1 - the live tenant's
+   * reads "…Kudasan, Gandhinagar, Gujarat 382419" - and then fill `city` and
    * `postalCode` as well. Joining the fields blindly printed
    * "…Gujarat 382419, Ahmedabad, 382419" on every invoice: the PIN twice, and
    * a city that contradicted the one already in the line. Later parts already
@@ -210,7 +210,7 @@ export function BillLetterhead({ hospital, variant = "receipt" }: { hospital?: B
   }
 
   /* Identity left, statutory IDs right. The IDs sit apart from the address
-     because that is what a reader scans for on a tax invoice — and keeping them
+     because that is what a reader scans for on a tax invoice - and keeping them
      out of the address block lets a long address wrap without pushing the GSTIN
      somewhere unpredictable. */
   return (
@@ -277,7 +277,7 @@ export function BillFooter({ children }: { children?: ReactNode }) {
       display: "flex", justifyContent: "space-between", gap: 16,
       fontSize: 10, color: "#9ca3af",
     }}>
-      <span>{children ?? "Computer-generated document — no signature required."}</span>
+      <span>{children ?? "Computer-generated document - no signature required."}</span>
       <span style={{ flexShrink: 0 }}>Printed {formatDateTime(new Date())}</span>
     </div>
   );
@@ -286,7 +286,7 @@ export function BillFooter({ children }: { children?: ReactNode }) {
 function MetaLine({ label, value }: BillMetaItem) {
   return (
     <div style={{ marginBottom: 3 }}>
-      <span style={{ fontWeight: 700, color: "#4b5563" }}>{label}:</span> {value ?? "—"}
+      <span style={{ fontWeight: 700, color: "#4b5563" }}>{label}:</span> {value ?? "-"}
     </div>
   );
 }

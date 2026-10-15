@@ -67,7 +67,7 @@ export default function ConsultationWorkspace() {
   const [tabIndex, setTabIndex] = useState(0);
   const [aiOpen, setAiOpen] = useState(false);
   const [rightTabIndex, setRightTabIndex] = useState(0);
-  // Lab & radiology ordering is part of the Laboratory module — hide those tabs
+  // Lab & radiology ordering is part of the Laboratory module - hide those tabs
   // when the hospital's plan doesn't include it (the API also rejects the order).
   const { isModuleEnabled } = useEnabledModules();
   const labEnabled = isModuleEnabled("Laboratory");
@@ -124,7 +124,7 @@ export default function ConsultationWorkspace() {
       const res = await axiosInstance.get(`/doctor/consultation/patients/${patientId}/history`);
       setHistory(res.data.data);
     } catch (err: unknown) {
-      // Surfaced distinctly from "no history" below — a fetch failure must not
+      // Surfaced distinctly from "no history" below - a fetch failure must not
       // look identical to a patient who genuinely has no past consultations.
       setHistoryError(getApiErrorMessage(err, "Failed to load consultation history"));
     }
@@ -273,7 +273,7 @@ export default function ConsultationWorkspace() {
               {saveStatus === "saved" && <CloudDoneRounded sx={{ fontSize: 18, color: "#16a34a" }} />}
               {saveStatus === "error" && <CloudOffRounded sx={{ fontSize: 18, color: SEMANTIC.danger }} />}
               <Typography variant="caption" sx={{ color: saveStatus === "error" ? SEMANTIC.danger : "text.secondary", fontWeight: 600 }}>
-                {saveStatus === "saving" ? "Saving…" : saveStatus === "saved" ? "All changes saved" : "Save failed — retrying on next edit"}
+                {saveStatus === "saving" ? "Saving…" : saveStatus === "saved" ? "All changes saved" : "Save failed - retrying on next edit"}
               </Typography>
             </Box>
           )}
@@ -282,7 +282,7 @@ export default function ConsultationWorkspace() {
             onClick={() => setAiOpen((v) => !v)}
             startIcon={<DexGlyph size={18} />}
             // Flat brand, matching every other primary action on this toolbar.
-            // This button carried a THIRD gradient — blue into violet #8b5cf6 —
+            // This button carried a THIRD gradient - blue into violet #8b5cf6 -
             // which sat beside the panel's own sky-to-navy one and the plain
             // indigo "Complete Consultation" button, three treatments for the
             // same accent in a single header.
@@ -536,7 +536,7 @@ export default function ConsultationWorkspace() {
         </Grid>
       </Grid>
 
-      {/* Dr. Dex — non-modal slide-over. No backdrop/dimming, so the notes stay
+      {/* Dr. Dex - non-modal slide-over. No backdrop/dimming, so the notes stay
           visible + interactive beside it. Kept ALWAYS mounted (slid off-screen
           when closed) so the briefing + chat persist for the whole visit. */}
       {aiOpen && (

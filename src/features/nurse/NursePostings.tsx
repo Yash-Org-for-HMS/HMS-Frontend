@@ -17,7 +17,7 @@ import { apiErrorText, getApiErrorMessage } from "@/utils/apiError";
 import { useClientPage } from "@/components/table/useClientPage";
 
 /**
- * Ward postings — Nursing Administration's (15_System_Roles: "all wards:
+ * Ward postings - Nursing Administration's (15_System_Roles: "all wards:
  * roster, postings, nurse reports"). Which ward each nurse works on, changed
  * in place. The server keeps the previous posting as history, the same as the
  * Staff Directory, and refuses anyone who is not nursing staff.
@@ -121,8 +121,8 @@ export default function NursePostings() {
               ) : shown.map((n) => (
                 <TableRow key={n.staffId} hover>
                   <TableCell sx={{ fontWeight: 600 }}>{n.name}</TableCell>
-                  <TableCell>{n.designationName ?? "—"}</TableCell>
-                  <TableCell>{n.branchName ?? "—"}</TableCell>
+                  <TableCell>{n.designationName ?? "-"}</TableCell>
+                  <TableCell>{n.branchName ?? "-"}</TableCell>
                   <TableCell>
                     <TextField
                       select size="small" fullWidth value={n.posting?.wardId ?? ""}

@@ -5,7 +5,7 @@
  * seven hand-rolled copies of this all printed unstyled pages once built:
  *
  *   Emotion switches to CSSOM `insertRule()` in production, leaving the
- *   <style data-emotion> tags EMPTY in the DOM — `outerHTML` copies nothing.
+ *   <style data-emotion> tags EMPTY in the DOM - `outerHTML` copies nothing.
  *   So rules are read off `sheet.cssRules`, not the tag's text.
  *
  *   Vite emits app CSS as an external <link> in a build but injects it via JS
@@ -17,7 +17,7 @@
  * Undo the parts of the app's own baseline that only make sense on screen.
  *
  * Carrying the real CSS across brings MUI's CssBaseline with it, and that paints
- * the app's grey page background — invisible on most printers, which drop
+ * the app's grey page background - invisible on most printers, which drop
  * backgrounds by default, but a full grey sheet for anyone who has "background
  * graphics" switched on. Written before `extraCss` so a caller can still override.
  */
@@ -31,7 +31,7 @@ const CLEANUP_MS = 1000;
 /**
  * The document's CSS as markup safe to write elsewhere, in cascade order.
  *
- * <link> is copied verbatim — its URLs resolve against the stylesheet's own
+ * <link> is copied verbatim - its URLs resolve against the stylesheet's own
  * location, which re-serialising would lose. <style> is copied verbatim when it
  * has text; only an empty tag is read from the CSSOM (the Emotion case above).
  */
@@ -61,7 +61,7 @@ function collectHeadCss(): string {
 
 /**
  * Resolves once the iframe's stylesheets have loaded and its fonts have settled
- * — or once the cap expires, whichever comes first.
+ * - or once the cap expires, whichever comes first.
  *
  * The cap is the important half: a stylesheet that 404s or a font server that
  * hangs must not leave the user pressing a Print button that does nothing. Late
@@ -82,7 +82,7 @@ function whenReady(doc: Document): Promise<void> {
             link.addEventListener("error", () => resolve(), { once: true });
           }),
   );
-  // Fonts change line breaks, so they change pagination — worth settling for.
+  // Fonts change line breaks, so they change pagination - worth settling for.
   const fonts = doc.fonts?.ready?.then(() => undefined) ?? Promise.resolve();
 
   return Promise.race([
@@ -92,14 +92,14 @@ function whenReady(doc: Document): Promise<void> {
 }
 
 export interface PrintOptions {
-  /** Document title — what most browsers offer as the default filename. */
+  /** Document title - what most browsers offer as the default filename. */
   title?: string;
   /** Page setup and overrides for this document, appended after the app's CSS. */
   extraCss?: string;
 }
 
 /**
- * Print `bodyHtml` — already-rendered markup, typically `someRef.innerHTML` —
+ * Print `bodyHtml` - already-rendered markup, typically `someRef.innerHTML` -
  * styled the way it appears on screen.
  */
 export function printHtml(bodyHtml: string, options: PrintOptions = {}): void {

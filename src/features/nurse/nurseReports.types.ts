@@ -1,5 +1,5 @@
 /**
- * GET /nurse/reports — one payload sliced by every sub-report on the page,
+ * GET /nurse/reports - one payload sliced by every sub-report on the page,
  * mirrored from backend/src/modules/nurse/reports.controller.ts.
  *
  * The IPD registers this page also shows (in-patients, discharges, IP
@@ -17,7 +17,7 @@ export interface NurseReportSummary {
 
 /**
  * One vitals reading. `flags` names the values that fell outside their normal
- * range — it is what makes a row "abnormal", so the abnormal register is the
+ * range - it is what makes a row "abnormal", so the abnormal register is the
  * same shape, already filtered.
  */
 export interface VitalsRow {
@@ -26,7 +26,7 @@ export interface VitalsRow {
   uhid: string;
   temperatureC?: number | null;
   pulse?: number | null;
-  /** Pre-joined "120/80" — systolic and diastolic are not sent separately. */
+  /** Pre-joined "120/80" - systolic and diastolic are not sent separately. */
   bp?: string | null;
   oxygenSaturation?: number | null;
   bloodSugarLevel?: number | null;
@@ -48,7 +48,7 @@ export interface NurseReportsData {
   abnormalList: VitalsRow[];
   byStaff: { staffName: string; count: number }[];
   /**
-   * Page state for each register separately — they page on their own keys
+   * Page state for each register separately - they page on their own keys
    * (vitalsPage/vitalsLimit, abnormalPage/abnormalLimit) because one shared
    * `page` would move both tables at once.
    */

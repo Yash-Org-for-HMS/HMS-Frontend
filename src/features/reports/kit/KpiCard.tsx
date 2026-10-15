@@ -9,7 +9,7 @@ export interface KpiCardProps {
   label: string;
   /** Preformatted display value (e.g. "₹84,200", "142", "63%"). */
   value: ReactNode;
-  /** Raw current value — needed to compute the delta vs `previous`. */
+  /** Raw current value - needed to compute the delta vs `previous`. */
   current?: number;
   /** Raw previous-period value; when present a ▲/▼ delta chip is shown. */
   previous?: number | null;
@@ -30,7 +30,7 @@ export interface KpiCardProps {
 
 /**
  * The single KPI tile for reports: a headline number that also answers "which
- * way is it moving?" via a delta vs the previous period — so a metric reads as
+ * way is it moving?" via a delta vs the previous period - so a metric reads as
  * insight, not a bare figure.
  */
 export default function KpiCard({
@@ -41,7 +41,7 @@ export default function KpiCard({
   // A percentage off a tiny baseline overstates the change (2 orders becoming
   // 12 is "+500%"), so below MIN_PCT_BASELINE show the plain difference.
   //
-  // Magnitude only, in BOTH modes — the arrow beside it already carries the
+  // Magnitude only, in BOTH modes - the arrow beside it already carries the
   // direction. Signing the absolute value made a drop of one render as "↓ -1",
   // reading as a double negative, while the percentage mode next to it showed a
   // bare "96.6%"; the same chip disagreed with itself about whether the sign
@@ -73,7 +73,7 @@ export default function KpiCard({
     >
       {/* The label gets the full row beside the icon. It used to share that row
           with the delta chip, which left roughly half the width for a caption
-          like "AVG TIME TO RESULT" — it wrapped onto three lines and pushed the
+          like "AVG TIME TO RESULT" - it wrapped onto three lines and pushed the
           value down, so cards in the same grid disagreed on where the number
           sat. The chip now rides with the value, which is short. */}
       <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, minWidth: 0 }}>
@@ -88,7 +88,7 @@ export default function KpiCard({
         {/* Says the tile opens something, before you touch it.
             Some tiles in a grid link to a register and some have no register
             to open, and the only thing separating them was a border colour on
-            hover — which you cannot see until the pointer is already on the
+            hover - which you cannot see until the pointer is already on the
             card, and never on a touch screen. The chevron makes the difference
             visible at rest. It deepens on hover so the affordance still
             responds. */}

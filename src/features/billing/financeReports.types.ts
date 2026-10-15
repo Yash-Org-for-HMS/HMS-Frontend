@@ -6,7 +6,7 @@ import type { Money } from "@/types";
  *
  * Nearly every amount here is a Prisma Decimal passed straight through, so it
  * arrives as a decimal STRING and must go through Number() before arithmetic or
- * comparison — the controller only calls `.toNumber()` in a few places, and
+ * comparison - the controller only calls `.toNumber()` in a few places, and
  * those are typed `number` deliberately.
  */
 
@@ -189,7 +189,7 @@ export interface DoctorProductivityRow {
   doctor: string;
   appointments: number;
   completed: number;
-  /** Percentage, one decimal — computed server-side. */
+  /** Percentage, one decimal - computed server-side. */
   completionRate: number;
   consultations: number;
   revenue: Money;

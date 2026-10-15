@@ -120,17 +120,17 @@ export default function DoctorDashboard() {
 
       {/* Critical results this doctor ordered and hasn't acknowledged. The
           acknowledgement is the ordering clinician's, so this is the only
-          genuinely time-critical thing on a doctor's screen — and it wasn't on
+          genuinely time-critical thing on a doctor's screen - and it wasn't on
           it at all. */}
       {criticalResults.length > 0 && (
         <Box sx={{ mb: 4 }}>
           <AttentionList
             title="Critical results awaiting your acknowledgement"
-            subtitle="Oldest first — these were flagged critical on tests you ordered"
+            subtitle="Oldest first - these were flagged critical on tests you ordered"
             items={criticalResults.map((c: any) => ({
               id: c.labReportId,
-              primary: `${c.patientName} — ${c.testName}`,
-              secondary: `Result: ${c.resultValue ?? "—"}`,
+              primary: `${c.patientName} - ${c.testName}`,
+              secondary: `Result: ${c.resultValue ?? "-"}`,
               meta: hoursSince(c.reportedAt),
               severity: "critical" as const,
               icon: <CrisisAlertRounded sx={{ fontSize: 18 }} />,
@@ -148,13 +148,13 @@ export default function DoctorDashboard() {
             <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3, gap: 2, flexWrap: "wrap" }}>
               <Box>
                 {/* Was "Upcoming Schedule / Your next scheduled appointments"
-                    over a list that never excluded times already past — so a
+                    over a list that never excluded times already past - so a
                     patient waiting seven hours read as upcoming. */}
                 <Typography variant="h6" sx={{ fontWeight: 700, color: "text.primary" }}>
                   Today's Patients
                 </Typography>
                 <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                  In appointment order — waiting time shown for anyone checked in
+                  In appointment order - waiting time shown for anyone checked in
                 </Typography>
               </Box>
               <Button

@@ -151,7 +151,7 @@ export default function ClaimForm() {
           <Grid size={{ xs: 12, sm: 6 }} >
             <Box sx={{ display: "flex", gap: 1 }}>
               <TextField select fullWidth label="Payer / TPA" value={form.payerId} onChange={(e) => set("payerId", e.target.value)}>
-                <MenuItem value="">— None —</MenuItem>
+                <MenuItem value="">- None -</MenuItem>
                 {payerOptions.map((p: any) => <MenuItem key={p.payerId} value={p.payerId}>{p.payerName}</MenuItem>)}
               </TextField>
               <Button size="small" onClick={() => setPayerOpen(true)} sx={{ whiteSpace: "nowrap", color: ACCENT }} startIcon={<AddRounded />}>Add</Button>
@@ -173,7 +173,7 @@ export default function ClaimForm() {
             <TextField fullWidth label="Portal reference (CCN)" value={form.portalReference} onChange={(e) => set("portalReference", e.target.value)} />
           </Grid>
 
-          <Grid size={12} ><Divider><Typography variant="caption" sx={{ color: "text.secondary" }}>Amounts (₹) — fill in as the case progresses</Typography></Divider></Grid>
+          <Grid size={12} ><Divider><Typography variant="caption" sx={{ color: "text.secondary" }}>Amounts (₹) - fill in as the case progresses</Typography></Divider></Grid>
           <Grid size={{ xs: 12, sm: 6, md: 4 }} ><TextField fullWidth type="number" label="Estimated cost" value={form.estimatedCost} onChange={(e) => set("estimatedCost", e.target.value)} /></Grid>
           <Grid size={{ xs: 12, sm: 6, md: 4 }} ><TextField fullWidth type="number" label="Pre-auth requested" value={form.preAuthRequestedAmount} onChange={(e) => set("preAuthRequestedAmount", e.target.value)} /></Grid>
           <Grid size={{ xs: 12, sm: 6, md: 4 }} ><TextField fullWidth type="number" label="Pre-auth approved" value={form.preAuthApprovedAmount} onChange={(e) => set("preAuthApprovedAmount", e.target.value)} /></Grid>
@@ -182,7 +182,7 @@ export default function ClaimForm() {
             <TextField fullWidth type="number" label="Room rent limit / day" value={form.roomRentLimit} onChange={(e) => set("roomRentLimit", e.target.value)}
               helperText="From the policy. The patient's room is checked against it." />
           </Grid>
-          {/* "Settled" is not editable here — it's recorded via the Record-settlement
+          {/* "Settled" is not editable here - it's recorded via the Record-settlement
               action on the claim (which books the payer payment + audit trail). */}
 
           <Grid size={12} ><TextField fullWidth multiline rows={2} label="Remarks" value={form.remarks} onChange={(e) => set("remarks", e.target.value)} /></Grid>

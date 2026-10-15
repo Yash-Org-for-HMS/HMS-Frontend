@@ -43,7 +43,7 @@ export default function TrialBanner() {
       ? "Your trial has ended"
       : days === 0
       ? "Your trial ends today"
-      : `Trial — ${days} day${days === 1 ? "" : "s"} remaining`;
+      : `Trial - ${days} day${days === 1 ? "" : "s"} remaining`;
 
   const endText = data.endDate
     ? new Date(data.endDate).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })

@@ -93,7 +93,7 @@ function TabLabel({ text, flag }: { text: string; flag?: boolean }) {
 
 export default function HospitalProfile() {
   const { user, hospital, updateHospital } = useHospitalAuth();
-  // The backend only lets H_ADMIN edit the hospital profile — mirror that here
+  // The backend only lets H_ADMIN edit the hospital profile - mirror that here
   // so staff see a read-only view instead of filling out a form that 403s on save.
   const canEdit = hasRole(user, "H_ADMIN");
   const navigate = useNavigate();
@@ -160,8 +160,8 @@ export default function HospitalProfile() {
    *
    * Every panel stays mounted (hidden with `visibility`, so the card does not
    * resize between tabs), which meant the browser's own `required` check found
-   * an empty control it could not focus — "An invalid form control is not
-   * focusable" — and blocked the save with nothing visible to act on. You
+   * an empty control it could not focus - "An invalid form control is not
+   * focusable" - and blocked the save with nothing visible to act on. You
    * filled in General, pressed Save, and either nothing happened or a "fill out
    * this field" bubble pointed at a field on a tab you were not looking at.
    *
@@ -191,8 +191,8 @@ export default function HospitalProfile() {
    * wrong is on the screen you are already looking at. The old single Save
    * checked all three at once and pointed at fields two tabs away.
    *
-   * The tab strip stays clickable on purpose — an existing hospital changing
-   * one GST number should not have to walk the whole path — so this is a guided
+   * The tab strip stays clickable on purpose - an existing hospital changing
+   * one GST number should not have to walk the whole path - so this is a guided
    * route, not a cage.
    */
   const goNext = () => {
@@ -240,7 +240,7 @@ export default function HospitalProfile() {
   };
 
   /**
-   * Save, called directly — never as a form submission from a button click.
+   * Save, called directly - never as a form submission from a button click.
    *
    * The Next and Save buttons occupy the same slot in the footer, so React
    * reuses the SAME <button> node between steps and simply changes its
@@ -266,7 +266,7 @@ export default function HospitalProfile() {
       setTabValue(first.tab);
       toast.error(
         missingFields.length === 1
-          ? `${first.label} is required — it's on the ${TAB_LABELS[first.tab]} tab.`
+          ? `${first.label} is required - it's on the ${TAB_LABELS[first.tab]} tab.`
           : `${missingFields.length} required fields are still empty. Starting with ${first.label}, on the ${TAB_LABELS[first.tab]} tab.`,
       );
       return;
@@ -286,7 +286,7 @@ export default function HospitalProfile() {
   };
 
   /**
-   * Reached only by the Enter key now — no button submits this form.
+   * Reached only by the Enter key now - no button submits this form.
    *
    * Enter still means "move on" until the last step, so it never runs a save
    * from a step where Save is not even on screen.
@@ -320,16 +320,16 @@ export default function HospitalProfile() {
     <Box sx={{ maxWidth: FORM_PAGE_WIDTH, mx: "auto", width: "100%" }}>
       <PageHeader
         title="Organisation profile"
-        subtitle="The organisation as a whole — its name, branding, registered address and compliance details."
+        subtitle="The organisation as a whole - its name, branding, registered address and compliance details."
       />
       {/* This page is the group's; each branch's own address and registration are on Branches. */}
       <Alert severity="info" sx={{ mb: 2 }}
         action={canEdit ? <Button color="inherit" size="small" onClick={() => navigate("/hospital/branches")} sx={{ textTransform: "none", fontWeight: 700, whiteSpace: "nowrap" }}>Open Branches</Button> : undefined}>
-        These are the defaults for every branch. Each branch's own address, phone, GSTIN and logo are set under Branches — a branch prints its own where filled, and these where not.
+        These are the defaults for every branch. Each branch's own address, phone, GSTIN and logo are set under Branches - a branch prints its own where filled, and these where not.
       </Alert>
       {!canEdit && (
         <Alert severity="info" sx={{ mb: 2 }}>
-          You're viewing this in read-only mode — only a hospital admin can edit these details.
+          You're viewing this in read-only mode - only a hospital admin can edit these details.
         </Alert>
       )}
       {canEdit && (!formData.officialPhone || !formData.addressLine1 || !formData.registrationNumber) && (
@@ -510,7 +510,7 @@ export default function HospitalProfile() {
                       overflow: "hidden",
                     }}
                   >
-                    {/* Whatever the sidebar is showing, shown here — including the
+                    {/* Whatever the sidebar is showing, shown here - including the
                         default when a logo was uploaded but its file has gone.
                         An admin deciding whether to upload one should be looking
                         at what their staff actually see, not the words "No Logo"
@@ -632,7 +632,7 @@ export default function HospitalProfile() {
 
               {/* Both `type="button"`, and given distinct keys so React builds a
                   NEW element for each rather than reusing one node and swapping
-                  its type mid-click — which is what made Next save the profile.
+                  its type mid-click - which is what made Next save the profile.
                   Neither ever triggers a form submission; each calls what it
                   says. */}
               {isLastTab ? (

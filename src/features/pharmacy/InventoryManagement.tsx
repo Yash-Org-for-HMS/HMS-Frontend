@@ -45,7 +45,7 @@ const HEAD_SX = {
 const isExpired = (expiryDate: string | Date) => new Date(expiryDate) < new Date();
 
 /**
- * Colour for a single batch's quantity — a property of that batch, not of the
+ * Colour for a single batch's quantity - a property of that batch, not of the
  * medicine. Marks the exceptions and leaves a healthy batch neutral: an expired
  * batch is stock nobody may dispense, and a zero batch is spent rather than
  * alarming, so neither should wear the "in stock" green.
@@ -60,7 +60,7 @@ function batchQtyColor(inv: { expiryDate: string | Date; availableQuantity: numb
  * How each purchase-order status reads.
  *
  * A map, not a chain of ternaries, because the chain only tested `pending` and
- * `partial` and painted EVERYTHING ELSE green — so a CANCELLED order rendered
+ * `partial` and painted EVERYTHING ELSE green - so a CANCELLED order rendered
  * as a success pill, reading "done" when it means "abandoned". There are five
  * statuses (pending, partial, received, completed, cancelled) and the two the
  * chain forgot are the two that matter most on a list somebody scans for what
@@ -81,7 +81,7 @@ const CARD_RADIUS = 3;
  * How tall a table may grow before it scrolls inside its own container.
  *
  * Was `calc(100vh - 300px)` written out three times. The 300 was nobody's
- * measurement — at browser zoom, or on a 768px-tall laptop, it left the table a
+ * measurement - at browser zoom, or on a 768px-tall laptop, it left the table a
  * couple of rows tall. Named once so the three tabs cannot drift apart, and
  * floored so it degrades to "short but usable" instead of "two rows".
  */
@@ -117,7 +117,7 @@ export default function InventoryManagement() {
   const [traceItem, setTraceItem] = useState<any>(null);
   // Sending a batch back to the supplier for credit, rather than writing it off.
   const [returnItem, setReturnItem] = useState<any>(null);
-  // Depleted batches are hidden by default — nothing can be done with one but
+  // Depleted batches are hidden by default - nothing can be done with one but
   // read its history, and they accumulate for ever.
   const [hideDepleted, setHideDepleted] = useState(true);
 
@@ -133,7 +133,7 @@ export default function InventoryManagement() {
   const [poPage, setPoPage] = useState(1);
   const [alertPage, setAlertPage] = useState(1);
 
-  // Current Stock search — a batch just received sorts wherever its expiry
+  // Current Stock search - a batch just received sorts wherever its expiry
   // date lands (default sort is expiry ascending), so a fresh top-up can end
   // up several pages in. Searching by medicine/batch finds it regardless of
   // page or sort, instead of the receiving pharmacist having to page through.
@@ -148,14 +148,14 @@ export default function InventoryManagement() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const didMount = useRef(false);
 
-  // Dialog triggers — each dialog owns its own form state internally.
+  // Dialog triggers - each dialog owns its own form state internally.
   const [openPoDialog, setOpenPoDialog] = useState(false);
   const [openAutoDialog, setOpenAutoDialog] = useState(false);
   const [receivePo, setReceivePo] = useState<any>(null);
   const [editInvItem, setEditInvItem] = useState<any>(null);
   const [detailPoId, setDetailPoId] = useState<string | null>(null);
 
-  // Reference data (full, not paginated) — used for name lookups and the
+  // Reference data (full, not paginated) - used for name lookups and the
   // Create PO / Receive dialogs' dropdowns. Also includes low-stock alerts,
   // which are computed by a full scan and paginated client-side.
   const fetchReference = async () => {
@@ -217,7 +217,7 @@ export default function InventoryManagement() {
     }
   };
 
-  // Reload when the active branch changes — this page fetches imperatively, so
+  // Reload when the active branch changes - this page fetches imperatively, so
   // BranchSwitcher's react-query invalidation doesn't cover it. The axios
   // interceptor already carries the new X-Branch-Id by the time this runs.
   useEffect(() => {
@@ -266,12 +266,12 @@ export default function InventoryManagement() {
 
   // Which medicines are ACTUALLY low, per the same definition Low Stock Alerts
   // uses (total available across every batch vs. that medicine's own
-  // minStockLevel) — not a single batch's own remaining quantity against the
+  // minStockLevel) - not a single batch's own remaining quantity against the
   // fixed reorderLevel every batch is created with. A batch with 2 units left
   // isn't "low stock" if the medicine has 200 more sitting in a newer batch;
   // coloring by the per-batch number was flagging dozens of nearly-depleted
-  // (but individually fine) batches as warnings while Low Stock Alerts —
-  // correctly looking at the real total — showed nothing, which read as the
+  // (but individually fine) batches as warnings while Low Stock Alerts -
+  // correctly looking at the real total - showed nothing, which read as the
   // alert being broken.
   //
   // Low stock is per branch: an alert row names its branch, and a batch is
@@ -313,7 +313,7 @@ export default function InventoryManagement() {
     await Promise.all([fetchPurchaseOrders(1), fetchReference()]);
   };
   const afterReceived = async () => {
-    // Receiving changes stock, PO status, and alerts — refresh all three.
+    // Receiving changes stock, PO status, and alerts - refresh all three.
     await Promise.all([fetchInventory(stockPage), fetchPurchaseOrders(poPage), fetchReference()]);
   };
 
@@ -355,7 +355,7 @@ export default function InventoryManagement() {
           {canTransfer && <Tab value={4} label="Transfers" sx={{ fontWeight: 600 }} />}
         </Tabs>
 
-        {/* Shared action bar — always rendered so height never shifts between tabs */}
+        {/* Shared action bar - always rendered so height never shifts between tabs */}
         <Box sx={{
           px: 2, py: 1.5,
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
@@ -437,7 +437,7 @@ export default function InventoryManagement() {
                     <SortableHeadCell label="Batch No." sortKey="batch" orderBy={stockSort.orderBy} order={stockSort.order} onSort={stockSort.onSort} sx={HEAD_SX} />
                     <SortableHeadCell label="Expiry Date" sortKey="expiry" orderBy={stockSort.orderBy} order={stockSort.order} onSort={stockSort.onSort} sx={HEAD_SX} />
                     <SortableHeadCell label="Batch Qty" sortKey="quantity" orderBy={stockSort.orderBy} order={stockSort.order} onSort={stockSort.onSort} sx={HEAD_SX} />
-                    <Tooltip title="This medicine's total usable stock across every non-expired batch — the number that goes up when you receive a PO into a new batch">
+                    <Tooltip title="This medicine's total usable stock across every non-expired batch - the number that goes up when you receive a PO into a new batch">
                       <TableCell sx={{ fontWeight: 700 }}>Total (all batches)</TableCell>
                     </Tooltip>
                     <TableCell sx={{ fontWeight: 700 }}>Supplier</TableCell>
@@ -499,7 +499,7 @@ export default function InventoryManagement() {
                             <TuneRounded fontSize="small" />
                           </IconButton>
                         </Tooltip>
-                        <Tooltip title="Who has this batch — recall trace">
+                        <Tooltip title="Who has this batch - recall trace">
                           <IconButton size="small" onClick={() => setTraceItem(inv)}>
                             <PersonSearchRounded fontSize="small" />
                           </IconButton>
@@ -538,7 +538,7 @@ export default function InventoryManagement() {
                   {purchaseOrders.length === 0 ? (
                     <TableRow><TableCell colSpan={6} sx={{ py: 3, border: 0 }}><Mascot pose="nothing-here-yet" subtitle="No purchase orders." size={110} /></TableCell></TableRow>
                   ) : purchaseOrders.map(po => {
-                    // Not shown anywhere else on this list — without it, "did receiving
+                    // Not shown anywhere else on this list - without it, "did receiving
                     // actually add anything?" had no persistent answer once the
                     // post-receive toast faded, only the (unlabeled) status pill.
                     const totalOrdered = (po.items || []).reduce((s: number, i: any) => s + i.orderedQuantity, 0);
@@ -591,7 +591,7 @@ export default function InventoryManagement() {
               <PaginationBar page={poPage} pageCount={poPageCount} total={poTotal} onChange={setPoPage} />
             </Box>
 
-            {/* Tab 2: Supplier Returns — mounted only when open, so the
+            {/* Tab 2: Supplier Returns - mounted only when open, so the
                 register is not fetched on every visit to Current Stock. */}
             {tabValue === 2 && (
               <Box role="tabpanel">
@@ -615,11 +615,11 @@ export default function InventoryManagement() {
                 </TableHead>
                 <TableBody>
                   {lowStockAlerts.length === 0 ? (
-                    <TableRow><TableCell colSpan={alertsSpanBranches ? 6 : 5} sx={{ py: 3, border: 0 }}><Mascot pose="all-caught-up" subtitle="No low stock alerts — stock is healthy." size={110} /></TableCell></TableRow>
+                    <TableRow><TableCell colSpan={alertsSpanBranches ? 6 : 5} sx={{ py: 3, border: 0 }}><Mascot pose="all-caught-up" subtitle="No low stock alerts - stock is healthy." size={110} /></TableCell></TableRow>
                   ) : paginatedAlerts.map(alert => (
                     <TableRow key={`${alert.medicineId}|${alert.branchId ?? ""}`} hover>
                       <TableCell sx={{ fontWeight: 600, color: BRAND.action }}>{alert.medicineName}</TableCell>
-                      {alertsSpanBranches && <TableCell sx={{ whiteSpace: 'nowrap' }}>{alert.branchName ?? "—"}</TableCell>}
+                      {alertsSpanBranches && <TableCell sx={{ whiteSpace: 'nowrap' }}>{alert.branchName ?? "-"}</TableCell>}
                       <TableCell sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}>
                         {alert.minStockLevel}
                         {alert.ownLevel && (
@@ -677,7 +677,7 @@ export default function InventoryManagement() {
               <PaginationBar page={alertPage} pageCount={alertPageCount} total={lowStockAlerts.length} onChange={setAlertPage} />
             </Box>
 
-            {/* Tab 4: Transfers between branches — mounted only when open. */}
+            {/* Tab 4: Transfers between branches - mounted only when open. */}
             {tabValue === 4 && canTransfer && transferBranches.data && (
               <Box role="tabpanel">
                 <StockTransfersTab

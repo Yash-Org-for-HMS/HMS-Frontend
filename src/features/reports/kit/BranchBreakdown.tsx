@@ -2,7 +2,7 @@ import SimpleTable from "./SimpleTable";
 import { formatINR } from "@/utils/format";
 
 /**
- * "By branch" — every branch side by side, for a report looked at across all
+ * "By branch" - every branch side by side, for a report looked at across all
  * of them (multi-branch plan, phase 7). The server sends the rows only in that
  * view, tallied from the same records as the report's totals, so the Total
  * row here is the report's own figure. Records that predate branches come as
@@ -13,7 +13,7 @@ export interface BranchColumn {
   key: string;
   label: string;
   kind?: "money" | "count" | "percent";
-  /** For a ratio (an occupancy %): worked out from the row's own figures, and for the Total from the totals — never summed. */
+  /** For a ratio (an occupancy %): worked out from the row's own figures, and for the Total from the totals - never summed. */
   derive?: (row: Record<string, number>) => number;
 }
 

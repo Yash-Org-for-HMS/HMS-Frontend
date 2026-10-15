@@ -16,7 +16,7 @@ interface Props {
 
 /**
  * Correct a mis-entered batch number / expiry date on an already-received
- * inventory row. Quantity isn't editable here — that only moves via a tracked
+ * inventory row. Quantity isn't editable here - that only moves via a tracked
  * stock transaction (receiving, dispensing, ward issue/return).
  *
  * Extracted verbatim from InventoryManagement; owns only its own form state.
@@ -57,7 +57,7 @@ export default function EditBatchDialog({ item, onClose, getMedicineName, onSave
 
   return (
     <Dialog open={!!item} onClose={onClose} maxWidth="xs" fullWidth>
-      <DialogTitle>Edit Batch — {item ? getMedicineName(item.medicineId) : ""}</DialogTitle>
+      <DialogTitle>Edit Batch - {item ? getMedicineName(item.medicineId) : ""}</DialogTitle>
       <DialogContent dividers sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: 3 }}>
         <TextField
           label="Batch No."
@@ -76,7 +76,7 @@ export default function EditBatchDialog({ item, onClose, getMedicineName, onSave
           required
         />
         <Typography variant="caption" color="text.secondary">
-          Quantity isn't editable here — it only changes via receiving, dispensing, or ward stock issue/return.
+          Quantity isn't editable here - it only changes via receiving, dispensing, or ward stock issue/return.
         </Typography>
       </DialogContent>
       <DialogActions>
