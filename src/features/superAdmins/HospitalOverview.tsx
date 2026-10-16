@@ -211,12 +211,12 @@ export default function HospitalOverview() {
 
         {/* Stat tiles */}
         <Grid container spacing={2} sx={{ mt: 2 }}>
-          <Grid size={{ xs: 6, md: 3 }}><StatCard layout="horizontal" icon={<ApartmentRounded />} label="Branches" value={quotas?.branches?.used ?? data.branches?.length ?? 0} sub={quotaText(quotas?.branches)} color={ACCENT} /></Grid>
-          <Grid size={{ xs: 6, md: 3 }}><StatCard layout="horizontal" icon={<MedicalServicesRounded />} label="Doctors" value={quotas?.doctors?.used ?? data._count?.doctors ?? 0} sub={quotaText(quotas?.doctors)} color={SEMANTIC.success} /></Grid>
-          <Grid size={{ xs: 6, md: 3 }}><StatCard layout="horizontal" icon={<PeopleRounded />} label="Patients" value={data._count?.patients || 0} color={SEMANTIC.warning} /></Grid>
+          <Grid size={{ xs: 6, md: 3 }}><StatCard layout="horizontal" icon={<ApartmentRounded />} label="Branches" info="Every branch this hospital has, closed ones included. Below: how many its plan allows." value={quotas?.branches?.used ?? data.branches?.length ?? 0} sub={quotaText(quotas?.branches)} color={ACCENT} /></Grid>
+          <Grid size={{ xs: 6, md: 3 }}><StatCard layout="horizontal" icon={<MedicalServicesRounded />} label="Doctors" info="Doctor records registered at this hospital. Doctors are not capped on their own; they count as logins." value={quotas?.doctors?.used ?? data._count?.doctors ?? 0} sub={quotaText(quotas?.doctors)} color={SEMANTIC.success} /></Grid>
+          <Grid size={{ xs: 6, md: 3 }}><StatCard layout="horizontal" icon={<PeopleRounded />} label="Patients" info="Patient records registered at this hospital, across all its branches." value={data._count?.patients || 0} color={SEMANTIC.warning} /></Grid>
           <Grid size={{ xs: 6, md: 3 }}>
             {/* Logins that can sign in, against this hospital's user capacity - which the super admin sets here. */}
-            <StatCard layout="horizontal" icon={<AccountCircleRounded />} label="Logins"
+            <StatCard layout="horizontal" icon={<AccountCircleRounded />} label="Logins" info="Active, not-deleted user logins at this hospital. Below: the limit, which is the one you set for this hospital, else its plan's, else the standard limit."
               value={quotas?.users?.used ?? data._count?.users ?? 0}
               sub={quotas?.users ? `of ${quotas.users.limit} allowed · ${quotas.users.source === "hospital" ? "set for this hospital" : quotas.users.source === "plan" ? "plan's limit" : "standard limit"}` : undefined}
               color={quotas?.users && quotas.users.remaining <= 0 ? SEMANTIC.danger : SEMANTIC.info} />

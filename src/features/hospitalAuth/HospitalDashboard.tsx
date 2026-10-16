@@ -290,6 +290,7 @@ export default function HospitalDashboard() {
                 : "on bills of any date"
             }
             icon={<CurrencyRupeeRounded />} color={SEMANTIC.success} loading={opsLoading}
+            info="All money received today (bill payments and IPD advances), minus refunds paid out today. Counts payments on old bills too, not just today's bills. The arrow compares with the same weekday last week. Matches the Day Book."
             onClick={() => navigate("/hospital/reports?view=day-book")}
           />
         </Grid>
@@ -298,6 +299,7 @@ export default function HospitalDashboard() {
             label="Outstanding" value={inr(ops?.money.outstandingAmount ?? 0)}
             sub={`${ops?.money.outstandingCount ?? 0} unpaid bill${ops?.money.outstandingCount === 1 ? "" : "s"}`}
             icon={<ReceiptLongRounded />} color={SEMANTIC.danger} loading={opsLoading}
+            info="Total still owed on issued bills: bill amount minus what has been paid (less any refunds). Bills of every date are included. Draft and cancelled bills are left out. Matches the Outstanding report."
             onClick={() => navigate("/hospital/reports?view=outstanding")}
           />
         </Grid>
@@ -307,6 +309,7 @@ export default function HospitalDashboard() {
             value={occupancy?.occupancyPct == null ? "-" : `${occupancy.occupancyPct}%`}
             sub={occupancy?.totalBeds ? `${occupancy.occupied} of ${occupancy.totalBeds} beds` : "No beds configured"}
             icon={<HotelRounded />} color={BRAND.action} loading={opsLoading}
+            info="Share of census beds that have a patient in them right now. A bed whose discharge has started still counts as occupied until the patient leaves. Beds not marked as census beds in setup are not counted."
             onClick={() => navigate("/hospital/ipd/beds")}
           />
         </Grid>
@@ -317,6 +320,7 @@ export default function HospitalDashboard() {
             deltaLabel="vs the same weekday last week"
             sub={ops ? `${ops.flow.admissionsToday} admitted · ${ops.flow.dischargesToday} discharged` : undefined}
             icon={<EventAvailableRounded />} color={BRAND.actionDark} loading={opsLoading}
+            info="All appointments booked for today, whatever their status, including cancelled and no-shows. The arrow compares with the same weekday last week. Below: patients admitted today and patients discharged today."
             onClick={() => navigate("/hospital/reports?view=opd-visits")}
           />
         </Grid>

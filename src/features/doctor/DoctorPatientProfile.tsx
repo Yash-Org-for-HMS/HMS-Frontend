@@ -232,19 +232,19 @@ export default function DoctorPatientProfile() {
 
       {/* Stat tiles */}
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2, 1fr)", md: totalDues > 0.005 ? "repeat(5, 1fr)" : "repeat(4, 1fr)" }, gap: 2, mb: 2 }}>
-        <StatCard layout="horizontal" icon={<HistoryRounded />} label="Consultations" value={history.length} color={DOCTOR_BLUE} />
-        <StatCard layout="horizontal" icon={<TodayRounded />} label="Last visit" color="#8b5cf6"
+        <StatCard layout="horizontal" icon={<HistoryRounded />} label="Consultations" info="Consultations this patient has had at this hospital, by any doctor and at any branch." value={history.length} color={DOCTOR_BLUE} />
+        <StatCard layout="horizontal" icon={<TodayRounded />} label="Last visit" info="Date of the most recent consultation, and the doctor who saw the patient." color="#8b5cf6"
           value={lastConsult ? new Date(lastConsult.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : "-"}
           sub={lastConsult ? lastConsult.doctorName : "no visits yet"} />
-        <StatCard layout="horizontal" icon={<VaccinesRounded />} label="Doses due" value={dueRows.length} color={doseColor}
+        <StatCard layout="horizontal" icon={<VaccinesRounded />} label="Doses due" info="Vaccine doses on this patient's schedule that are overdue or due soon. Red when at least one is overdue." value={dueRows.length} color={doseColor}
           sub={hasOverdueDose ? "overdue" : dueRows.length ? "due soon" : "up to date"} />
-        <StatCard layout="horizontal" icon={<MedicalServicesRounded />} label="Surgeries" value={surgeries.length} color="#0891b2" />
+        <StatCard layout="horizontal" icon={<MedicalServicesRounded />} label="Surgeries" info="All surgeries on record for this patient: scheduled, done and cancelled." value={surgeries.length} color="#0891b2" />
         {/* Shown only when there IS something owed. A permanent "Outstanding ₹0"
             would be one more tile between the doctor and the clinical ones; a
             figure that appears when it matters is the thing worth knowing
             before adding another test to the bill. */}
         {totalDues > 0.005 && (
-          <StatCard layout="horizontal" icon={<ReceiptLongRounded />} label="Outstanding"
+          <StatCard layout="horizontal" icon={<ReceiptLongRounded />} label="Outstanding" info="What this patient still owes on their bills: for each bill, the amount minus what has been paid (less refunds). Cancelled bills owe nothing."
             value={formatINR(totalDues, 0)} color={SEMANTIC.danger} sub="unpaid on earlier bills" />
         )}
       </Box>

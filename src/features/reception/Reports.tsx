@@ -94,9 +94,9 @@ export function OpRegistration() {
       {isLoading ? <Loading /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box ref={ref}>
           <Grid container spacing={2} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PersonAddRounded />} label="Registrations" value={String(data.totals.registrations)} accent={ACCENT} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CallSplitRounded />} label="Referred in" value={String(data.totals.withReferral ?? 0)} sub={`${data.totals.registrations - (data.totals.withReferral ?? 0)} walk-in`} accent={SEMANTIC.info} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<GroupRounded />} label="Average age" value={data.totals.avgAge == null ? "-" : `${data.totals.avgAge}`} accent="#8b5cf6" /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PersonAddRounded />} label="Registrations" info="New patients registered in the selected dates." value={String(data.totals.registrations)} accent={ACCENT} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CallSplitRounded />} label="Referred in" info="Of those, patients who came referred by a doctor (internal or outside), not as walk-ins." value={String(data.totals.withReferral ?? 0)} sub={`${data.totals.registrations - (data.totals.withReferral ?? 0)} walk-in`} accent={SEMANTIC.info} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<GroupRounded />} label="Average age" info="Average age of the patients registered in the selected dates, where age is known." value={data.totals.avgAge == null ? "-" : `${data.totals.avgAge}`} accent="#8b5cf6" /></Grid>
           </Grid>
 
           {/* Who registered, not just how many. Age, gender and city were on
@@ -181,16 +181,16 @@ export function OpBills() {
       {isLoading ? <Loading /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box ref={ref}>
           <Grid container spacing={2} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PaymentsRounded />} label="Invoices" value={String(data.totals.invoices)} accent={ACCENT} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<AccountBalanceWalletRounded />} label="Billed" value={inr(data.totals.billed)} accent="#8b5cf6" /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PaymentsRounded />} label="Collected" value={inr(data.totals.collected)} accent={SEMANTIC.success} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PaymentsRounded />} label="Invoices" info="OPD bills (linked to an appointment) dated in the selected range." value={String(data.totals.invoices)} accent={ACCENT} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<AccountBalanceWalletRounded />} label="Billed" info="Total of those OPD bills. Cancelled bills are left out." value={inr(data.totals.billed)} accent="#8b5cf6" /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PaymentsRounded />} label="Collected" info="What has been paid on those OPD bills so far, less refunds, whenever it was paid." value={inr(data.totals.collected)} accent={SEMANTIC.success} /></Grid>
             {/* What is still owed. Every row already carried a balance and
                 nothing added it up, so the report showed billed and collected
                 and left the reader to subtract - which is the one figure a
                 desk actually chases. */}
             <Grid size={{ xs: 6, md: 3 }}>
               <KpiCard
-                icon={<AccountBalanceWalletRounded />} label="Outstanding"
+                icon={<AccountBalanceWalletRounded />} label="Outstanding" info="What is still owed on those OPD bills. Below: how many bills still owe money."
                 value={inr(data.totals.outstanding ?? 0)}
                 sub={`across ${data.totals.unpaidInvoices ?? 0} unpaid invoice${(data.totals.unpaidInvoices ?? 0) === 1 ? "" : "s"}`}
                 accent={Number(data.totals.outstanding ?? 0) > 0 ? SEMANTIC.danger : SEMANTIC.success}
@@ -227,10 +227,10 @@ export function DiagnosisWise() {
       {isLoading ? <Loading /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box ref={ref}>
           <Grid container spacing={2} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<MedicalInformationRounded />} label="Consultations" value={String(data.totals.consultations)} accent={ACCENT} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<TrendingUpRounded />} label="Distinct diagnoses" value={String(data.totals.distinctDiagnoses)} accent="#8b5cf6" /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<GroupRounded />} label="Patients" value={String(data.totals.patients ?? 0)} accent={SEMANTIC.info} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ReplayRounded />} label="With follow-up" value={String(data.totals.withFollowUp ?? 0)} accent={SEMANTIC.warning} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<MedicalInformationRounded />} label="Consultations" info="Consultations in the selected dates that have a diagnosis written." value={String(data.totals.consultations)} accent={ACCENT} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<TrendingUpRounded />} label="Distinct diagnoses" info="Number of different diagnoses among those consultations." value={String(data.totals.distinctDiagnoses)} accent="#8b5cf6" /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<GroupRounded />} label="Patients" info="Different patients in those consultations." value={String(data.totals.patients ?? 0)} accent={SEMANTIC.info} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ReplayRounded />} label="With follow-up" info="Consultations where a follow-up date was set." value={String(data.totals.withFollowUp ?? 0)} accent={SEMANTIC.warning} /></Grid>
           </Grid>
 
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
@@ -295,10 +295,10 @@ export function ReferralsByDoctor() {
       {isLoading ? <Loading /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box>
           <Grid container spacing={2} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<MedicalInformationRounded />} accent={ACCENT} label="Referring doctors" value={String(s.referringDoctors)} current={s.referringDoctors} previous={prev?.referringDoctors} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PersonAddRounded />} accent={SEMANTIC.success} label="Referred patients" value={String(s.referredPatients)} current={s.referredPatients} previous={prev?.referredPatients} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CallSplitRounded />} accent={SEMANTIC.info} label="Internal / External" value={`${s.internal ?? 0} / ${s.external ?? 0}`} sub="referrers" /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<EventRounded />} accent="#8b5cf6" label="Total visits" value={String(s.totalVisits)} current={s.totalVisits} previous={prev?.totalVisits} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<MedicalInformationRounded />} accent={ACCENT} label="Referring doctors" info="Different doctors (ours or outside) who referred patients registered in the selected dates." value={String(s.referringDoctors)} current={s.referringDoctors} previous={prev?.referringDoctors} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PersonAddRounded />} accent={SEMANTIC.success} label="Referred patients" info="Patients registered in the selected dates who came with a referral." value={String(s.referredPatients)} current={s.referredPatients} previous={prev?.referredPatients} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CallSplitRounded />} accent={SEMANTIC.info} label="Internal / External" info="Of those referring doctors: how many are our own / how many are outside doctors." value={`${s.internal ?? 0} / ${s.external ?? 0}`} sub="referrers" /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<EventRounded />} accent="#8b5cf6" label="Total visits" info="Appointments those referred patients had in the selected dates." value={String(s.totalVisits)} current={s.totalVisits} previous={prev?.totalVisits} /></Grid>
           </Grid>
 
           {hasPlottableData(trend, ["patients"]) && (
@@ -348,10 +348,10 @@ export function Census() {
       {isLoading ? <Loading /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box ref={ref}>
           <Grid container spacing={2} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<LocalHotelRounded />} label="Current inpatients" value={String(data.currentInpatients)} accent={ACCENT} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<MeetingRoomRounded />} label="Bed occupancy" value={`${beds.occupancyRate}%`} accent={SEMANTIC.danger} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PersonAddRounded />} label="Admissions" value={String(data.movement.admissions)} accent={SEMANTIC.success} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ReplayRounded />} label="Discharges" value={String(data.movement.discharges)} accent="#8b5cf6" /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<LocalHotelRounded />} label="Current inpatients" info="Patients admitted in hospital right now." value={String(data.currentInpatients)} accent={ACCENT} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<MeetingRoomRounded />} label="Bed occupancy" info="Occupied beds as a share of all beds right now." value={`${beds.occupancyRate}%`} accent={SEMANTIC.danger} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PersonAddRounded />} label="Admissions" info="Patients admitted in the selected dates." value={String(data.movement.admissions)} accent={SEMANTIC.success} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ReplayRounded />} label="Discharges" info="Patients discharged in the selected dates." value={String(data.movement.discharges)} accent="#8b5cf6" /></Grid>
           </Grid>
 
           {data.byBranch && (
@@ -402,14 +402,14 @@ export function DailyOpd() {
       {isLoading ? <Loading /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box ref={ref}>
           <Grid container spacing={2} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<EventRounded />} label="Appointments" value={String(t.appointments)} accent={ACCENT} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CheckCircleRounded />} label="Completed" value={String(t.completed)} accent={SEMANTIC.success} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CancelRounded />} label="Cancelled" value={String(t.cancelled)} accent={SEMANTIC.danger} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PaymentsRounded />} label="Collected" value={inr(t.collected)} accent="#8b5cf6" /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CheckCircleRounded />} label="Checked in" value={String(t.checkedIn)} accent={SEMANTIC.info} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ReplayRounded />} label="Follow-ups" value={String(t.followUps)} accent={SEMANTIC.warning} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<EventRounded />} label="New OPD" value={String(t.newOpd)} accent={ACCENT} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PersonAddRounded />} label="New patients" value={String(t.newPatients)} accent="#ec4899" /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<EventRounded />} label="Appointments" info="Appointments for the chosen day, any status." value={String(t.appointments)} accent={ACCENT} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CheckCircleRounded />} label="Completed" info="Of those, appointments marked completed." value={String(t.completed)} accent={SEMANTIC.success} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CancelRounded />} label="Cancelled" info="Of those, appointments cancelled." value={String(t.cancelled)} accent={SEMANTIC.danger} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PaymentsRounded />} label="Collected" info="Patient payments taken on the chosen day, minus refunds paid out that day. Insurer payments and advances used on a bill are left out." value={inr(t.collected)} accent="#8b5cf6" /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CheckCircleRounded />} label="Checked in" info="Of the day's appointments, patients who were checked in at the desk." value={String(t.checkedIn)} accent={SEMANTIC.info} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ReplayRounded />} label="Follow-ups" info="Of the day's appointments, those booked as a follow-up of an earlier visit." value={String(t.followUps)} accent={SEMANTIC.warning} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<EventRounded />} label="New OPD" info="The day's appointments that are not follow-ups." value={String(t.newOpd)} accent={ACCENT} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PersonAddRounded />} label="New patients" info="New patients registered on the chosen day." value={String(t.newPatients)} accent="#ec4899" /></Grid>
           </Grid>
 
           {data.byBranch && (
@@ -498,13 +498,13 @@ export function OpdVisitRegister() {
       {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box>
           <Grid container spacing={2} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<EventRounded />} label="Visits" value={String(t.visits)} accent={ACCENT} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<GroupRounded />} label={`Unique patients · ${t.avgVisitsPerPatient} visits each`} value={String(t.uniquePatients)} accent="#8b5cf6" /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CheckCircleRounded />} label="Completed" value={String(t.completed)} accent={SEMANTIC.success} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CancelRounded />} label="Cancelled" value={String(t.cancelled)} accent={SEMANTIC.danger} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PersonAddRounded />} label="First visits" value={String(t.firstVisits)} accent="#ec4899" /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ReplayRounded />} label="Repeat visits" value={String(t.repeatVisits)} accent={SEMANTIC.info} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ReplayRounded />} label="Follow-ups" value={String(t.followUps)} accent={SEMANTIC.warning} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<EventRounded />} label="Visits" info="OPD appointments dated in the selected range, any status." value={String(t.visits)} accent={ACCENT} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<GroupRounded />} info="Different patients behind those visits. Below the label: average visits per patient." label={`Unique patients · ${t.avgVisitsPerPatient} visits each`} value={String(t.uniquePatients)} accent="#8b5cf6" /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CheckCircleRounded />} label="Completed" info="Of those visits, ones marked completed." value={String(t.completed)} accent={SEMANTIC.success} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CancelRounded />} label="Cancelled" info="Of those visits, ones cancelled." value={String(t.cancelled)} accent={SEMANTIC.danger} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PersonAddRounded />} label="First visits" info="Visits that were the patient's very first appointment here." value={String(t.firstVisits)} accent="#ec4899" /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ReplayRounded />} label="Repeat visits" info="Visits by patients who had been here before." value={String(t.repeatVisits)} accent={SEMANTIC.info} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ReplayRounded />} label="Follow-ups" info="Visits booked as a follow-up of an earlier visit." value={String(t.followUps)} accent={SEMANTIC.warning} /></Grid>
           </Grid>
 
           <Box sx={{ mb: 2.5 }}>
@@ -580,10 +580,10 @@ export function Analytics() {
       {isLoading ? <Loading /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box ref={ref}>
           <Grid container spacing={2} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<EventRounded />} accent={ACCENT} label="Total appointments" value={String(t.appointments)} current={t.appointments} previous={p?.appointments} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CheckCircleRounded />} accent={SEMANTIC.success} label="Completion rate" value={`${t.completionRate}%`} current={t.completionRate} previous={p?.completionRate} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CancelRounded />} accent={SEMANTIC.danger} label="Cancellation rate" value={`${t.cancellationRate}%`} current={t.cancellationRate} previous={p?.cancellationRate} higherIsBetter={false} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<TrendingUpRounded />} accent="#8b5cf6" label="Avg / day" value={String(t.avgPerDay)} current={t.avgPerDay} previous={p?.avgPerDay} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<EventRounded />} accent={ACCENT} label="Total appointments" info="Appointments dated in the selected range, any status." value={String(t.appointments)} current={t.appointments} previous={p?.appointments} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CheckCircleRounded />} accent={SEMANTIC.success} label="Completion rate" info="Share of those appointments marked completed." value={`${t.completionRate}%`} current={t.completionRate} previous={p?.completionRate} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CancelRounded />} accent={SEMANTIC.danger} label="Cancellation rate" info="Share of those appointments cancelled." value={`${t.cancellationRate}%`} current={t.cancellationRate} previous={p?.cancellationRate} higherIsBetter={false} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<TrendingUpRounded />} accent="#8b5cf6" label="Avg / day" info="Appointments divided by the number of days in the range." value={String(t.avgPerDay)} current={t.avgPerDay} previous={p?.avgPerDay} /></Grid>
           </Grid>
 
           {/* When the clinic is busy, which is what this report is for and what
@@ -654,10 +654,10 @@ export function Collection() {
       {isLoading ? <Loading /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box ref={ref}>
           <Grid container spacing={2} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PaymentsRounded />} accent={SEMANTIC.success} label="Gross collected" value={inr(t.gross)} current={t.gross} previous={p?.gross} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ReplayRounded />} accent={SEMANTIC.danger} label="Refunds" value={inr(t.refunded)} current={t.refunded} previous={p?.refunded} higherIsBetter={false} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<AccountBalanceWalletRounded />} accent={ACCENT} label="Net" value={inr(t.net)} current={t.net} previous={p?.net} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<AccessTimeRounded />} accent="#8b5cf6" label="Transactions" value={String(t.transactions)} current={t.transactions} previous={p?.transactions} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PaymentsRounded />} accent={SEMANTIC.success} label="Gross collected" info="Patient payments taken in the selected dates. Insurer payments and advances used on a bill are left out." value={inr(t.gross)} current={t.gross} previous={p?.gross} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ReplayRounded />} accent={SEMANTIC.danger} label="Refunds" info="Completed refunds paid out in the selected dates." value={inr(t.refunded)} current={t.refunded} previous={p?.refunded} higherIsBetter={false} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<AccountBalanceWalletRounded />} accent={ACCENT} label="Net" info="Gross collected minus refunds." value={inr(t.net)} current={t.net} previous={p?.net} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<AccessTimeRounded />} accent="#8b5cf6" label="Transactions" info="Number of patient payments in the selected dates." value={String(t.transactions)} current={t.transactions} previous={p?.transactions} /></Grid>
           </Grid>
 
           {data.byBranch && (

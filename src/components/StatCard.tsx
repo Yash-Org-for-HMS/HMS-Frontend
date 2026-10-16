@@ -3,6 +3,7 @@ import { Box, Paper, Typography, Skeleton, Tooltip } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { ArrowUpwardRounded, ArrowDownwardRounded, RemoveRounded } from "@mui/icons-material";
 import { computeDelta } from "@/utils/delta";
+import KpiInfo from "./KpiInfo";
 import type { ReactNode } from "react";
 
 export interface StatCardProps {
@@ -32,6 +33,8 @@ export interface StatCardProps {
   higherIsBetter?: boolean;
   /** What the comparison is against, shown on hover. Default "vs previous period". */
   deltaLabel?: string;
+  /** Plain-language note on what the figure counts, behind an (i) beside the label. */
+  info?: ReactNode;
 }
 
 const DEFAULT_ACCENT = BRAND.action;
@@ -44,7 +47,7 @@ const DEFAULT_ACCENT = BRAND.action;
  */
 export default function StatCard({
   icon, label, value, color = DEFAULT_ACCENT, sub, loading = false, onClick, layout = "vertical",
-  current, previous, higherIsBetter = true, deltaLabel = "vs previous period",
+  current, previous, higherIsBetter = true, deltaLabel = "vs previous period", info,
 }: StatCardProps) {
   const clickable = Boolean(onClick);
   const horizontal = layout === "horizontal";
@@ -157,12 +160,15 @@ export default function StatCard({
             {displayValue}
           </Typography>
         )}
-        <Typography
-          variant="caption"
-          sx={{ color: "text.secondary", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, display: "block", mt: 0.5 }}
-        >
-          {label}
-        </Typography>
+        <Box sx={{ display: "flex", alignItems: "center", mt: 0.5 }}>
+          <Typography
+            variant="caption"
+            sx={{ color: "text.secondary", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, display: "block" }}
+          >
+            {label}
+          </Typography>
+          {info && <KpiInfo text={info} label={label} />}
+        </Box>
         {/* The sub-line is skeletoned too, not just the number. Most callers
             build it from a `?? 0` fallback, so while the query is in flight it
             reads as a statement of fact - "No beds configured" on a ward with

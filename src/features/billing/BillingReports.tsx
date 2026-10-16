@@ -92,12 +92,12 @@ export function Receipts() {
       {isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : isLoading || !data ? <ReportSkeleton /> : (
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}><KpiCard icon={<PaymentsRounded />} accent={SEMANTIC.success} label="Total received" value={inr(data.totals.gross)} current={Number(data.totals.gross)} previous={prev ? Number(prev.gross) : undefined} /></Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}><KpiCard icon={<PaymentsRounded />} accent={SEMANTIC.success} label="Total received" info="All payments received in the selected dates, from patients and from insurers or schemes. Advances used against a bill are not counted again. Refunds are not taken off." value={inr(data.totals.gross)} current={Number(data.totals.gross)} previous={prev ? Number(prev.gross) : undefined} /></Grid>
             {/* Split out the same way the Day Book does: a payer settling a claim
                 is real income, but nobody collected it over the counter. */}
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}><KpiCard icon={<PaymentsRounded />} accent={ACCENT} label="From patients" value={inr(data.totals.fromPatient ?? data.totals.gross)} /></Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}><KpiCard icon={<AccountBalanceRounded />} accent={SEMANTIC.info} label="From payers (claims)" value={inr(data.totals.fromPayer ?? 0)} /></Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}><KpiCard icon={<ReceiptLongRounded />} accent={ACCENT} label="Receipts" value={String(data.totals.count)} current={data.totals.count} previous={prev?.count} /></Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}><KpiCard icon={<PaymentsRounded />} accent={ACCENT} label="From patients" info="The part of that paid by patients themselves." value={inr(data.totals.fromPatient ?? data.totals.gross)} /></Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}><KpiCard icon={<AccountBalanceRounded />} accent={SEMANTIC.info} label="From payers (claims)" info="The part of that paid by insurers, TPAs or schemes against claims." value={inr(data.totals.fromPayer ?? 0)} /></Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}><KpiCard icon={<ReceiptLongRounded />} accent={ACCENT} label="Receipts" info="Number of payments received in the selected dates." value={String(data.totals.count)} current={data.totals.count} previous={prev?.count} /></Grid>
           </Grid>
           {/* Both came back with every request and neither was rendered. The
               method split is what a desk reconciles a drawer against; the
@@ -164,9 +164,9 @@ export function Outstanding() {
       {isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : isLoading || !data ? <ReportSkeleton /> : (
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 12, sm: 4, md: 3 }}><KpiCard icon={<AccountBalanceWalletRounded />} accent={SEMANTIC.danger} label="Total dues" value={inr(data.totals.totalDues)} /></Grid>
-            <Grid size={{ xs: 6, sm: 4, md: 3 }}><KpiCard icon={<ReceiptLongRounded />} accent={ACCENT} label="Invoices" value={String(data.totals.invoices)} /></Grid>
-            <Grid size={{ xs: 6, sm: 4, md: 3 }}><KpiCard icon={<PaymentsRounded />} accent={SEMANTIC.info} label="Billed" value={inr(data.totals.totalBilled)} /></Grid>
+            <Grid size={{ xs: 12, sm: 4, md: 3 }}><KpiCard icon={<AccountBalanceWalletRounded />} accent={SEMANTIC.danger} label="Total dues" info="For bills dated in the selected range that still owe money: the total still owed (bill minus payments, less refunds). Cancelled bills are left out." value={inr(data.totals.totalDues)} /></Grid>
+            <Grid size={{ xs: 6, sm: 4, md: 3 }}><KpiCard icon={<ReceiptLongRounded />} accent={ACCENT} label="Invoices" info="Number of bills dated in the selected range that still owe money." value={String(data.totals.invoices)} /></Grid>
+            <Grid size={{ xs: 6, sm: 4, md: 3 }}><KpiCard icon={<PaymentsRounded />} accent={SEMANTIC.info} label="Billed" info="Full amount of those unpaid bills, before payments." value={inr(data.totals.totalBilled)} /></Grid>
           </Grid>
           <ReportTable
             title="Outstanding invoices"
@@ -230,11 +230,11 @@ export function UnreturnedAdvances() {
       {isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : isLoading || !data ? <ReportSkeleton /> : (
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 12, sm: 4, md: 3 }}><KpiCard icon={<AccountBalanceWalletRounded />} accent={SEMANTIC.danger} label="Owed to patients" value={inr(data.totals.totalOwed)} /></Grid>
+            <Grid size={{ xs: 12, sm: 4, md: 3 }}><KpiCard icon={<AccountBalanceWalletRounded />} accent={SEMANTIC.danger} label="Owed to patients" info="IPD advance money not yet given back after discharge or cancellation: advance taken minus what was used on the bill and what was refunded." value={inr(data.totals.totalOwed)} /></Grid>
             {/* "Pending" also counts deliberately-held advances, so it is the
                 count still to return rather than a queue of oversights. */}
-            <Grid size={{ xs: 6, sm: 4, md: 3 }}><KpiCard icon={<ReceiptLongRounded />} accent={SEMANTIC.warning} label="Still to return" value={String(data.totals.pending)} /></Grid>
-            <Grid size={{ xs: 6, sm: 4, md: 3 }}><KpiCard icon={<PaymentsRounded />} accent={SEMANTIC.success} label="Already refunded" value={String(data.totals.refunded)} /></Grid>
+            <Grid size={{ xs: 6, sm: 4, md: 3 }}><KpiCard icon={<ReceiptLongRounded />} accent={SEMANTIC.warning} label="Still to return" info="Number of discharged or cancelled stays where some advance is still owed to the patient." value={String(data.totals.pending)} /></Grid>
+            <Grid size={{ xs: 6, sm: 4, md: 3 }}><KpiCard icon={<PaymentsRounded />} accent={SEMANTIC.success} label="Already refunded" info="Number of those stays where the leftover advance has been fully refunded." value={String(data.totals.refunded)} /></Grid>
           </Grid>
           <Box sx={{ mb: 2 }}>
             <ReportStatusChips
@@ -314,10 +314,10 @@ export function ServiceWise() {
                 with Financial Overview's Billed Value, which is net: on this
                 data they sit ₹145.90 apart, exactly the discount less the tax,
                 and nothing on either card explained why. */}
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}><KpiCard icon={<TrendingUpRounded />} accent={SEMANTIC.success} label="Total line value" value={inr(data.totals.total)} sub="Before invoice discount and tax" /></Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}><KpiCard icon={<ReceiptLongRounded />} accent={ACCENT} label="Services" value={String(data.totals.services)} /></Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}><KpiCard icon={<TrendingUpRounded />} accent={SEMANTIC.warning} label="Line discount" value={inr(data.totals.discount ?? 0)} sub="Given away on the lines themselves" /></Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}><KpiCard icon={<AccountBalanceWalletRounded />} accent={SEMANTIC.info} label="Line tax" value={inr(data.totals.tax ?? 0)} /></Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}><KpiCard icon={<TrendingUpRounded />} accent={SEMANTIC.success} label="Total line value" info="Total of all bill line items (services, tests, rooms and so on) on bills dated in the selected range." value={inr(data.totals.total)} sub="Before invoice discount and tax" /></Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}><KpiCard icon={<ReceiptLongRounded />} accent={ACCENT} label="Services" info="Number of different services that appear on those bills." value={String(data.totals.services)} /></Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}><KpiCard icon={<TrendingUpRounded />} accent={SEMANTIC.warning} label="Line discount" info="Discount given on those line items." value={inr(data.totals.discount ?? 0)} sub="Given away on the lines themselves" /></Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}><KpiCard icon={<AccountBalanceWalletRounded />} accent={SEMANTIC.info} label="Line tax" info="Tax charged on those line items." value={inr(data.totals.tax ?? 0)} /></Grid>
           </Grid>
 
           {/* Which part of the hospital the money comes from. The rows below
@@ -381,8 +381,8 @@ export function PharmacyExpense() {
       {isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : isLoading || !data ? <ReportSkeleton /> : (
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}><KpiCard icon={<Inventory2Rounded />} accent={SEMANTIC.warning} label="Total spend" value={inr(data.totals.total)} current={Number(data.totals.total)} previous={prev ? Number(prev.total) : undefined} higherIsBetter={false} /></Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}><KpiCard icon={<ReceiptLongRounded />} accent={ACCENT} label="Purchase orders" value={String(data.totals.purchaseOrders)} current={data.totals.purchaseOrders} previous={prev?.purchaseOrders} higherIsBetter={false} /></Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}><KpiCard icon={<Inventory2Rounded />} accent={SEMANTIC.warning} label="Total spend" info="Value of pharmacy purchase orders raised in the selected dates (what was ordered, whether received or not)." value={inr(data.totals.total)} current={Number(data.totals.total)} previous={prev ? Number(prev.total) : undefined} higherIsBetter={false} /></Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}><KpiCard icon={<ReceiptLongRounded />} accent={ACCENT} label="Purchase orders" info="Number of pharmacy purchase orders raised in the selected dates." value={String(data.totals.purchaseOrders)} current={data.totals.purchaseOrders} previous={prev?.purchaseOrders} higherIsBetter={false} /></Grid>
           </Grid>
           {/* Spend per day. Fetched on every request and never drawn, so a
               month of purchasing read as a single total with no sense of
@@ -462,10 +462,10 @@ export function PatientStatement() {
       ) : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : isLoading || !data ? <ReportSkeleton /> : (
         <Box>
           <Grid container spacing={2} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ReceiptLongRounded />} accent={ACCENT} label="Total billed" value={inr(data.totals.totalBilled)} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PaymentsRounded />} accent={SEMANTIC.success} label="Total paid" value={inr(data.totals.totalPaid)} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<AccountBalanceWalletRounded />} accent={SEMANTIC.danger} label="Dues" value={inr(data.totals.totalDues)} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<SavingsRounded />} accent={SEMANTIC.info} label="Advance held" value={inr(data.totals.totalDeposit)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ReceiptLongRounded />} accent={ACCENT} label="Total billed" info="All of this patient's bills, after discounts. Cancelled bills are left out." value={inr(data.totals.totalBilled)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PaymentsRounded />} accent={SEMANTIC.success} label="Total paid" info="What this patient has paid on those bills, less refunds." value={inr(data.totals.totalPaid)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<AccountBalanceWalletRounded />} accent={SEMANTIC.danger} label="Dues" info="What this patient still owes: for each bill, the amount minus what has been paid." value={inr(data.totals.totalDues)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<SavingsRounded />} accent={SEMANTIC.info} label="Advance held" info="This patient's IPD advance money still with the hospital: taken, minus used on bills and refunded." value={inr(data.totals.totalDeposit)} /></Grid>
           </Grid>
           <ReportTable
             title={`Account statement - ${selected.firstName} ${selected.lastName}`}

@@ -4,6 +4,7 @@ import { alpha } from "@mui/material/styles";
 import { ArrowUpwardRounded, ArrowDownwardRounded, RemoveRounded, ChevronRightRounded } from "@mui/icons-material";
 import { Link as RouterLink } from "react-router-dom";
 import { computeDelta, seriesColor } from "./chartTheme";
+import KpiInfo from "@/components/KpiInfo";
 
 export interface KpiCardProps {
   label: string;
@@ -26,6 +27,8 @@ export interface KpiCardProps {
    * make it up can go and see them instead of hunting for the right report.
    */
   href?: string;
+  /** Plain-language note on what the figure counts, behind an (i) beside the label. */
+  info?: ReactNode;
 }
 
 /**
@@ -34,7 +37,7 @@ export interface KpiCardProps {
  * insight, not a bare figure.
  */
 export default function KpiCard({
-  label, value, current, previous, higherIsBetter = true, icon, accent = seriesColor(0), sub, href,
+  label, value, current, previous, higherIsBetter = true, icon, accent = seriesColor(0), sub, href, info,
 }: KpiCardProps) {
   const delta = current != null ? computeDelta(current, previous, higherIsBetter) : null;
   const showDelta = delta != null && delta.mode !== "none";
@@ -85,6 +88,7 @@ export default function KpiCard({
         <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.4, lineHeight: 1.2 }}>
           {label}
         </Typography>
+        {info && <KpiInfo text={info} label={label} />}
         {/* Says the tile opens something, before you touch it.
             Some tiles in a grid link to a register and some have no register
             to open, and the only thing separating them was a border colour on

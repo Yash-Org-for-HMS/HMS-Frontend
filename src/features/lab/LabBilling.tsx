@@ -161,10 +161,10 @@ export default function LabBilling() {
       {/* Summary */}
       <Grid container spacing={3} sx={{ mb: 3 }}>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard label="Outstanding Orders" value={outstandingCount} icon={<ReceiptLongRounded sx={{ color: SEMANTIC.warning }} />} color={SEMANTIC.warning} />
+          <StatCard label="Outstanding Orders" info="Lab and radiology orders for outpatients (not admitted) that are not paid yet, any date. Inpatient orders go on the ward bill instead. If your hospital bills tests later (post-paid), this is always 0." value={outstandingCount} icon={<ReceiptLongRounded sx={{ color: SEMANTIC.warning }} />} color={SEMANTIC.warning} />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard label="Amount Due" value={formatINR(outstandingTotal)} icon={<PointOfSaleRounded sx={{ color: ACCENT }} />} color={ACCENT} />
+          <StatCard label="Amount Due" info="Total value of the outstanding orders: what the lab counter still has to collect from outpatients." value={formatINR(outstandingTotal)} icon={<PointOfSaleRounded sx={{ color: ACCENT }} />} color={ACCENT} />
         </Grid>
       </Grid>
 

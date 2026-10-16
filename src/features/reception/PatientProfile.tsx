@@ -355,17 +355,17 @@ export default function PatientProfile(
 
       {/* ── Stat tiles ── */}
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2, 1fr)", md: "repeat(4, 1fr)" }, gap: 2, mb: 2 }}>
-        <StatCard layout="horizontal" icon={<EventRounded />} label="Appointments" value={String(stats.total)} color={ACCENT}
+        <StatCard layout="horizontal" icon={<EventRounded />} label="Appointments" info="Every appointment this patient has had or booked, any status. Below: those still ahead, not cancelled or completed." value={String(stats.total)} color={ACCENT}
           sub={stats.upcoming ? `${stats.upcoming} upcoming` : "none upcoming"} />
-        <StatCard layout="horizontal" icon={<CalendarTodayRounded />} label="Last visit" color="#8b5cf6"
+        <StatCard layout="horizontal" icon={<CalendarTodayRounded />} label="Last visit" info="Date of this patient's most recent completed appointment." color="#8b5cf6"
           value={stats.lastVisit ? stats.lastVisit.toLocaleDateString("en-IN", { day: "numeric", month: "short" }) : "-"}
           sub={stats.lastVisit ? stats.lastVisit.getFullYear().toString() : "no visits yet"} />
         {billingEnabled && (
-          <StatCard layout="horizontal" icon={<PaymentsRounded />} label="Total billed" value={formatINR(billing?.totals?.totalBilled)} color={SEMANTIC.success}
+          <StatCard layout="horizontal" icon={<PaymentsRounded />} label="Total billed" info="Total of all this patient's bills, after discounts. Cancelled bills are left out. Below: number of bills." value={formatINR(billing?.totals?.totalBilled)} color={SEMANTIC.success}
             sub={`${billing?.totals?.invoiceCount || 0} invoices`} />
         )}
         {billingEnabled && (
-          <StatCard layout="horizontal" icon={<AccountBalanceWalletRounded />} label="Outstanding dues" value={formatINR(billing?.totals?.totalDues)}
+          <StatCard layout="horizontal" icon={<AccountBalanceWalletRounded />} label="Outstanding dues" info="What this patient still owes: for each bill, the amount minus what has been paid (less refunds). Cancelled bills owe nothing." value={formatINR(billing?.totals?.totalDues)}
             color={Number(billing?.totals?.totalDues || 0) > 0 ? SEMANTIC.danger : SEMANTIC.success}
             sub={Number(billing?.totals?.totalDues || 0) > 0 ? "due now" : "all settled"} />
         )}

@@ -58,7 +58,7 @@ export interface PlanRegisterRow extends WithBranchCount {
 /** A plan row with the derived subscription figures the table shows. */
 export interface PlanWithMrr extends PlanRegisterRow {
   branches: number;
-  /** monthlyPrice x subscribed branches - the same basis as the dashboard. */
+  /** What the hospitals on this plan pay per month (annual plans over 12) - the Overview's basis. */
   mrr: number;
 }
 
@@ -159,6 +159,7 @@ export interface TenantSubscriptionRow {
   hospitalCode: string | null;
   hospitalStatus: string;
   customerSince: string;
+  planId: string | null;
   planName: string | null;
   billingCycle: "MONTHLY" | "ANNUAL";
   /** What they pay per cycle - a year's price for an annual tenant. */

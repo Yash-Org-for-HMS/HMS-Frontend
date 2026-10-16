@@ -63,10 +63,10 @@ export function DayBook() {
       {isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : isLoading || !data ? <ReportSkeleton /> : (
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<SouthEastRounded />} accent={SEMANTIC.success} label="Money in" value={inr(data.totals.cashIn)} current={Number(data.totals.cashIn)} previous={prev ? Number(prev.cashIn) : undefined} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<NorthEastRounded />} accent={SEMANTIC.danger} label="Money out" value={inr(data.totals.cashOut)} current={Number(data.totals.cashOut)} previous={prev ? Number(prev.cashOut) : undefined} higherIsBetter={false} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<AccountBalanceRounded />} accent={SEMANTIC.info} label="Net position" value={inr(data.totals.net)} current={Number(data.totals.net)} previous={prev ? Number(prev.net) : undefined} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<SwapVertRounded />} accent="#8b5cf6" label="Movements" value={String(data.totals.movements)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<SouthEastRounded />} accent={SEMANTIC.success} label="Money in" info="All money received in the selected dates: patient payments, insurer and scheme payments, and IPD advances taken. Advances used against a bill are not counted again." value={inr(data.totals.cashIn)} current={Number(data.totals.cashIn)} previous={prev ? Number(prev.cashIn) : undefined} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<NorthEastRounded />} accent={SEMANTIC.danger} label="Money out" info="All money paid back in the selected dates: completed bill refunds and advance (deposit) refunds." value={inr(data.totals.cashOut)} current={Number(data.totals.cashOut)} previous={prev ? Number(prev.cashOut) : undefined} higherIsBetter={false} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<AccountBalanceRounded />} accent={SEMANTIC.info} label="Net position" info="Money in minus money out for the selected dates." value={inr(data.totals.net)} current={Number(data.totals.net)} previous={prev ? Number(prev.net) : undefined} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<SwapVertRounded />} accent="#8b5cf6" label="Movements" info="Number of individual money entries (in and out) in the selected dates." value={String(data.totals.movements)} /></Grid>
           </Grid>
 
           {/* In against out per day. The series was fetched and never drawn,
@@ -190,10 +190,10 @@ export function RevenueAnalytics() {
       {isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : isLoading || !data ? <ReportSkeleton /> : (
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<TrendingUpRounded />} accent={SEMANTIC.success} label="Net revenue (billed)" value={inr(data.totals.net)} current={Number(data.totals.net)} previous={prev ? Number(prev.net) : undefined} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ReceiptLongRounded />} accent="#8b5cf6" label="Gross" value={inr(data.totals.gross)} current={Number(data.totals.gross)} previous={prev ? Number(prev.gross) : undefined} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<LocalOfferRounded />} accent={SEMANTIC.warning} label="Discount" value={inr(data.totals.discount)} current={Number(data.totals.discount)} previous={prev ? Number(prev.discount) : undefined} higherIsBetter={false} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<AccountBalanceWalletRounded />} accent={SEMANTIC.info} label="Tax (GST)" value={inr(data.totals.tax)} current={Number(data.totals.tax)} previous={prev ? Number(prev.tax) : undefined} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<TrendingUpRounded />} accent={SEMANTIC.success} label="Net revenue (billed)" info="Total of issued bills dated in the selected range, after discount and with tax. This is what was billed, not what was collected. Draft and cancelled bills are left out." value={inr(data.totals.net)} current={Number(data.totals.net)} previous={prev ? Number(prev.net) : undefined} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ReceiptLongRounded />} accent="#8b5cf6" label="Gross" info="Total of those bills before discount and tax." value={inr(data.totals.gross)} current={Number(data.totals.gross)} previous={prev ? Number(prev.gross) : undefined} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<LocalOfferRounded />} accent={SEMANTIC.warning} label="Discount" info="Total discount given on those bills." value={inr(data.totals.discount)} current={Number(data.totals.discount)} previous={prev ? Number(prev.discount) : undefined} higherIsBetter={false} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<AccountBalanceWalletRounded />} accent={SEMANTIC.info} label="Tax (GST)" info="Total GST charged on those bills." value={inr(data.totals.tax)} current={Number(data.totals.tax)} previous={prev ? Number(prev.tax) : undefined} /></Grid>
           </Grid>
 
           {/* The daily series came back with every request and nothing drew it,
@@ -246,8 +246,8 @@ export function RefundRegister() {
       {isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : isLoading || !data ? <ReportSkeleton /> : (
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ReplayRounded />} accent={SEMANTIC.danger} label="Total refunded" value={inr(data.totals.total)} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<NumbersRounded />} accent="#8b5cf6" label="Refunds" value={String(data.totals.count)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ReplayRounded />} accent={SEMANTIC.danger} label="Total refunded" info="Total of refunds processed in the selected dates." value={inr(data.totals.total)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<NumbersRounded />} accent="#8b5cf6" label="Refunds" info="Number of refunds processed in the selected dates." value={String(data.totals.count)} /></Grid>
           </Grid>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
             <Grid size={{ xs: 12, md: 6 }}>
@@ -301,9 +301,9 @@ export function DiscountRegister() {
       {isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : isLoading || !data ? <ReportSkeleton /> : (
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<LocalOfferRounded />} accent={SEMANTIC.warning} label="Total discount" value={inr(data.totals.totalDiscount)} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<NumbersRounded />} accent="#8b5cf6" label="Discounted invoices" value={String(data.totals.count)} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PercentRounded />} accent={SEMANTIC.info} label="Avg discount" value={`${data.totals.avgPct}%`} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<LocalOfferRounded />} accent={SEMANTIC.warning} label="Total discount" info="Total discount on bills dated in the selected range that had a discount. Cancelled bills are left out." value={inr(data.totals.totalDiscount)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<NumbersRounded />} accent="#8b5cf6" label="Discounted invoices" info="Number of bills in the selected dates that had any discount. Cancelled bills are left out." value={String(data.totals.count)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PercentRounded />} accent={SEMANTIC.info} label="Avg discount" info="Total discount as a share of those bills' amount before discount." value={`${data.totals.avgPct}%`} /></Grid>
           </Grid>
           <Box sx={{ mb: 2.5 }}>
             <ReportTable title="By staff (who applied)" filename={`discounts_by_user_${range.from}_${range.to}`} maxHeight={300}
@@ -349,8 +349,8 @@ export function CancelledInvoices() {
       {isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : isLoading || !data ? <ReportSkeleton /> : (
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<BlockRounded />} accent={SEMANTIC.danger} label="Cancelled invoices" value={String(data.totals.count)} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<AccountBalanceRounded />} accent={SEMANTIC.warning} label="Value voided" value={inr(data.totals.totalValue)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<BlockRounded />} accent={SEMANTIC.danger} label="Cancelled invoices" info="Bills that are cancelled and were last changed (usually when cancelled) in the selected dates." value={String(data.totals.count)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<AccountBalanceRounded />} accent={SEMANTIC.warning} label="Value voided" info="Total amount of those cancelled bills." value={inr(data.totals.totalValue)} /></Grid>
           </Grid>
           <Box sx={{ mb: 2.5 }}>
             <ReportTable title="By staff (who cancelled)" filename={`cancelled_by_user_${range.from}_${range.to}`} maxHeight={300}
@@ -397,10 +397,10 @@ export function DoctorProductivity() {
       {isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : isLoading || !data ? <ReportSkeleton /> : (
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<GroupsRounded />} accent="#8b5cf6" label="Active doctors" value={String(data.totals.doctors)} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<EventAvailableRounded />} accent={SEMANTIC.info} label="Appointments" value={String(data.totals.appointments)} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<MedicalServicesRounded />} accent={SEMANTIC.success} label="Consultations" value={String(data.totals.consultations)} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<TrendingUpRounded />} accent={SEMANTIC.success} label="Revenue (billed)" value={inr(data.totals.revenue)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<GroupsRounded />} accent="#8b5cf6" label="Active doctors" info="Doctors with at least one appointment, consultation or bill in the selected dates." value={String(data.totals.doctors)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<EventAvailableRounded />} accent={SEMANTIC.info} label="Appointments" info="Appointments dated in the selected range, any status." value={String(data.totals.appointments)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<MedicalServicesRounded />} accent={SEMANTIC.success} label="Consultations" info="Consultations started in the selected dates." value={String(data.totals.consultations)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<TrendingUpRounded />} accent={SEMANTIC.success} label="Revenue (billed)" info="Total of bills linked to appointments, dated in the selected range. Cancelled bills are left out. Billed, not collected." value={inr(data.totals.revenue)} /></Grid>
           </Grid>
           <ReportTable
             title="Doctor productivity & earnings"

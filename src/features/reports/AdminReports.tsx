@@ -97,14 +97,14 @@ function OverviewReport() {
           platform-level register to open, so they stay plain rather than
           promising a page that doesn't exist. */}
       <Grid container spacing={2}>
-        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<LocalHospitalRounded />} label="Hospitals" value={data.totalHospitals ?? 0} sub={`${data.activeHospitals ?? 0} active`} href="/reports?view=hospitals" /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<TimerRounded />} label="Active Trials" value={data.activeTrials ?? 0} sub={`${data.expiredHospitals ?? 0} expired`} accent={SEMANTIC.warning} href="/reports?view=trials&status=active" /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PersonSearchRounded />} label="Leads" value={data.totalLeads ?? 0} sub={`${data.convertedLeads ?? 0} converted`} accent="#8b5cf6" href="/reports?view=leads" /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<AccountBalanceWalletRounded />} label="Est. MRR" value={inr(data.totalRevenue)} sub="monthly recurring" accent={SEMANTIC.success} href="/reports?view=subscriptions" /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CardMembershipRounded />} label="Plans" value={data.activePlans ?? 0} accent="#0891b2" href="/reports?view=subscriptions" /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<GroupsRounded />} label="Patients" value={data.totalPatients ?? 0} accent="#ec4899" /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<MedicalInformationRounded />} label="Doctors" value={data.totalDoctors ?? 0} accent={BRAND.action} /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<StoreMallDirectoryRounded />} label="Branches" value={data.totalBranches ?? 0} accent={NEUTRAL.muted} href="/reports?view=hospitals" /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<LocalHospitalRounded />} label="Hospitals" info="Hospitals on the platform (deleted ones left out). Below: how many are active." value={data.totalHospitals ?? 0} sub={`${data.activeHospitals ?? 0} active`} href="/reports?view=hospitals" /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<TimerRounded />} label="Active Trials" info="Free trials running right now." value={data.activeTrials ?? 0} sub={`${data.expiredHospitals ?? 0} expired`} accent={SEMANTIC.warning} href="/reports?view=trials&status=active" /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PersonSearchRounded />} label="Leads" info="All sales leads ever recorded. Below: how many became paying hospitals." value={data.totalLeads ?? 0} sub={`${data.convertedLeads ?? 0} converted`} accent="#8b5cf6" href="/reports?view=leads" /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<AccountBalanceWalletRounded />} label="Est. MRR" info="Monthly recurring revenue: each hospital's plan price per month added up (annual plans divided by 12). Same figure as Subscription billing." value={inr(data.totalRevenue)} sub="monthly recurring" accent={SEMANTIC.success} href="/reports?view=subscriptions" /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CardMembershipRounded />} label="Plans" info="Subscription plans set up on the platform." value={data.activePlans ?? 0} accent="#0891b2" href="/reports?view=subscriptions" /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<GroupsRounded />} label="Patients" info="Patient records across all live hospitals." value={data.totalPatients ?? 0} accent="#ec4899" /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<MedicalInformationRounded />} label="Doctors" info="Doctor records across all live hospitals." value={data.totalDoctors ?? 0} accent={BRAND.action} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<StoreMallDirectoryRounded />} label="Branches" info="Branches across all live hospitals, closed ones included." value={data.totalBranches ?? 0} accent={NEUTRAL.muted} href="/reports?view=hospitals" /></Grid>
       </Grid>
 
       {/* Downloadable summary tables */}
@@ -178,9 +178,9 @@ function HospitalsReport() {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
       <Grid container spacing={2}>
-        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<LocalHospitalRounded />} label="Total" value={data.length} /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CheckCircleRounded />} label="Active" value={active} accent={SEMANTIC.success} /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<HighlightOffRounded />} label="Suspended" value={suspended} accent={SEMANTIC.danger} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<LocalHospitalRounded />} label="Total" info="Hospitals in this list." value={data.length} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CheckCircleRounded />} label="Active" info="Hospitals whose status is active." value={active} accent={SEMANTIC.success} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<HighlightOffRounded />} label="Suspended" info="Hospitals that are suspended (for example for unpaid bills) and cannot be used." value={suspended} accent={SEMANTIC.danger} /></Grid>
         {/* Branches in the CURRENT VIEW, not platform-wide. It used to sum
             every hospital regardless of the filters, so it repeated the number
             already on the Overview and sat unchanged while you filtered to
@@ -189,7 +189,7 @@ function HospitalsReport() {
         <Grid size={{ xs: 6, md: 3 }}>
           <KpiCard
             icon={<StoreMallDirectoryRounded />}
-            label="Branches in view"
+            label="Branches in view" info="Branches of the hospitals currently shown, so it follows your filters."
             value={branchesInView}
             sub={filtered.length === data.length ? "across all tenants" : `across ${filtered.length} of ${data.length} tenants`}
             accent={NEUTRAL.muted}
@@ -247,10 +247,10 @@ function LeadsReport() {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
       <Grid container spacing={2}>
-        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PeopleAltRounded />} label="Total leads" value={data.length} accent="#8b5cf6" /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CheckCircleRounded />} label="Converted" value={counts["converted"] || 0} accent={SEMANTIC.success} /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<RocketLaunchRounded />} label="Trialing" value={counts["trialing"] || 0} accent={SEMANTIC.warning} /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<HighlightOffRounded />} label="Lost" value={counts["lost"] || 0} accent={SEMANTIC.danger} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PeopleAltRounded />} label="Total leads" info="All sales leads in this list." value={data.length} accent="#8b5cf6" /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CheckCircleRounded />} label="Converted" info="Leads that became paying hospitals." value={counts["converted"] || 0} accent={SEMANTIC.success} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<RocketLaunchRounded />} label="Trialing" info="Leads currently on a free trial." value={counts["trialing"] || 0} accent={SEMANTIC.warning} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<HighlightOffRounded />} label="Lost" info="Leads marked as lost." value={counts["lost"] || 0} accent={SEMANTIC.danger} /></Grid>
       </Grid>
       <ReportStatusChips
         options={[
@@ -312,10 +312,10 @@ function TrialsReport() {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
       <Grid container spacing={2}>
-        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<TimerRounded />} label="Total trials" value={data.length} accent={SEMANTIC.warning} /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<RocketLaunchRounded />} label="Active" value={byState("active")} accent={BRAND.action} /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<WarningAmberRounded />} label="Expiring in 7 days" value={expiringSoon} accent={expiringSoon ? SEMANTIC.danger : NEUTRAL.muted} /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CheckCircleRounded />} label="Converted" value={byState("converted")} accent={SEMANTIC.success} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<TimerRounded />} label="Total trials" info="All free trials ever started." value={data.length} accent={SEMANTIC.warning} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<RocketLaunchRounded />} label="Active" info="Trials running right now." value={byState("active")} accent={BRAND.action} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<WarningAmberRounded />} label="Expiring in 7 days" info="Active trials that end within the next 7 days. Follow up before they lapse." value={expiringSoon} accent={expiringSoon ? SEMANTIC.danger : NEUTRAL.muted} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CheckCircleRounded />} label="Converted" info="Trials that turned into a paying hospital." value={byState("converted")} accent={SEMANTIC.success} /></Grid>
       </Grid>
       <ReportStatusChips
         options={[
@@ -335,14 +335,26 @@ function SubscriptionsReport() {
     queryKey: ["admin-report-plans"],
     queryFn: () => fetchAllRows<PlanRegisterRow>("/plans"),
   });
+  // The billed tenants, for MRR: the same per-hospital figure (annual plans
+  // spread over 12 months) the Overview and Subscription billing show.
+  const tenantsQ = useQuery({
+    queryKey: ["admin-report-tenant-subscriptions"],
+    queryFn: () => apiGet<TenantSubscriptionsResponse>("/subscription-billing/tenants"),
+  });
 
-  if (isLoading) return <ReportSkeleton />;
-  if (isError) return <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />;
+  if (isLoading || tenantsQ.isLoading) return <ReportSkeleton />;
+  if (isError || tenantsQ.isError) return <ErrorState message={apiErrorText(error ?? tenantsQ.error)} onRetry={() => { refetch(); tenantsQ.refetch(); }} />;
 
-  // Est. MRR per plan = monthlyPrice × branches subscribed to it (same basis as the dashboard).
+  // MRR per plan = what each hospital on it pays per month, added up. It used to
+  // be monthlyPrice × branches, which ignored annual billing and billed every
+  // branch, so this tab disagreed with the Overview's MRR.
+  const mrrByPlan = new Map<string, number>();
+  for (const t of tenantsQ.data?.rows ?? []) {
+    if (t.planId) mrrByPlan.set(t.planId, (mrrByPlan.get(t.planId) ?? 0) + Number(t.monthlyEquivalent ?? 0));
+  }
   const withMrr = data.map((p): PlanWithMrr => {
     const branches = Number(p._count?.branches ?? 0);
-    const mrr = Number(p.monthlyPrice || 0) * branches;
+    const mrr = Math.round((p.planId ? mrrByPlan.get(p.planId) ?? 0 : 0) * 100) / 100;
     return { ...p, branches, mrr };
   });
   const totalMrr = withMrr.reduce((s, p) => s + p.mrr, 0);
@@ -362,10 +374,10 @@ function SubscriptionsReport() {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
       <Grid container spacing={2}>
-        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CardMembershipRounded />} label="Plans" value={data.length} accent="#0891b2" /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<LocalHospitalRounded />} label="Branches on a plan" value={totalBranches} accent={NEUTRAL.muted} /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<AccountBalanceWalletRounded />} label="Est. MRR" value={inr(totalMrr)} sub="monthly recurring" accent={SEMANTIC.success} /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ShowChartRounded />} label="Est. ARR" value={inr(totalMrr * 12)} sub="annualised" accent="#8b5cf6" /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CardMembershipRounded />} label="Plans" info="Subscription plans set up on the platform." value={data.length} accent="#0891b2" /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<LocalHospitalRounded />} label="Branches on a plan" info="Branches subscribed to any of these plans." value={totalBranches} accent={NEUTRAL.muted} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<AccountBalanceWalletRounded />} label="Est. MRR" info="What the hospitals on these plans pay per month, added up (annual plans divided by 12). Same figure as the Overview and Subscription billing." value={inr(totalMrr)} sub="monthly recurring" accent={SEMANTIC.success} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ShowChartRounded />} label="Est. ARR" info="That estimated MRR times 12." value={inr(totalMrr * 12)} sub="annualised" accent="#8b5cf6" /></Grid>
       </Grid>
       <SimpleTable
         title="Subscription plans"
@@ -450,15 +462,15 @@ function TenantSubscriptionsReport() {
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
       <Grid container spacing={2}>
         <Grid size={{ xs: 6, md: 3 }}>
-          <KpiCard icon={<LocalHospitalRounded />} label="Tenants" value={t.tenants} sub={`${t.withPlan} on a plan · ${t.noPlan} without`} />
+          <KpiCard icon={<LocalHospitalRounded />} label="Tenants" info="Hospitals being billed or tracked here. Below: how many are on a plan and how many are not." value={t.tenants} sub={`${t.withPlan} on a plan · ${t.noPlan} without`} />
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
-          <KpiCard icon={<AccountBalanceWalletRounded />} label="MRR" value={inr(t.mrr)} sub={`${t.monthly} monthly · ${t.annual} annual`} accent={SEMANTIC.success} />
+          <KpiCard icon={<AccountBalanceWalletRounded />} label="MRR" info="Monthly recurring revenue from these hospitals: plan price per month (annual plans divided by 12). Below: how many pay monthly and how many annually." value={inr(t.mrr)} sub={`${t.monthly} monthly · ${t.annual} annual`} accent={SEMANTIC.success} />
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
           <Tooltip title="Subscriptions whose paid-for period ends within 30 days. Renew or invoice these before they lapse.">
             <Box>
-              <KpiCard icon={<TimerRounded />} label="Expiring in 30 days" value={t.expiringIn30Days} sub="renew before these lapse"
+              <KpiCard icon={<TimerRounded />} label="Expiring in 30 days" info="Hospitals whose current paid period ends within the next 30 days." value={t.expiringIn30Days} sub="renew before these lapse"
                 accent={t.expiringIn30Days ? SEMANTIC.warning : NEUTRAL.muted} />
             </Box>
           </Tooltip>
@@ -466,7 +478,7 @@ function TenantSubscriptionsReport() {
         <Grid size={{ xs: 6, md: 3 }}>
           <Tooltip title="Past a due date. Those beyond the grace window are locked out at their next login.">
             <Box>
-              <KpiCard icon={<WarningAmberRounded />} label="Overdue" value={t.overdue}
+              <KpiCard icon={<WarningAmberRounded />} label="Overdue" info="Hospitals with a subscription invoice unpaid past its due date. Past grace means they are close to losing access." value={t.overdue}
                 sub={t.pastGrace ? `${t.pastGrace} past grace - access at risk`
                   : t.notInvoiced ? `${t.notInvoiced} never invoiced`
                     : "all still inside grace"}
@@ -705,11 +717,11 @@ function OnboardingReport() {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
       <Grid container spacing={2}>
-        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<RocketLaunchRounded />} label="Onboarding records" value={data.length} sub={`${inProgress} in progress`} /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CheckCircleRounded />} label="Completed" value={completed} accent={SEMANTIC.success} /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<HighlightOffRounded />} label="Stalled" value={stalled} accent={SEMANTIC.danger} /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<AccountBalanceWalletRounded />} label="Collected to date" value={inr(totalCollected)} accent={SEMANTIC.success} /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CheckCircleRounded />} label="Payment verified" value={verifiedCount} accent="#0891b2" /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<RocketLaunchRounded />} label="Onboarding records" info="Hospitals going through, or finished with, onboarding. Below: how many are still in progress." value={data.length} sub={`${inProgress} in progress`} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CheckCircleRounded />} label="Completed" info="Onboardings marked completed." value={completed} accent={SEMANTIC.success} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<HighlightOffRounded />} label="Stalled" info="Onboardings marked stalled: started but not moving." value={stalled} accent={SEMANTIC.danger} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<AccountBalanceWalletRounded />} label="Collected to date" info="Total paid so far by the hospitals in this list." value={inr(totalCollected)} accent={SEMANTIC.success} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CheckCircleRounded />} label="Payment verified" info="Onboardings where someone ticked that payment was verified." value={verifiedCount} accent="#0891b2" /></Grid>
         {/* These two cross-check the manual "Payment verified" tick against
             real money in Subscription Billing. The explanation used to live
             only in a hover tooltip, so the labels had to be decoded - the
@@ -718,7 +730,7 @@ function OnboardingReport() {
           <Tooltip title="Someone ticked Payment Verified on these tenants, but Subscription Billing holds no payment from them at all.">
             <Box>
               <KpiCard
-                icon={<WarningAmberRounded />} label="Ticked, but never paid"
+                icon={<WarningAmberRounded />} label="Ticked, but never paid" info="Payment marked verified, but no payment is on file. Check these."
                 value={mismatchCount} sub="verified with no payment on file"
                 accent={mismatchCount ? SEMANTIC.danger : NEUTRAL.muted}
               />
@@ -729,14 +741,14 @@ function OnboardingReport() {
           <Tooltip title="These tenants have really paid - the money is in Subscription Billing - but nobody has ticked Payment Verified, so onboarding still reads as blocked.">
             <Box>
               <KpiCard
-                icon={<InfoOutlined />} label="Paid, awaiting tick"
+                icon={<InfoOutlined />} label="Paid, awaiting tick" info="Money has been received but nobody ticked payment verified yet."
                 value={unverifiedPaidCount} sub="money received, box not ticked"
                 accent={unverifiedPaidCount ? SEMANTIC.warning : NEUTRAL.muted}
               />
             </Box>
           </Tooltip>
         </Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PeopleAltRounded />} label="Showing" value={filtered.length} sub={`of ${data.length}`} accent={NEUTRAL.muted} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PeopleAltRounded />} label="Showing" info="Rows matching your current filter, out of all onboarding records." value={filtered.length} sub={`of ${data.length}`} accent={NEUTRAL.muted} /></Grid>
       </Grid>
 
       {/* Filters. Counts sit on the chips so the split is visible before choosing. */}
@@ -937,18 +949,18 @@ function AiUsageReport() {
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
       <Grid container spacing={2}>
         <Grid size={{ xs: 6, md: 3 }}>
-          <KpiCard icon={<AutoAwesomeRounded />} label="AI calls" value={compactNum(totals.calls)} accent={BRAND.action} />
+          <KpiCard icon={<AutoAwesomeRounded />} label="AI calls" info="Requests made to the AI service in the selected period, across all hospitals." value={compactNum(totals.calls)} accent={BRAND.action} />
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
-          <KpiCard icon={<AccountBalanceWalletRounded />} label="Provider cost" value={inrCost(totals.costMicros)} accent={SEMANTIC.warning} />
+          <KpiCard icon={<AccountBalanceWalletRounded />} label="Provider cost" info="What those AI requests cost us from the provider." value={inrCost(totals.costMicros)} accent={SEMANTIC.warning} />
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
-          <KpiCard icon={<ShowChartRounded />} label="Tokens" value={compactNum(totals.totalTokens)} accent={NEUTRAL.muted} />
+          <KpiCard icon={<ShowChartRounded />} label="Tokens" info="Total text units (tokens) the AI read and wrote. Cost is based on these." value={compactNum(totals.totalTokens)} accent={NEUTRAL.muted} />
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
           <KpiCard
             icon={<WarningAmberRounded />}
-            label="Failed calls"
+            label="Failed calls" info="AI requests that failed in the selected period, and what share of all requests that is."
             value={`${failed} (${failureRate}%)`}
             accent={failed ? SEMANTIC.danger : SEMANTIC.success}
             higherIsBetter={false}
@@ -1069,18 +1081,18 @@ function SmsUsageReport() {
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
       <Grid container spacing={2}>
         <Grid size={{ xs: 6, md: 3 }}>
-          <KpiCard icon={<SmsRounded />} label="Messages sent" value={compactNum(totals.billableMessages)} accent={BRAND.action} />
+          <KpiCard icon={<SmsRounded />} label="Messages sent" info="Billable SMS and other messages sent in the selected period, across all hospitals." value={compactNum(totals.billableMessages)} accent={BRAND.action} />
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
-          <KpiCard icon={<AccountBalanceWalletRounded />} label="Gateway cost" value={inrCost(totals.costMicros)} accent={SEMANTIC.warning} />
+          <KpiCard icon={<AccountBalanceWalletRounded />} label="Gateway cost" info="What those messages cost us from the SMS gateway." value={inrCost(totals.costMicros)} accent={SEMANTIC.warning} />
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
-          <KpiCard icon={<ShowChartRounded />} label="Segments" value={compactNum(totals.segments)} accent={NEUTRAL.muted} />
+          <KpiCard icon={<ShowChartRounded />} label="Segments" info="Message parts sent. A long SMS is split into several parts, and each part is charged." value={compactNum(totals.segments)} accent={NEUTRAL.muted} />
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
           <KpiCard
             icon={<WarningAmberRounded />}
-            label="Failed at gateway"
+            label="Failed at gateway" info="Messages the SMS gateway could not send in the selected period, and what share of all messages that is."
             value={`${failed} (${failureRate}%)`}
             accent={failed ? SEMANTIC.danger : SEMANTIC.success}
             higherIsBetter={false}

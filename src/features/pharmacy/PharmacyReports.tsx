@@ -51,12 +51,12 @@ export function PharmacyOverview() {
       ) : (
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
           <Grid container spacing={2}>
-            <Grid size={{ xs: 6, sm: 4, md: 2 }}><KpiCard icon={<ReceiptLongRounded />} accent={BRAND.action} label="Orders dispensed" value={s?.totalOrders || 0} current={s?.totalOrders} previous={p?.totalOrders} /></Grid>
-            <Grid size={{ xs: 6, sm: 4, md: 2 }}><KpiCard icon={<CurrencyRupeeRounded />} accent={SEMANTIC.success} label="Billed value" value={inr(s?.totalSales)} current={s?.totalSales} previous={p?.totalSales} /></Grid>
-            <Grid size={{ xs: 6, sm: 4, md: 2 }}><KpiCard icon={<TrendingUpRounded />} accent={SEMANTIC.info} label="Avg order value" value={inr(s?.avgOrderValue)} current={s?.avgOrderValue} previous={p?.avgOrderValue} /></Grid>
-            <Grid size={{ xs: 6, sm: 4, md: 2 }}><KpiCard icon={<LocalPharmacyRounded />} accent={BRAND.action} label="IPD meds issued" value={inr(s?.ipdMedicationValue)} current={s?.ipdMedicationValue} previous={p?.ipdMedicationValue} /></Grid>
-            <Grid size={{ xs: 6, sm: 4, md: 2 }}><KpiCard icon={<WarningAmberRounded />} accent={SEMANTIC.warning} label="Low stock items" value={s?.lowStockCount || 0} /></Grid>
-            <Grid size={{ xs: 6, sm: 4, md: 2 }}><KpiCard icon={<EventBusyRounded />} accent={SEMANTIC.danger} label="Expiring in 30 days" value={s?.expiringSoonCount || 0} /></Grid>
+            <Grid size={{ xs: 6, sm: 4, md: 2 }}><KpiCard icon={<ReceiptLongRounded />} accent={BRAND.action} label="Orders dispensed" info="Pharmacy sales made in the selected dates, not counting cancelled ones." value={s?.totalOrders || 0} current={s?.totalOrders} previous={p?.totalOrders} /></Grid>
+            <Grid size={{ xs: 6, sm: 4, md: 2 }}><KpiCard icon={<CurrencyRupeeRounded />} accent={SEMANTIC.success} label="Billed value" info="Total amount of those pharmacy sales in the selected dates, not counting cancelled ones." value={inr(s?.totalSales)} current={s?.totalSales} previous={p?.totalSales} /></Grid>
+            <Grid size={{ xs: 6, sm: 4, md: 2 }}><KpiCard icon={<TrendingUpRounded />} accent={SEMANTIC.info} label="Avg order value" info="Billed value divided by the number of sales in the selected dates." value={inr(s?.avgOrderValue)} current={s?.avgOrderValue} previous={p?.avgOrderValue} /></Grid>
+            <Grid size={{ xs: 6, sm: 4, md: 2 }}><KpiCard icon={<LocalPharmacyRounded />} accent={BRAND.action} label="IPD meds issued" info="Value of medicines confirmed for admitted patients on the wards in the selected dates (active or already billed)." value={inr(s?.ipdMedicationValue)} current={s?.ipdMedicationValue} previous={p?.ipdMedicationValue} /></Grid>
+            <Grid size={{ xs: 6, sm: 4, md: 2 }}><KpiCard icon={<WarningAmberRounded />} accent={SEMANTIC.warning} label="Low stock items" info="Right now, not for the dates: medicines whose unexpired stock on hand is at or below their minimum level, including ones with none left." value={s?.lowStockCount || 0} /></Grid>
+            <Grid size={{ xs: 6, sm: 4, md: 2 }}><KpiCard icon={<EventBusyRounded />} accent={SEMANTIC.danger} label="Expiring in 30 days" info="Right now, not for the dates: stock batches that expire within the next 30 days." value={s?.expiringSoonCount || 0} /></Grid>
           </Grid>
 
           {data?.byBranch && (

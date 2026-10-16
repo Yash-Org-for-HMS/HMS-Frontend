@@ -74,7 +74,7 @@ export default function LabDashboard() {
       <Grid container spacing={3} sx={{ mb: 3 }}>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            label="Lab pending" value={lab.pending}
+            label="Lab pending" info="Lab orders of any date that do not have every result entered yet (no report at all, or a result still blank). Below: how long the oldest has waited." value={lab.pending}
             sub={pendingLab[0] ? `oldest ${ageLabel(pendingLab[0].ageDays, pendingLab[0].ageHours)}` : "Nothing waiting"}
             icon={<ScienceRounded sx={{ color: SEMANTIC.info }} />} color={SEMANTIC.info}
             onClick={() => navigate("/lab/orders")}
@@ -82,7 +82,7 @@ export default function LabDashboard() {
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            label="Radiology pending" value={rad.pending}
+            label="Radiology pending" info="Radiology orders of any date not marked completed yet. Below: how long the oldest has waited." value={rad.pending}
             sub={pendingRad[0] ? `oldest ${ageLabel(pendingRad[0].ageDays, pendingRad[0].ageHours)}` : "Nothing waiting"}
             icon={<BiotechRounded sx={{ color: SEMANTIC.warning }} />} color={SEMANTIC.warning}
             onClick={() => navigate("/lab/radiology")}
@@ -90,14 +90,14 @@ export default function LabDashboard() {
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            label="Completed today" value={lab.completedToday + rad.completedToday}
+            label="Completed today" info="Lab orders with all results entered and a result saved today, plus radiology orders completed with a report dated today. Editing an older result today also counts that order." value={lab.completedToday + rad.completedToday}
             sub={`${lab.completedToday} lab · ${rad.completedToday} radiology`}
             icon={<CheckCircleRounded sx={{ color: SEMANTIC.success }} />} color={SEMANTIC.success}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            label="Paid today" value={inr(lab.revenueToday + rad.revenueToday)}
+            label="Paid today" info="Value of lab and radiology orders raised today that are marked paid. Payments today for orders raised on earlier days are not included." value={inr(lab.revenueToday + rad.revenueToday)}
             sub="On orders raised today"
             icon={<AttachMoneyRounded sx={{ color: SEMANTIC.success }} />} color={SEMANTIC.success}
           />

@@ -37,14 +37,14 @@ export function StockValuation() {
       {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<Inventory2Rounded />} accent={SEMANTIC.success} label="Retail value" value={inr(data.totals.retailValue)} sub={`as of ${data.asOf}`} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<Inventory2Rounded />} accent={SEMANTIC.success} label="Retail value" info="Right now: unexpired stock on hand times each medicine's selling price." value={inr(data.totals.retailValue)} sub={`as of ${data.asOf}`} /></Grid>
             {/* Cost and margin cover only the SKUs with a supplier price on
                 record. Saying so on the tile stops a partial figure being read
                 as a whole one - it used to be arithmetic on a fixed 70%-of-price
                 assumption for every medicine. */}
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<SavingsRounded />} accent={SEMANTIC.info} label="Cost value" value={inr(data.totals.costValue)} sub={costCoverage(data.totals)} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<TrendingUpRounded />} accent="#8b5cf6" label="Margin on costed stock" value={inr(data.totals.estMargin)} sub={data.totals.skusWithCost ? `on ${inr(data.totals.costedRetailValue)} retail` : "no costs on record"} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CategoryRounded />} accent={SEMANTIC.warning} label="SKUs / units" value={`${data.totals.skus} / ${data.totals.units}`} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<SavingsRounded />} accent={SEMANTIC.info} label="Cost value" info="Right now: unexpired stock on hand times its latest purchase price, for medicines where a purchase price is known." value={inr(data.totals.costValue)} sub={costCoverage(data.totals)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<TrendingUpRounded />} accent="#8b5cf6" label="Margin on costed stock" info="Retail value minus cost value, only for medicines with a known purchase price. An estimate of profit if all that stock sells." value={inr(data.totals.estMargin)} sub={data.totals.skusWithCost ? `on ${inr(data.totals.costedRetailValue)} retail` : "no costs on record"} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CategoryRounded />} accent={SEMANTIC.warning} label="SKUs / units" info="Different medicines with unexpired stock on hand, and the total units of them." value={`${data.totals.skus} / ${data.totals.units}`} /></Grid>
           </Grid>
           <ReportTable
             title="Stock valuation (usable, non-expired)"
@@ -99,10 +99,10 @@ export function ExpiryLoss() {
       {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<EventBusyRounded />} accent={SEMANTIC.danger} label="Expired value (loss)" value={inr(data.totals.expired.value)} sub={`${data.totals.expired.units} units`} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<Inventory2Rounded />} accent={SEMANTIC.danger} label="Expired SKUs" value={String(data.totals.expired.skus)} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<WarningAmberRounded />} accent={SEMANTIC.warning} label={`At-risk value (${data.windowDays}d)`} value={inr(data.totals.nearExpiry.value)} sub={`${data.totals.nearExpiry.units} units`} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<WidgetsRounded />} accent={SEMANTIC.warning} label="Near-expiry SKUs" value={String(data.totals.nearExpiry.skus)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<EventBusyRounded />} accent={SEMANTIC.danger} label="Expired value (loss)" info="Stock still on the shelf that is already past its expiry date, at selling price. It cannot be sold." value={inr(data.totals.expired.value)} sub={`${data.totals.expired.units} units`} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<Inventory2Rounded />} accent={SEMANTIC.danger} label="Expired SKUs" info="Different medicines that have expired stock still on the shelf." value={String(data.totals.expired.skus)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<WarningAmberRounded />} accent={SEMANTIC.warning} info="Stock on the shelf that will expire within the chosen window (90 days unless changed), at selling price." label={`At-risk value (${data.windowDays}d)`} value={inr(data.totals.nearExpiry.value)} sub={`${data.totals.nearExpiry.units} units`} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<WidgetsRounded />} accent={SEMANTIC.warning} label="Near-expiry SKUs" info="Different medicines with stock expiring within that window." value={String(data.totals.nearExpiry.skus)} /></Grid>
           </Grid>
           <ReportTable
             title="Expired & near-expiry batches"
@@ -140,8 +140,8 @@ export function PurchaseConsumption() {
       {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ShoppingCartRounded />} accent={SEMANTIC.warning} label="Purchased value" value={inr(data.totals.purchasedValue)} sub={`${data.totals.purchasedQty} units`} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<LocalShippingRounded />} accent={SEMANTIC.success} label="Consumed value" value={inr(data.totals.consumedValue)} sub={`${data.totals.consumedQty} units`} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ShoppingCartRounded />} accent={SEMANTIC.warning} label="Purchased value" info="Value of medicines on purchase orders raised in the selected dates (ordered, whether received or not)." value={inr(data.totals.purchasedValue)} sub={`${data.totals.purchasedQty} units`} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<LocalShippingRounded />} accent={SEMANTIC.success} label="Consumed value" info="Value of medicines that went out in the selected dates: pharmacy sales (not cancelled) plus medicines issued to admitted patients." value={inr(data.totals.consumedValue)} sub={`${data.totals.consumedQty} units`} /></Grid>
           </Grid>
           <ReportTable
             title="Purchase vs consumption"
@@ -176,8 +176,8 @@ export function ReorderList() {
       {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ReplayRounded />} accent={SEMANTIC.danger} label="Items to reorder" value={String(data.totals.itemsBelowReorder)} sub={`as of ${data.asOf}`} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<WidgetsRounded />} accent={SEMANTIC.warning} label="Total shortfall (units)" value={String(data.totals.totalShortfall)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ReplayRounded />} accent={SEMANTIC.danger} label="Items to reorder" info="Right now: medicines whose unexpired stock is at or below their minimum level, including ones with none left." value={String(data.totals.itemsBelowReorder)} sub={`as of ${data.asOf}`} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<WidgetsRounded />} accent={SEMANTIC.warning} label="Total shortfall (units)" info="Units needed to bring all those medicines back up to their minimum level." value={String(data.totals.totalShortfall)} /></Grid>
           </Grid>
           <ReportTable
             title="Reorder list (at/below reorder level)"
@@ -214,10 +214,10 @@ export function SupplierLedger() {
       {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<LocalShippingRounded />} accent="#8b5cf6" label="Suppliers" value={String(data.totals.suppliers)} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ReceiptLongRounded />} accent={SEMANTIC.info} label="Purchase orders" value={String(data.totals.purchaseOrders)} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ShoppingCartRounded />} accent={SEMANTIC.warning} label="Ordered value" value={inr(data.totals.orderedValue)} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<Inventory2Rounded />} accent={SEMANTIC.success} label="Received value" value={inr(data.totals.receivedValue)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<LocalShippingRounded />} accent="#8b5cf6" label="Suppliers" info="Different suppliers with purchase orders in the selected dates." value={String(data.totals.suppliers)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ReceiptLongRounded />} accent={SEMANTIC.info} label="Purchase orders" info="Number of purchase orders raised in the selected dates." value={String(data.totals.purchaseOrders)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ShoppingCartRounded />} accent={SEMANTIC.warning} label="Ordered value" info="Total value of those purchase orders as ordered." value={inr(data.totals.orderedValue)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<Inventory2Rounded />} accent={SEMANTIC.success} label="Received value" info="Value of the goods actually received on those orders so far (received quantity times unit price)." value={inr(data.totals.receivedValue)} /></Grid>
           </Grid>
           <ReportTable
             title="Supplier ledger"
@@ -253,10 +253,10 @@ export function Movers() {
       {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<TrendingUpRounded />} accent={SEMANTIC.success} label="Moving items" value={String(data.totals.movingItems)} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<SavingsRounded />} accent={SEMANTIC.info} label="Consumed value" value={inr(data.totals.consumedValue)} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<BlockRounded />} accent={SEMANTIC.danger} label="Dead-stock items" value={String(data.totals.deadStockItems)} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<TrendingDownRounded />} accent={SEMANTIC.danger} label="Dead-stock value" value={inr(data.totals.deadStockValue)} sub="on-hand, no movement" /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<TrendingUpRounded />} accent={SEMANTIC.success} label="Moving items" info="Medicines that sold or were issued at least once in the selected dates." value={String(data.totals.movingItems)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<SavingsRounded />} accent={SEMANTIC.info} label="Consumed value" info="Value of medicines that went out in the selected dates: pharmacy sales (not cancelled) plus medicines issued to admitted patients." value={inr(data.totals.consumedValue)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<BlockRounded />} accent={SEMANTIC.danger} label="Dead-stock items" info="Medicines with unexpired stock on hand that did not move at all in the selected dates." value={String(data.totals.deadStockItems)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<TrendingDownRounded />} accent={SEMANTIC.danger} label="Dead-stock value" info="That idle stock at selling price: money sitting on the shelf." value={inr(data.totals.deadStockValue)} sub="on-hand, no movement" /></Grid>
           </Grid>
           <ReportTable
             title="Fast / slow movers"
@@ -296,10 +296,10 @@ export function OpdIpdSplit() {
       {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<StorefrontRounded />} accent={BRAND.action} label="OPD billed" value={inr(data.totals.opd.value)} sub={`${data.totals.opd.orders} orders · ${data.totals.opd.qty} units`} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<LocalPharmacyRounded />} accent={BRAND.action} label="IPD meds issued" value={inr(data.totals.ipd.value)} sub={`${data.totals.ipd.orders} orders · ${data.totals.ipd.qty} units`} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CurrencyRupeeRounded />} accent={SEMANTIC.success} label="Combined value" value={inr(data.totals.combined.value)} sub={`${data.totals.combined.qty} units`} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<DonutLargeRounded />} accent={SEMANTIC.info} label="IPD share" value={`${ipdShare}%`} sub="of pharmacy value" /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<StorefrontRounded />} accent={BRAND.action} label="OPD billed" info="Value of pharmacy sales (outpatient counter) in the selected dates, not counting cancelled ones." value={inr(data.totals.opd.value)} sub={`${data.totals.opd.orders} orders · ${data.totals.opd.qty} units`} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<LocalPharmacyRounded />} accent={BRAND.action} label="IPD meds issued" info="Value of medicines issued to admitted patients in the selected dates (active or already billed)." value={inr(data.totals.ipd.value)} sub={`${data.totals.ipd.orders} orders · ${data.totals.ipd.qty} units`} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CurrencyRupeeRounded />} accent={SEMANTIC.success} label="Combined value" info="OPD sales plus IPD issues for the selected dates." value={inr(data.totals.combined.value)} sub={`${data.totals.combined.qty} units`} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<DonutLargeRounded />} accent={SEMANTIC.info} label="IPD share" info="IPD issues as a share of the combined value." value={`${ipdShare}%`} sub="of pharmacy value" /></Grid>
           </Grid>
           <ReportTable
             title="OPD vs IPD dispensing, by medicine"

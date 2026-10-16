@@ -75,7 +75,7 @@ export default function FinancialDashboard() {
       <Grid container spacing={4} sx={{ mb: 6 }}>
         <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
           <StatCard
-            label="Total Collected (to date)"
+            label="Total Collected (to date)" info="All money ever received against issued bills, minus refunds. Payments on cancelled bills are left out. Below: what share of the billed value that is, and how much was refunded."
             value={formatINR(analytics.totalCollected, 0)}
             icon={<AccountBalanceRounded />}
             color={SEMANTIC.success}
@@ -84,7 +84,7 @@ export default function FinancialDashboard() {
         </Grid>
         <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
           <StatCard
-            label="Billed Value (to date)"
+            label="Billed Value (to date)" info="Total of every issued bill ever, after discounts. Draft and cancelled bills are left out."
             value={formatINR(analytics.expectedRevenue, 0)}
             icon={<TrendingUpRounded />}
             color={SEMANTIC.info}
@@ -93,7 +93,7 @@ export default function FinancialDashboard() {
         </Grid>
         <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
           <StatCard
-            label="Outstanding Dues (to date)"
+            label="Outstanding Dues (to date)" info="What patients still owe: for each issued bill, the amount minus what has been paid (less refunds), added up. An over-paid bill does not reduce another bill's dues. Matches the Outstanding report."
             value={formatINR(analytics.outstandingDues, 0)}
             icon={<WarningRounded />}
             color={SEMANTIC.danger}
@@ -102,7 +102,7 @@ export default function FinancialDashboard() {
         </Grid>
         <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
           <StatCard
-            label="Invoices Issued (to date)"
+            label="Invoices Issued (to date)" info="Number of bills ever issued. Draft and cancelled bills are left out."
             value={analytics.totalInvoices || 0}
             icon={<ReceiptRounded />}
             color="#8B5CF6"

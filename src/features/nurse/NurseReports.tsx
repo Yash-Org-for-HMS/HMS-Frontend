@@ -58,16 +58,16 @@ function SummaryReport({ data }: { data: NurseReportsData }) {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2,1fr)", sm: "repeat(4,1fr)" }, gap: 1.5 }}>
-        <KpiCard icon={<MonitorHeartRounded />} accent={BRAND.action} label="Vitals recorded"
+        <KpiCard icon={<MonitorHeartRounded />} accent={BRAND.action} label="Vitals recorded" info="Sets of vitals saved or last edited in the selected dates. A set edited later moves to the date of the edit."
           value={s?.totalVitalsRecorded || 0} current={s?.totalVitalsRecorded} previous={p?.totalVitalsRecorded} />
-        <KpiCard icon={<GroupRounded />} accent={SEMANTIC.info} label="Unique patients"
+        <KpiCard icon={<GroupRounded />} accent={SEMANTIC.info} label="Unique patients" info="Different patients who had vitals recorded in the selected dates. A patient measured many times counts once."
           value={s?.uniquePatients || 0} current={s?.uniquePatients} previous={p?.uniquePatients} />
         {/* Fewer abnormal readings is the good direction here, unlike every
             other card on this row. */}
-        <KpiCard icon={<WarningAmberRounded />} accent={SEMANTIC.danger} label="Abnormal readings"
+        <KpiCard icon={<WarningAmberRounded />} accent={SEMANTIC.danger} label="Abnormal readings" info="Vitals sets in the selected dates with at least one value outside the normal range (for example high BP, fever, low oxygen)."
           value={s?.abnormalReadings || 0} current={s?.abnormalReadings} previous={p?.abnormalReadings}
           higherIsBetter={false} />
-        <KpiCard icon={<BadgeRounded />} accent={SEMANTIC.success} label="Staff recording"
+        <KpiCard icon={<BadgeRounded />} accent={SEMANTIC.success} label="Staff recording" info="Different staff members who recorded vitals in the selected dates."
           value={s?.staffRecording || 0} current={s?.staffRecording} previous={p?.staffRecording} />
       </Box>
       <SimpleTable title="Daily vitals recorded" head={["Date", "Vitals"]}

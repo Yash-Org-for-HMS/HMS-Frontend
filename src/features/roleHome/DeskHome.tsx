@@ -106,11 +106,11 @@ export default function DeskHome() {
       {show.admission && !admission.isError && (
         <Section title="Admission desk" subtitle="Beds to give, beds coming free, and who is waiting for one.">
           <Grid container spacing={2} sx={{ mb: 2 }}>
-            <Grid size={tile}><StatCard icon={<KingBedRounded />} label="Free beds" color={SEMANTIC.success} loading={admission.isLoading}
+            <Grid size={tile}><StatCard icon={<KingBedRounded />} label="Free beds" info="Patient beds that are clean and empty right now, ready to give. Only active beds set up as patient beds are counted." color={SEMANTIC.success} loading={admission.isLoading}
               value={admission.data?.beds.free ?? 0} sub={`of ${admission.data?.beds.total ?? 0} patient beds`} onClick={() => navigate("/reception/ipd/beds")} /></Grid>
-            <Grid size={tile}><StatCard icon={<HotelRounded />} label="Occupied" color={BRAND.action} loading={admission.isLoading}
+            <Grid size={tile}><StatCard icon={<HotelRounded />} label="Occupied" info="Patient beds with a patient in them right now. A bed whose discharge has started still counts until the patient leaves." color={BRAND.action} loading={admission.isLoading}
               value={admission.data?.beds.occupied ?? 0} onClick={() => navigate("/reception/ipd/beds")} /></Grid>
-            <Grid size={tile}><StatCard icon={<CleaningServicesRounded />} label="Being turned round" color={SEMANTIC.warning} loading={admission.isLoading}
+            <Grid size={tile}><StatCard icon={<CleaningServicesRounded />} label="Being turned round" info="Beds a patient has just left that are not ready yet: vacated, being cleaned, or getting a deep (terminal) clean." color={SEMANTIC.warning} loading={admission.isLoading}
               value={admission.data?.beds.turnaround ?? 0} sub="vacated or cleaning" onClick={() => navigate("/reception/ipd/beds")} /></Grid>
           </Grid>
           <Grid container spacing={2}>
@@ -138,11 +138,11 @@ export default function DeskHome() {
       {show.billing && !billing.isError && (
         <Section title="Billing" subtitle="Final bills to make, bills still owed, and stays running without an advance.">
           <Grid container spacing={2} sx={{ mb: 2 }}>
-            <Grid size={tile}><StatCard icon={<CurrencyRupeeRounded />} label="Collected today" color={SEMANTIC.success} loading={billing.isLoading}
+            <Grid size={tile}><StatCard icon={<CurrencyRupeeRounded />} label="Collected today" info="All money received today (bill payments and IPD advances), minus refunds paid out today. Includes payments on old bills. Same figure as the hospital dashboard." color={SEMANTIC.success} loading={billing.isLoading}
               value={inr(billing.data?.collectedToday)} onClick={() => navigate("/reception/billing")} /></Grid>
-            <Grid size={tile}><StatCard icon={<ReceiptLongRounded />} label="Unpaid bills" color={SEMANTIC.warning} loading={billing.isLoading}
+            <Grid size={tile}><StatCard icon={<ReceiptLongRounded />} label="Unpaid bills" info="Issued bills that still have money owing, of any date. Below: the total still owed. Draft and cancelled bills are left out." color={SEMANTIC.warning} loading={billing.isLoading}
               value={billing.data?.unpaidBills.count ?? 0} sub={`${inr(billing.data?.unpaidBills.totalDue)} due`} onClick={() => navigate("/reception/billing")} /></Grid>
-            <Grid size={tile}><StatCard icon={<ExitToAppRounded />} label="Final bills to make" color={BRAND.action} loading={billing.isLoading}
+            <Grid size={tile}><StatCard icon={<ExitToAppRounded />} label="Final bills to make" info="Patients still admitted whose discharge has been started. Their final bill is the last step before they can go." color={BRAND.action} loading={billing.isLoading}
               value={billing.data?.finalBillsToMake.count ?? 0} sub="discharge started" onClick={() => navigate("/reception/ipd/admissions")} /></Grid>
           </Grid>
           <Grid container spacing={2}>
@@ -170,11 +170,11 @@ export default function DeskHome() {
       {show.tpa && !tpa.isError && (
         <Section title="TPA / insurance desk" subtitle="Queries to answer, pre-authorisations to chase, and insured stays to check.">
           <Grid container spacing={2} sx={{ mb: 2 }}>
-            <Grid size={tile}><StatCard icon={<HelpOutlineRounded />} label="Queried by the payer" color={SEMANTIC.danger} loading={tpa.isLoading}
+            <Grid size={tile}><StatCard icon={<HelpOutlineRounded />} label="Queried by the payer" info="Claims where the insurer or TPA has asked a question (on the pre-auth or on the final claim) and is waiting for the hospital to answer." color={SEMANTIC.danger} loading={tpa.isLoading}
               value={tpa.data?.queried.count ?? 0} onClick={() => navigate("/reception/claims")} /></Grid>
-            <Grid size={tile}><StatCard icon={<HealthAndSafetyRounded />} label="Pre-auth pending" color={SEMANTIC.warning} loading={tpa.isLoading}
+            <Grid size={tile}><StatCard icon={<HealthAndSafetyRounded />} label="Pre-auth pending" info="Claims registered but not yet sent for pre-authorisation, or sent and still waiting for the insurer's approval." color={SEMANTIC.warning} loading={tpa.isLoading}
               value={tpa.data?.preAuthPending.count ?? 0} onClick={() => navigate("/reception/claims")} /></Grid>
-            <Grid size={tile}><StatCard icon={<KingBedRounded />} label="Rooms over policy limit" color={SEMANTIC.warning} loading={tpa.isLoading}
+            <Grid size={tile}><StatCard icon={<KingBedRounded />} label="Rooms over policy limit" info="Insured patients in hospital whose room costs more per day than the room-rent limit entered on their claim. Claims with no limit entered are not checked." color={SEMANTIC.warning} loading={tpa.isLoading}
               value={tpa.data?.roomsOverLimit.count ?? 0} onClick={() => navigate("/reception/ipd/admissions")} /></Grid>
           </Grid>
           <Grid container spacing={2}>
@@ -216,28 +216,28 @@ export default function DeskHome() {
       {show.mrd && !mrd.isError && (
         <Section title="Medical records" subtitle="Files closed without a summary, surgeries coming up without a signed consent, and the record room's registers.">
           <Grid container spacing={2} sx={{ mb: 2 }}>
-            <Grid size={tile}><StatCard icon={<ExitToAppRounded />} label="Discharged this week" color={BRAND.action} loading={mrd.isLoading}
+            <Grid size={tile}><StatCard icon={<ExitToAppRounded />} label="Discharged this week" info="Patients discharged in the last 7 days." color={BRAND.action} loading={mrd.isLoading}
               value={mrd.data?.dischargedThisWeek ?? 0} /></Grid>
-            <Grid size={tile}><StatCard icon={<DescriptionRounded />} label="Summaries missing" color={SEMANTIC.warning} loading={mrd.isLoading}
-              value={mrd.data?.summariesMissing.count ?? 0} sub="of those discharged" /></Grid>
-            <Grid size={tile}><StatCard icon={<AssignmentLateRounded />} label="Consents missing" color={SEMANTIC.danger} loading={mrd.isLoading}
+            <Grid size={tile}><StatCard icon={<DescriptionRounded />} label="Summaries missing" info="Discharged patients whose discharge summary is still empty, however long ago they left. A file stays here until the summary is written." color={SEMANTIC.warning} loading={mrd.isLoading}
+              value={mrd.data?.summariesMissing.count ?? 0} sub="discharged, not yet written" /></Grid>
+            <Grid size={tile}><StatCard icon={<AssignmentLateRounded />} label="Consents missing" info="Surgeries in the next 48 hours with no surgical consent recorded on the theatre case (or one that was withdrawn). Other consents, like for blood, do not count." color={SEMANTIC.danger} loading={mrd.isLoading}
               value={mrd.data?.consentsMissing.count ?? 0} sub="surgery in the next 48h" /></Grid>
             {/* The record room's own registers (Medical records page). */}
-            <Grid size={tile}><StatCard icon={<GavelRounded />} label="Medico-legal cases open" color={SEMANTIC.warning} loading={mrd.isLoading}
+            <Grid size={tile}><StatCard icon={<GavelRounded />} label="Medico-legal cases open" info="Medico-legal (MLC) cases still open. Below: how many of those have no police intimation recorded yet." color={SEMANTIC.warning} loading={mrd.isLoading}
               value={mrd.data?.medicoLegal?.open ?? 0} sub={`${mrd.data?.medicoLegal?.policePending ?? 0} not yet told to police`} onClick={() => navigate("/reception/mrd")} /></Grid>
-            <Grid size={tile}><StatCard icon={<FolderSharedRounded />} label="Files overdue" color={SEMANTIC.danger} loading={mrd.isLoading}
+            <Grid size={tile}><StatCard icon={<FolderSharedRounded />} label="Files overdue" info="Patient files lent out of the record room that are past their due-back time and not returned yet. A file lent with no due time is never overdue." color={SEMANTIC.danger} loading={mrd.isLoading}
               value={mrd.data?.filesOverdue ?? 0} sub="out past their due time" onClick={() => navigate("/reception/mrd")} /></Grid>
-            <Grid size={tile}><StatCard icon={<VerifiedRounded />} label="Certificates this week" color={BRAND.action} loading={mrd.isLoading}
+            <Grid size={tile}><StatCard icon={<VerifiedRounded />} label="Certificates this week" info="Medical, fitness and death certificates issued in the last 7 days. Drafts are not counted." color={BRAND.action} loading={mrd.isLoading}
               value={mrd.data?.certificatesThisWeek ?? 0} sub="medical, fitness, death" onClick={() => navigate("/reception/mrd")} /></Grid>
           </Grid>
           <Grid container spacing={2}>
             <Grid size={half}>
-              <AttentionList title="Discharged without a summary" subtitle="This week - oldest first" loading={mrd.isLoading}
-                emptyText="Every file this week has its summary." totalCount={mrd.data?.summariesMissing.count}
+              <AttentionList title="Discharged without a summary" subtitle="Any discharge date - oldest first" loading={mrd.isLoading}
+                emptyText="Every discharged file has its summary." totalCount={mrd.data?.summariesMissing.count}
                 items={(mrd.data?.summariesMissing.rows ?? []).map((r) => ({ id: r.admissionId, primary: r.patientName, secondary: r.admissionNumber ?? undefined, meta: since(r.dischargedOn), severity: "warning" as const, icon: <DescriptionRounded sx={{ fontSize: 18 }} />, onClick: () => navigate("/reception/ipd/admissions") }))} />
             </Grid>
             <Grid size={half}>
-              <AttentionList title="Surgery without a signed consent" subtitle="In the next 48 hours - soonest first" loading={mrd.isLoading}
+              <AttentionList title="Surgery without a signed consent" subtitle="No surgical consent on the theatre case - next 48 hours, soonest first" loading={mrd.isLoading}
                 emptyText="Every surgery coming up has its consent." totalCount={mrd.data?.consentsMissing.count}
                 items={(mrd.data?.consentsMissing.rows ?? []).map((r) => ({ id: r.surgeryId, primary: r.patientName, secondary: r.procedure, meta: formatDateTime(r.at), severity: "critical" as const, icon: <AssignmentLateRounded sx={{ fontSize: 18 }} />, onClick: () => navigate("/reception/patients") }))} />
             </Grid>

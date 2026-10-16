@@ -83,7 +83,7 @@ export default function PharmacyDashboard() {
           <Grid container spacing={3} mb={4}>
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                   <StatCard
-                    label="Medicines in catalog"
+                    label="Medicines in catalog" info="Medicines in the list you can sell: your hospital's own plus the shared master list. It is the catalogue, not what is in stock."
                     value={medicineCount}
                     icon={<MedicationRounded sx={{ color: BRAND.action }} />} 
                     color={BRAND.action}
@@ -91,7 +91,7 @@ export default function PharmacyDashboard() {
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                   <StatCard 
-                    label="Low Stock Alerts"
+                    label="Low Stock Alerts" info="Medicines whose unexpired stock on hand is at or below their minimum stock level. Stock already ordered but not received does not count. Below: purchase orders still waiting to be received."
                     value={lowStockAlerts.length}
                     sub={pendingPOCount ? `${pendingPOCount} purchase order${pendingPOCount === 1 ? "" : "s"} open` : "No open purchase orders"}
                     icon={<WarningRounded sx={{ color: SEMANTIC.danger }} />} 
@@ -104,7 +104,7 @@ export default function PharmacyDashboard() {
                       them here at all - the only way to know was to open the
                       IPD Medication Requests page and look. */}
                   <StatCard
-                    label="IPD requests waiting"
+                    label="IPD requests waiting" info="Medicines the wards have requested for admitted patients that the pharmacy has not dispensed yet."
                     value={ipdRequestsPending}
                     sub={ipdRequestsPending ? "Ward medicines not yet dispensed" : "Nothing waiting from the wards"}
                     icon={<VaccinesRounded sx={{ color: SEMANTIC.warning }} />}
@@ -117,7 +117,7 @@ export default function PharmacyDashboard() {
                       with no period stated. A lifetime figure only goes up, so
                       it could never say whether today was any good. */}
                   <StatCard
-                    label="Sales today"
+                    label="Sales today" info="Total of pharmacy sales made today with at least one item, not counting cancelled sales. The arrow compares with the same weekday last week."
                     value={inr(salesToday)}
                     current={salesToday} previous={salesPrevious}
                     deltaLabel="vs the same weekday last week"

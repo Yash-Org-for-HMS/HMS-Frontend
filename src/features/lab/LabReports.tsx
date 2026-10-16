@@ -52,14 +52,14 @@ export function LabOverview() {
       {isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : isLoading || !data ? <ReportSkeleton /> : (
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
           <Grid container spacing={2}>
-            <Grid size={{ xs: 6, sm: 4, md: 3 }}><KpiCard icon={<ScienceRounded />} accent={SEMANTIC.success} label="Lab orders" value={s?.totalOrders || 0} current={s?.totalOrders} previous={p?.totalOrders} /></Grid>
-            <Grid size={{ xs: 6, sm: 4, md: 3 }}><KpiCard icon={<HourglassEmptyRounded />} accent={SEMANTIC.warning} label="Pending" value={s?.pending || 0} current={s?.pending} previous={p?.pending} higherIsBetter={false} /></Grid>
-            <Grid size={{ xs: 6, sm: 4, md: 3 }}><KpiCard icon={<BiotechRounded />} accent={SEMANTIC.info} label="Sample collected" value={s?.sampleCollected || 0} current={s?.sampleCollected} previous={p?.sampleCollected} /></Grid>
-            <Grid size={{ xs: 6, sm: 4, md: 3 }}><KpiCard icon={<CheckCircleRounded />} accent={SEMANTIC.success} label="Completed" value={s?.completed || 0} current={s?.completed} previous={p?.completed} /></Grid>
-            <Grid size={{ xs: 6, sm: 4, md: 3 }}><KpiCard icon={<MonitorHeartRounded />} accent={BRAND.action} label="Radiology orders" value={s?.radiologyOrders || 0} current={s?.radiologyOrders} previous={p?.radiologyOrders} /></Grid>
-            <Grid size={{ xs: 6, sm: 4, md: 3 }}><KpiCard icon={<WarningAmberRounded />} accent={SEMANTIC.danger} label="Critical results" value={s?.criticalResults || 0} current={s?.criticalResults} previous={p?.criticalResults} higherIsBetter={false} /></Grid>
-            <Grid size={{ xs: 6, sm: 4, md: 3 }}><KpiCard icon={<AccessTimeRounded />} accent={BRAND.actionDark} label="Avg time to result" value={`${s?.avgTurnaroundHours || 0} hrs`} current={s?.avgTurnaroundHours} previous={p?.avgTurnaroundHours} higherIsBetter={false} /></Grid>
-            <Grid size={{ xs: 6, sm: 4, md: 3 }}><KpiCard icon={<CurrencyRupeeRounded />} accent={SEMANTIC.success} label="Lab billed value" value={inr(s?.revenueEstimate)} sub="Priced per order" current={s?.revenueEstimate} previous={p?.revenueEstimate} /></Grid>
+            <Grid size={{ xs: 6, sm: 4, md: 3 }}><KpiCard icon={<ScienceRounded />} accent={SEMANTIC.success} label="Lab orders" info="Lab orders raised in the selected dates." value={s?.totalOrders || 0} current={s?.totalOrders} previous={p?.totalOrders} /></Grid>
+            <Grid size={{ xs: 6, sm: 4, md: 3 }}><KpiCard icon={<HourglassEmptyRounded />} accent={SEMANTIC.warning} label="Pending" info="Of the lab orders in the selected dates: sample not collected yet." value={s?.pending || 0} current={s?.pending} previous={p?.pending} higherIsBetter={false} /></Grid>
+            <Grid size={{ xs: 6, sm: 4, md: 3 }}><KpiCard icon={<BiotechRounded />} accent={SEMANTIC.info} label="Sample collected" info="Of those: sample collected, results not all entered yet." value={s?.sampleCollected || 0} current={s?.sampleCollected} previous={p?.sampleCollected} /></Grid>
+            <Grid size={{ xs: 6, sm: 4, md: 3 }}><KpiCard icon={<CheckCircleRounded />} accent={SEMANTIC.success} label="Completed" info="Of those: every result entered." value={s?.completed || 0} current={s?.completed} previous={p?.completed} /></Grid>
+            <Grid size={{ xs: 6, sm: 4, md: 3 }}><KpiCard icon={<MonitorHeartRounded />} accent={BRAND.action} label="Radiology orders" info="Radiology orders raised in the selected dates." value={s?.radiologyOrders || 0} current={s?.radiologyOrders} previous={p?.radiologyOrders} /></Grid>
+            <Grid size={{ xs: 6, sm: 4, md: 3 }}><KpiCard icon={<WarningAmberRounded />} accent={SEMANTIC.danger} label="Critical results" info="Lab results flagged critical on orders from the selected dates." value={s?.criticalResults || 0} current={s?.criticalResults} previous={p?.criticalResults} higherIsBetter={false} /></Grid>
+            <Grid size={{ xs: 6, sm: 4, md: 3 }}><KpiCard icon={<AccessTimeRounded />} accent={BRAND.actionDark} label="Avg time to result" info="For completed lab orders in the selected dates: average hours from sample collection to the last result being entered." value={`${s?.avgTurnaroundHours || 0} hrs`} current={s?.avgTurnaroundHours} previous={p?.avgTurnaroundHours} higherIsBetter={false} /></Grid>
+            <Grid size={{ xs: 6, sm: 4, md: 3 }}><KpiCard icon={<CurrencyRupeeRounded />} accent={SEMANTIC.success} label="Lab billed value" info="Value of lab orders raised in the selected dates: the order amount, or the test price list where no amount was recorded. Billed, not necessarily paid." value={inr(s?.revenueEstimate)} sub="Priced per order" current={s?.revenueEstimate} previous={p?.revenueEstimate} /></Grid>
           </Grid>
 
           <Grid container spacing={2.5}>
@@ -98,10 +98,10 @@ export function TestWise() {
       {isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : isLoading || !data ? <ReportSkeleton /> : (
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ScienceRounded />} accent={SEMANTIC.success} label="Lab tests performed" value={String(data.totals.labPerformed)} sub={`${data.totals.labTests} distinct`} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CurrencyRupeeRounded />} accent={SEMANTIC.success} label="Lab value by test" value={inr(data.totals.labRevenue)} sub="Priced per test" /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<MonitorHeartRounded />} accent={BRAND.action} label="Radiology scans" value={String(data.totals.radScans)} sub={`${data.totals.radTypes} types`} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CurrencyRupeeRounded />} accent={SEMANTIC.info} label="Radiology value by scan" value={inr(data.totals.radRevenue)} sub="Priced per scan (est.)" /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ScienceRounded />} accent={SEMANTIC.success} label="Lab tests performed" info="Individual lab tests on orders from the selected dates (an order with 3 tests counts 3)." value={String(data.totals.labPerformed)} sub={`${data.totals.labTests} distinct`} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CurrencyRupeeRounded />} accent={SEMANTIC.success} label="Lab value by test" info="Value of those lab tests, added up test by test." value={inr(data.totals.labRevenue)} sub="Priced per test" /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<MonitorHeartRounded />} accent={BRAND.action} label="Radiology scans" info="Radiology scans ordered in the selected dates." value={String(data.totals.radScans)} sub={`${data.totals.radTypes} types`} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CurrencyRupeeRounded />} accent={SEMANTIC.info} label="Radiology value by scan" info="Value of those scans at their price." value={inr(data.totals.radRevenue)} sub="Priced per scan (est.)" /></Grid>
           </Grid>
 
           <Box sx={{ mb: 2.5 }}>
@@ -198,14 +198,14 @@ export function Turnaround() {
                 meaningless outside analytics - "9 in 10 within Xh" says the
                 same thing and needs no explaining. */}
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<SpeedRounded />} accent={BRAND.action}
-              label="Lab - average time to result" value={avgText(data.lab)} sub={spreadText(data.lab)} /></Grid>
+              label="Lab - average time to result" info="For lab orders completed in the selected dates: average hours from sample collection to the last result. Below: the middle (median) and slowest 10 percent." value={avgText(data.lab)} sub={spreadText(data.lab)} /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<VerifiedRounded />} accent={onTimeAccent(data.lab)}
-              label={`Lab - ready within ${sla} hrs`} value={data.lab.count ? `${data.lab.slaPct}%` : "-"}
+              info="Share of those lab orders that were ready within the target hours (24 unless changed)." label={`Lab - ready within ${sla} hrs`} value={data.lab.count ? `${data.lab.slaPct}%` : "-"}
               sub={data.lab.count ? `of ${data.lab.count} completed test${data.lab.count === 1 ? "" : "s"}` : "No completed tests in this period"} /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<MonitorHeartRounded />} accent={BRAND.actionDark}
-              label="Radiology - average time to report" value={avgText(data.radiology)} sub={spreadText(data.radiology)} /></Grid>
+              label="Radiology - average time to report" info="For radiology reported in the selected dates: average hours from the order to the report. Below: the median and slowest 10 percent." value={avgText(data.radiology)} sub={spreadText(data.radiology)} /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<VerifiedRounded />} accent={onTimeAccent(data.radiology)}
-              label={`Radiology - ready within ${sla} hrs`} value={data.radiology.count ? `${data.radiology.slaPct}%` : "-"}
+              info="Share of those radiology orders reported within the target hours (24 unless changed)." label={`Radiology - ready within ${sla} hrs`} value={data.radiology.count ? `${data.radiology.slaPct}%` : "-"}
               sub={data.radiology.count ? `of ${data.radiology.count} reported scan${data.radiology.count === 1 ? "" : "s"}` : "No reported scans in this period"} /></Grid>
           </Grid>
 
@@ -267,10 +267,10 @@ export function Pending() {
       {isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : isLoading || !data ? <ReportSkeleton /> : (
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PendingActionsRounded />} accent={SEMANTIC.warning} label="Lab pending" value={String(data.totals.pendingLab)} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<MonitorHeartRounded />} accent={BRAND.action} label="Radiology pending" value={String(data.totals.pendingRadiology)} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<WarningAmberRounded />} accent={SEMANTIC.danger} label="Breaching (> 48h)" value={String(data.totals.breaching)} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<TimelapseRounded />} accent={BRAND.actionDark} label="Oldest pending" value={`${data.totals.oldestHours}h`} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PendingActionsRounded />} accent={SEMANTIC.warning} label="Lab pending" info="Lab orders from the last 120 days that do not have all results yet." value={String(data.totals.pendingLab)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<MonitorHeartRounded />} accent={BRAND.action} label="Radiology pending" info="Radiology orders from the last 120 days not reported yet." value={String(data.totals.pendingRadiology)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<WarningAmberRounded />} accent={SEMANTIC.danger} label="Breaching (> 48h)" info="Pending orders that have been waiting more than 48 hours." value={String(data.totals.breaching)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<TimelapseRounded />} accent={BRAND.actionDark} label="Oldest pending" info="How long the longest-waiting pending order has been open." value={`${data.totals.oldestHours}h`} /></Grid>
           </Grid>
 
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
@@ -328,10 +328,10 @@ export function CriticalResults() {
       {isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : isLoading || !data ? <ReportSkeleton /> : (
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CrisisAlertRounded />} accent={SEMANTIC.danger} label="Critical results" value={String(data.totals.critical)} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PersonRounded />} accent={BRAND.action} label="Patients affected" value={String(data.totals.patients)} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ReportProblemRounded />} accent={SEMANTIC.warning} label="Unacknowledged" value={String(data.totals.unacknowledged ?? 0)} /></Grid>
-            {verifies && <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ReportProblemRounded />} accent={SEMANTIC.info} label="Unverified" value={String(data.totals.unverified)} /></Grid>}
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CrisisAlertRounded />} accent={SEMANTIC.danger} label="Critical results" info="Every lab result flagged critical on orders from the selected dates." value={String(data.totals.critical)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PersonRounded />} accent={BRAND.action} label="Patients affected" info="Different patients with a critical result in the selected dates." value={String(data.totals.patients)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ReportProblemRounded />} accent={SEMANTIC.warning} label="Unacknowledged" info="Critical results no doctor has acknowledged yet. These need a call to the doctor." value={String(data.totals.unacknowledged ?? 0)} /></Grid>
+            {verifies && <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ReportProblemRounded />} accent={SEMANTIC.info} label="Unverified" info="Critical results not yet verified by a second person." value={String(data.totals.unverified)} /></Grid>}
           </Grid>
           <ReportTable title="Critical results" filename={`lab_critical_${range.from}_${range.to}`}
             emptyText="No critical results flagged in this period."
@@ -412,10 +412,10 @@ export function OrderRegister() {
       {isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : isLoading || !data ? <ReportSkeleton /> : (
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ScienceRounded />} accent={SEMANTIC.success} label="Lab orders" value={String(data.totals.labOrders)} sub={`${data.totals.labCompleted} completed`} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<MonitorHeartRounded />} accent={BRAND.action} label="Radiology orders" value={String(data.totals.radOrders)} sub={`${data.totals.radReported} reported`} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CurrencyRupeeRounded />} accent={SEMANTIC.success} label="Order value" value={inr(Number(data.totals.labValue) + Number(data.totals.radValue))} sub={`${data.totals.unpaid} unpaid`} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<WarningAmberRounded />} accent={SEMANTIC.danger} label="With a critical result" value={String(data.totals.labCritical)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ScienceRounded />} accent={SEMANTIC.success} label="Lab orders" info="Lab orders in the register for the selected dates and filters." value={String(data.totals.labOrders)} sub={`${data.totals.labCompleted} completed`} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<MonitorHeartRounded />} accent={BRAND.action} label="Radiology orders" info="Radiology orders in the register for the selected dates and filters." value={String(data.totals.radOrders)} sub={`${data.totals.radReported} reported`} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CurrencyRupeeRounded />} accent={SEMANTIC.success} label="Order value" info="Total value of the lab and radiology orders in the register." value={inr(Number(data.totals.labValue) + Number(data.totals.radValue))} sub={`${data.totals.unpaid} unpaid`} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<WarningAmberRounded />} accent={SEMANTIC.danger} label="With a critical result" info="Lab orders in the register with at least one critical result." value={String(data.totals.labCritical)} /></Grid>
           </Grid>
 
           <Box sx={{ mb: 2.5 }}>

@@ -73,19 +73,19 @@ function OverviewReport({ data }: { data: ClaimReportsResponse }) {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2,1fr)", sm: "repeat(3,1fr)", md: "repeat(6,1fr)" }, gap: 1.5 }}>
-        <KpiCard icon={<DescriptionRounded />} accent={BRAND.action} label="Total claims"
+        <KpiCard icon={<DescriptionRounded />} accent={BRAND.action} label="Total claims" info="Insurance and scheme claims registered in the selected dates."
           value={String(s.totalClaims || 0)} current={s.totalClaims} previous={p.totalClaims} />
         {/* An open claim is money not yet settled, so more of them is not better. */}
-        <KpiCard icon={<HourglassBottomRounded />} accent={SEMANTIC.warning} label="Open"
+        <KpiCard icon={<HourglassBottomRounded />} accent={SEMANTIC.warning} label="Open" info="Of those, claims not yet finished: not settled, closed or rejected."
           value={String(s.open || 0)} current={s.open} previous={p.open} higherIsBetter={false} />
-        <KpiCard icon={<PaidRounded />} accent={SEMANTIC.success} label="Settled"
+        <KpiCard icon={<PaidRounded />} accent={SEMANTIC.success} label="Settled" info="Of those, claims fully settled by the payer. Partly settled claims are not counted here."
           value={String(s.settled || 0)} current={s.settled} previous={p.settled} />
-        <KpiCard icon={<CancelRounded />} accent={SEMANTIC.danger} label="Rejected"
+        <KpiCard icon={<CancelRounded />} accent={SEMANTIC.danger} label="Rejected" info="Of those, claims the payer rejected, at pre-auth or at the final claim."
           value={String(s.rejected || 0)} current={s.rejected} previous={p.rejected} higherIsBetter={false} />
-        <KpiCard icon={<AccountBalanceWalletRounded />} accent={SEMANTIC.info} label="Payer outstanding"
+        <KpiCard icon={<AccountBalanceWalletRounded />} accent={SEMANTIC.info} label="Payer outstanding" info="For the open claims: what the payer is still expected to pay. That is the approved amount (or the claimed amount if nothing is approved yet) minus what they have already settled."
           value={inr(s.outstandingFromPayer)} current={Number(s.outstandingFromPayer)} previous={Number(p.outstandingFromPayer)}
           higherIsBetter={false} />
-        <KpiCard icon={<GroupRounded />} accent={BRAND.actionDark} label="Patient shortfall"
+        <KpiCard icon={<GroupRounded />} accent={BRAND.actionDark} label="Patient shortfall" info="What falls back on patients: the whole claim when rejected, claimed minus settled when finished, and claimed minus approved while still open."
           value={inr(s.patientShortfall)} current={Number(s.patientShortfall)} previous={Number(p.patientShortfall)}
           higherIsBetter={false} />
       </Box>
@@ -121,9 +121,9 @@ function TatReport({ data }: { data: ClaimReportsResponse }) {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr 1fr" }, gap: 1.5, maxWidth: 420 }}>
-        <KpiCard icon={<HourglassBottomRounded />} accent={SEMANTIC.warning} label="Avg pre-auth turnaround"
+        <KpiCard icon={<HourglassBottomRounded />} accent={SEMANTIC.warning} label="Avg pre-auth turnaround" info="Average days from sending a pre-auth to the payer approving it, over claims from the selected dates that have both dates."
           value={`${tat.avgDays ?? 0} days`} />
-        <KpiCard icon={<DescriptionRounded />} accent={SEMANTIC.info} label="Approved pre-auths"
+        <KpiCard icon={<DescriptionRounded />} accent={SEMANTIC.info} label="Approved pre-auths" info="Claims from the selected dates whose pre-auth was sent and approved, the ones the turnaround above is worked out from."
           value={String(rows.length)} />
       </Box>
       <PagedSimpleTable source={data} title="Pre-authorization turnaround" head={["Claim #", "Patient", "Submitted", "Approved", "Days"]}

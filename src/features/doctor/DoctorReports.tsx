@@ -47,17 +47,17 @@ function SummaryReport({ data }: { data: DoctorReportsData }) {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2,minmax(0,1fr))", sm: "repeat(3,minmax(0,1fr))", md: "repeat(6,minmax(0,1fr))" }, gap: 1.5 }}>
-        <KpiCard icon={<DescriptionRounded />} accent={BRAND.action} label="Consultations"
+        <KpiCard icon={<DescriptionRounded />} accent={BRAND.action} label="Consultations" info="Consultations you started in the selected dates."
           value={s?.totalConsultations || 0} current={s?.totalConsultations} previous={p?.totalConsultations} />
-        <KpiCard icon={<GroupRounded />} accent={BRAND.actionDark} label="Unique patients"
+        <KpiCard icon={<GroupRounded />} accent={BRAND.actionDark} label="Unique patients" info="Different patients you consulted in the selected dates. A patient seen twice counts once."
           value={s?.uniquePatients || 0} current={s?.uniquePatients} previous={p?.uniquePatients} />
-        <KpiCard icon={<EventAvailableRounded />} accent={SEMANTIC.success} label="Completed appointments"
+        <KpiCard icon={<EventAvailableRounded />} accent={SEMANTIC.success} label="Completed appointments" info="Your appointments dated in the selected range that are marked completed."
           value={s?.completedAppointments || 0} current={s?.completedAppointments} previous={p?.completedAppointments} />
-        <KpiCard icon={<MedicationRounded />} accent={SEMANTIC.info} label="Prescriptions"
+        <KpiCard icon={<MedicationRounded />} accent={SEMANTIC.info} label="Prescriptions" info="Prescriptions written in your consultations from the selected dates."
           value={s?.prescriptions || 0} current={s?.prescriptions} previous={p?.prescriptions} />
-        <KpiCard icon={<ScienceRounded />} accent={SEMANTIC.warning} label="Lab orders"
+        <KpiCard icon={<ScienceRounded />} accent={SEMANTIC.warning} label="Lab orders" info="Lab tests you ordered in the selected dates."
           value={s?.labOrders || 0} current={s?.labOrders} previous={p?.labOrders} />
-        <KpiCard icon={<MonitorHeartRounded />} accent={BRAND.action} label="Radiology orders"
+        <KpiCard icon={<MonitorHeartRounded />} accent={BRAND.action} label="Radiology orders" info="Scans and X-rays you ordered in the selected dates."
           value={s?.radiologyOrders || 0} current={s?.radiologyOrders} previous={p?.radiologyOrders} />
       </Box>
       <SimpleTable title="Daily consultations" head={["Date", "Consultations"]}

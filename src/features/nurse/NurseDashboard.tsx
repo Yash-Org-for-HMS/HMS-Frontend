@@ -94,7 +94,7 @@ export default function NurseDashboard() {
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            label="Total Patients Today"
+            label="Total Patients Today" info="Every OPD queue token created today at this branch, for all doctors, in any state (including finished and cancelled)."
             value={totalPatients}
             icon={<PeopleAltRounded sx={{ color: NURSE_PURPLE }} />}
             loading={loading}
@@ -103,7 +103,7 @@ export default function NurseDashboard() {
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            label="Vitals Pending"
+            label="Vitals Pending" info="Patients in today's queue with an appointment, no vitals taken yet, and not finished or cancelled. Same list as the worklist below."
             value={vitalsPending}
             icon={<HourglassTopRounded sx={{ color: SEMANTIC.warning }} />}
             loading={loading}
@@ -114,7 +114,7 @@ export default function NurseDashboard() {
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            label="Vitals Recorded"
+            label="Vitals Recorded" info="Patients in today's queue whose vitals are on file."
             value={vitalsCompleted}
             icon={<MonitorHeartRounded sx={{ color: SEMANTIC.success }} />}
             loading={loading}
@@ -124,7 +124,7 @@ export default function NurseDashboard() {
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            label="In Consultation"
+            label="In Consultation" info="Patients in today's queue who are with a doctor right now."
             value={inProgress}
             icon={<MedicalServicesRounded sx={{ color: SEMANTIC.info }} />}
             loading={loading}

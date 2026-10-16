@@ -57,7 +57,7 @@ export function InPatients() {
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
             <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <KpiCard icon={<LocalHotelRounded />} accent={ACCENT} label="Current inpatients" value={String(data.totals.inpatients)} sub={`across ${byWard.length} ward${byWard.length === 1 ? "" : "s"}`} />
+              <KpiCard icon={<LocalHotelRounded />} accent={ACCENT} label="Current inpatients" info="Patients in hospital at the end of the chosen day: admitted on or before it and not discharged by then. Cancelled admissions are left out." value={String(data.totals.inpatients)} sub={`across ${byWard.length} ward${byWard.length === 1 ? "" : "s"}`} />
             </Grid>
           </Grid>
           <ReportTable
@@ -98,8 +98,8 @@ export function Discharges() {
       {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box>
           <Grid container spacing={2} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}><KpiCard icon={<ReplayRounded />} accent={ACCENT} label="Discharges" value={String(data.totals.discharges)} current={data.totals.discharges} previous={prev?.discharges} /></Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}><KpiCard icon={<AccessTimeRounded />} accent={SEMANTIC.info} label="Avg stay (days)" value={String(data.totals.avgStay)} current={data.totals.avgStay} previous={prev?.avgStay} higherIsBetter={false} /></Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}><KpiCard icon={<ReplayRounded />} accent={ACCENT} label="Discharges" info="Patients discharged in the selected dates." value={String(data.totals.discharges)} current={data.totals.discharges} previous={prev?.discharges} /></Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}><KpiCard icon={<AccessTimeRounded />} accent={SEMANTIC.info} label="Avg stay (days)" info="For patients discharged in the selected dates: average days from admission to discharge." value={String(data.totals.avgStay)} current={data.totals.avgStay} previous={prev?.avgStay} higherIsBetter={false} /></Grid>
           </Grid>
           <ReportTable
             title="Discharge detail"
@@ -138,13 +138,13 @@ export function IpRegistrations() {
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
             <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <KpiCard icon={<PersonAddRounded />} accent={ACCENT} label="Admissions" value={String(data.totals.admissions)} current={data.totals.admissions} previous={prev?.admissions} />
+              <KpiCard icon={<PersonAddRounded />} accent={ACCENT} label="Admissions" info="Patients admitted in the selected dates. Cancelled admissions are left out." value={String(data.totals.admissions)} current={data.totals.admissions} previous={prev?.admissions} />
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <KpiCard icon={<LocalHotelRounded />} accent={SEMANTIC.info} label="Still admitted" value={String(data.totals.stillAdmitted ?? 0)} />
+              <KpiCard icon={<LocalHotelRounded />} accent={SEMANTIC.info} label="Still admitted" info="Of those admissions, how many have not been discharged yet." value={String(data.totals.stillAdmitted ?? 0)} />
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <KpiCard icon={<AccessTimeRounded />} accent="#8b5cf6" label="Average stay" value={`${data.totals.avgStayDays ?? 0} d`} />
+              <KpiCard icon={<AccessTimeRounded />} accent="#8b5cf6" label="Average stay" info="For those admissions: average days in hospital, counting days so far for anyone still admitted." value={`${data.totals.avgStayDays ?? 0} d`} />
             </Grid>
           </Grid>
           {hasPlottableData(trend, ["admissions"]) && (
@@ -210,8 +210,8 @@ export function IpAdvances() {
       {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box>
           <Grid container spacing={2} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}><KpiCard icon={<SavingsRounded />} accent={SEMANTIC.success} label="Advance collected" value={inr(data.totals.total)} current={Number(data.totals.total)} previous={prev ? Number(prev.total) : undefined} /></Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}><KpiCard icon={<AccessTimeRounded />} accent={ACCENT} label="Entries" value={String(data.totals.count)} current={data.totals.count} previous={prev?.count} /></Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}><KpiCard icon={<SavingsRounded />} accent={SEMANTIC.success} label="Advance collected" info="Total IPD advance (deposit) money taken in the selected dates. Refunds and amounts used against bills are not taken off." value={inr(data.totals.total)} current={Number(data.totals.total)} previous={prev ? Number(prev.total) : undefined} /></Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}><KpiCard icon={<AccessTimeRounded />} accent={ACCENT} label="Entries" info="Number of advance payments taken in the selected dates." value={String(data.totals.count)} current={data.totals.count} previous={prev?.count} /></Grid>
           </Grid>
           {hasPlottableData(trend, ["amount"]) && (
             <Box sx={{ mb: 2.5 }}>
@@ -278,10 +278,10 @@ export function Occupancy() {
       {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<LocalHotelRounded />} accent={ACCENT} label="Avg occupancy" value={`${data.totals.avgOccupancy}%`} sub={`${data.totals.totalBeds} beds`} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<AccessTimeRounded />} accent={SEMANTIC.info} label="Avg stay (ALOS)" value={`${data.totals.alos} d`} current={data.totals.alos} previous={prev?.alos} higherIsBetter={false} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<SpeedRounded />} accent={SEMANTIC.success} label="Bed turnover" value={String(data.totals.turnover)} sub={`${data.totals.discharges} discharges`} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<HeightRounded />} accent="#8b5cf6" label="Peak occupied" value={String(data.totals.peakOccupied)} sub={`of ${data.totals.totalBeds}`} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<LocalHotelRounded />} accent={ACCENT} label="Avg occupancy" info="For each day in the selected dates: patients in census beds divided by the number of census beds. This is the average of those daily figures." value={`${data.totals.avgOccupancy}%`} sub={`${data.totals.totalBeds} beds`} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<AccessTimeRounded />} accent={SEMANTIC.info} label="Avg stay (ALOS)" info="Average length of stay: for patients discharged in the selected dates, the average days from admission to discharge." value={`${data.totals.alos} d`} current={data.totals.alos} previous={prev?.alos} higherIsBetter={false} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<SpeedRounded />} accent={SEMANTIC.success} label="Bed turnover" info="Discharges in the selected dates divided by the number of census beds: roughly how many patients each bed served." value={String(data.totals.turnover)} sub={`${data.totals.discharges} discharges`} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<HeightRounded />} accent="#8b5cf6" label="Peak occupied" info="The highest number of patients in census beds on any single day in the selected dates." value={String(data.totals.peakOccupied)} sub={`of ${data.totals.totalBeds}`} /></Grid>
           </Grid>
           <ReportTable
             title="Daily occupancy"
@@ -314,8 +314,8 @@ export function OverdueDoses() {
       {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<WarningAmberRounded />} accent={SEMANTIC.danger} label="Overdue doses" value={String(data.totals.overdueDoses)} sub={`> ${data.graceMins}m past due`} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<MedicationRounded />} accent={BRAND.action} label="Patients affected" value={String(data.totals.patients)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<WarningAmberRounded />} accent={SEMANTIC.danger} label="Overdue doses" info="Medicine doses still marked pending more than the grace time (30 minutes unless changed) after they were due, over the last 90 days. Includes patients already discharged: a dose never charted before discharge is a records gap too." value={String(data.totals.overdueDoses)} sub={`> ${data.graceMins}m past due`} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<MedicationRounded />} accent={BRAND.action} label="Patients affected" info="Different patients with at least one overdue dose." value={String(data.totals.patients)} /></Grid>
           </Grid>
           <ReportTable
             title="Overdue / uncharted medication doses"

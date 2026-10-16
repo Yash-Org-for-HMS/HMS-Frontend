@@ -71,7 +71,7 @@ export default function DoctorDashboard() {
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            label="Today's Appointments"
+            label="Today's Appointments" info="Your appointments dated today, whatever their status."
             value={stats?.todaysAppointments || 0}
             icon={<PeopleAltRounded sx={{ color: DOCTOR_BLUE }} />}
             loading={loading}
@@ -80,7 +80,7 @@ export default function DoctorDashboard() {
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            label="Waiting Patients"
+            label="Waiting Patients" info="Your patients in today's queue who are waiting: either for vitals or ready for you to see."
             value={stats?.waitingPatients || 0}
             icon={<HourglassTopRounded sx={{ color: SEMANTIC.warning }} />}
             loading={loading}
@@ -98,7 +98,7 @@ export default function DoctorDashboard() {
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            label="Vitals Recorded"
+            label="Vitals Recorded" info="Vitals entries recorded today against your appointments. A patient whose vitals were taken twice counts twice."
             value={stats?.vitalsRecorded || 0}
             icon={<MonitorHeartRounded sx={{ color: SEMANTIC.success }} />}
             loading={loading}
@@ -108,7 +108,7 @@ export default function DoctorDashboard() {
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            label="Completed Consultations"
+            label="Completed Consultations" info="Your appointments today that are marked completed (consultation finished)."
             value={stats?.completedVisits || 0}
             icon={<CheckCircleRounded sx={{ color: SEMANTIC.success }} />}
             loading={loading}

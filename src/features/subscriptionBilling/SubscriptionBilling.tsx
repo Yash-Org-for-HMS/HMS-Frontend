@@ -160,16 +160,16 @@ export default function SubscriptionBilling() {
       {/* Metrics */}
       <Grid container spacing={2.5} sx={{ mb: 3 }}>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard label="MRR" value={metrics ? formatINR(metrics.mrr) : "-"} icon={<TrendingUpRounded sx={{ color: BRAND.action }} />} color={BRAND.action} sub={metrics ? `${formatINR(metrics.arr)} ARR` : undefined} />
+          <StatCard label="MRR" info="Monthly recurring revenue: each hospital's plan price per month added up (an annual plan counts as its yearly price divided by 12). Hospitals with no plan are left out. Below: the same times 12 (ARR)." value={metrics ? formatINR(metrics.mrr) : "-"} icon={<TrendingUpRounded sx={{ color: BRAND.action }} />} color={BRAND.action} sub={metrics ? `${formatINR(metrics.arr)} ARR` : undefined} />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard label="Collected" value={metrics ? formatINR(metrics.collected) : "-"} icon={<AccountBalanceWalletRounded sx={{ color: SEMANTIC.success }} />} color={SEMANTIC.success} />
+          <StatCard label="Collected" info="Total of all subscription invoices marked paid, ever, for hospitals that still exist." value={metrics ? formatINR(metrics.collected) : "-"} icon={<AccountBalanceWalletRounded sx={{ color: SEMANTIC.success }} />} color={SEMANTIC.success} />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard label="Outstanding" value={metrics ? formatINR(metrics.outstanding) : "-"} icon={<PendingActionsRounded sx={{ color: SEMANTIC.warning }} />} color={SEMANTIC.warning} sub={metrics ? `${metrics.unpaidCount} unpaid` : undefined} />
+          <StatCard label="Outstanding" info="Total of subscription invoices not paid yet, for hospitals that still exist. Below: how many such invoices." value={metrics ? formatINR(metrics.outstanding) : "-"} icon={<PendingActionsRounded sx={{ color: SEMANTIC.warning }} />} color={SEMANTIC.warning} sub={metrics ? `${metrics.unpaidCount} unpaid` : undefined} />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard label="Overdue" value={metrics ? metrics.overdueCount : "-"} icon={<WarningAmberRounded sx={{ color: SEMANTIC.danger }} />} color={SEMANTIC.danger} />
+          <StatCard label="Overdue" info="Unpaid subscription invoices whose due date has passed." value={metrics ? metrics.overdueCount : "-"} icon={<WarningAmberRounded sx={{ color: SEMANTIC.danger }} />} color={SEMANTIC.danger} />
         </Grid>
       </Grid>
 
