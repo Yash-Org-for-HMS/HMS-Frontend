@@ -106,6 +106,8 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
   const depositRefundable = Math.max(0, deposit - depositApplied);
   // What the patient must cover after insurance approval (shortfall).
   const patientShortfall = claim ? Math.max(0, total - claimApproved) : null;
+  // How far the bill runs past the policy's cover, when the desk entered one.
+  const overCover = claim?.sumInsured != null ? Math.max(0, total - Number(claim.sumInsured)) : 0;
 
   // Leftover advance: the desk has to say what happens to it before the
   // discharge goes through. This used to be a caption suggesting they refund it
@@ -282,6 +284,11 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
                 <Typography variant="body2" sx={{ color: "text.secondary" }}>Patient shortfall (bill − approved)</Typography>
                 <Typography variant="body2" sx={{ fontWeight: 700, color: patientShortfall! > 0 ? SEMANTIC.danger : SEMANTIC.success }}>{formatINR(patientShortfall || 0)}</Typography>
               </Box>
+              {overCover > 0 && (
+                <Typography variant="body2" sx={{ color: SEMANTIC.danger, fontWeight: 600, mt: 0.5 }}>
+                  The bill is {formatINR(overCover)} over the sum insured of {formatINR(Number(claim.sumInsured))} - the payer will not pay past it.
+                </Typography>
+              )}
               <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 0.5 }}>
                 The bill is auto-linked to this claim on discharge; record the payer settlement from the claim page.
               </Typography>

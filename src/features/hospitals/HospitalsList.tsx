@@ -49,7 +49,6 @@ import FilterBar from "@/components/layout/FilterBar";
 import { TableRowsSkeleton } from "@/components/TableRowsSkeleton";
 import { useServerSort } from "@/components/table/useTableSort";
 import SortableHeadCell from "@/components/table/SortableHeadCell";
-import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 
 // Keep the admin list's existing sentence-case header look (the SortableHeadCell
 // default is the reception-panel uppercase style).
@@ -74,14 +73,12 @@ export default function HospitalsList() {
   // Server-side column sorting (the list is paginated, so sorting happens in the DB).
   const { orderBy, order, onSort } = useServerSort();
 
-  // The request waits until typing pauses - it fired on every keystroke.
-  const debouncedSearch = useDebouncedValue(search);
   const { data, isLoading: loading, isError, error, refetch } = useQuery({
-    queryKey: ["hospitals", page, debouncedSearch, activeTab, orderBy, order],
+    queryKey: ["hospitals", page, search, activeTab, orderBy, order],
     queryFn: async () =>
       (await axiosInstance.get("/hospitals", {
         params: {
-          page, limit: 10, search: debouncedSearch,
+          page, limit: 10, search,
           sortBy: orderBy || undefined, sortOrder: order,
           ...(activeTab === 1 ? { showDeleted: "true" } : {}),
         },
@@ -287,7 +284,7 @@ export default function HospitalsList() {
                             <IconButton
                               onClick={() => navigate(`/hospitals/${hospital.hospitalId}/modules`)}
                               sx={{ color: "#8b5cf6" }}
-                            >
+                            >+
                               <WidgetsRounded />
                             </IconButton>
                           </Tooltip>
@@ -345,7 +342,7 @@ export default function HospitalsList() {
               color="primary"
               sx={{
                 "& .MuiPaginationItem-root": { color: "text.primary" },
-                "& .Mui-selected": { bgcolor: "rgba(12, 115, 181, 0.16) !important", color: "#0C73B5" }
+                "& .Mui-selected": { bgcolor: "rgba(99, 102, 241, 0.2) !important", color: "#818cf8" }
               }}
             />
           </Box>

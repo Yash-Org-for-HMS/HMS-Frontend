@@ -4,7 +4,7 @@ import {
   Box, Typography, Paper, Tabs, Tab, Button, IconButton, Chip, Divider, Alert, Pagination,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem,
-  Tooltip, FormControlLabel, Switch, InputAdornment, CircularProgress, ButtonBase, Stack,
+  Tooltip, FormControlLabel, Switch, InputAdornment, CircularProgress, ButtonBase,
 } from "@mui/material";
 import {
   AddRounded, SearchRounded, ArrowBackRounded, LocalShippingRounded,
@@ -23,6 +23,9 @@ import ErrorState from "@/components/ErrorState";
 import { ListSkeleton } from "@/components/TableRowsSkeleton";
 import SearchableSelect from "@/components/form/SearchableSelect";
 import StoreIndents from "@/features/wardIndents/StoreIndents";
+import { useNavigate } from "react-router-dom";
+import { useHospitalAuth } from "@/providers/HospitalAuthContext";
+import { hasAction } from "@/constants/roles";
 
 /**
  * Ward stock: what each ward holds, and how it got there.
@@ -110,6 +113,37 @@ function Stat({ label, value, color }: { label: string; value: number | string; 
       </Typography>
       <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>{label}</Typography>
     </Box>
+  );
+}
+
+/**
+ * One thing you can do with the cupboard, said in plain words: a title for the
+ * job and a line on what happens when you do it, so the choice is made by
+ * reading what you came to do rather than guessing from a button label.
+ */
+function TaskCard({ icon, title, hint, onClick, primary }: {
+  icon: React.ReactNode; title: string; hint: string; onClick: () => void; primary?: boolean;
+}) {
+  const tone = primary ? SEMANTIC.info : NEUTRAL.muted;
+  return (
+    <ButtonBase onClick={onClick} sx={{ display: "block", width: "100%", textAlign: "left", borderRadius: 2 }}>
+      <Paper
+        variant="outlined"
+        sx={{
+          p: 1.75, borderRadius: 2, height: "100%", display: "flex", gap: 1.5, alignItems: "flex-start",
+          borderColor: primary ? alpha(SEMANTIC.info, 0.5) : "divider",
+          bgcolor: primary ? alpha(SEMANTIC.info, 0.05) : "transparent",
+          transition: "border-color .15s, background-color .15s",
+          "&:hover": { borderColor: SEMANTIC.info, bgcolor: alpha(SEMANTIC.info, 0.08) },
+        }}
+      >
+        <Box sx={{ color: tone, display: "flex", mt: 0.25 }}>{icon}</Box>
+        <Box sx={{ minWidth: 0 }}>
+          <Typography variant="body1" sx={{ fontWeight: 700, color: primary ? SEMANTIC.info : "text.primary" }}>{title}</Typography>
+          <Typography variant="caption" sx={{ color: "text.secondary", display: "block", lineHeight: 1.4 }}>{hint}</Typography>
+        </Box>
+      </Paper>
+    </ButtonBase>
   );
 }
 
@@ -1023,7 +1057,7 @@ function ReorderTab() {
 /* ── tabs ───────────────────────────────────────────────────────────────── */
 
 /** One ward opened up: every line it holds, and what can be done to each. */
-function WardDetail({ ward, onBack, canIssue }: { ward: WardSummary; onBack: () => void; canIssue: boolean }) {
+function WardDetail({ ward, onBack, canIssue, onIndent }: { ward: WardSummary; onBack?: () => void; canIssue: boolean; onIndent?: () => void }) {
   const qc = useQueryClient();
   const [issuing, setIssuing] = useState(false);
   const [returning, setReturning] = useState<WardStockRow | null>(null);
@@ -1053,35 +1087,48 @@ function WardDetail({ ward, onBack, canIssue }: { ward: WardSummary; onBack: () 
           the buttons wrapped one at a time and the back arrow ended up orphaned
           above a stack of three - so the way back moved depending on how wide
           the window was. */}
-      <Box sx={{ mb: 2.5 }}>
+      <Box sx={{ mb: 3 }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
-          <IconButton onClick={onBack} size="small" aria-label="Back to all wards"><ArrowBackRounded /></IconButton>
+          {onBack && <IconButton onClick={onBack} size="small" aria-label="Back to all wards"><ArrowBackRounded /></IconButton>}
           <Typography variant="h6" sx={{ fontWeight: 700, minWidth: 0 }} noWrap>{ward.wardName}</Typography>
         </Box>
-        <Stack direction="row" spacing={1.5} sx={{ flexWrap: "wrap", rowGap: 1.5, pl: { xs: 0, sm: 5 } }}>
+        <Typography variant="subtitle2" sx={{ fontWeight: 700, color: "text.secondary", mb: 1 }}>What do you need to do?</Typography>
+        <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", lg: "repeat(4, 1fr)" } }}>
           {/* The nursing action, and the one this whole module exists to make
               possible: it bills the patient and empties the cupboard at once. */}
-          <Button variant="contained" startIcon={<HealingRounded />} onClick={() => setConsuming(true)} sx={{ textTransform: "none" }}>
-            Record use
-          </Button>
+          <TaskCard
+            primary icon={<HealingRounded />} title="Record use" onClick={() => setConsuming(true)}
+            hint="Used something on a patient. Takes it off the shelf and bills the patient."
+          />
           {/* Counting is the ward's own work: the people who can see the shelf are
               the ones who know what is on it. */}
-          <Button variant="outlined" startIcon={<FactCheckRounded />} onClick={() => setCounting(true)} sx={{ textTransform: "none" }}>
-            Count stock
-          </Button>
-          {canIssue && (
-            <Button variant="outlined" startIcon={<LocalShippingRounded />} onClick={() => setIssuing(true)} sx={{ textTransform: "none" }}>
-              Issue to this ward
-            </Button>
-          )}
-        </Stack>
+          <TaskCard
+            icon={<FactCheckRounded />} title="Count stock" onClick={() => setCounting(true)}
+            hint="Counted the cupboard. Enter what is really there; any difference is recorded."
+          />
+          <TaskCard
+            icon={<AssignmentReturnRounded />} title="Send back" onClick={() => setView("holding")}
+            hint="Not needed, damaged or expired? Press Send back on that item in the list below."
+          />
+          {canIssue ? (
+            <TaskCard
+              icon={<LocalShippingRounded />} title="Issue to this ward" onClick={() => setIssuing(true)}
+              hint="Send items from the central store to this ward's cupboard."
+            />
+          ) : onIndent ? (
+            <TaskCard
+              icon={<InventoryRounded />} title="Ask for more" onClick={onIndent}
+              hint="Running low? Raise an indent and the store sends it to this ward."
+            />
+          ) : null}
+        </Box>
       </Box>
 
       <Tabs
         value={view} onChange={(_, v) => setView(v)}
         sx={{ mb: 2, minHeight: 36, "& .MuiTab-root": { minHeight: 36, py: 0 } }}
       >
-        <Tab value="holding" label="Holding" sx={{ textTransform: "none", fontWeight: 700 }} />
+        <Tab value="holding" label="In the cupboard" sx={{ textTransform: "none", fontWeight: 700 }} />
         <Tab value="used" label="Used on patients" sx={{ textTransform: "none", fontWeight: 700 }} />
       </Tabs>
 
@@ -1096,15 +1143,15 @@ function WardDetail({ ward, onBack, canIssue }: { ward: WardSummary; onBack: () 
           {/* Counts plain, states coloured, and a state at zero left out -
               a red "0 expired" is a warning about nothing. */}
           <Box sx={{ display: "flex", gap: 1.5, mb: 2.5, flexWrap: "wrap" }}>
-            <Stat label="Lines held" value={data.summary.items} />
-            <Stat label="Units" value={data.summary.units} />
-            {data.summary.belowPar > 0 && <Stat label="Below par" value={data.summary.belowPar} color={SEMANTIC.warning} />}
-            {data.summary.outOfStock > 0 && <Stat label="Out of stock" value={data.summary.outOfStock} color={NEUTRAL.muted} />}
+            <Stat label="Items" value={data.summary.items} />
+            <Stat label="Units in all" value={data.summary.units} />
+            {data.summary.belowPar > 0 && <Stat label="Running low" value={data.summary.belowPar} color={SEMANTIC.warning} />}
+            {data.summary.outOfStock > 0 && <Stat label="Run out" value={data.summary.outOfStock} color={NEUTRAL.muted} />}
             {data.summary.expired > 0 && <Stat label="Expired" value={data.summary.expired} color={SEMANTIC.danger} />}
           </Box>
 
           {data.stock.length === 0 ? (
-            <Empty>This ward has never been issued anything.</Empty>
+            <Empty>Nothing in this cupboard yet. Items appear here once the store issues them to this ward.</Empty>
           ) : (
             <TableContainer component={Paper} variant="outlined" sx={{ overflowX: "auto" }}>
               <Table size="small">
@@ -1112,8 +1159,12 @@ function WardDetail({ ward, onBack, canIssue }: { ward: WardSummary; onBack: () 
                   <TableRow>
                     <TableCell sx={{ fontWeight: 700 }}>Item</TableCell>
                     <TableCell sx={{ fontWeight: 700 }}>Batch</TableCell>
-                    <TableCell sx={{ fontWeight: 700 }} align="right">On hand</TableCell>
-                    <TableCell sx={{ fontWeight: 700 }} align="right">Par</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }} align="right">In cupboard</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }} align="right">
+                      <Tooltip title="The least this ward should hold (par level). Below it, the item shows as running low and goes on the store's reorder list.">
+                        <span>Keep at least</span>
+                      </Tooltip>
+                    </TableCell>
                     <TableCell sx={{ fontWeight: 700 }} align="right">Last moved</TableCell>
                     <TableCell />
                   </TableRow>
@@ -1161,13 +1212,13 @@ function WardDetail({ ward, onBack, canIssue }: { ward: WardSummary; onBack: () 
                         <Typography variant="caption" sx={{ color: "text.secondary" }}>{formatDate(r.updatedAt)}</Typography>
                       </TableCell>
                       <TableCell align="right">
-                        <Tooltip title={r.quantityOnHand === 0 ? "Nothing to send back" : "Send back to the store"}>
-                          <span>
-                            <IconButton size="small" disabled={r.quantityOnHand === 0} onClick={() => setReturning(r)}>
-                              <AssignmentReturnRounded fontSize="small" />
-                            </IconButton>
-                          </span>
-                        </Tooltip>
+                        <Button
+                          size="small" startIcon={<AssignmentReturnRounded fontSize="small" />}
+                          disabled={r.quantityOnHand === 0} onClick={() => setReturning(r)}
+                          sx={{ textTransform: "none", whiteSpace: "nowrap" }}
+                        >
+                          Send back
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -1191,17 +1242,22 @@ function WardDetail({ ward, onBack, canIssue }: { ward: WardSummary; onBack: () 
 }
 
 /** Every ward at a glance, so the one that needs attention is obvious. */
-function WardsTab({ canIssue }: { canIssue: boolean }) {
+function WardsTab({ canIssue, onIndent }: { canIssue: boolean; onIndent?: () => void }) {
   const [open, setOpen] = useState<WardSummary | null>(null);
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["ward-stock-wards"],
     queryFn: () => get<{ wards: WardSummary[] }>("/pharmacy/ward-stock/wards"),
   });
 
-  if (open) return <WardDetail ward={open} onBack={() => setOpen(null)} canIssue={canIssue} />;
+  if (open) return <WardDetail ward={open} onBack={() => setOpen(null)} canIssue={canIssue} onIndent={onIndent} />;
   if (isError) return <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />;
   if (isLoading || !data) return <ListSkeleton rows={4} />;
   if (!data.wards.length) return <Empty>No wards are set up yet.</Empty>;
+  // One ward: no list to pick from, so its cupboard opens straight away.
+  if (data.wards.length === 1) return <WardDetail ward={data.wards[0]} canIssue={canIssue} onIndent={onIndent} />;
+  // Expired first, then running low or run out, then the rest.
+  const rank = (w: WardSummary) => (w.expired > 0 ? 2 : w.belowPar + w.outOfStock > 0 ? 1 : 0);
+  const wards = [...data.wards].sort((a, b) => rank(b) - rank(a));
 
   // The position across every ward, so the store keeper can see whether
   // anything needs doing without opening six cupboards one at a time.
@@ -1220,13 +1276,16 @@ function WardsTab({ canIssue }: { canIssue: boolean }) {
       {needsAttention && (
         <Box sx={{ display: "flex", gap: 1.5, mb: 2.5, flexWrap: "wrap" }}>
           {across.expired > 0 && <Stat label="Expired, all wards" value={across.expired} color={SEMANTIC.danger} />}
-          {across.belowPar > 0 && <Stat label="Below par, all wards" value={across.belowPar} color={SEMANTIC.warning} />}
-          {across.outOfStock > 0 && <Stat label="Out of stock, all wards" value={across.outOfStock} color={NEUTRAL.muted} />}
+          {across.belowPar > 0 && <Stat label="Running low, all wards" value={across.belowPar} color={SEMANTIC.warning} />}
+          {across.outOfStock > 0 && <Stat label="Run out, all wards" value={across.outOfStock} color={NEUTRAL.muted} />}
         </Box>
       )}
+      <Typography variant="body2" sx={{ color: "text.secondary", mb: 1.5 }}>
+        Choose a ward to see its cupboard{canIssue ? ", issue to it" : ""}, record use, count or send back. Wards that need attention come first.
+      </Typography>
 
       <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", lg: "1fr 1fr 1fr" } }}>
-        {data.wards.map((w) => {
+        {wards.map((w) => {
           // Expired stock on a ward outranks everything else on that card;
           // below-par is a nudge. Carried on the card's own edge, because a
           // 20px chip is not visible when you are scanning a grid of twelve.
@@ -1260,11 +1319,11 @@ function WardsTab({ canIssue }: { canIssue: boolean }) {
                         sx={{ height: 20, fontSize: 11, fontWeight: 700, bgcolor: alpha(SEMANTIC.danger, 0.1), color: SEMANTIC.danger }} />
                     )}
                     {w.belowPar > 0 && (
-                      <Chip size="small" label={`${w.belowPar} below par`}
+                      <Chip size="small" label={`${w.belowPar} running low`}
                         sx={{ height: 20, fontSize: 11, fontWeight: 700, bgcolor: alpha(SEMANTIC.warning, 0.1), color: SEMANTIC.warning }} />
                     )}
                     {w.outOfStock > 0 && (
-                      <Chip size="small" label={`${w.outOfStock} out`}
+                      <Chip size="small" label={`${w.outOfStock} run out`}
                         sx={{ height: 20, fontSize: 11, fontWeight: 700, bgcolor: alpha(NEUTRAL.muted, 0.12), color: NEUTRAL.muted }} />
                     )}
                   </Box>
@@ -1787,18 +1846,23 @@ function VarianceView({ data }: { data: VarianceReport }) {
 export default function WardStock() {
   const isNurse = useIsNursePanel();
   const [tab, setTab] = useState(0);
+  const { user } = useHospitalAuth();
+  const navigate = useNavigate();
+  const onIndent = isNurse && hasAction(user, "nurse.indent") ? () => navigate("/nurse/indents") : undefined;
 
   // A nurse looks after her own cupboard and sends things back; deciding what
   // the hospital stocks and receiving deliveries belong to the store.
   const tabs = isNurse
-    ? [{ label: "Ward cupboards", node: <WardsTab canIssue={false} /> }, { label: "Movement log", node: <LogTab /> }]
+    ? [{ label: "Ward cupboard", node: <WardsTab canIssue={false} onIndent={onIndent} /> }, { label: "History", node: <LogTab /> }]
     : [
+      // In the order the store works: what the wards asked for (their
+      // in-charges' indents), what they are short of, then the cupboards and
+      // the store itself; history and reports last.
+      { label: "Ward requests", node: <StoreIndents /> },
+      { label: "Wards running low", node: <ReorderTab /> },
       { label: "Ward cupboards", node: <WardsTab canIssue /> },
-      // What the wards have asked for (their in-charges' indents).
-      { label: "Indents", node: <StoreIndents /> },
-      { label: "To reorder", node: <ReorderTab /> },
       { label: "Central store", node: <StoreTab /> },
-      { label: "Movement log", node: <LogTab /> },
+      { label: "History", node: <LogTab /> },
       { label: "Reports", node: <ReportsTab /> },
     ];
 
@@ -1811,8 +1875,8 @@ export default function WardStock() {
       <PageHeader
         title="Ward Stock"
         subtitle={isNurse
-          ? "What this ward is holding, what it used, and sending back what it does not need."
-          : "Gloves, syringes and floor-stock drugs: what the store has, and what each ward is holding."}
+          ? "Record what you used on a patient, count the cupboard, and send back what the ward does not need."
+          : "Gloves, syringes and floor-stock drugs: fill the wards' requests, top up wards running low, and keep the central store stocked."}
       />
 
       <Tabs

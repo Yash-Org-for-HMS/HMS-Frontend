@@ -39,7 +39,7 @@ export default function NursePostings() {
   const toast = useToast();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
-  const [saving, setSaving] = useState<string | null>(null);
+  const [saving, setSaving] = useState<Set<string>>(() => new Set());
 
   const { data, isLoading, isError, error, refetch } = useQuery<{ nurses: NurseRow[]; wards: WardOption[] }>({
     queryKey: ["nursing-postings"],
@@ -54,17 +54,28 @@ export default function NursePostings() {
   }, [data, search]);
   const { shown, pager } = useClientPage(nurses, { size: 25, resetKey: search });
 
+  const setRow = (staffId: string, posting: NurseRow["posting"]) =>
+    queryClient.setQueryData<{ nurses: NurseRow[]; wards: WardOption[] }>(["nursing-postings"], (old) =>
+      old && { ...old, nurses: old.nurses.map((x) => (x.staffId === staffId ? { ...x, posting } : x)) });
+  const busy = (staffId: string, on: boolean) =>
+    setSaving((prev) => { const next = new Set(prev); if (on) next.add(staffId); else next.delete(staffId); return next; });
+
+  // The dropdown shows the new ward at once and the save runs behind it; the
+  // row is then patched from the server's answer instead of reloading every nurse.
   const post = async (nurse: NurseRow, wardId: string) => {
-    setSaving(nurse.staffId);
+    const ward = data?.wards.find((w) => w.wardId === wardId);
+    const before = nurse.posting;
+    setRow(nurse.staffId, ward ? { postingType: before?.postingType ?? "WARD", wardId, label: ward.wardName } : null);
+    busy(nurse.staffId, true);
     try {
-      await axiosInstance.put(`/hospital/staff/${nurse.staffId}/posting`, { wardId: wardId || null });
-      const ward = data?.wards.find((w) => w.wardId === wardId);
+      const res = await axiosInstance.put(`/hospital/staff/${nurse.staffId}/posting`, { wardId: wardId || null });
+      setRow(nurse.staffId, res.data?.data?.posting ?? null);
       toast.success(ward ? `${nurse.name} posted to ${ward.wardName}` : `${nurse.name} taken off their ward`);
-      await queryClient.invalidateQueries({ queryKey: ["nursing-postings"] });
     } catch (err) {
+      setRow(nurse.staffId, before);
       toast.error(getApiErrorMessage(err, "Couldn't change the posting"));
     } finally {
-      setSaving(null);
+      busy(nurse.staffId, false);
     }
   };
 
@@ -127,7 +138,7 @@ export default function NursePostings() {
                     <TextField
                       select size="small" fullWidth value={n.posting?.wardId ?? ""}
                       onChange={(e) => post(n, e.target.value)}
-                      disabled={saving === n.staffId}
+                      disabled={saving.has(n.staffId)}
                       slotProps={{ select: { displayEmpty: true, inputProps: { "aria-label": `Ward for ${n.name}` } } }}
                     >
                       <MenuItem value=""><em>Not posted to a ward</em></MenuItem>

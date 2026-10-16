@@ -121,6 +121,8 @@ export interface AdmissionClaimRef {
   status?: string | null;
   /** Approved at pre-authorisation; what the payer is expected to cover. */
   preAuthApprovedAmount?: Money | null;
+  /** The policy's cover; the bill past it is the patient's. */
+  sumInsured?: Money | null;
 }
 
 /** A room class the discharge bill can be priced against. */

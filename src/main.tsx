@@ -41,6 +41,20 @@ import { ConfirmProvider } from "@/providers/ConfirmContext";
 // render-phase errors, so without this most real failures went unrecorded.
 installGlobalErrorHandlers();
 
+// A tab left open across a redeploy still asks for the old chunk filenames,
+// which no longer exist, so the next page it opens fails to load. Reload once
+// to pick up the new build; the timestamp stops a reload loop if the chunk is
+// genuinely broken.
+window.addEventListener("vite:preloadError", (event) => {
+  const KEY = "hms-chunk-reload-at";
+  let last = 0;
+  try { last = Number(sessionStorage.getItem(KEY)) || 0; } catch { /* storage blocked */ }
+  if (Date.now() - last < 10_000) return;
+  try { sessionStorage.setItem(KEY, String(Date.now())); } catch { /* storage blocked */ }
+  event.preventDefault();
+  window.location.reload();
+});
+
 // Wrap the app in an error boundary keyed to the current route, so a render
 // crash shows a contained fallback (not a blank screen) and navigating to
 // another page clears it automatically.

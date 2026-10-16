@@ -5,7 +5,7 @@ import {
   Box, Paper, Typography, TextField, MenuItem, Button, IconButton, Tooltip, Autocomplete,
   Table, TableHead, TableBody, TableRow, TableCell, TableContainer,
 } from "@mui/material";
-import { ChevronLeftRounded, ChevronRightRounded, ContentCopyRounded } from "@mui/icons-material";
+import { CheckRounded, ChevronLeftRounded, ChevronRightRounded, ContentCopyRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import PageHeader from "@/components/layout/PageHeader";
 import ErrorState from "@/components/ErrorState";
@@ -58,7 +58,7 @@ export default function DutyRoster() {
   const [chosenWard, setWardId] = useState("");
   const [week, setWeek] = useState(() => mondayOf(dayjs()));
   const [added, setAdded] = useState<Record<string, NurseChoice[]>>({});
-  const [busy, setBusy] = useState<string | null>(null);
+  const [busy, setBusy] = useState<Set<string>>(() => new Set());
 
   const wards = useQuery<WardChoice[]>({
     queryKey: ["roster-wards"],
@@ -91,21 +91,31 @@ export default function DutyRoster() {
   const away = (staffId: string, day: string, shift: string) => w?.elsewhere.find((d) => d.staffId === staffId && d.dutyDate === day && d.shiftName === shift);
   const cover = (day: string, shift: string) => w?.duties.filter((d) => d.dutyDate === day && d.shiftName === shift).length ?? 0;
 
+  // The mark flips at once and the save runs behind it; only this week's duties
+  // are patched, instead of reloading the census, postings and other wards.
+  const setDuty = (staffId: string, day: string, shift: string, on: boolean) =>
+    qc.setQueryData<Week>(key, (old) => {
+      if (!old) return old;
+      const rest = old.duties.filter((d) => !(d.staffId === staffId && d.dutyDate === day && d.shiftName === shift));
+      return { ...old, duties: on ? [...rest, { staffId, dutyDate: day, shiftName: shift }] : rest };
+    });
   const toggle = async (staffId: string, day: string, shift: string) => {
     const id = `${staffId}|${day}|${shift}`;
-    setBusy(id);
+    const on = !isOn(staffId, day, shift);
+    setDuty(staffId, day, shift, on);
+    setBusy((prev) => new Set(prev).add(id));
     try {
-      await axiosInstance.put("/roster/duty", { wardId, staffId, dutyDate: day, shiftName: shift, on: !isOn(staffId, day, shift) });
-      await qc.invalidateQueries({ queryKey: key });
+      await axiosInstance.put("/roster/duty", { wardId, staffId, dutyDate: day, shiftName: shift, on });
     } catch (err) {
+      setDuty(staffId, day, shift, !on);
       toast.error(getApiErrorMessage(err, "Couldn't change the roster"));
     } finally {
-      setBusy(null);
+      setBusy((prev) => { const next = new Set(prev); next.delete(id); return next; });
     }
   };
 
   const copyLastWeek = async () => {
-    setBusy("copy");
+    setBusy((prev) => new Set(prev).add("copy"));
     try {
       const from = dayjs(week).subtract(7, "day").format("YYYY-MM-DD");
       const { copied, skipped } = (await axiosInstance.post("/roster/copy-week", { wardId, fromWeek: from, toWeek: week })).data.data as { copied: number; skipped: number };
@@ -116,7 +126,7 @@ export default function DutyRoster() {
     } catch (err) {
       toast.error(getApiErrorMessage(err, "Couldn't copy last week"));
     } finally {
-      setBusy(null);
+      setBusy((prev) => { const next = new Set(prev); next.delete("copy"); return next; });
     }
   };
 
@@ -165,7 +175,7 @@ export default function DutyRoster() {
               sx={{ width: 240 }}
               loading={choices.isLoading}
             />
-            <Button variant="outlined" startIcon={<ContentCopyRounded />} disabled={busy === "copy"} onClick={copyLastWeek}>Copy last week</Button>
+            <Button variant="outlined" startIcon={<ContentCopyRounded />} disabled={busy.has("copy")} onClick={copyLastWeek}>Copy last week</Button>
           </>
         )}
       </Paper>
@@ -197,12 +207,13 @@ export default function DutyRoster() {
                     <Box sx={{ display: "flex", gap: 0.5, justifyContent: "center" }}>
                       {w!.shifts.map((s) => {
                         const n = cover(d, s.name);
-                        const need = w!.neededPerShift;
+                        // "Needed" is worked out from today's census, so it means nothing for days already gone.
+                        const need = d >= today ? w!.neededPerShift : null;
                         const short = !!need && n < need;
                         return (
                           <Tooltip key={s.name} title={`${s.name}: ${n} on duty${need ? ` of ${need} needed` : ""}`}>
-                            <Typography variant="caption" sx={{ width: 28, textAlign: "center", fontVariantNumeric: "tabular-nums", color: short ? SEMANTIC.danger : "text.secondary", fontWeight: short ? 800 : 500 }}>
-                              {need ? `${n}/${need}` : n}
+                            <Typography variant="caption" sx={{ width: 28, textAlign: "center", fontVariantNumeric: "tabular-nums", color: short ? SEMANTIC.danger : need ? SEMANTIC.success : "text.secondary", fontWeight: short ? 800 : 500 }}>
+                              {short ? `${n}/${need}` : need ? <CheckRounded sx={{ fontSize: 14, verticalAlign: "middle" }} /> : n}
                             </Typography>
                           </Tooltip>
                         );
@@ -250,7 +261,7 @@ export default function DutyRoster() {
                                   size="small"
                                   aria-label={`${n.name}, ${dayjs(d).format("ddd D MMM")}, ${label}`}
                                   aria-pressed={on}
-                                  disabled={!canPlan || !!there || busy === `${n.staffId}|${d}|${s.name}`}
+                                  disabled={!canPlan || !!there || busy.has(`${n.staffId}|${d}|${s.name}`)}
                                   onClick={() => toggle(n.staffId, d, s.name)}
                                   variant={on ? "contained" : "outlined"}
                                   sx={{

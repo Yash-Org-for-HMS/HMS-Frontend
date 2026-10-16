@@ -25,11 +25,13 @@ import SortableHeadCell from "@/components/table/SortableHeadCell";
 import { useToast } from "@/providers/ToastContext";
 import { QUEUE_POLL_MS, QUEUE_LIVE_FALLBACK_MS } from "@/constants/intervals";
 import { refetchUnlessFresh, queueEventConcerns } from "@/utils/liveRefresh";
+import { useLabVerification } from "./useLabVerification";
 
 // Tab index → server bucket (Today / Past / Completed / All).
 const BUCKETS = ["today_pending", "past_pending", "completed", "all"];
 
 export default function RadiologyOrdersQueue() {
+  const verifies = useLabVerification();
   const toast = useToast();
   // One scan is addressable as /lab/radiology/:id. Radiology is edited in a
   // dialog rather than on its own page, so the id opens that dialog OVER the
@@ -340,7 +342,7 @@ export default function RadiologyOrdersQueue() {
                   <TableCell>{formatDate(order.orderDate)}</TableCell>
                   <TableCell>
                     <Chip label={order.status || "PENDING"} color={orderStatusColor(order.status ?? "PENDING")} size="small" />
-                    {order.verified && (
+                    {verifies && order.verified && (
                       <Chip icon={<VerifiedRounded sx={{ fontSize: "14px !important" }} />} label="Verified" size="small" color="success" variant="outlined" sx={{ ml: 0.5, height: 22 }} />
                     )}
                   </TableCell>
@@ -474,7 +476,7 @@ export default function RadiologyOrdersQueue() {
           </Box>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          {editOrder?.verified ? (
+          {!verifies ? null : editOrder?.verified ? (
             <Chip icon={<VerifiedRounded />} color="success" variant="outlined" sx={{ mr: "auto" }}
               label={`Verified${editOrder.verifiedByName ? ` · ${editOrder.verifiedByName}` : ""}`} />
           ) : editOrder?.status === "COMPLETED" && (

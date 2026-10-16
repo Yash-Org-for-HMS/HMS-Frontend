@@ -22,6 +22,7 @@ import { apiErrorText } from "@/utils/apiError";
 import { formatINRAuto } from "@/utils/format";
 import { KpiCard, ReportFilters, ReportFilterSelect, ReportTable, ReportNavLayout, useReportFilterOptions, useReportPaging, type DateRange, type ReportGroup } from "@/features/reports/kit";
 import dayjs from "dayjs";
+import { useLabVerification } from "./useLabVerification";
 
 const inr = formatINRAuto;
 const initialRange = (): DateRange => ({ from: dayjs().subtract(29, "day").format("YYYY-MM-DD"), to: dayjs().format("YYYY-MM-DD") });
@@ -309,6 +310,7 @@ export function Pending() {
 
 // ── Critical Results register (patient safety) ────────────────────────────────
 export function CriticalResults() {
+  const verifies = useLabVerification();
   const [range, setRange] = useState<DateRange>(initialRange);
   const [doctorId, setDoctorId] = useState("");
   const { data: opts } = useReportFilterOptions();
@@ -329,7 +331,7 @@ export function CriticalResults() {
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CrisisAlertRounded />} accent={SEMANTIC.danger} label="Critical results" value={String(data.totals.critical)} /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PersonRounded />} accent={BRAND.action} label="Patients affected" value={String(data.totals.patients)} /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ReportProblemRounded />} accent={SEMANTIC.warning} label="Unacknowledged" value={String(data.totals.unacknowledged ?? 0)} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ReportProblemRounded />} accent={SEMANTIC.info} label="Unverified" value={String(data.totals.unverified)} /></Grid>
+            {verifies && <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ReportProblemRounded />} accent={SEMANTIC.info} label="Unverified" value={String(data.totals.unverified)} /></Grid>}
           </Grid>
           <ReportTable title="Critical results" filename={`lab_critical_${range.from}_${range.to}`}
             emptyText="No critical results flagged in this period."
@@ -342,7 +344,7 @@ export function CriticalResults() {
               { key: "normalRange", label: "Reference range" },
               { key: "doctor", label: "Ordering doctor" },
               { key: "acknowledged", label: "Acknowledged" },
-              { key: "verified", label: "Verified" },
+              ...(verifies ? [{ key: "verified", label: "Verified" }] : []),
             ]}
             rows={rows}
             truncated={data.truncated} totalRows={data.totalRows} shownRows={data.shownRows}
@@ -359,6 +361,7 @@ export function CriticalResults() {
 // pending, critical only. This is the plain list: every lab order and every
 // scan in the period, with patient names, downloadable as-is.
 export function OrderRegister() {
+  const verifies = useLabVerification();
   const [range, setRange] = useState<DateRange>(initialRange);
   const [doctorId, setDoctorId] = useState("");
   const [status, setStatus] = useState("");
@@ -433,7 +436,7 @@ export function OrderRegister() {
                 { key: "reportedOn", label: "Reported" },
                 { key: "tatHours", label: "Turnaround (h)", align: "right", value: (r) => (r.tatHours == null ? "" : Number(r.tatHours)) },
                 { key: "doctor", label: "Ordering doctor" },
-                { key: "verified", label: "Verified" },
+                ...(verifies ? [{ key: "verified", label: "Verified" }] : []),
                 money("amount", "Amount"),
                 { key: "paymentStatus", label: "Payment" },
               ]}
@@ -456,7 +459,7 @@ export function OrderRegister() {
               { key: "reportedOn", label: "Reported" },
               { key: "tatHours", label: "Turnaround (h)", align: "right", value: (r) => (r.tatHours == null ? "" : Number(r.tatHours)) },
               { key: "doctor", label: "Ordering doctor" },
-              { key: "verified", label: "Verified" },
+              ...(verifies ? [{ key: "verified", label: "Verified" }] : []),
               money("amount", "Amount"),
               { key: "paymentStatus", label: "Payment" },
             ]}

@@ -23,11 +23,13 @@ import { useTableSort } from "@/components/table/useTableSort";
 import SortableHeadCell from "@/components/table/SortableHeadCell";
 import { QUEUE_POLL_MS, QUEUE_LIVE_FALLBACK_MS } from "@/constants/intervals";
 import { refetchUnlessFresh, queueEventConcerns } from "@/utils/liveRefresh";
+import { useLabVerification } from "./useLabVerification";
 
 // Tab index → server bucket (matches the queue's Today / Past / Completed / All tabs).
 const BUCKETS = ["today_pending", "past_pending", "completed", "all"];
 
 export default function LabOrdersQueue() {
+  const verifies = useLabVerification();
   const [tabValue, setTabValue] = useState(0);
   const [page, setPage] = useState(1);
 
@@ -250,7 +252,7 @@ export default function LabOrdersQueue() {
                   <TableCell>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, flexWrap: "wrap" }}>
                       <Chip label={order.status || "PENDING"} color={orderStatusColor(order.status ?? "PENDING")} size="small" />
-                      {order.status === "COMPLETED" && (
+                      {verifies && order.status === "COMPLETED" && (
                         order.verified ? (
                           <Chip icon={<VerifiedRounded sx={{ fontSize: "14px !important" }} />} label="Verified" size="small" color="success" variant="outlined" sx={{ height: 22, fontWeight: 700 }} />
                         ) : (
@@ -282,7 +284,7 @@ export default function LabOrdersQueue() {
                       >
                         Collect Sample
                       </Button>
-                    ) : order.status === "COMPLETED" && !order.verified ? (
+                    ) : verifies && order.status === "COMPLETED" && !order.verified ? (
                       // Results in, but nobody has signed off - make verification the
                       // obvious next action instead of a plain "View".
                       <Button

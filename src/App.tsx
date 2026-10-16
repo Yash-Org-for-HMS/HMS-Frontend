@@ -181,8 +181,21 @@ const WardStock = lazy(() => import("@/features/pharmacy/WardStock"));
 // only the content area shows the skeleton while its chunk loads - the
 // surrounding layout/sidebar stays rendered. `C` is a stable module-scope lazy
 // component, so this only builds an element (no React.lazy re-creation).
+//
+// Keyed per page: React Router runs navigation as a transition, and a
+// transition never swaps an already-visible boundary for its fallback. Unkeyed,
+// every page shared one boundary, so on a slow network the old page just sat
+// there until the next chunk arrived and sidebar clicks looked dead.
+const pageKeys = new WeakMap<ComponentType<any>, string>();
+let nextPageKey = 0;
+const pageKey = (C: ComponentType<any>) => {
+  let k = pageKeys.get(C);
+  if (!k) { k = `page-${nextPageKey++}`; pageKeys.set(C, k); }
+  return k;
+};
+
 const el = (C: ComponentType<any>) => (
-  <Suspense fallback={<PageSkeleton />}>
+  <Suspense key={pageKey(C)} fallback={<PageSkeleton />}>
     <C />
   </Suspense>
 );
@@ -190,7 +203,7 @@ const el = (C: ComponentType<any>) => (
 // Like el(), but passes props - used to reuse a page under a different shell
 // (e.g. the admin oversight routes render reception pages with basePath="/hospital").
 const elp = (C: ComponentType<any>, props: Record<string, unknown>) => (
-  <Suspense fallback={<PageSkeleton />}>
+  <Suspense key={pageKey(C)} fallback={<PageSkeleton />}>
     <C {...props} />
   </Suspense>
 );
@@ -200,7 +213,7 @@ const elp = (C: ComponentType<any>, props: Record<string, unknown>) => (
 // of 404ing or 403ing.
 const elGated = (C: ComponentType<any>, module: string, feature?: string, props: Record<string, unknown> = {}) => (
   <ModuleGate module={module} feature={feature}>
-    <Suspense fallback={<PageSkeleton />}>
+    <Suspense key={pageKey(C)} fallback={<PageSkeleton />}>
       <C {...props} />
     </Suspense>
   </ModuleGate>

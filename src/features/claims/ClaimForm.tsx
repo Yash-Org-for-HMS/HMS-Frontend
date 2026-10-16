@@ -19,7 +19,7 @@ const ACCENT = BRAND.action;
 const empty = {
   patientId: "", schemeType: "INSURANCE", payerId: "", policyOrCardNumber: "", tpaName: "",
   patientRelation: "Self", estimatedCost: "", preAuthRequestedAmount: "", preAuthApprovedAmount: "",
-  finalClaimedAmount: "", roomRentLimit: "", portalReference: "", remarks: "",
+  finalClaimedAmount: "", roomRentLimit: "", sumInsured: "", portalReference: "", remarks: "",
 };
 
 export default function ClaimForm() {
@@ -73,6 +73,7 @@ export default function ClaimForm() {
       preAuthApprovedAmount: existing.preAuthApprovedAmount ?? "",
       finalClaimedAmount: existing.finalClaimedAmount ?? "",
       roomRentLimit: existing.roomRentLimit ?? "",
+      sumInsured: existing.sumInsured ?? "",
       portalReference: existing.portalReference || "",
       remarks: existing.remarks || "",
     });
@@ -101,6 +102,7 @@ export default function ClaimForm() {
         finalClaimedAmount: num(form.finalClaimedAmount),
         // Emptied on an edit: the policy has no limit after all, so clear it.
         roomRentLimit: form.roomRentLimit === "" ? (isEdit ? null : undefined) : Number(form.roomRentLimit),
+        sumInsured: form.sumInsured === "" ? (isEdit ? null : undefined) : Number(form.sumInsured),
         portalReference: form.portalReference || undefined,
         remarks: form.remarks || undefined,
       };
@@ -181,6 +183,10 @@ export default function ClaimForm() {
           <Grid size={{ xs: 12, sm: 6, md: 4 }} >
             <TextField fullWidth type="number" label="Room rent limit / day" value={form.roomRentLimit} onChange={(e) => set("roomRentLimit", e.target.value)}
               helperText="From the policy. The patient's room is checked against it." />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 4 }} >
+            <TextField fullWidth type="number" label="Sum insured" value={form.sumInsured} onChange={(e) => set("sumInsured", e.target.value)}
+              helperText="Cover left on the policy. The bill is checked against it." />
           </Grid>
           {/* "Settled" is not editable here - it's recorded via the Record-settlement
               action on the claim (which books the payer payment + audit trail). */}

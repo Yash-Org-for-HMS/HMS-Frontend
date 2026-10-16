@@ -24,6 +24,7 @@ import DetailSkeleton from "@/components/skeletons/DetailSkeleton";
 import { axiosInstance } from "@/api/axios";
 import { useParams, useNavigate } from "react-router-dom";
 import PointOfCarePOS from "@/components/billing/PointOfCarePOS";
+import { useLabVerification } from "./useLabVerification";
 
 /** The editable result rows, keyed by labReportId. */
 type ResultDraft = Record<string, { value: string; range: string; remarks: string; critical?: boolean }>;
@@ -78,6 +79,7 @@ function Fact({ icon, label, children }: { icon: React.ReactNode; label: string;
 }
 
 export default function UpdateLabOrder() {
+  const verifies = useLabVerification();
   const openPrint = usePrintWindow();
   const { id } = useParams();
   const navigate = useNavigate();
@@ -212,7 +214,7 @@ export default function UpdateLabOrder() {
               Collect Payment
             </Button>
           )}
-          {order.verified ? (
+          {!verifies ? null : order.verified ? (
             <Chip icon={<VerifiedRounded />} color="success" variant="outlined"
               label={`Verified${order.verifiedByName ? ` · ${order.verifiedByName}` : ""}`} sx={{ fontWeight: 700 }} />
           ) : order.status === "COMPLETED" && (

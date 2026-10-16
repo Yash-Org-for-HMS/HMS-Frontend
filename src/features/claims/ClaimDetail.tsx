@@ -150,6 +150,7 @@ export default function ClaimDetail() {
                 ["Pre-auth approved", claim.preAuthApprovedAmount],
                 ["Final claimed", claim.finalClaimedAmount],
                 ["Room rent limit / day", claim.roomRentLimit],
+                ["Sum insured", claim.sumInsured],
               ].map(([label, val]) => (
                 <Grid size={{ xs: 6, sm: 3 }} key={label as string}>
                   <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>{label as string}</Typography>
@@ -171,6 +172,28 @@ export default function ClaimDetail() {
                 </Alert>
               )
             )}
+            {/* The case's latest figure against the policy's cover: the linked bill once
+                there is one, else the amount claimed, asked for, or estimated. */}
+            {(() => {
+              if (claim.sumInsured == null) return null;
+              const cover = Number(claim.sumInsured);
+              const [label, raw] = claim.invoice ? ["The linked bill", claim.invoice.netAmount]
+                : claim.finalClaimedAmount != null ? ["The amount claimed", claim.finalClaimedAmount]
+                : claim.preAuthRequestedAmount != null ? ["The pre-auth asked for", claim.preAuthRequestedAmount]
+                : ["The estimated cost", claim.estimatedCost];
+              if (raw == null) return null;
+              const figure = Number(raw);
+              return figure > cover ? (
+                <Alert severity="warning" sx={{ mt: 1.5 }}>
+                  {label} ({inr(figure)}) is {inr(figure - cover)} over the sum insured of {inr(cover)}. The payer will not pay past the
+                  cover - tell the patient what they will owe, or take an advance for it.
+                </Alert>
+              ) : (
+                <Alert severity="success" sx={{ mt: 1.5 }}>
+                  {label} ({inr(figure)}) is within the sum insured of {inr(cover)}.
+                </Alert>
+              );
+            })()}
           </Paper>
         </Grid>
 

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { FORM_PAGE_WIDTH } from "@/components/layout/pageWidth";
 import { SEMANTIC } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import ErrorState from "@/components/ErrorState";
 import {
   Box,
@@ -67,6 +67,7 @@ export default function HospitalSettings() {
   const [tabValue, setTabValue] = useState(0);
   const [saving, setSaving] = useState(false);
   const toast = useToast();
+  const queryClient = useQueryClient();
   const [formData, setFormData] = useState({
 
     // Localization
@@ -87,6 +88,9 @@ export default function HospitalSettings() {
     billingStrategy: "PRE_PAID" as "PRE_PAID" | "POST_PAID",
     // Kept as a string so the field can be cleared while typing; parsed on save.
     refundApprovalThreshold: "5000",
+
+    // Lab & radiology
+    labVerificationEnabled: false,
   });
 
   const { data: settingsData, isLoading: loading, isError, error, refetch } = useQuery({
@@ -110,6 +114,7 @@ export default function HospitalSettings() {
       vitalsCollector: (settings.vitalsCollector as "RECEPTIONIST" | "NURSE") || "RECEPTIONIST",
       billingStrategy: (settings.billingStrategy as "PRE_PAID" | "POST_PAID") || "PRE_PAID",
       refundApprovalThreshold: settings.refundApprovalThreshold != null ? String(settings.refundApprovalThreshold) : "5000",
+      labVerificationEnabled: settings.labVerificationEnabled ?? false,
     });
   }, [settingsData]);
 
@@ -139,6 +144,8 @@ export default function HospitalSettings() {
       else payload.refundApprovalThreshold = Number(raw);
 
       await axiosInstance.put("/hospital/settings", payload);
+      // Screens that read these (the lab's Verify button, the doctor's results) pick the change up.
+      await queryClient.invalidateQueries({ queryKey: ["hospital-settings"] });
       toast.success("Settings updated successfully!");
     } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to update settings"));
@@ -486,6 +493,19 @@ export default function HospitalSettings() {
                     : 'The "Record Vitals" button will appear in the Nurse Panel (/nurse/vitals). Receptionists will not see it in the queue.'}
                 </Typography>
               </Box>
+            </Box>
+
+            {/* Verifying lab and radiology results: a second person signs off. */}
+            <Box sx={{ mt: 3, p: 2.5, borderRadius: 2, border: "1px solid", borderColor: "divider" }}>
+              <FormControlLabel
+                control={<Switch checked={formData.labVerificationEnabled} onChange={handleChange} name="labVerificationEnabled" color="primary" />}
+                label={<Typography variant="subtitle1" sx={{ fontWeight: 700 }}>Lab and radiology results need verifying</Typography>}
+              />
+              <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5 }}>
+                {formData.labVerificationEnabled
+                  ? "On: after results are entered, a second person verifies them. Whoever entered a result cannot verify it. Doctors see results marked Verified or Unverified."
+                  : "Off: a result is final once it is entered. There is no Verify step and no Verified / Unverified marking. Turn on if your lab needs a pathologist or radiologist to sign off (for example, for NABL)."}
+              </Typography>
             </Box>
           </CustomTabPanel>
 

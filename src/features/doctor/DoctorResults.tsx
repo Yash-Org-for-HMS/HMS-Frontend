@@ -23,6 +23,7 @@ import SortableHeadCell from "@/components/table/SortableHeadCell";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
 import { apiErrorText, getApiErrorMessage } from "@/utils/apiError";
 import { useToast } from "@/providers/ToastContext";
+import { useLabVerification } from "@/features/lab/useLabVerification";
 
 // Match this page's existing table-head styling so SortableHeadCell blends in.
 const HEAD_SX = { bgcolor: "background.paper", color: "text.secondary", fontWeight: 600, borderBottom: "1px solid", borderColor: "divider" } as const;
@@ -37,6 +38,7 @@ const TABS = [
 ];
 
 export default function DoctorResults() {
+  const verifies = useLabVerification();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [tab, setTab] = useState(0);
@@ -193,7 +195,7 @@ export default function DoctorResults() {
                             ) : (
                               <Chip label={r.type === "LAB" && r.progress ? `Pending ${r.progress}` : "Pending"} size="small" sx={{ bgcolor: "rgba(245,158,11,0.15)", color: SEMANTIC.warningDark, fontWeight: 600 }} />
                             )}
-                            {(r.type === "LAB" || r.type === "RADIOLOGY") && r.status === "READY" && (
+                            {verifies && (r.type === "LAB" || r.type === "RADIOLOGY") && r.status === "READY" && (
                               r.verified ? (
                                 <Chip icon={<VerifiedRounded sx={{ fontSize: "14px !important" }} />} label="Verified" size="small" sx={{ height: 20, bgcolor: "rgba(16,185,129,0.12)", color: "#0f9d78", fontWeight: 700 }} />
                               ) : (
@@ -251,7 +253,7 @@ export default function DoctorResults() {
                     ) : (
                       <Chip label={selected.type === "LAB" && selected.progress ? `Pending ${selected.progress}` : "Pending"} size="small" sx={{ bgcolor: "rgba(245,158,11,0.15)", color: SEMANTIC.warningDark, fontWeight: 600 }} />
                     )}
-                    {(selected.type === "LAB" || selected.type === "RADIOLOGY") && selected.status === "READY" && (
+                    {verifies && (selected.type === "LAB" || selected.type === "RADIOLOGY") && selected.status === "READY" && (
                       selected.verified ? (
                         <Chip icon={<VerifiedRounded sx={{ fontSize: "14px !important" }} />} label="Verified" size="small" sx={{ height: 20, bgcolor: "rgba(16,185,129,0.12)", color: "#0f9d78", fontWeight: 700 }} />
                       ) : (
