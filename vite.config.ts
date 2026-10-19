@@ -1,6 +1,13 @@
 import { defineConfig, type PluginOption } from "vite";
 import react from "@vitejs/plugin-react";
 import { fileURLToPath, URL } from "node:url";
+// jspdf's own dependencies (and canvg's) plus the barcode library: used only by
+// lazily loaded screens, so they must not land in a chunk index.html preloads.
+const LAZY_ONLY = [
+  "html2canvas", "canvg", "fflate", "fast-png", "iobuffer", "pako", "core-js", "raf", "performance-now",
+  "rgbcolor", "stackblur-canvas", "svg-pathdata", "regenerator-runtime", "jsbarcode",
+];
+
 // Force vite restart
 
 // https://vite.dev/config/
@@ -59,9 +66,20 @@ export default defineConfig(async () => {
           if (id.includes("jspdf")) return;
           // Real-time client — only used inside queue/POS screens (all lazy), not at login.
           if (id.includes("socket.io") || id.includes("engine.io")) return "vendor-socket";
+          // Icons are leaf modules: each goes with the screens that draw it, so the
+          // login page no longer downloads every icon the app uses.
+          if (id.includes("@mui/icons-material")) return;
           if (id.includes("@mui") || id.includes("@emotion")) return "vendor-mui";
           if (id.includes("react-router") || id.includes("@remix-run")) return "vendor-router";
           if (id.includes("/react/") || id.includes("/react-dom/") || id.includes("/scheduler/")) return "vendor-react";
+          // Packages reached only from lazy screens (PDF export's helpers, the ID
+          // card barcode) are left to Rollup, like jspdf above. Swept into the
+          // catch-all below they were preloaded for every visitor: ~500KB of the
+          // 770KB "vendor" chunk the login page waited for.
+          if (LAZY_ONLY.some((p) => id.includes(`/node_modules/${p}/`))) return;
+          // The rest stays in one shared chunk: leaving it all to Rollup scattered
+          // small shared helpers into the charts/editor chunks, and the entry then
+          // preloaded those whole chunks instead.
           return "vendor";
         },
       },

@@ -107,12 +107,12 @@ export default function FrontDeskConsole() {
           </Typography>
           <Typography variant="caption" sx={{ color: "text.secondary", display: "flex", alignItems: "center" }} noWrap>
             MRN: {p.uhidNumber}{p.phone ? ` • ${p.phone}` : ""}
-            <IconButton size="small" onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(p.uhidNumber); }} sx={{ p: 0.2, ml: 0.5, color: "text.secondary", "&:hover": { color: "#06b6d4" } }}>
+            <IconButton size="small" onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(p.uhidNumber); }} sx={{ p: 0.2, ml: 0.5, color: "text.secondary", "&:hover": { color: "primary.main" } }}>
               <ContentCopyRounded sx={{ fontSize: "0.875rem" }} />
             </IconButton>
           </Typography>
         </Box>
-        <ChevronRightRounded sx={{ color: selected ? "#06b6d4" : "text.disabled" }} />
+        <ChevronRightRounded sx={{ color: selected ? "primary.main" : "text.disabled" }} />
       </Box>
     );
   };
@@ -156,7 +156,7 @@ export default function FrontDeskConsole() {
                   "& .MuiOutlinedInput-root": {
                     color: "text.primary", bgcolor: "background.default", borderRadius: 2,
                     "& fieldset": { borderColor: "rgba(6, 182, 212, 0.15)" },
-                    "&.Mui-focused fieldset": { borderColor: "#06b6d4" },
+                    "&.Mui-focused fieldset": { borderColor: "primary.main" },
                   },
                 }}
               />
@@ -196,7 +196,7 @@ export default function FrontDeskConsole() {
               ) : patients.length === 0 && !loading ? (
                 <Box sx={{ textAlign: "center", py: 4 }}>
                   <Mascot pose="no-matches" subtitle="No patient found." size={120} />
-                  <Button variant="outlined" size="small" onClick={() => setRegisterModalOpen(true)} sx={{ mt: 1, color: "#06b6d4", borderColor: "rgba(6, 182, 212, 0.5)" }}>
+                  <Button variant="outlined" size="small" onClick={() => setRegisterModalOpen(true)} sx={{ mt: 1, color: "primary.main", borderColor: "rgba(6, 182, 212, 0.5)" }}>
                     Register New Patient
                   </Button>
                 </Box>
@@ -264,7 +264,7 @@ export default function FrontDeskConsole() {
                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                          <Chip label={`Selected: ${sp.firstName} ${sp.lastName}`} size="small" sx={{ bgcolor: "rgba(16, 185, 129, 0.1)", color: SEMANTIC.success, border: "1px solid rgba(16, 185, 129, 0.2)", fontWeight: 600 }} />
                          <Chip label={`MRN: ${sp.uhidNumber}`} size="small" variant="outlined" sx={{ color: "text.secondary", borderColor: "divider", fontWeight: 600, fontFamily: "monospace" }} />
-                         <IconButton size="small" onClick={() => navigator.clipboard.writeText(sp.uhidNumber)} sx={{ color: "text.secondary", "&:hover": { color: "#06b6d4", bgcolor: "rgba(6, 182, 212, 0.08)" } }}>
+                         <IconButton size="small" onClick={() => navigator.clipboard.writeText(sp.uhidNumber)} sx={{ color: "text.secondary", "&:hover": { color: "primary.main", bgcolor: "rgba(6, 182, 212, 0.08)" } }}>
                            <ContentCopyRounded fontSize="small" />
                          </IconButton>
                        </Box>

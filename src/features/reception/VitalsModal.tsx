@@ -88,9 +88,9 @@ function VitalInput({
         "& .MuiOutlinedInput-root": {
           "& fieldset": { borderColor: "rgba(100,116,139,0.3)" },
           "&:hover fieldset": { borderColor: "rgba(6,182,212,0.5)" },
-          "&.Mui-focused fieldset": { borderColor: "#06b6d4" },
+          "&.Mui-focused fieldset": { borderColor: "primary.main" },
         },
-        "& .MuiInputLabel-root.Mui-focused": { color: "#06b6d4" },
+        "& .MuiInputLabel-root.Mui-focused": { color: "primary.main" },
       }}
     />
   );
@@ -365,9 +365,9 @@ export default function VitalsModal({ open, onClose, appointmentId, patientId, p
                 "& .MuiOutlinedInput-root": {
                   "& fieldset": { borderColor: "rgba(100,116,139,0.3)" },
                   "&:hover fieldset": { borderColor: "rgba(6,182,212,0.5)" },
-                  "&.Mui-focused fieldset": { borderColor: "#06b6d4" },
+                  "&.Mui-focused fieldset": { borderColor: "primary.main" },
                 },
-                "& .MuiInputLabel-root.Mui-focused": { color: "#06b6d4" },
+                "& .MuiInputLabel-root.Mui-focused": { color: "primary.main" },
               }}
             />
           </>

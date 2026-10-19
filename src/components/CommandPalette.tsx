@@ -490,7 +490,7 @@ export default function CommandPalette() {
                   onClick={() => handleSelect(route.path, { kind: "route", path: route.path, name: route.name })}
                   sx={{ borderRadius: 2, mb: 0.5, "&:hover": { bgcolor: "rgba(6, 182, 212, 0.08)" }, "&.Mui-selected": { bgcolor: "rgba(6, 182, 212, 0.14)" }, "&.Mui-selected:hover": { bgcolor: "rgba(6, 182, 212, 0.18)" } }}
                 >
-                  <ListItemIcon sx={{ minWidth: 40, color: "#0891b2" }}>{route.icon}</ListItemIcon>
+                  <ListItemIcon sx={{ minWidth: 40, color: "primary.dark" }}>{route.icon}</ListItemIcon>
                   <ListItemText
                     primary={route.name}
                     secondary={route.section}
@@ -523,7 +523,7 @@ export default function CommandPalette() {
                   onClick={() => handleSelect(routePath, { kind: "patient", patientId: p.patientId, name: `${p.firstName} ${p.lastName}` })}
                   sx={{ borderRadius: 2, mb: 0.5, "&:hover": { bgcolor: "rgba(6, 182, 212, 0.08)" }, "&.Mui-selected": { bgcolor: "rgba(6, 182, 212, 0.14)" }, "&.Mui-selected:hover": { bgcolor: "rgba(6, 182, 212, 0.18)" } }}
                 >
-                  <ListItemIcon sx={{ minWidth: 40, color: "#06b6d4" }}><PersonRounded /></ListItemIcon>
+                  <ListItemIcon sx={{ minWidth: 40, color: "primary.main" }}><PersonRounded /></ListItemIcon>
                   <ListItemText
                     primary={`${p.firstName} ${p.lastName}`}
                     secondary={`MRN: ${p.uhidNumber || "-"}${p.phone ? ` • ${p.phone}` : ""}`}

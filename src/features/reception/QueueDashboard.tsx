@@ -301,7 +301,7 @@ export default function QueueDashboard({ readOnly = false }: { readOnly?: boolea
             startIcon={<SyncRounded />}
             onClick={invalidateQueue}
             sx={{
-              color: "#06b6d4", borderColor: "rgba(6,182,212,0.5)", fontWeight: 600,
+              color: "primary.main", borderColor: "rgba(6,182,212,0.5)", fontWeight: 600,
               "&:hover": { borderColor: BRAND.action, bgcolor: "rgba(6,182,212,0.1)" }
             }}
           >
@@ -314,7 +314,7 @@ export default function QueueDashboard({ readOnly = false }: { readOnly?: boolea
       {/* Waiting-time monitor */}
       <Box sx={{ display: "flex", gap: 2, mb: 3, flexWrap: "wrap" }}>
         {[
-          { label: "Patients Waiting", value: String(waitingTokens.length), color: "#06b6d4" },
+          { label: "Patients Waiting", value: String(waitingTokens.length), color: "primary.main" },
           { label: "Avg Wait", value: fmtWait(avgWait), color: waitColor(avgWait) },
           { label: "Longest Wait", value: fmtWait(maxWait), color: waitColor(maxWait) },
           { label: "Completed Today", value: String(completedTokens.length), color: SEMANTIC.success },
@@ -563,7 +563,7 @@ export default function QueueDashboard({ readOnly = false }: { readOnly?: boolea
         {/* Record Vitals - only shown when hospital is configured for Receptionist vitals */}
         {vitalsCollector === "RECEPTIONIST" && selectedAppt?.appointmentId && (
           <MenuItem onClick={openVitals} sx={{ "&:hover": { bgcolor: "rgba(6,182,212,0.08)" } }}>
-            <MonitorHeartRounded fontSize="small" sx={{ mr: 1.5, color: "#06b6d4" }} />
+            <MonitorHeartRounded fontSize="small" sx={{ mr: 1.5, color: "primary.main" }} />
             {tokens.find((t) => t.appointmentId === selectedAppt.appointmentId)?.vitalsRecorded ? "Update Vitals" : "Record Vitals"}
           </MenuItem>
         )}

@@ -336,7 +336,7 @@ export default function AppointmentsList({ readOnly = false }: { readOnly?: bool
               bgcolor: "background.paper", borderRadius: 2,
               "& fieldset": { borderColor: "divider" },
               "&:hover fieldset": { borderColor: "rgba(6, 182, 212, 0.4)" },
-              "&.Mui-focused fieldset": { borderColor: "#06b6d4" },
+              "&.Mui-focused fieldset": { borderColor: "primary.main" },
             }
           }}
         />

@@ -385,7 +385,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
     >
       <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid", borderColor: "divider", pb: 2 }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-          <ReceiptRounded sx={{ color: "#06b6d4" }} />
+          <ReceiptRounded sx={{ color: "primary.main" }} />
           <Typography variant="h6" sx={{ color: "text.primary", fontWeight: 700 }}>
             Billing & Receipt
           </Typography>

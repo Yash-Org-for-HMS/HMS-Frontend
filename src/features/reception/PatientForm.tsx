@@ -246,10 +246,10 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
       bgcolor: "action.hover",
       "& fieldset": { borderColor: "rgba(6, 182, 212, 0.15)" },
       "&:hover fieldset": { borderColor: "rgba(6, 182, 212, 0.3)" },
-      "&.Mui-focused fieldset": { borderColor: "#06b6d4" },
+      "&.Mui-focused fieldset": { borderColor: "primary.main" },
     },
     "& .MuiInputLabel-root": { color: "text.secondary" },
-    "& .MuiInputLabel-root.Mui-focused": { color: "#06b6d4" },
+    "& .MuiInputLabel-root.Mui-focused": { color: "primary.main" },
     "& .MuiSvgIcon-root": { color: "text.secondary" },
   };
 
@@ -521,7 +521,7 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
             label="MRN will be auto-generated"
             sx={{
               bgcolor: "rgba(6, 182, 212, 0.08)",
-              color: "#06b6d4",
+              color: "primary.main",
               border: "1px solid", borderColor: "divider",
               fontWeight: 600,
             }}
@@ -600,7 +600,7 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
                   }}
                 >
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 3 }}>
-                    <Box sx={{ color: "#06b6d4" }}>
+                    <Box sx={{ color: "primary.main" }}>
                       {section.icon}
                     </Box>
                     <Typography variant="h6" sx={{ color: "text.primary", fontWeight: 700 }}>

@@ -224,7 +224,7 @@ export default function PatientsList({ basePath = "/reception", readOnly = false
                 borderRadius: 2,
                 "& fieldset": { borderColor: "rgba(6, 182, 212, 0.15)" },
                 "&:hover fieldset": { borderColor: "rgba(6, 182, 212, 0.3)" },
-                "&.Mui-focused fieldset": { borderColor: "#06b6d4" },
+                "&.Mui-focused fieldset": { borderColor: "primary.main" },
               },
               "& .MuiInputBase-input::placeholder": { color: "#334155" },
             }}
@@ -366,7 +366,7 @@ export default function PatientsList({ basePath = "/reception", readOnly = false
                             onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(patient.uhidNumber); toast.success("UHID copied"); }}
                             sx={{
                               bgcolor: "rgba(6, 182, 212, 0.08)",
-                              color: "#06b6d4",
+                              color: "primary.main",
                               border: "1px solid", borderColor: "divider",
                               fontWeight: 700,
                               fontFamily: "monospace",
@@ -431,7 +431,7 @@ export default function PatientsList({ basePath = "/reception", readOnly = false
                         <Tooltip title="View profile">
                           <IconButton size="small"
                             onClick={(e) => { e.stopPropagation(); navigate(`${basePath}/patients/${patient.patientId}`); }}
-                            sx={{ color: "text.secondary", "&:hover": { color: "#06b6d4", bgcolor: "rgba(6,182,212,0.08)" } }}>
+                            sx={{ color: "text.secondary", "&:hover": { color: "primary.main", bgcolor: "rgba(6,182,212,0.08)" } }}>
                             <VisibilityRounded fontSize="small" />
                           </IconButton>
                         </Tooltip>
@@ -459,7 +459,7 @@ export default function PatientsList({ basePath = "/reception", readOnly = false
                 onChange={(_, p) => setPage(p)}
                 sx={{
                   "& .MuiPaginationItem-root": { color: "text.secondary" },
-                  "& .Mui-selected": { bgcolor: "rgba(6,182,212,0.15) !important", color: "#06b6d4", fontWeight: 700 },
+                  "& .Mui-selected": { bgcolor: "rgba(6,182,212,0.15) !important", color: "primary.main", fontWeight: 700 },
                 }}
               />
             </Box>

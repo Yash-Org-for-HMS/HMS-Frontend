@@ -36,7 +36,7 @@ const STATUS: Record<Indent["status"], { label: string; bg: string; color: strin
   OPEN: { label: "Waiting for the store", bg: `${SEMANTIC.warning}22`, color: SEMANTIC.warningDark },
   PART_ISSUED: { label: "Partly issued", bg: `${BRAND.action}1a`, color: BRAND.action },
   ISSUED: { label: "Issued", bg: `${SEMANTIC.success}1f`, color: SEMANTIC.success },
-  CANCELLED: { label: "Cancelled", bg: "rgba(100,116,139,0.12)", color: "#475569" },
+  CANCELLED: { label: "Cancelled", bg: "rgba(100,116,139,0.12)", color: "text.secondary" },
   CLOSED: { label: "Closed short", bg: `${SEMANTIC.danger}1a`, color: SEMANTIC.danger },
 };
 

@@ -513,8 +513,8 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
                     checked={checkInImmediately}
                     onChange={(e) => setCheckInImmediately(e.target.checked)}
                     sx={{
-                      "& .MuiSwitch-switchBase.Mui-checked": { color: "#06b6d4" },
-                      "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": { bgcolor: "#06b6d4" }
+                      "& .MuiSwitch-switchBase.Mui-checked": { color: "primary.main" },
+                      "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": { bgcolor: "primary.main" }
                     }}
                   />
                 }
@@ -527,7 +527,7 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
               <Button variant="outlined" onClick={() => { if (isEmbedded && onCancel) onCancel(); else navigate(-1); }} sx={{ color: "text.secondary", borderColor: "divider", textTransform: "none" }}>
                 Cancel
               </Button>
-              <Button type="submit" variant="contained" disabled={saving || !formData.patientId} startIcon={saving ? <HeartbeatLoader size={22} /> : <SaveRounded />} sx={{ bgcolor: "#06b6d4", textTransform: "none", fontWeight: 600 }}>
+              <Button type="submit" variant="contained" disabled={saving || !formData.patientId} startIcon={saving ? <HeartbeatLoader size={22} /> : <SaveRounded />} sx={{ bgcolor: "primary.main", textTransform: "none", fontWeight: 600 }}>
                 {id ? "Update Appointment" : "Confirm Booking"}
               </Button>
             </Box>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { alpha, type Theme } from "@mui/material/styles";
 import { FORM_PAGE_WIDTH } from "@/components/layout/pageWidth";
 import { SEMANTIC } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
@@ -380,11 +381,11 @@ export default function HospitalSettings() {
                     p: 3,
                     borderRadius: 3,
                     border: "2px solid",
-                    borderColor: formData.vitalsCollector === "RECEPTIONIST" ? "#06b6d4" : "divider",
-                    bgcolor: formData.vitalsCollector === "RECEPTIONIST" ? "rgba(6,182,212,0.06)" : "background.default",
+                    borderColor: formData.vitalsCollector === "RECEPTIONIST" ? "primary.main" : "divider",
+                    bgcolor: formData.vitalsCollector === "RECEPTIONIST" ? ((t: Theme) => alpha(t.palette.primary.main, 0.06)) : "background.default",
                     cursor: "pointer",
                     transition: "all 0.2s ease",
-                    "&:hover": { borderColor: "#06b6d4", bgcolor: "rgba(6,182,212,0.04)" },
+                    "&:hover": { borderColor: "primary.main", bgcolor: ((t: Theme) => alpha(t.palette.primary.main, 0.04)) },
                     display: "flex",
                     alignItems: "flex-start",
                     gap: 2,
@@ -395,22 +396,22 @@ export default function HospitalSettings() {
                       width: 48,
                       height: 48,
                       borderRadius: 2,
-                      bgcolor: formData.vitalsCollector === "RECEPTIONIST" ? "rgba(6,182,212,0.2)" : "rgba(100,116,139,0.1)",
+                      bgcolor: formData.vitalsCollector === "RECEPTIONIST" ? ((t: Theme) => alpha(t.palette.primary.main, 0.2)) : "rgba(100,116,139,0.1)",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
                       flexShrink: 0,
                     }}
                   >
-                    <PersonRounded sx={{ color: formData.vitalsCollector === "RECEPTIONIST" ? "#06b6d4" : "text.secondary", fontSize: 28 }} />
+                    <PersonRounded sx={{ color: formData.vitalsCollector === "RECEPTIONIST" ? "primary.main" : "text.secondary", fontSize: 28 }} />
                   </Box>
                   <Box sx={{ flex: 1 }}>
                     <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.5 }}>
-                      <Typography variant="subtitle1" sx={{ color: formData.vitalsCollector === "RECEPTIONIST" ? "#06b6d4" : "text.primary", fontWeight: 700 }}>
+                      <Typography variant="subtitle1" sx={{ color: formData.vitalsCollector === "RECEPTIONIST" ? "primary.main" : "text.primary", fontWeight: 700 }}>
                         Receptionist
                       </Typography>
                       {formData.vitalsCollector === "RECEPTIONIST" && (
-                        <Box sx={{ width: 10, height: 10, borderRadius: "50%", bgcolor: "#06b6d4" }} />
+                        <Box sx={{ width: 10, height: 10, borderRadius: "50%", bgcolor: "primary.main" }} />
                       )}
                     </Box>
                     <Typography variant="body2" sx={{ color: "text.secondary", lineHeight: 1.5 }}>
@@ -419,7 +420,7 @@ export default function HospitalSettings() {
                     </Typography>
                     <Box sx={{ mt: 1.5, display: "flex", gap: 1, flexWrap: "wrap" }}>
                       {["Quick check-in flow", "Single-staff hospitals", "OPD clinics"].map(tag => (
-                        <Box key={tag} sx={{ px: 1, py: 0.3, borderRadius: 1, bgcolor: "rgba(6,182,212,0.1)", fontSize: "0.75rem", color: "#06b6d4", fontWeight: 600 }}>{tag}</Box>
+                        <Box key={tag} sx={{ px: 1, py: 0.3, borderRadius: 1, bgcolor: ((t: Theme) => alpha(t.palette.primary.main, 0.1)), fontSize: "0.75rem", color: "primary.main", fontWeight: 600 }}>{tag}</Box>
                       ))}
                     </Box>
                   </Box>

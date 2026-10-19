@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { alpha, type Theme } from "@mui/material/styles";
 import CredentialDialog from "@/components/CredentialDialog";
 import { SEMANTIC, BRAND } from "@/styles/accents";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
@@ -294,12 +295,12 @@ function ResetPasswordDialog({ open, user, onClose, onSuccess }: ResetPasswordDi
             gap: 1,
             p: 1.5,
             borderRadius: 1.5,
-            bgcolor: "rgba(6,182,212,0.04)",
-            border: "1px solid rgba(6,182,212,0.12)",
+            bgcolor: ((t: Theme) => alpha(t.palette.primary.main, 0.04)),
+            border: (t: Theme) => `1px solid ${alpha(t.palette.primary.main, 0.12)}`,
             mb: 3,
           }}
         >
-          <InfoOutlined sx={{ color: "#06b6d4", fontSize: 16, mt: 0.1, flexShrink: 0 }} />
+          <InfoOutlined sx={{ color: "primary.main", fontSize: 16, mt: 0.1, flexShrink: 0 }} />
           <Typography variant="caption" sx={{ color: "text.secondary", lineHeight: 1.6 }}>
             The staff member will be required to change this password on their next login.
           </Typography>

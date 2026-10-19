@@ -116,7 +116,7 @@ export default function IdCardModal({ open, onClose, patient }: IdCardModalProps
       </DialogContent>
       <DialogActions sx={{ p: 2 }}>
         <Button onClick={onClose} color="inherit">Close</Button>
-        <Button variant="contained" startIcon={<PrintRounded />} onClick={handlePrint} sx={{ bgcolor: "#06b6d4" }}>
+        <Button variant="contained" startIcon={<PrintRounded />} onClick={handlePrint} sx={{ bgcolor: "primary.main" }}>
           Print ID Card
         </Button>
       </DialogActions>

@@ -161,7 +161,7 @@ export default function ReceptionLayout() {
           <Box key={section.heading} sx={{ mb: 0.5 }}>
             <Typography
               variant="caption"
-              sx={{ color: "#475569", fontWeight: 700, px: 1.5, pt: si === 0 ? 0 : 1.5, pb: 0.75, display: "block", letterSpacing: 1, textTransform: "uppercase", fontSize: "0.75rem" }}
+              sx={{ color: "text.secondary", fontWeight: 700, px: 1.5, pt: si === 0 ? 0 : 1.5, pb: 0.75, display: "block", letterSpacing: 1, textTransform: "uppercase", fontSize: "0.75rem" }}
             >
               {section.heading}
             </Typography>
