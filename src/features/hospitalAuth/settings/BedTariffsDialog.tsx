@@ -111,11 +111,14 @@ export default function BedTariffsDialog({ onClose, onDone }: { onClose: () => v
   return (
     <Dialog open onClose={saving ? undefined : onClose} maxWidth="lg" fullWidth>
       <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-        <PaymentsRounded sx={{ color: BRAND.action }} /> Bed tariffs - room rent and nursing, per day
+        <PaymentsRounded sx={{ color: BRAND.action }} /> Bed tariffs - room rent and nursing
       </DialogTitle>
       <DialogContent dividers>
         {isLoading || !data ? <ListSkeleton rows={4} /> : (
           <>
+            <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
+              Each rate is per the ward's billing unit: per day in most wards, per hour in recovery and observation, per session in daycare and dialysis, per visit in emergency.
+            </Typography>
             {multiBranch && (
               <TextField id="tariff-scope" select size="small" label="Tariffs for" value={branchId} sx={{ mb: 2, minWidth: 280 }}
                 onChange={(e) => { setBranchId(e.target.value); setEdits({}); }} SelectProps={{ displayEmpty: true }} InputLabelProps={{ shrink: true }}>

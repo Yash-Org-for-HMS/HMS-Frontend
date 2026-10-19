@@ -22,6 +22,7 @@ import { ListSkeleton } from "@/components/TableRowsSkeleton";
 import { useToast } from "@/providers/ToastContext";
 import PageHeader from "@/components/layout/PageHeader";
 import SearchableSelect from "@/components/form/SearchableSelect";
+import { rateLabel, billingModeText } from "@/features/ipd/billingUnit";
 import BedTariffsDialog from "./BedTariffsDialog";
 
 const ACCENT = BRAND.action;
@@ -203,7 +204,7 @@ export default function FacilitySetup() {
                   </Tooltip>
                 </Box>
                 <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 1.5, pl: 3.5 }}>
-                  {[w.floorLabel ?? `Floor ${w.floorNumber}`, w.departmentName, w.inChargeName ? `In-charge: ${w.inChargeName}` : null, w.billingMode && w.billingMode !== "PER_DAY" ? `billed ${w.billingMode.replace("PER_", "per ").toLowerCase()}` : null].filter(Boolean).join(" · ")}
+                  {[w.floorLabel ?? `Floor ${w.floorNumber}`, w.departmentName, w.inChargeName ? `In-charge: ${w.inChargeName}` : null, w.billingMode && w.billingMode !== "PER_DAY" ? `billed ${billingModeText(w.billingMode)}` : null].filter(Boolean).join(" · ")}
                 </Typography>
                 {w.rooms.length === 0 ? <Typography variant="body2" sx={{ color: "text.secondary", py: 1 }}>No rooms</Typography> : w.rooms.map((r: RoomNode) => (
                   <Box key={r.roomId} sx={{ mb: 1.5 }}>
@@ -563,15 +564,19 @@ function SetupDialog({ kind, edit, wards, roomClasses, options, onClose, onDone 
               helperText={f.bedCode ? "Must be unique in this branch." : `Leave blank for ${previewBedCode(ward?.wardCode, room?.roomNumber, f.bedNumber)}`}
               slotProps={{ htmlInput: { maxLength: 50 } }} />
             <TextField select fullWidth label="Room class (pricing)" value={f.roomClassId || ""} onChange={(e) => pickClass(e.target.value)}
-              helperText="Sets the price tier for this bed's charges - and fills the daily rent from the Schedule of Charges.">
+              helperText="Sets the price tier for this bed's charges - and fills the rent from the Schedule of Charges. Pick a class priced in this ward's unit (e.g. Recovery for hourly beds, Daycare for sessions).">
               <MenuItem value=""><em>None (base price)</em></MenuItem>
               {/* Active classes, plus the bed's current class even if later deactivated. */}
               {roomClasses.filter((rc) => rc.isActive || rc.roomClassId === f.roomClassId).map((rc) => <MenuItem key={rc.roomClassId} value={rc.roomClassId}>{rc.name}{rc.isActive ? "" : " (inactive)"}</MenuItem>)}
             </TextField>
-            <TextField fullWidth type="number" label="Daily charge (₹)" value={f.dailyCharge || ""} onChange={(e) => set("dailyCharge", e.target.value)}
-              helperText={rentInfo?.configured
-                ? (rentFor(f.roomClassId) != null ? `Auto-filled from Schedule of Charges (₹${rentFor(f.roomClassId)}) - editable` : "Editable")
-                : "Tip: add a 'Room rent' charge (type Bed) in the Schedule of Charges to auto-fill this."}
+            <TextField fullWidth type="number" label={rateLabel(ward?.billingMode)} value={f.dailyCharge || ""} onChange={(e) => set("dailyCharge", e.target.value)}
+              helperText={[
+                // The ward type decides the unit: the same figure is charged per day, hour, session or visit.
+                ward?.billingMode && ward.billingMode !== "PER_DAY" ? `${ward.wardName ?? "This ward"} is billed ${billingModeText(ward.billingMode)}.` : null,
+                rentInfo?.configured
+                  ? (rentFor(f.roomClassId) != null ? `Auto-filled from Schedule of Charges (₹${rentFor(f.roomClassId)}) - editable` : "Editable")
+                  : "Tip: add a 'Room rent' charge (type Bed) in the Schedule of Charges to auto-fill this.",
+              ].filter(Boolean).join(" ")}
               InputProps={rentInfo?.configured && rentFor(f.roomClassId) != null ? {
                 endAdornment: (
                   <InputAdornment position="end">

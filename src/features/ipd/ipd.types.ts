@@ -67,7 +67,11 @@ export interface BedSegment {
   dailyCharge: Money;
   from: string;
   to: string;
+  /** Units billed on this bed, in `unit` (days unless the ward bills otherwise). */
   days: number;
+  /** The ward's billing unit; null when its bed time is part of a procedure or package. */
+  unit?: "day" | "hour" | "session" | "visit" | null;
+  billingMode?: string;
   amount: Money;
   /** Nursing charge for this bed's days, from the bed tariff (0 without one). */
   nursingAmount?: Money;

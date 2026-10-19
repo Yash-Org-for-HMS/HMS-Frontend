@@ -13,6 +13,7 @@ import { useToast } from "@/providers/ToastContext";
 import HeartbeatLoader from "../HeartbeatLoader";
 import PatientForm from "@/features/reception/PatientForm";
 import { SCHEME_OPTIONS } from "@/features/claims/claimMeta";
+import { rateWithUnit } from "@/features/ipd/billingUnit";
 import SearchableSelect from "@/components/form/SearchableSelect";
 
 interface Props {
@@ -209,11 +210,11 @@ export default function AdmitDialog({ open, onClose, onAdmitted, prefilledPatien
                 options={beds.map((b) => ({
                   value: b.bedId,
                   label: b.label,
-                  // The daily rate belongs beside the bed: it is half of what
+                  // The rate (per day, hour, session...) belongs beside the bed: it is half of what
                   // "which bed" means, and it was previously buried in one line
                   // of a menu too long to read.
                   secondary: [
-                    b.dailyCharge ? `₹${Number(b.dailyCharge).toFixed(0)}/day` : null,
+                    b.dailyCharge ? rateWithUnit(`₹${Number(b.dailyCharge).toFixed(0)}`, b.billingMode) : null,
                     b.status === "RESERVED"
                       ? (!b.reservedForPatientId ? "reserved" : b.reservedForPatientId === form.patientId ? "held for this patient" : "held for another patient")
                       : null,

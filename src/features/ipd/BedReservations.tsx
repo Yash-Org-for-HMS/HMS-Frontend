@@ -18,6 +18,7 @@ import { useToast } from "@/providers/ToastContext";
 import { useConfirm } from "@/providers/ConfirmContext";
 import { SEMANTIC } from "@/styles/accents";
 import { apiErrorText, getApiErrorMessage } from "@/utils/apiError";
+import { rateWithUnit } from "./billingUnit";
 import PatientPicker, { type PickedPatient } from "@/features/mrd/PatientPicker";
 
 /**
@@ -32,7 +33,7 @@ interface Hold {
   bedId: string; label: string; wardName: string | null; reservedUntil: string | null; reservedAt: string | null; reason: string | null;
   patient: { patientId: string; name: string; uhid: string } | null; endingSoon: boolean;
 }
-interface FreeBed { bedId: string; label: string; status: string; dailyCharge: number | null }
+interface FreeBed { bedId: string; label: string; status: string; dailyCharge: number | null; billingMode?: string }
 const HOURS = [4, 8, 12, 24, 48, 72];
 
 function ReserveDialog({ onClose, onDone }: { onClose: () => void; onDone: () => void }) {
@@ -65,7 +66,7 @@ function ReserveDialog({ onClose, onDone }: { onClose: () => void; onDone: () =>
           <SearchableSelect
             label="Bed" name="reserve-bed" required value={bedId} onChange={(e) => setBedId(e.target.value)}
             placeholder="Select a free bed" searchPlaceholder="Search by ward, room or bed…"
-            options={free.map((b) => ({ value: b.bedId, label: b.label, secondary: b.dailyCharge ? `₹${Number(b.dailyCharge).toFixed(0)}/day` : undefined }))}
+            options={free.map((b) => ({ value: b.bedId, label: b.label, secondary: b.dailyCharge ? rateWithUnit(`₹${Number(b.dailyCharge).toFixed(0)}`, b.billingMode) : undefined }))}
             helperText={beds.data && !free.length ? "No free bed to reserve" : undefined}
           />
           <PatientPicker id="reserve-patient" value={patient} onChange={setPatient} label="For patient (optional)" required={false} />

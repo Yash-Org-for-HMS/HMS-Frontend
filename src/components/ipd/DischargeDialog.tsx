@@ -13,6 +13,7 @@ import { LogoutRounded, AddRounded, DeleteOutlineRounded } from "@mui/icons-mate
 import { axiosInstance } from "@/api/axios";
 import { useToast } from "@/providers/ToastContext";
 import HeartbeatLoader from "../HeartbeatLoader";
+import { unitCount } from "@/features/ipd/billingUnit";
 import SocChargePicker from "@/components/billing/SocChargePicker";
 
 interface Props {
@@ -80,7 +81,7 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
   };
 
   const bedCharge = Number(detail?.estimatedBedCharge || 0);
-  // The nursing charge a bed tariff carries, billed per day beside the rent.
+  // The nursing charge a bed tariff carries, billed per unit beside the rent.
   const nursingCharge = Number(detail?.estimatedNursingCharge || 0);
   const bedSegments: BedSegment[] = detail?.bedSegments || [];
   // Clinical charges (doctor visits / lab / radiology) accrued during the stay
@@ -158,21 +159,22 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
         ) : (
         <Stack spacing={2.5} sx={{ pt: 0.5 }}>
           <Box sx={{ p: 2, borderRadius: 2, bgcolor: "action.hover" }}>
-            {bedSegments.length > 1 ? (
-              // Patient was transferred mid-stay - bill (and show) each bed at its own rate,
-              // instead of one line for the whole stay at just the current bed's rate.
+            {bedSegments.length > 1 || bedSegments.some((s) => (s.unit ?? "day") !== "day") ? (
+              // Patient was transferred mid-stay, or a bed is billed by the hour,
+              // session or visit - show each bed in its own unit at its own rate,
+              // instead of one line for the whole stay in days.
               <Stack spacing={0.75}>
                 {bedSegments.map((seg, i) => (
                   <Box key={i} sx={{ display: "flex", justifyContent: "space-between" }}>
                     <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                      {seg.label} - {seg.days} day{seg.days === 1 ? "" : "s"}{(seg.runs?.length ?? 1) > 1 ? ` at ${seg.runs!.length} rates` : ` @ ${formatINR(Number(seg.dailyCharge))}`}
+                      {seg.label} - {unitCount(seg.days, seg.unit)}{seg.unit === null || seg.days === 0 ? "" : (seg.runs?.length ?? 1) > 1 ? ` at ${seg.runs!.length} rates` : ` @ ${formatINR(Number(seg.dailyCharge))}`}
                     </Typography>
                     <Typography variant="body2" sx={{ fontWeight: 700 }}>{formatINR(Number(seg.amount))}</Typography>
                   </Box>
                 ))}
                 <Divider sx={{ my: 0.5 }} />
                 <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-                  <Typography variant="body2" sx={{ fontWeight: 700 }}>Bed charges total ({detail?.days ?? "-"} days)</Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 700 }}>Bed charges total</Typography>
                   <Typography variant="body2" sx={{ fontWeight: 700 }}>{formatINR(bedCharge)}</Typography>
                 </Box>
               </Stack>
