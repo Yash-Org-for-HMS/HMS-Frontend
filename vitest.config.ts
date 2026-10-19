@@ -16,5 +16,8 @@ export default defineConfig({
     globals: true,
     setupFiles: ["./src/test/setup.ts"],
     include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
+    // jsdom component tests that type into pickers take ~3s alone and ran past
+    // the 5s default when the whole suite runs in parallel - a timeout, not a bug.
+    testTimeout: 15_000,
   },
 });
