@@ -5,6 +5,7 @@ import type { UnbilledItem } from "@/types";
 import { formatDate } from "@/utils/format";
 import { BRAND } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
+import ErrorState from "@/components/ErrorState";
 import { orderStatusColor } from "@/utils/statusColors";
 import { Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem, Link, Alert, Tabs, Tab, Pagination } from "@mui/material";
 import { CheckCircleRounded, EditRounded, CloudUploadRounded, AddRounded, VerifiedRounded } from "@mui/icons-material";
@@ -65,7 +66,7 @@ export default function RadiologyOrdersQueue() {
     },
   });
 
-  const { data, isLoading: loading, refetch: fetchOrders } = useQuery({
+  const { data, isLoading: loading, isError, error: loadError, refetch: fetchOrders } = useQuery({
     queryKey: ["radiology-orders-queue", tabValue, page],
     queryFn: async () => {
       const res = await axiosInstance.get(`/lab/radiology-orders`, { params: { bucket: BUCKETS[tabValue], page, limit: 20 } });
@@ -298,6 +299,8 @@ export default function RadiologyOrdersQueue() {
       <Paper sx={{ p: 2, borderRadius: 3 }}>
         {loading ? (
           <ListSkeleton rows={6} />
+        ) : isError && orders.length === 0 ? (
+          <ErrorState message={getApiErrorMessage(loadError, "The radiology queue could not be loaded.")} onRetry={() => fetchOrders()} />
         ) : orders.length === 0 ? (
           tabValue === 0 && pastPendingCount > 0 ? (
             <Mascot

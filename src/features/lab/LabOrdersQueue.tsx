@@ -4,6 +4,8 @@ import type { UnbilledItem } from "@/types";
 import { formatDate } from "@/utils/format";
 import { BRAND } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
+import ErrorState from "@/components/ErrorState";
+import { useConfirm } from "@/providers/ConfirmContext";
 import { orderStatusColor } from "@/utils/statusColors";
 import { Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Alert, Tabs, Tab, Pagination } from "@mui/material";
 import { VisibilityRounded, BloodtypeRounded, AddRounded, CancelRounded, VerifiedRounded } from "@mui/icons-material";
@@ -54,7 +56,7 @@ export default function LabOrdersQueue() {
     },
   });
 
-  const { data, isLoading: loading, refetch: fetchOrders } = useQuery({
+  const { data, isLoading: loading, isError, error: loadError, refetch: fetchOrders } = useQuery({
     queryKey: ["lab-orders-queue", tabValue, page],
     queryFn: async () => {
       const res = await axiosInstance.get(`/lab/orders`, { params: { bucket: BUCKETS[tabValue], page, limit: 20 } });
@@ -103,9 +105,15 @@ export default function LabOrdersQueue() {
   const posItem = unbilledItems.find((it: UnbilledItem) => it.id === collectOrder?.labOrderId);
 
   const toast = useToast();
+  const confirm = useConfirm();
 
   const handleCancel = async (order: LabOrderRow) => {
-    if (!window.confirm(`Cancel this lab order for ${order.patient?.firstName || "this patient"}? It will no longer be billable.`)) return;
+    const ok = await confirm({
+      title: "Cancel lab order",
+      message: `Cancel this lab order for ${order.patient?.firstName || "this patient"}? It will no longer be billable.`,
+      confirmText: "Cancel order", cancelText: "Keep it", destructive: true,
+    });
+    if (!ok) return;
     try {
       await axiosInstance.post(`/lab/orders/${order.labOrderId}/cancel`);
       toast.success("Lab order cancelled");
@@ -192,6 +200,8 @@ export default function LabOrdersQueue() {
       <Paper sx={{ p: 2, borderRadius: 3 }}>
         {loading ? (
           <ListSkeleton rows={6} />
+        ) : isError && orders.length === 0 ? (
+          <ErrorState message={getApiErrorMessage(loadError, "The lab queue could not be loaded.")} onRetry={() => fetchOrders()} />
         ) : orders.length === 0 ? (
           tabValue === 0 && pastPendingCount > 0 ? (
             <Mascot

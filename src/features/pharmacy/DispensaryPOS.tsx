@@ -7,6 +7,7 @@ import type {
 } from "@/types";
 import { SEMANTIC } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
+import ErrorState from "@/components/ErrorState";
 import { useLocation } from "react-router-dom";
 import { 
   Box, Typography, Paper, Table, TableBody, TableCell, TableHead, TableRow,
@@ -59,7 +60,7 @@ export default function DispensaryPOS() {
   // searches all of it) and the stock on hand. It moves with sales and stock
   // receipts, which are announced, so while live it is re-read only as a
   // safety net; every 30s as before while not.
-  const { data: stock, isLoading: stockLoading, refetch: refetchStock } = useQuery({
+  const { data: stock, isLoading: stockLoading, error: stockError, refetch: refetchStock } = useQuery({
     queryKey: ["dispensary-pos-stock"],
     queryFn: async () => {
       const [medRes, invRes] = await Promise.all([
@@ -75,7 +76,7 @@ export default function DispensaryPOS() {
   });
 
   // The counter's work: prescriptions waiting, and today's sales.
-  const { data: work, isLoading: workLoading, refetch: refetchWork } = useQuery({
+  const { data: work, isLoading: workLoading, error: workError, refetch: refetchWork } = useQuery({
     queryKey: ["dispensary-pos-work"],
     queryFn: async () => {
       /**
@@ -392,6 +393,8 @@ export default function DispensaryPOS() {
     >
       {loading ? (
         <DashboardSkeleton />
+      ) : (stockError && !stock) || (workError && !work) ? (
+        <ErrorState message={getApiErrorMessage(stockError ?? workError, "The dispensary could not be loaded.")} onRetry={() => fetchData()} />
       ) : (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
 

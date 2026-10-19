@@ -51,6 +51,7 @@ import HeartbeatLoader from "@/components/HeartbeatLoader";
 import Mascot from "@/components/Mascot";
 import { getInitials, formatDate } from "@/utils/format";
 import { TableRowsSkeleton } from "@/components/TableRowsSkeleton";
+import ErrorState from "@/components/ErrorState";
 import IdCardModal from "@/components/reception/IdCardModal";
 import AdmitDialog from "@/components/ipd/AdmitDialog";
 import { useToast } from "@/providers/ToastContext";
@@ -112,7 +113,7 @@ export default function PatientsList({ basePath = "/reception", readOnly = false
     setPage(1);
   }, [orderBy, order]);
 
-  const { data, isLoading: loading, error } = useQuery({
+  const { data, isLoading: loading, error, refetch } = useQuery({
     queryKey: ["patients", search, page, orderBy, order],
     queryFn: async () => {
       const res = await axiosInstance.get("/reception/patients", {
@@ -230,9 +231,10 @@ export default function PatientsList({ basePath = "/reception", readOnly = false
           />
         </Box>
 
-        {error && (
-          <Alert severity="error" sx={{ mb: 3, bgcolor: "rgba(239,68,68,0.08)", color: "#fca5a5" }}>
-            {getApiErrorMessage(error, "Failed to load patients")}
+        {/* With rows on screen, a failed refresh is a note; with none, the table shows the error card. */}
+        {error && patients.length > 0 && (
+          <Alert severity="warning" sx={{ mb: 3 }}>
+            {`Couldn't refresh the patient list (${getApiErrorMessage(error, "network error")}) - showing the last one loaded.`}
           </Alert>
         )}
 
@@ -283,6 +285,12 @@ export default function PatientsList({ basePath = "/reception", readOnly = false
               <TableBody>
                 {loading && patients.length === 0 ? (
                   <TableRowsSkeleton rows={6} columns={6} />
+                ) : error && patients.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} sx={{ py: 4, borderBottom: "none" }}>
+                      <ErrorState message={getApiErrorMessage(error, "The patient list could not be loaded.")} onRetry={() => refetch()} />
+                    </TableCell>
+                  </TableRow>
                 ) : patients.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={6} sx={{ textAlign: "center", py: 6, borderBottom: "none" }}>

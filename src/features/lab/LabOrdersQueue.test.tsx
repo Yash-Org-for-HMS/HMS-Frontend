@@ -15,6 +15,7 @@ vi.mock("@/hooks/useSocket", () => ({
   useSocket: (map: Record<string, (...a: unknown[]) => void>) => { socket.handlers = map; return { connected: true }; },
 }));
 vi.mock("@/providers/HospitalAuthContext", () => ({ useHospitalAuth: () => ({ user: { role: "LAB_TECH" }, hospital: { id: "h" } }) }));
+vi.mock("@/providers/ConfirmContext", () => ({ useConfirm: () => async () => true }));
 const get = vi.fn();
 vi.mock("@/api/axios", () => ({ axiosInstance: { get: (...a: unknown[]) => get(...a), post: vi.fn() }, API_URL: "http://localhost:5000/api" }));
 
@@ -54,5 +55,18 @@ describe("LabOrdersQueue - live updates", () => {
     } finally {
       spy.mockRestore();
     }
+  });
+});
+
+describe("LabOrdersQueue - a failed load", () => {
+  it("says so with a Retry button instead of claiming there is no work", async () => {
+    get.mockImplementation((u: string) =>
+      u === "/lab/orders"
+        ? Promise.reject({ isAxiosError: true, response: { data: { message: "Server is waking up" } } })
+        : Promise.resolve({ data: { data: [], pagination: { total: 0, totalPages: 1 } } }));
+    const { findByText, findByRole, queryByText } = renderWithProviders(<LabOrdersQueue />);
+    expect(await findByRole("button", { name: /retry/i }, { timeout: 5000 })).toBeInTheDocument();
+    expect(await findByText(/Server is waking up|could not be loaded/i)).toBeInTheDocument();
+    expect(queryByText(/all caught up/i)).toBeNull();
   });
 });

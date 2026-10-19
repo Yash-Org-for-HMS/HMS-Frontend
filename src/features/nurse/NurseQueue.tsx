@@ -4,6 +4,8 @@ import WalkInOrderDialog from "@/components/lab/WalkInOrderDialog";
 import { useState, useEffect, useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import ErrorState from "@/components/ErrorState";
+import { getApiErrorMessage } from "@/utils/apiError";
 import {
   Box, Typography, Button, Paper, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, Chip,
@@ -150,10 +152,15 @@ export default function NurseQueue() {
         />
       </Box>
 
-      {error && <Alert severity="error" sx={{ mb: 3 }}>Failed to load queue</Alert>}
+      {/* Nothing loaded: the error card with Retry stands in for the queue. Rows already
+          on screen stay, with a note that the latest refresh failed. */}
+      {error && tokens.length > 0 && <Alert severity="warning" sx={{ mb: 3 }}>Couldn't refresh the queue - showing the last one loaded.</Alert>}
+      {error && tokens.length === 0 && view === "queue" && (
+        <ErrorState message={getApiErrorMessage(error, "The patient queue could not be loaded.")} onRetry={() => fetchQueue()} />
+      )}
 
       {/* ── QUEUE (table) VIEW ─────────────────────────────────────────── */}
-      {view === "queue" && (
+      {view === "queue" && !(error && tokens.length === 0) && (
         <Paper elevation={0} sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider", bgcolor: "background.paper", overflow: "hidden" }}>
           <TableContainer>
             <Table>
