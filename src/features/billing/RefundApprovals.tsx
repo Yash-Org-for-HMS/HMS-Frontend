@@ -14,6 +14,7 @@ import { getApiErrorMessage } from "@/utils/apiError";
 import { useToast } from "@/providers/ToastContext";
 import { SEMANTIC, BRAND } from "@/styles/accents";
 import RefundReceiptDialog from "@/components/billing/RefundReceiptDialog";
+import DepositRefundApprovals from "./DepositRefundApprovals";
 
 /**
  * Refunds waiting on an administrator.
@@ -240,6 +241,8 @@ export default function RefundApprovals() {
           )}
         </>
       )}
+
+      <DepositRefundApprovals />
 
       <RefundReceiptDialog refundId={receiptFor} open={!!receiptFor} onClose={() => setReceiptFor(null)} />
 

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import axios from "axios";
 import type { PrescribableMedicine, InpatientMedicationRow } from "@/types";
 import { SEMANTIC, NEUTRAL, BRAND } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
@@ -7,7 +8,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Autocomplete,
-  Stack, Typography, Box, Table, TableHead, TableBody, TableRow, TableCell,
+  Stack, Typography, Box, Alert, Table, TableHead, TableBody, TableRow, TableCell,
   TableContainer, IconButton, Divider, Tooltip, Tabs, Tab, MenuItem,
 } from "@mui/material";
 import {
@@ -57,6 +58,10 @@ export default function IpdMedicinesDialog({ open, onClose, admission, orderOnly
   const [saving, setSaving] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [view, setView] = useState<"assign" | "chart">("assign");
+  // Set when the server finds the medicine clashes with a recorded allergy: the
+  // order goes through only when confirmed with a reason.
+  const [allergyClash, setAllergyClash] = useState<{ message: string; warnings: { salt: string; allergen: string; severity: string | null; reaction: string | null }[] } | null>(null);
+  const [overrideReason, setOverrideReason] = useState("");
 
   const medsKey = ["ipd-admission-meds", admission?.admissionId];
   const { data, isFetching, refetch } = useQuery<{ medications: InpatientMedicationRow[]; total: number }>({
@@ -110,12 +115,20 @@ export default function IpdMedicinesDialog({ open, onClose, admission, orderOnly
         durationDays: form.durationDays ? Number(form.durationDays) : undefined,
         route: form.route || undefined,
         notes: form.notes || undefined,
+        allergyOverrideReason: allergyClash ? overrideReason.trim() : undefined,
       });
       toast.success("Medicine assigned");
       setForm(emptyForm);
       setSearch("");
+      setAllergyClash(null);
+      setOverrideReason("");
       afterChange();
     } catch (err: unknown) {
+      const body = axios.isAxiosError(err) ? err.response?.data : null;
+      if (body?.code === "ALLERGY_CONFLICT") {
+        setAllergyClash({ message: body.message, warnings: body.data?.warnings ?? [] });
+        return;
+      }
       toast.error(getApiErrorMessage(err, "Failed to assign medicine"));
     } finally {
       setSaving(false);
@@ -124,18 +137,18 @@ export default function IpdMedicinesDialog({ open, onClose, admission, orderOnly
 
   const remove = async (m: any) => {
     const ok = await confirm({
-      title: m.status === "REQUESTED" ? "Retract request" : "Remove medicine",
+      title: m.status === "REQUESTED" ? "Retract request" : "Stop medicine",
       message: m.status === "REQUESTED"
         ? `Retract the request for ${m.medicineName || "this medicine"}? It hasn't been dispensed yet.`
-        : `Remove ${m.medicineName || "this medicine"}? The dispensed stock will be returned.`,
-      confirmText: m.status === "REQUESTED" ? "Retract" : "Remove",
+        : `Stop ${m.medicineName || "this medicine"}? Doses already given stay on the bill; the unused stock is returned.`,
+      confirmText: m.status === "REQUESTED" ? "Retract" : "Stop",
       destructive: true,
     });
     if (!ok) return;
     setBusyId(m.ipMedOrderId);
     try {
       await axiosInstance.delete(`/ipd/admissions/${admission.admissionId}/medications/${m.ipMedOrderId}`);
-      toast.success("Medicine removed");
+      toast.success(m.status === "REQUESTED" ? "Request retracted" : "Medicine stopped");
       afterChange();
     } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to remove"));
@@ -195,7 +208,10 @@ export default function IpdMedicinesDialog({ open, onClose, admission, orderOnly
                       {m.status === "REQUESTED" && (
                         <SoftChip icon={<HourglassTopRounded sx={{ fontSize: 14 }} />} label="Awaiting pharmacy" bg="rgba(245,158,11,0.12)" color="#b45309" />
                       )}
-                      {m.status === "ACTIVE" && (
+                      {m.status === "ACTIVE" && m.stoppedAt && (
+                        <SoftChip label="Stopped" bg="rgba(100,116,139,0.15)" color={NEUTRAL.textSecondary} />
+                      )}
+                      {m.status === "ACTIVE" && !m.stoppedAt && (
                         <SoftChip icon={<CheckCircleRounded sx={{ fontSize: 14 }} />} label="Dispensed" bg="rgba(16,185,129,0.12)" color={SEMANTIC.successDark} />
                       )}
                       {m.status === "BILLED" && (
@@ -203,8 +219,8 @@ export default function IpdMedicinesDialog({ open, onClose, admission, orderOnly
                       )}
                     </TableCell>
                     <TableCell align="right">
-                      {m.status !== "BILLED" && !orderOnly && (
-                        <Tooltip title={m.status === "REQUESTED" ? "Retract request" : "Remove (returns stock)"}>
+                      {m.status !== "BILLED" && !m.stoppedAt && !orderOnly && (
+                        <Tooltip title={m.status === "REQUESTED" ? "Retract request" : "Stop / remove (returns unused stock)"}>
                           <IconButton size="small" disabled={busyId === m.ipMedOrderId} onClick={() => remove(m)} sx={{ color: SEMANTIC.danger }}>
                             <DeleteOutlineRounded fontSize="small" />
                           </IconButton>
@@ -233,7 +249,7 @@ export default function IpdMedicinesDialog({ open, onClose, admission, orderOnly
             options={catalog}
             loading={catLoading}
             value={form.medicine}
-            onChange={(_, v) => setForm({ ...form, medicine: v })}
+            onChange={(_, v) => { setForm({ ...form, medicine: v }); setAllergyClash(null); setOverrideReason(""); }}
             onInputChange={(_, v, reason) => { if (reason === "input") setSearch(v); }}
             getOptionLabel={(o) => (o ? `${o.medicineName}${o.genericName ? ` (${o.genericName})` : ""}` : "")}
             isOptionEqualToValue={(o, v) => o.medicineId === v?.medicineId}
@@ -284,6 +300,23 @@ export default function IpdMedicinesDialog({ open, onClose, admission, orderOnly
             <TextField label="Route" placeholder="e.g. Oral / IV" value={form.route} onChange={(e) => setForm({ ...form, route: e.target.value })} />
           </Box>
           <TextField label="Notes (optional)" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} fullWidth />
+          {allergyClash && (
+            <Alert severity="error">
+              <Typography variant="body2" sx={{ fontWeight: 700, mb: 0.5 }}>Allergy warning</Typography>
+              <Typography variant="body2">{allergyClash.message}</Typography>
+              {allergyClash.warnings.map((w, i) => (
+                <Typography key={i} variant="caption" sx={{ display: "block" }}>
+                  {w.salt} - recorded allergy: {w.allergen}{w.severity ? ` (${w.severity})` : ""}{w.reaction ? `, ${w.reaction}` : ""}
+                </Typography>
+              ))}
+              <TextField
+                fullWidth size="small" sx={{ mt: 1.5, bgcolor: "background.paper" }}
+                label="Reason to order anyway" required
+                placeholder="e.g. Discussed with consultant, mild rash only, monitored"
+                value={overrideReason} onChange={(e) => setOverrideReason(e.target.value)}
+              />
+            </Alert>
+          )}
           {form.medicine && (
             <Typography variant="caption" sx={{ color: "text.secondary" }}>
               {formatINR(form.medicine.sellingPrice)} × {qty || 0} = <strong>{formatINR(lineTotal)}</strong> · sent to pharmacy for confirmation, stock is drawn once they dispense it
@@ -296,9 +329,11 @@ export default function IpdMedicinesDialog({ open, onClose, admission, orderOnly
       <DialogActions sx={{ p: 2 }}>
         <Button onClick={onClose} color="inherit" disabled={saving}>Close</Button>
         {view === "assign" && (
-          <Button variant="contained" onClick={submit} disabled={saving || !canAdd}
+          <Button variant="contained" onClick={submit}
+            color={allergyClash ? "error" : "primary"}
+            disabled={saving || !canAdd || (!!allergyClash && overrideReason.trim().length < 3)}
             startIcon={saving ? <HeartbeatLoader size={22} /> : <AddRounded />}
->Assign Medicine</Button>
+>{allergyClash ? "Order anyway" : "Assign Medicine"}</Button>
         )}
       </DialogActions>
     </Dialog>

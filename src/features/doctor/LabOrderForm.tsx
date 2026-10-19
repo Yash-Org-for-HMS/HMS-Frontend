@@ -1,4 +1,6 @@
 import { BRAND } from "@/styles/accents";
+import { useAskReason } from "@/providers/ConfirmContext";
+import { withConsultReason, ReasonCancelled } from "./withConsultReason";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -33,6 +35,7 @@ const priorities = [
 export default function LabOrderForm({ consultationId, patientId, onRequireSave }: LabOrderFormProps) {
   const [saving, setSaving] = useState(false);
   const toast = useToast();
+  const askReason = useAskReason();
   const qc = useQueryClient();
 
   // Basket of picked SOC lab tests + the browse picker.
@@ -68,11 +71,12 @@ export default function LabOrderForm({ consultationId, patientId, onRequireSave 
         }
       }
 
-      await axiosInstance.post(`/doctor/lab-orders/consultations/${targetConsultationId}`, {
+      await withConsultReason(askReason, (reason) => axiosInstance.post(`/doctor/lab-orders/consultations/${targetConsultationId}`, {
         patientId,
         priorityId: selectedPriority,
-        chargeItemIds: items.map(i => i.chargeItemId)
-      });
+        chargeItemIds: items.map(i => i.chargeItemId),
+        reason,
+      }));
 
       toast.success("Lab order created successfully!");
       setItems([]);
@@ -80,6 +84,7 @@ export default function LabOrderForm({ consultationId, patientId, onRequireSave 
       // Refresh list (covers both the existing consultation and a freshly-created one)
       qc.invalidateQueries({ queryKey: ["lab-orders"] });
     } catch (err: unknown) {
+      if (err instanceof ReasonCancelled) return;
       toast.error(getApiErrorMessage(err, (err instanceof Error && err.message) || "Failed to create lab order"));
     } finally {
       setSaving(false);

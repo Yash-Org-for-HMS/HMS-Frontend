@@ -120,11 +120,9 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
   // Hospital identity for the receipt header
   const [hospitalProfile, setHospitalProfile] = useState<HospitalBillingProfile | null>(null);
 
-  // Discount & Tax
-  const [defaultTaxPct, setDefaultTaxPct] = useState(0);
+  // Discount (GST follows each line's own rate - not set here)
   const [discountInput, setDiscountInput] = useState("");
   const [discountReasonInput, setDiscountReasonInput] = useState("");
-  const [taxInput, setTaxInput] = useState("");
   const [adjusting, setAdjusting] = useState(false);
 
   // Void / cancel invoice
@@ -164,10 +162,8 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
       setLoadError(null);
       // 1. Fetch lookups
       const lookupsRes = await axiosInstance.get("/reception/billing/lookups");
-      const hospitalTaxPct = Number(lookupsRes.data?.data?.taxPercentage || 0);
       if (lookupsRes.data.success) {
         setPaymentMethods(lookupsRes.data.data.methods);
-        setDefaultTaxPct(hospitalTaxPct);
         setHospitalProfile(lookupsRes.data.data.hospital || null);
       }
 
@@ -208,17 +204,9 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
           setPaymentAmount(remaining.toString());
         }
 
-        // Prefill the discount/tax fields: existing discount, and the tax rate
-        // already on the invoice if any. Consultations are GST-exempt, so a fresh
-        // consult invoice defaults to 0% (the field stays editable for the rare
-        // taxable case) rather than the hospital's flat rate.
-        const g = Number(currentInvoice.grossAmount || 0);
+        // Prefill the discount field with the invoice's existing discount.
         const d = Number(currentInvoice.discountAmount || 0);
-        const t = Number(currentInvoice.taxAmount || 0);
         setDiscountInput(d > 0 ? String(d) : "");
-        const taxable = g - d;
-        const currentRate = taxable > 0 && t > 0 ? Math.round((t / taxable) * 10000) / 100 : 0;
-        setTaxInput(currentRate ? String(currentRate) : "");
       }
 
     } catch (err: unknown) {
@@ -316,11 +304,10 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
       setAdjusting(true);
       const res = await axiosInstance.put(`/reception/billing/invoices/${invoice.invoiceId}/adjust`, {
         discountAmount: Number(discountInput || 0),
-        taxPercent: Number(taxInput || 0),
         discountReason: discountReasonInput.trim() || undefined,
       });
       if (res.data.success) {
-        toast.success("Discount & tax applied");
+        toast.success("Discount applied");
         await fetchBillingData();
       }
     } catch (err: unknown) {
@@ -604,13 +591,13 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
 
                   <ActionSection
                     icon={<LocalOfferRounded fontSize="small" />}
-                    label="Discount & tax"
+                    label="Discount"
                     accent={SEMANTIC.success}
                     open={openSection === "discount"}
                     onToggle={() => toggleSection("discount")}
                   >
                     <Grid container spacing={2}>
-                      <Grid size={{ xs: 12, lg: 6 }}>
+                      <Grid size={{ xs: 12 }}>
                         <TextField
                           fullWidth size="small"
                           label="Discount (INR)"
@@ -618,17 +605,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
                           value={discountInput}
                           onChange={(e) => setDiscountInput(e.target.value)}
                           inputProps={{ min: 0 }}
-                        />
-                      </Grid>
-                      <Grid size={{ xs: 12, lg: 6 }}>
-                        <TextField
-                          fullWidth size="small"
-                          label="Tax (%)"
-                          type="number"
-                          value={taxInput}
-                          onChange={(e) => setTaxInput(e.target.value)}
-                          inputProps={{ min: 0, max: 100 }}
-                          helperText={defaultTaxPct ? `Hospital default: ${defaultTaxPct}%` : undefined}
+                          helperText="GST is charged on each item at its own rate, after the discount"
                         />
                       </Grid>
                       <Grid size={{ xs: 12 }}>
@@ -647,7 +624,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
                       disabled={adjusting}
                       sx={{ mt: 2, color: SEMANTIC.success, borderColor: alpha(SEMANTIC.success, 0.5), fontWeight: 600 }}
                     >
-                      {adjusting ? "Applying..." : "Apply discount & tax"}
+                      {adjusting ? "Applying..." : "Apply discount"}
                     </Button>
                   </ActionSection>
 

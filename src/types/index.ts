@@ -494,6 +494,9 @@ export interface InpatientMedicationRow {
   totalPrice: Money;
   /** REQUESTED -> ACTIVE -> BILLED; CANCELLED before BILLED. */
   status: string;
+  /** Set when a dispensed medicine was stopped after doses were given: it stays
+   *  ACTIVE (so the given doses are billed) with quantity cut to what was used. */
+  stoppedAt?: string | null;
   notes?: string | null;
   orderedAt?: string | null;
   orderedBy?: string | null;

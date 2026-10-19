@@ -45,12 +45,14 @@ export default function PointOfCarePOS({ open, onClose, onSuccess, onPaid, patie
   const [receiptData, setReceiptData] = useState<any>(null);
 
   // Financial Math - GST comes from the item's rate-card taxPercent (0 = exempt), or
-  // a precomputed taxAmount for a mixed-rate pharmacy order (per-medicine). Computed
-  // on gross; the server re-derives it authoritatively at collection.
+  // a precomputed taxAmount for a mixed-rate pharmacy order (per-medicine). Charged
+  // after discount, in proportion; the server re-derives it authoritatively at collection.
   const grossAmount = Number(item?.amount || 0);
   const discountAmount = Number(discount || 0);
+  const discountTooHigh = discountAmount < 0 || discountAmount > grossAmount;
   const taxableAmount = grossAmount - discountAmount;
-  const taxAmount = item?.taxAmount != null ? Number(item.taxAmount) : grossAmount * (Number(item?.taxPercent || 0) / 100);
+  const grossTax = item?.taxAmount != null ? Number(item.taxAmount) : grossAmount * (Number(item?.taxPercent || 0) / 100);
+  const taxAmount = grossAmount > 0 && !discountTooHigh ? grossTax * (taxableAmount / grossAmount) : grossTax;
   const netAmount = taxableAmount + taxAmount;
 
   const handleProcessPayment = async () => {
@@ -134,6 +136,8 @@ export default function PointOfCarePOS({ open, onClose, onSuccess, onPaid, patie
             fullWidth
             value={discount}
             onChange={(e) => setDiscount(Number(e.target.value))}
+            error={discountTooHigh}
+            helperText={discountTooHigh ? "Discount cannot exceed the bill total" : undefined}
           />
         </Box>
 
@@ -176,7 +180,7 @@ export default function PointOfCarePOS({ open, onClose, onSuccess, onPaid, patie
         <Button 
           variant="contained" 
           onClick={handleProcessPayment} 
-          disabled={loading || netAmount < 0}
+          disabled={loading || netAmount < 0 || discountTooHigh}
           startIcon={loading ? <HeartbeatLoader size={22} /> : <ReceiptLongRounded />}
         >
           Confirm & Collect ₹{netAmount.toFixed(2)}

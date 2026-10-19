@@ -103,6 +103,7 @@ export default function RadiologyOrdersQueue() {
     setStatus(order?.status || "PENDING");
     setNotes(order?.radiologistNotes || "");
     setReportUrl(order?.reportUrl || "");
+    setAmendReason("");
   };
 
   // The URL is what decides whether the dialog is open, so a refresh reopens
@@ -131,6 +132,10 @@ export default function RadiologyOrdersQueue() {
   const [status, setStatus] = useState("PENDING");
   const [notes, setNotes] = useState("");
   const [reportUrl, setReportUrl] = useState("");
+  // A completed report changed (findings or file) is an amendment: needs a reason.
+  const [amendReason, setAmendReason] = useState("");
+  const wasCompleted = (editOrder?.status || "").toUpperCase() === "COMPLETED";
+  const amending = wasCompleted && (notes !== (editOrder?.radiologistNotes || "") || reportUrl !== (editOrder?.reportUrl || ""));
   const [saving, setSaving] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -177,6 +182,14 @@ export default function RadiologyOrdersQueue() {
       setUploading(true);
       const formData = new FormData();
       formData.append("file", file);
+      // Replacing the file of a completed report is an amendment.
+      if (wasCompleted) {
+        if (amendReason.trim().length < 3) {
+          toast.error("Enter the reason for amending this completed report before replacing its file.");
+          return;
+        }
+        formData.append("amendmentReason", amendReason.trim());
+      }
 
       const res = await axiosInstance.post(`/lab/radiology-orders/${editOrder.radiologyOrderId}/upload`, formData, {
         headers: { "Content-Type": "multipart/form-data" }
@@ -224,11 +237,13 @@ export default function RadiologyOrdersQueue() {
         status,
         radiologistNotes: notes,
         reportUrl,
+        ...(amending ? { amendmentReason: amendReason.trim() } : {}),
       });
+      if (amending) toast.success("Report amended. Any verification was cleared and the doctor has been notified.");
       handleClose();
       fetchOrders();
     } catch (err) {
-      console.error("Failed to update radiology order", err);
+      toast.error(getApiErrorMessage(err, "Failed to save the report"));
     } finally {
       setSaving(false);
     }
@@ -472,6 +487,16 @@ export default function RadiologyOrdersQueue() {
               rows={4}
               disabled={editOrder?.billingLockActive}
             />
+            {wasCompleted && (
+              <TextField
+                sx={{ mt: 2 }} fullWidth size="small" required={amending}
+                label="Reason for amending this completed report"
+                placeholder="e.g. Wrong side reported, addendum after comparison"
+                helperText="Needed to change the findings or replace the file. The earlier version is kept in the audit trail; any verification is cleared and the doctor is told."
+                value={amendReason} onChange={(e) => setAmendReason(e.target.value)}
+                disabled={editOrder?.billingLockActive}
+              />
+            )}
             </Box>
           </Box>
         </DialogContent>
@@ -489,7 +514,7 @@ export default function RadiologyOrdersQueue() {
             <Button color="success" variant="outlined" onClick={() => setShowPOS(true)}>Collect Payment</Button>
           )}
           <Button onClick={handleClose} color="inherit">Cancel</Button>
-          <Button onClick={handleSave} variant="contained" disabled={saving || editOrder?.billingLockActive}>
+          <Button onClick={handleSave} variant="contained" disabled={saving || editOrder?.billingLockActive || (amending && amendReason.trim().length < 3)}>
             {saving ? <HeartbeatLoader size={22} /> : "Save Changes"}
           </Button>
         </DialogActions>

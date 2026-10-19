@@ -88,6 +88,8 @@ export default function UpdateLabOrder() {
   const [showPOS, setShowPOS] = useState(false);
   const [results, setResults] = useState<ResultDraft>({});
   const [message, setMessage] = useState<{type: "success" | "error", text: string} | null>(null);
+  // Changing a result already entered is an amendment: it needs a reason.
+  const [amendReason, setAmendReason] = useState("");
 
   const { data: order, isLoading: loading, isError, error, refetch } = useQuery({
     queryKey: ["lab-order", id],
@@ -125,6 +127,13 @@ export default function UpdateLabOrder() {
     setResults(initialResults);
   }, [order]);
 
+  // Results already entered that the draft changes (amendments).
+  const amendedCount = (order?.reports ?? []).filter((r: LabReportRow) => {
+    const saved = (r.resultValue ?? "").trim();
+    if (!saved || saved.toUpperCase() === "PENDING") return false;
+    return saved !== (results[r.labReportId]?.value ?? "").trim();
+  }).length;
+
   const handleSave = async () => {
     try {
       setSaving(true);
@@ -138,8 +147,9 @@ export default function UpdateLabOrder() {
         ...(typeof data.critical === "boolean" ? { isCritical: data.critical } : {}),
       }));
 
-      await axiosInstance.put(`/lab/orders/${id}/results`, { results: payload });
-      setMessage({ type: "success", text: "Lab results updated successfully!" });
+      await axiosInstance.put(`/lab/orders/${id}/results`, { results: payload, ...(amendedCount > 0 ? { amendmentReason: amendReason.trim() } : {}) });
+      setMessage({ type: "success", text: amendedCount > 0 ? "Results amended. Any verification was cleared and the doctor has been notified." : "Lab results updated successfully!" });
+      setAmendReason("");
       setTimeout(() => refetch(), 1000);
     } catch (err) {
       setMessage({ type: "error", text: getApiErrorMessage(err, "Failed to update results.") });
@@ -412,11 +422,20 @@ export default function UpdateLabOrder() {
               ? <Box component="span" sx={{ color: SEMANTIC.danger, fontWeight: 700 }}>Critical value(s) present - the doctor is notified on save.</Box>
               : "Results are visible to the ordering doctor as soon as they're saved."}
           </Typography>
+          {amendedCount > 0 && (
+            <TextField
+              size="small" required sx={{ flex: 1, minWidth: 260 }}
+              label={`Reason for amending ${amendedCount} result${amendedCount === 1 ? "" : "s"}`}
+              placeholder="e.g. Transcription error, re-run on fresh sample"
+              helperText="The old value is kept in the audit trail; any verification is cleared and the doctor is told."
+              value={amendReason} onChange={(e) => setAmendReason(e.target.value)}
+            />
+          )}
           <Button
             variant="contained"
             startIcon={saving ? <HeartbeatLoader size={22} /> : <SaveRounded />}
             onClick={handleSave}
-            disabled={saving || !canEdit}
+            disabled={saving || !canEdit || (amendedCount > 0 && amendReason.trim().length < 3)}
             sx={{ bgcolor: LAB_DARK, "&:hover": { bgcolor: LAB }, px: 3 }}
           >
             Save Results

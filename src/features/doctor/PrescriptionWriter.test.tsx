@@ -57,6 +57,11 @@ vi.mock("@/providers/HospitalAuthContext", () => ({
   useHospitalAuth: () => ({ hospital: { hospitalName: "Test" }, user: { name: "Dr Test" }, branch: null }),
 }));
 
+vi.mock("@/providers/ConfirmContext", () => ({
+  useConfirm: () => async () => true,
+  useAskReason: () => async () => null,
+}));
+
 import PrescriptionWriter from "./PrescriptionWriter";
 
 const NO_MATCH = /Nothing in the medicine catalogue matches/i;

@@ -1,4 +1,6 @@
 import { BRAND } from "@/styles/accents";
+import { useAskReason } from "@/providers/ConfirmContext";
+import { withConsultReason, ReasonCancelled } from "./withConsultReason";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -37,6 +39,7 @@ const priorities = [
 export default function RadiologyOrderForm({ consultationId, patientId, onRequireSave }: RadiologyOrderFormProps) {
   const [saving, setSaving] = useState(false);
   const toast = useToast();
+  const askReason = useAskReason();
   const qc = useQueryClient();
 
   // Form state - the test is chosen from the SOC radiology catalogue via a picker,
@@ -94,7 +97,7 @@ export default function RadiologyOrderForm({ consultationId, patientId, onRequir
       }
 
       // Send each SOC test's chargeItemId (price master) + its name for display.
-      await axiosInstance.post(`/doctor/radiology-orders/consultations/${targetConsultationId}`, {
+      await withConsultReason(askReason, (reason) => axiosInstance.post(`/doctor/radiology-orders/consultations/${targetConsultationId}`, {
         patientId,
         priorityId: selectedPriority,
         scans: effectiveScans.map((s) => ({
@@ -102,7 +105,8 @@ export default function RadiologyOrderForm({ consultationId, patientId, onRequir
           scanType: s.scanType,
           radiologistNotes: s.radiologistNotes,
         })),
-      });
+        reason,
+      }));
 
       toast.success(`${effectiveScans.length} radiology order${effectiveScans.length === 1 ? "" : "s"} created successfully!`);
       setSelectedTest(null);
@@ -112,6 +116,7 @@ export default function RadiologyOrderForm({ consultationId, patientId, onRequir
       // Refresh list (covers both the existing consultation and a freshly-created one)
       qc.invalidateQueries({ queryKey: ["radiology-orders"] });
     } catch (err: unknown) {
+      if (err instanceof ReasonCancelled) return;
       toast.error(getApiErrorMessage(err, (err instanceof Error && err.message) || "Failed to create radiology order"));
     } finally {
       setSaving(false);

@@ -12,7 +12,8 @@ import {
 import { MedicalServicesRounded, AddRounded, DeleteOutlineRounded, ReceiptLongRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import { useToast } from "@/providers/ToastContext";
-import { useConfirm } from "@/providers/ConfirmContext";
+import { useConfirm, useAskReason } from "@/providers/ConfirmContext";
+import axios from "axios";
 import HeartbeatLoader from "../HeartbeatLoader";
 import SoftChip from "../SoftChip";
 
@@ -25,6 +26,7 @@ interface Props {
 export default function IpdDoctorVisitsDialog({ open, onClose, admission }: Props) {
   const toast = useToast();
   const confirm = useConfirm();
+  const askReason = useAskReason();
   const qc = useQueryClient();
   const [doctor, setDoctor] = useState<any>(null);
   const [visitDate, setVisitDate] = useState(dayjs().format("YYYY-MM-DDTHH:mm"));
@@ -56,11 +58,23 @@ export default function IpdDoctorVisitsDialog({ open, onClose, admission }: Prop
     if (!doctor) return;
     setSaving(true);
     try {
-      await axiosInstance.post(`/ipd/admissions/${admission.admissionId}/doctor-visits`, {
+      const post = (repeatReason?: string) => axiosInstance.post(`/ipd/admissions/${admission.admissionId}/doctor-visits`, {
         doctorId: doctor.doctorId,
         visitDate: visitDate ? new Date(visitDate).toISOString() : undefined,
         notes: notes || undefined,
+        repeatReason,
       });
+      try {
+        await post();
+      } catch (err) {
+        // Same doctor already logged within the hour: each visit bills, so a
+        // genuine second visit needs a reason; otherwise nothing is added.
+        const body = axios.isAxiosError(err) ? err.response?.data : null;
+        if (body?.code !== "DUPLICATE_VISIT") throw err;
+        const reason = await askReason({ title: "Already logged?", message: body.message, label: "Why is this a separate visit?", confirmText: "Log visit" });
+        if (!reason) return;
+        await post(reason);
+      }
       toast.success("Visit logged");
       setNotes("");
       setVisitDate(dayjs().format("YYYY-MM-DDTHH:mm"));

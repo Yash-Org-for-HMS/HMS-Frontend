@@ -162,6 +162,8 @@ export default function VitalsModal({ open, onClose, appointmentId, patientId, p
     setForm(prev => ({ ...prev, [name]: value }));
   };
 
+  const reading = (x: unknown) => (x === "" || x == null || Number.isNaN(Number(x)) ? null : Number(x));
+
   const handleSubmit = async () => {
     setSaving(true);
     try {
@@ -169,14 +171,15 @@ export default function VitalsModal({ open, onClose, appointmentId, patientId, p
         appointmentId,
         patientId,
         ...form,
-        bpSystolic: Number(form.bpSystolic) || 0,
-        bpDiastolic: Number(form.bpDiastolic) || 0,
-        pulseRate: Number(form.pulseRate) || 0,
-        temperatureC: Number(form.temperatureC) || 0,
-        oxygenSaturation: Number(form.oxygenSaturation) || 0,
-        heightCm: Number(form.heightCm) || 0,
-        weightKg: Number(form.weightKg) || 0,
-        bloodSugarLevel: Number(form.bloodSugarLevel) || 0,
+        // A blank field is "not taken" (null), never 0 - 0 reads as a critical value.
+        bpSystolic: reading(form.bpSystolic),
+        bpDiastolic: reading(form.bpDiastolic),
+        pulseRate: reading(form.pulseRate),
+        temperatureC: reading(form.temperatureC),
+        oxygenSaturation: reading(form.oxygenSaturation),
+        heightCm: reading(form.heightCm),
+        weightKg: reading(form.weightKg),
+        bloodSugarLevel: reading(form.bloodSugarLevel),
         painScale: Number(form.painScale) || 0,
       });
       setSuccess(true);

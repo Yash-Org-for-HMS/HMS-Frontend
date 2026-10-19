@@ -41,7 +41,8 @@ export default function DepositDialog({ open, mode, admission, onClose, onDone }
     enabled: open && !isRefund,
   });
 
-  const canSubmit = Number(amount) > 0 && (isRefund ? Number(amount) <= held + 0.005 : true);
+  // A refund is a request an admin approves, and it needs a reason.
+  const canSubmit = Number(amount) > 0 && (isRefund ? Number(amount) <= held + 0.005 && reason.trim().length >= 3 : true);
 
   const submit = async () => {
     if (!canSubmit) return;
@@ -53,7 +54,7 @@ export default function DepositDialog({ open, mode, admission, onClose, onDone }
         ...(isRefund ? {} : { paymentMethodId: methodId || undefined }),
         reason: reason || undefined,
       });
-      toast.success(isRefund ? "Deposit refunded" : "Deposit collected");
+      toast.success(isRefund ? "Refund request sent for admin approval" : "Deposit collected");
       onDone();
     } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed"));
@@ -66,7 +67,7 @@ export default function DepositDialog({ open, mode, admission, onClose, onDone }
     <Dialog open={open} onClose={saving ? undefined : onClose} maxWidth="xs" fullWidth>
       <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
         {isRefund ? <UndoRounded sx={{ color: "#8b5cf6" }} /> : <SavingsRounded sx={{ color: BRAND.action }} />}
-        {isRefund ? "Refund Deposit" : "Collect Deposit"}
+        {isRefund ? "Request Deposit Refund" : "Collect Deposit"}
       </DialogTitle>
       <DialogContent dividers>
         <Stack spacing={2.5} sx={{ pt: 0.5 }}>
@@ -75,7 +76,7 @@ export default function DepositDialog({ open, mode, admission, onClose, onDone }
             <Typography variant="body2" sx={{ fontWeight: 700 }}>Held: {formatINR(held)}</Typography>
           </Box>
           <TextField fullWidth required type="number" label={`Amount (₹)`} value={amount} onChange={(e) => setAmount(e.target.value)}
-            helperText={isRefund ? `Max refundable: ${formatINR(held)}` : undefined}
+            helperText={isRefund ? `Max refundable: ${formatINR(held)}. An admin approves before the money is paid out.` : undefined}
             error={isRefund && Number(amount) > held + 0.005}
             InputProps={isRefund && held > 0 ? {
               endAdornment: (
@@ -93,7 +94,7 @@ export default function DepositDialog({ open, mode, admission, onClose, onDone }
               {(lookups?.methods || []).map((m) => <MenuItem key={m.paymentMethodId} value={m.paymentMethodId}>{m.methodName}</MenuItem>)}
             </TextField>
           )}
-          <TextField fullWidth label="Note (optional)" value={reason} onChange={(e) => setReason(e.target.value)} multiline rows={2} />
+          <TextField fullWidth required={isRefund} label={isRefund ? "Reason for refund" : "Note (optional)"} value={reason} onChange={(e) => setReason(e.target.value)} multiline rows={2} />
         </Stack>
       </DialogContent>
       <DialogActions sx={{ p: 2 }}>
@@ -101,7 +102,7 @@ export default function DepositDialog({ open, mode, admission, onClose, onDone }
         <Button variant="contained" onClick={submit} disabled={saving || !canSubmit}
           startIcon={saving ? <HeartbeatLoader size={22} /> : (isRefund ? <UndoRounded /> : <SavingsRounded />)}
           sx={{ bgcolor: isRefund ? "#8b5cf6" : BRAND.action, "&:hover": { bgcolor: isRefund ? BRAND.action : BRAND.actionDark } }}>
-          {isRefund ? "Refund" : "Collect"}
+          {isRefund ? "Request refund" : "Collect"}
         </Button>
       </DialogActions>
     </Dialog>

@@ -37,13 +37,17 @@ export default function MarChart({ admissionId, readOnly = false }: { admissionI
   // is what stops the nurse recording the same event again in the fluid chart.
   const [askVolumeFor, setAskVolumeFor] = useState<any>(null);
   const [volume, setVolume] = useState("");
+  // Undoing a dose already GIVEN is a correction of the record: it needs a reason.
+  const [correcting, setCorrecting] = useState<any>(null);
+  const [correctionReason, setCorrectionReason] = useState("");
 
-  const setStatus = async (adminId: string, status: string, infusedVolumeMl?: string) => {
+  const setStatus = async (adminId: string, status: string, infusedVolumeMl?: string, reason?: string) => {
     setBusy(adminId);
     try {
       await axiosInstance.post(`/ipd/mar/${adminId}`, {
         status,
         ...(infusedVolumeMl ? { infusedVolumeMl } : {}),
+        ...(reason ? { correctionReason: reason } : {}),
       });
       await refetch();
     } catch (err: unknown) {
@@ -92,7 +96,7 @@ export default function MarChart({ admissionId, readOnly = false }: { admissionI
                           <Tooltip title="Held"><Button size="small" variant="outlined" disabled={busy === d.ipMedAdminId} onClick={() => setStatus(d.ipMedAdminId, "HELD")} sx={{ minWidth: 0, borderColor: "divider", color: "text.secondary" }}><PauseRounded fontSize="small" /></Button></Tooltip>
                         </>
                       ) : (
-                        <Tooltip title="Undo"><Button size="small" disabled={busy === d.ipMedAdminId} onClick={() => setStatus(d.ipMedAdminId, "PENDING")} startIcon={<UndoRounded />} sx={{ minWidth: 0, color: "text.secondary" }}>Undo</Button></Tooltip>
+                        <Tooltip title="Undo"><Button size="small" disabled={busy === d.ipMedAdminId} onClick={() => (d.status === "GIVEN" ? (setCorrectionReason(""), setCorrecting(d)) : setStatus(d.ipMedAdminId, "PENDING"))} startIcon={<UndoRounded />} sx={{ minWidth: 0, color: "text.secondary" }}>Undo</Button></Tooltip>
                       )}
                     </Box>}
                   </Box>
@@ -131,6 +135,37 @@ export default function MarChart({ admissionId, readOnly = false }: { admissionI
             }}
           >
             Record as given
+          </Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog open={!!correcting} onClose={() => setCorrecting(null)} maxWidth="xs" fullWidth>
+        <DialogTitle component="div">
+          <Typography variant="h6" sx={{ fontWeight: 700 }}>Correct a dose recorded as given</Typography>
+          <Typography variant="caption" sx={{ color: "text.secondary" }}>
+            Due {correcting ? dayjs(correcting.scheduledAt).format("DD MMM, HH:mm") : ""}
+            {correcting?.administeredAt ? ` · given at ${dayjs(correcting.administeredAt).format("HH:mm")}` : ""}
+          </Typography>
+        </DialogTitle>
+        <DialogContent dividers>
+          <TextField
+            autoFocus size="small" fullWidth required label="Reason for the correction" value={correctionReason}
+            onChange={(e) => setCorrectionReason(e.target.value)}
+            placeholder="e.g. Charted against the wrong patient"
+            helperText="The original entry is kept in the record with this reason."
+          />
+        </DialogContent>
+        <DialogActions sx={{ px: 3, py: 2 }}>
+          <Button onClick={() => setCorrecting(null)} sx={{ textTransform: "none" }}>Cancel</Button>
+          <Button
+            variant="contained" color="warning" sx={{ textTransform: "none" }}
+            disabled={correctionReason.trim().length < 3}
+            onClick={() => {
+              const dose = correcting;
+              setCorrecting(null);
+              setStatus(dose.ipMedAdminId, "PENDING", undefined, correctionReason.trim());
+            }}
+          >
+            Undo with reason
           </Button>
         </DialogActions>
       </Dialog>

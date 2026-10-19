@@ -126,12 +126,14 @@ export default function PatientsList({ basePath = "/reception", readOnly = false
   const patients = data?.data || [];
   const meta = data?.meta || { total: 0, page: 1, limit: 20, totalPages: 1 };
 
+  const [deleteReason, setDeleteReason] = useState("");
   const deleteMutation = useMutation({
     mutationFn: async (patientId: string) => {
-      await axiosInstance.delete(`/reception/patients/${patientId}`);
+      await axiosInstance.delete(`/reception/patients/${patientId}`, { data: { reason: deleteReason.trim() } });
     },
     onSuccess: () => {
       setDeleteDialog({ open: false, patient: null });
+      setDeleteReason("");
       queryClient.invalidateQueries({ queryKey: ["patients"] });
     },
     onError: (err: unknown) => {
@@ -460,7 +462,7 @@ export default function PatientsList({ basePath = "/reception", readOnly = false
       {/* Delete Confirm Dialog */}
       <Dialog
         open={deleteDialog.open}
-        onClose={() => setDeleteDialog({ open: false, patient: null })}
+        onClose={() => { setDeleteDialog({ open: false, patient: null }); setDeleteReason(""); }}
         maxWidth="xs"
         fullWidth
         PaperProps={{
@@ -480,12 +482,20 @@ export default function PatientsList({ basePath = "/reception", readOnly = false
             </Box>{" "}
             ({deleteDialog.patient?.uhidNumber}) from the system.
           </Typography>
+          <TextField
+            fullWidth size="small" sx={{ mt: 2 }}
+            label="Reason for deleting"
+            placeholder="e.g. Duplicate registration"
+            value={deleteReason}
+            onChange={(e) => setDeleteReason(e.target.value)}
+            required
+          />
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 3, gap: 1.5 }}>
           <Button fullWidth variant="outlined" onClick={() => setDeleteDialog({ open: false, patient: null })} sx={{ color: "text.secondary", borderColor: "divider", textTransform: "none" }}>
             Cancel
           </Button>
-          <Button fullWidth variant="contained" onClick={handleDelete} disabled={deleteMutation.isPending} sx={{ bgcolor: SEMANTIC.danger, "&:hover": { bgcolor: SEMANTIC.dangerDark }, textTransform: "none", fontWeight: 600 }}>
+          <Button fullWidth variant="contained" onClick={handleDelete} disabled={deleteMutation.isPending || deleteReason.trim().length < 3}sx={{ bgcolor: SEMANTIC.danger, "&:hover": { bgcolor: SEMANTIC.dangerDark }, textTransform: "none", fontWeight: 600 }}>
             {deleteMutation.isPending ? <HeartbeatLoader size={22} /> : "Delete"}
           </Button>
         </DialogActions>

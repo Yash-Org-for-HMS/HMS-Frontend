@@ -121,10 +121,13 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
   const grossAmount = selectedItemsList.reduce((sum, item) => sum + item.amount, 0);
   const discountAmount = Number(discount || 0);
   const taxableAmount = grossAmount - discountAmount;
+  const discountTooHigh = discountAmount < 0 || discountAmount > grossAmount;
   // Per-line GST from the rate card (server is authoritative; this only mirrors it
-  // for the preview). Tax is on each line's gross; a pharmacy order carries a
-  // precomputed taxAmount (per-medicine, mixed rates). The discount reduces net.
-  const taxAmount = selectedItemsList.reduce((sum, item) => sum + (item.taxAmount != null ? Number(item.taxAmount) : item.amount * (Number(item.taxPercent || 0) / 100)), 0);
+  // for the preview). A pharmacy order carries a precomputed taxAmount (per-medicine,
+  // mixed rates). GST is charged after discount: the discount is spread over the
+  // lines by value, so the tax shrinks in the same proportion.
+  const grossTax = selectedItemsList.reduce((sum, item) => sum + (item.taxAmount != null ? Number(item.taxAmount) : item.amount * (Number(item.taxPercent || 0) / 100)), 0);
+  const taxAmount = grossAmount > 0 && !discountTooHigh ? grossTax * (taxableAmount / grossAmount) : grossTax;
   const netAmount = taxableAmount + taxAmount;
   // Amount the payment dialog collects against. Once the invoice is created the
   // selected items are refetched away (no longer "unbilled"), so the derived
@@ -289,6 +292,8 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
                 <TextField 
                   size="small" type="number" 
                   value={discount} onChange={e => setDiscount(e.target.value === "" ? "" : Number(e.target.value))}
+                  error={discountTooHigh}
+                  helperText={discountTooHigh ? "Above bill total" : undefined}
                   sx={{ width: 100 }}
                   inputProps={{ style: { textAlign: 'right' } }}
                 />
@@ -311,7 +316,7 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
                 fullWidth
                 size="large"
                 startIcon={<ReceiptLongRounded />}
-                disabled={selectedItemIds.size === 0 || isGenerating}
+                disabled={selectedItemIds.size === 0 || isGenerating || discountTooHigh}
                 onClick={handleGenerateInvoice}
                 sx={{ py: 1.5, borderRadius: 2, fontWeight: 700 }}
               >

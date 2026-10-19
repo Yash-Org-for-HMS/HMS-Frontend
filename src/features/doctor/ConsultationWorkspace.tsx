@@ -1,4 +1,6 @@
 import { SEMANTIC, BRAND } from "@/styles/accents";
+import { useAskReason } from "@/providers/ConfirmContext";
+import { withConsultReason, ReasonCancelled } from "./withConsultReason";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { calculateAge } from "@/utils/format";
 import { useState, useEffect, useRef } from "react";
@@ -55,6 +57,7 @@ export default function ConsultationWorkspace() {
   const [completing, setCompleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const toast = useToast();
+  const askReason = useAskReason();
   const [context, setContext] = useState<any>(null);
   const [history, setHistory] = useState<any[]>([]);
   const [historyError, setHistoryError] = useState<string | null>(null);
@@ -172,7 +175,11 @@ export default function ConsultationWorkspace() {
   const handleSave = async (isAutoSave = false) => {
     try {
       if (!isAutoSave) setSaving(true);
-      const res = await axiosInstance.post(`/doctor/consultation/appointments/${appointmentId}`, form);
+      // Auto-save never prompts. A manual save of a completed visit's changed
+      // notes is an amendment: the server asks for a reason, and we ask the doctor.
+      const res = isAutoSave
+        ? await axiosInstance.post(`/doctor/consultation/appointments/${appointmentId}`, form)
+        : await withConsultReason(askReason, (reason) => axiosInstance.post(`/doctor/consultation/appointments/${appointmentId}`, { ...form, reason }));
 
       // Update context if consultationId was generated
       if (res.data.data?.consultationId && !context?.consultation?.consultationId) {
@@ -192,7 +199,7 @@ export default function ConsultationWorkspace() {
       // (existing consultations may not echo the id back).
       return res.data.data?.consultationId ?? true;
     } catch (err: unknown) {
-      if (!isAutoSave) toast.error(getApiErrorMessage(err, "Failed to save consultation"));
+      if (!isAutoSave && !(err instanceof ReasonCancelled)) toast.error(getApiErrorMessage(err, "Failed to save consultation"));
       return null;
     } finally {
       if (!isAutoSave) setSaving(false);
@@ -213,15 +220,15 @@ export default function ConsultationWorkspace() {
   const handleComplete = async () => {
     try {
       setCompleting(true);
-      // Auto-save first
-      await axiosInstance.post(`/doctor/consultation/appointments/${appointmentId}`, form);
+      // Auto-save first (a reason is asked for if this amends a completed visit)
+      await withConsultReason(askReason, (reason) => axiosInstance.post(`/doctor/consultation/appointments/${appointmentId}`, { ...form, reason }));
       
       // Then mark complete
       await axiosInstance.post(`/doctor/consultation/appointments/${appointmentId}/complete`);
       
       navigate("/doctor/queue");
     } catch (err: unknown) {
-      toast.error(getApiErrorMessage(err, "Failed to complete consultation"));
+      if (!(err instanceof ReasonCancelled)) toast.error(getApiErrorMessage(err, "Failed to complete consultation"));
       setCompleting(false);
     }
   };
@@ -331,27 +338,27 @@ export default function ConsultationWorkspace() {
                 <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2, mb: 3 }}>
                   <Box>
                     <Typography variant="caption" sx={{ color: "text.secondary" }}>BP</Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 600 }}>{v.bpSystolic}/{v.bpDiastolic} mmHg</Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>{v.bpSystolic != null && v.bpDiastolic != null ? `${v.bpSystolic}/${v.bpDiastolic} mmHg` : "-"}</Typography>
                   </Box>
                   <Box>
                     <Typography variant="caption" sx={{ color: "text.secondary" }}>Pulse</Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 600 }}>{v.pulseRate} bpm</Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>{v.pulseRate != null ? `${v.pulseRate} bpm` : "-"}</Typography>
                   </Box>
                   <Box>
                     <Typography variant="caption" sx={{ color: "text.secondary" }}>Temp</Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 600 }}>{v.temperatureC} °C</Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>{v.temperatureC != null ? `${v.temperatureC} °C` : "-"}</Typography>
                   </Box>
                   <Box>
                     <Typography variant="caption" sx={{ color: "text.secondary" }}>SpO2</Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 600 }}>{v.oxygenSaturation}%</Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>{v.oxygenSaturation != null ? `${v.oxygenSaturation}%` : "-"}</Typography>
                   </Box>
                   <Box>
                     <Typography variant="caption" sx={{ color: "text.secondary" }}>Weight</Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 600 }}>{v.weightKg} kg</Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>{v.weightKg != null ? `${v.weightKg} kg` : "-"}</Typography>
                   </Box>
                   <Box>
                     <Typography variant="caption" sx={{ color: "text.secondary" }}>Pain</Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 600 }}>{v.painScale}/10</Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>{v.painScale != null ? `${v.painScale}/10` : "-"}</Typography>
                   </Box>
                 </Box>
               ) : (

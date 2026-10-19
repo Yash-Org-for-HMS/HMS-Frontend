@@ -1,4 +1,6 @@
 import { SEMANTIC, BRAND } from "@/styles/accents";
+import { useAskReason } from "@/providers/ConfirmContext";
+import { withConsultReason, ReasonCancelled } from "./withConsultReason";
 import type { PrescribableMedicine, PrescriptionItem } from "@/types";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { useState, useEffect, useMemo } from "react";
@@ -99,6 +101,7 @@ export default function PrescriptionWriter({ consultationId, patientId, patientA
   const [saving, setSaving] = useState(false);
   const [repeating, setRepeating] = useState(false);
   const toast = useToast();
+  const askReason = useAskReason();
   const { hospital, user } = useHospitalAuth();
   // The branch being worked at, not the login's home branch.
   const letterhead = useLetterhead();
@@ -343,11 +346,12 @@ export default function PrescriptionWriter({ consultationId, patientId, patientA
         }
       }
 
-      await axiosInstance.post(`/doctor/prescription/consultations/${targetConsultationId}`, {
+      await withConsultReason(askReason, (reason) => axiosInstance.post(`/doctor/prescription/consultations/${targetConsultationId}`, {
         patientId,
         specialInstructions,
-        items
-      });
+        items,
+        reason,
+      }));
 
       // Update status locally based on items
       const allExternal = items.length > 0 && items.every(i => i.buyOutside);
@@ -355,6 +359,7 @@ export default function PrescriptionWriter({ consultationId, patientId, patientA
 
       toast.success("Prescription saved successfully!");
 } catch (err: unknown) {
+      if (err instanceof ReasonCancelled) return;
       toast.error(getApiErrorMessage(err, (err instanceof Error && err.message) || "Failed to save prescription"));
     } finally {
       setSaving(false);
