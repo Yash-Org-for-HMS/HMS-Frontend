@@ -17,11 +17,13 @@ export interface ReportFilterOptions {
  * The option lists (doctors, departments, payment methods, …) that populate
  * report filter dropdowns for the caller's hospital/branch. Shares its cache key
  * with the reception reports page, so it's fetched once across all report pages.
+ * Lab staff cannot read the reception copy, so the lab reports pass their own.
  */
-export function useReportFilterOptions() {
+export function useReportFilterOptions(path = "/reception/reports/filter-options") {
   return useQuery<ReportFilterOptions>({
-    queryKey: ["report-filter-options"],
-    queryFn: async () => (await axiosInstance.get("/reception/reports/filter-options")).data.data,
+    // The default path keeps the key the reception reports page shares.
+    queryKey: path === "/reception/reports/filter-options" ? ["report-filter-options"] : ["report-filter-options", path],
+    queryFn: async () => (await axiosInstance.get(path)).data.data,
     staleTime: 5 * 60 * 1000,
   });
 }

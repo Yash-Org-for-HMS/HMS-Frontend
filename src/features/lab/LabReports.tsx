@@ -24,6 +24,9 @@ import { KpiCard, ReportFilters, ReportFilterSelect, ReportTable, ReportNavLayou
 import dayjs from "dayjs";
 import { useLabVerification } from "./useLabVerification";
 
+/** The lab's own copy: the reception one is closed to lab and radiology staff. */
+const LAB_FILTER_OPTIONS = "/lab/reports/filter-options";
+
 const inr = formatINRAuto;
 const initialRange = (): DateRange => ({ from: dayjs().subtract(29, "day").format("YYYY-MM-DD"), to: dayjs().format("YYYY-MM-DD") });
 const cell = (r: unknown, key: string): unknown => (r as Record<string, unknown>)?.[key];
@@ -82,7 +85,7 @@ export function LabOverview() {
 export function TestWise() {
   const [range, setRange] = useState<DateRange>(initialRange);
   const [doctorId, setDoctorId] = useState("");
-  const { data: opts } = useReportFilterOptions();
+  const { data: opts } = useReportFilterOptions(LAB_FILTER_OPTIONS);
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["lab-test-wise", range.from, range.to, doctorId],
     queryFn: () => apiGet<TestWiseResponse>("/lab/reports/test-wise", { params: { from: range.from, to: range.to, doctorId: doctorId || undefined } }),
@@ -162,7 +165,7 @@ export function Turnaround() {
   const [range, setRange] = useState<DateRange>(initialRange);
   const [doctorId, setDoctorId] = useState("");
   const [sla, setSla] = useState("24");
-  const { data: opts } = useReportFilterOptions();
+  const { data: opts } = useReportFilterOptions(LAB_FILTER_OPTIONS);
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["lab-turnaround", range.from, range.to, doctorId, sla],
     queryFn: () => apiGet<TurnaroundResponse>("/lab/reports/turnaround", { params: { from: range.from, to: range.to, doctorId: doctorId || undefined, slaHours: sla } }),
@@ -245,7 +248,7 @@ export function Turnaround() {
 export function Pending() {
   const [doctorId, setDoctorId] = useState("");
   const paging = useReportPaging();
-  const { data: opts } = useReportFilterOptions();
+  const { data: opts } = useReportFilterOptions(LAB_FILTER_OPTIONS);
   const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
     queryKey: ["lab-pending", doctorId, paging.page, paging.pageSize],
     queryFn: () => apiGet<PendingResponse>("/lab/reports/pending", { params: { doctorId: doctorId || undefined, ...paging.params } }),
@@ -313,7 +316,7 @@ export function CriticalResults() {
   const verifies = useLabVerification();
   const [range, setRange] = useState<DateRange>(initialRange);
   const [doctorId, setDoctorId] = useState("");
-  const { data: opts } = useReportFilterOptions();
+  const { data: opts } = useReportFilterOptions(LAB_FILTER_OPTIONS);
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["lab-critical", range.from, range.to, doctorId],
     queryFn: () => apiGet<CriticalResponse>("/lab/reports/critical", { params: { from: range.from, to: range.to, doctorId: doctorId || undefined } }),
@@ -365,7 +368,7 @@ export function OrderRegister() {
   const [range, setRange] = useState<DateRange>(initialRange);
   const [doctorId, setDoctorId] = useState("");
   const [status, setStatus] = useState("");
-  const { data: opts } = useReportFilterOptions();
+  const { data: opts } = useReportFilterOptions(LAB_FILTER_OPTIONS);
   // Two registers in one response, so each pages on its own keys. A single
   // `page` would scroll both tables at once and mean the right thing for
   // neither - and a reader on page 12 of the lab register has no business
