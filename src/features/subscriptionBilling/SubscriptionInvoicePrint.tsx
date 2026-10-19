@@ -4,6 +4,7 @@ import { useParams } from "react-router-dom";
 import { Box, Typography } from "@mui/material";
 import { axiosInstance } from "@/api/axios";
 import { getApiErrorMessage } from "@/utils/apiError";
+import ErrorState from "@/components/ErrorState";
 import { formatINR, formatDate } from "@/utils/format";
 import DetailSkeleton from "@/components/skeletons/DetailSkeleton";
 import BillDocument from "@/components/billing/BillDocument";
@@ -24,6 +25,7 @@ export default function SubscriptionInvoicePrint() {
   const [inv, setInv] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     (async () => {
@@ -36,12 +38,13 @@ export default function SubscriptionInvoicePrint() {
         setLoading(false);
       }
     })();
-  }, [id]);
+  }, [id, attempt]);
 
   useAutoPrint(!loading && !!inv);
 
   if (loading) return <DetailSkeleton />;
-  if (error) return <Typography color="error" sx={{ p: 4 }}>{error}</Typography>;
+  const retry = () => { setError(null); setLoading(true); setAttempt((a) => a + 1); };
+  if (error) return <ErrorState message={error} onRetry={retry} />;
   if (!inv) return <Typography sx={{ p: 4 }}>Invoice not found</Typography>;
 
   const h = inv.hospital || {};

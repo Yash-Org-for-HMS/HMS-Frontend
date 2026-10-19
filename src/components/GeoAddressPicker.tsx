@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Grid, TextField, MenuItem, InputAdornment, CircularProgress } from "@mui/material";
+import { Grid, TextField, MenuItem, InputAdornment, CircularProgress, Link } from "@mui/material";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { axiosInstance } from "@/api/axios";
 
@@ -49,7 +49,7 @@ export default function GeoAddressPicker({ value, onChange, colSpan = 3, require
   const queryClient = useQueryClient();
   const isRequired = (field: "state" | "district" | "city" | "pincode") =>
     Array.isArray(required) ? required.includes(field) : !!required;
-  const { data: states = [] } = useQuery<GeoOption[]>({
+  const { data: states = [], isError: statesFailed, refetch: refetchStates } = useQuery<GeoOption[]>({
     queryKey: ["geo-states"],
     queryFn: async () => (await axiosInstance.get("/geo/states")).data.data,
     staleTime: Infinity,
@@ -59,7 +59,7 @@ export default function GeoAddressPicker({ value, onChange, colSpan = 3, require
     ? Number(value.stateId)
     : (value.stateName ? states.find((s) => s.name === value.stateName)?.stateId ?? "" : "");
 
-  const { data: districts = [] } = useQuery<GeoOption[]>({
+  const { data: districts = [], isError: districtsFailed, refetch: refetchDistricts } = useQuery<GeoOption[]>({
     queryKey: ["geo-districts", stateId],
     queryFn: async () => (await axiosInstance.get(`/geo/districts?stateId=${stateId}`)).data.data,
     enabled: !!stateId,
@@ -107,7 +107,8 @@ export default function GeoAddressPicker({ value, onChange, colSpan = 3, require
       <Grid size={{ xs: 12, md: colSpan }}>
         <TextField
           select fullWidth label="State" required={isRequired("state")} disabled={disabled}
-          error={!!errors.state} helperText={errors.state}
+          error={!!errors.state || statesFailed}
+          helperText={errors.state ?? (statesFailed ? <>Couldn't load the states. <Link component="button" type="button" onClick={() => refetchStates()}>Retry</Link></> : undefined)}
           value={stateId}
           onChange={(e) => {
             const id = Number(e.target.value);
@@ -122,6 +123,8 @@ export default function GeoAddressPicker({ value, onChange, colSpan = 3, require
       <Grid size={{ xs: 12, md: colSpan }}>
         <TextField
           select fullWidth label="District" required={isRequired("district")}
+          error={districtsFailed}
+          helperText={districtsFailed ? <>Couldn't load the districts. <Link component="button" type="button" onClick={() => refetchDistricts()}>Retry</Link></> : undefined}
           value={districtId} disabled={disabled || !stateId}
           onChange={(e) => {
             const id = Number(e.target.value);

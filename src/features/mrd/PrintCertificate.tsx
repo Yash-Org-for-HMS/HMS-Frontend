@@ -6,6 +6,7 @@ import { useAutoPrint } from "@/utils/useAutoPrint";
 import { assetUrl } from "@/utils/assetUrl";
 import { formatDate, formatDateTime } from "@/utils/format";
 import { getApiErrorMessage } from "@/utils/apiError";
+import ErrorState from "@/components/ErrorState";
 import DetailSkeleton from "@/components/skeletons/DetailSkeleton";
 
 /**
@@ -32,6 +33,7 @@ export default function PrintCertificate() {
   const [sheet, setSheet] = useState<Sheet | null>(null);
   const [duplicate, setDuplicate] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
   const marked = useRef<Promise<boolean> | null>(null);
 
   useEffect(() => {
@@ -52,11 +54,12 @@ export default function PrintCertificate() {
       }
     })();
     return () => { cancelled = true; };
-  }, [id]);
+  }, [id, attempt]);
 
   useAutoPrint(!!sheet && sheet.status === "ISSUED");
 
-  if (error) return <Typography color="error" sx={{ p: 4 }}>{error}</Typography>;
+  const retry = () => { setError(null); setAttempt((a) => a + 1); };
+  if (error) return <ErrorState message={error} onRetry={retry} />;
   if (!sheet) return <DetailSkeleton />;
 
   const h = sheet.hospital;

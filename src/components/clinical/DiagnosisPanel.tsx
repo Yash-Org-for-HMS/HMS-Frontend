@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  Autocomplete, Box, Button, Checkbox, Chip, FormControlLabel, IconButton,
+  Alert, Autocomplete, Box, Button, Checkbox, Chip, FormControlLabel, IconButton,
   MenuItem, Stack, TextField, Tooltip, Typography,
 } from "@mui/material";
 import {
@@ -125,7 +125,7 @@ export default function DiagnosisPanel({
     return () => clearTimeout(t);
   }, [term]);
 
-  const { data: rows = [], isLoading } = useQuery<DiagnosisRow[]>({
+  const { data: rows = [], isLoading, error: rowsError, refetch: refetchRows } = useQuery<DiagnosisRow[]>({
     queryKey: key,
     enabled: !!id,
     queryFn: async () => {
@@ -215,6 +215,10 @@ export default function DiagnosisPanel({
 
       {isLoading ? (
         <ListSkeleton rows={2} />
+      ) : rowsError && rows.length === 0 ? (
+        <Alert severity="error" sx={{ mb: 1.5 }} action={<Button color="inherit" size="small" onClick={() => refetchRows()}>Retry</Button>}>
+          {getApiErrorMessage(rowsError, "Couldn't load the diagnoses for this visit.")}
+        </Alert>
       ) : rows.length === 0 ? (
         <Typography variant="body2" sx={{ color: "text.secondary", mb: 1.5 }}>
           Nothing recorded yet.

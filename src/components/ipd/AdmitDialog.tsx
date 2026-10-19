@@ -4,7 +4,7 @@ import { getApiErrorMessage } from "@/utils/apiError";
 import { useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, Grid, TextField,
-  MenuItem, Box, Switch, FormControlLabel, Typography, Divider, Autocomplete,
+  MenuItem, Box, Switch, FormControlLabel, Typography, Divider, Autocomplete, Alert,
 } from "@mui/material";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { LocalHotelRounded, PersonAddRounded, HealthAndSafetyRounded } from "@mui/icons-material";
@@ -48,7 +48,7 @@ export default function AdmitDialog({ open, onClose, onAdmitted, prefilledPatien
   const [ins, setIns] = useState({ schemeType: "INSURANCE", payerId: "", policyOrCardNumber: "", tpaName: "", estimatedCost: "" });
   const setI = (k: string, v: string) => setIns((f) => ({ ...f, [k]: v }));
 
-  const { data: dropdowns = { patients: [], doctors: [] } } = useQuery({
+  const { data: dropdowns = { patients: [], doctors: [] }, error: dropdownsError, refetch: refetchDropdowns } = useQuery({
     queryKey: ["appointment-dropdowns"],
     queryFn: async () => (await axiosInstance.get("/reception/appointments/dropdowns")).data.data,
     // The same doctor list the booking screens hold for two minutes; it was
@@ -56,12 +56,12 @@ export default function AdmitDialog({ open, onClose, onAdmitted, prefilledPatien
     staleTime: 2 * 60_000,
     enabled: open,
   });
-  const { data: beds = [] } = useQuery<any[]>({
+  const { data: beds = [], error: bedsError, refetch: refetchBeds } = useQuery<any[]>({
     queryKey: ["ipd-available-beds"],
     queryFn: async () => (await axiosInstance.get("/ipd/beds/available")).data.data,
     enabled: open,
   });
-  const { data: payers = [] } = useQuery<any[]>({
+  const { data: payers = [], error: payersError, refetch: refetchPayers } = useQuery<any[]>({
     queryKey: ["claim-payers"],
     queryFn: async () => (await axiosInstance.get("/claims/payers")).data.data,
     enabled: open && insuranceOn,
@@ -154,6 +154,13 @@ export default function AdmitDialog({ open, onClose, onAdmitted, prefilledPatien
           <LocalHotelRounded sx={{ color: BRAND.action }} /> Admit Patient
         </DialogTitle>
         <DialogContent dividers>
+          {/* An empty bed or doctor list after a failed load would read as "none available". */}
+          {(dropdownsError || bedsError || payersError) && (
+            <Alert severity="error" sx={{ mb: 2 }}
+              action={<Button color="inherit" size="small" onClick={() => { if (dropdownsError) refetchDropdowns(); if (bedsError) refetchBeds(); if (payersError) refetchPayers(); }}>Retry</Button>}>
+              {getApiErrorMessage(dropdownsError ?? bedsError ?? payersError, "Couldn't load the doctors, beds or payers.")}
+            </Alert>
+          )}
           <Grid container spacing={2.5} sx={{ pt: 0.5 }}>
             <Grid size={{ xs: 12 }}>
               <Box sx={{ display: "flex", gap: 1, alignItems: "flex-start" }}>

@@ -6,6 +6,7 @@ import { axiosInstance } from "@/api/axios";
 import { assetUrl } from "@/utils/assetUrl";
 import { formatDate, formatDateTime } from "@/utils/format";
 import { getApiErrorMessage } from "@/utils/apiError";
+import ErrorState from "@/components/ErrorState";
 import DetailSkeleton from "@/components/skeletons/DetailSkeleton";
 
 interface ConsentResponse {
@@ -91,6 +92,7 @@ export default function PrintConsentForm() {
   const [form, setForm] = useState<ConsentPrintData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -105,14 +107,15 @@ export default function PrintConsentForm() {
       }
     })();
     return () => { cancelled = true; };
-  }, [id]);
+  }, [id, attempt]);
 
   // Waits for fonts and the hospital logo rather than a fixed 500ms - see
   // useAutoPrint. The timer was enough locally and a coin-flip on a deployment.
   useAutoPrint(!loading && !!form);
 
   if (loading) return <DetailSkeleton />;
-  if (error) return <Typography color="error" sx={{ p: 4 }}>{error}</Typography>;
+  const retry = () => { setError(null); setLoading(true); setAttempt((a) => a + 1); };
+  if (error) return <ErrorState message={error} onRetry={retry} />;
   if (!form) return <Typography sx={{ p: 4 }}>Consent form not found</Typography>;
 
   const h = form.hospital;

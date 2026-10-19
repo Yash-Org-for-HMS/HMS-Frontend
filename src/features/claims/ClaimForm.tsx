@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { getApiErrorMessage } from "@/utils/apiError";
+import ErrorState from "@/components/ErrorState";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
@@ -48,13 +49,13 @@ export default function ClaimForm() {
   }, [pSearch, isEdit]);
 
   // Payers dropdown.
-  const { data: payers = [], refetch: refetchPayers } = useQuery({
+  const { data: payers = [], isError: payersFailed, refetch: refetchPayers } = useQuery({
     queryKey: ["claim-payers"],
     queryFn: async () => (await axiosInstance.get("/claims/payers")).data.data as any[],
   });
 
   // Load existing claim for edit.
-  const { data: existing, isLoading: loadingClaim } = useQuery({
+  const { data: existing, isLoading: loadingClaim, error: claimError, refetch: refetchClaim } = useQuery({
     queryKey: ["claim", id],
     queryFn: async () => (await axiosInstance.get(`/claims/${id}`)).data.data,
     enabled: isEdit,
@@ -122,6 +123,8 @@ export default function ClaimForm() {
   const payerOptions = useMemo(() => payers, [payers]);
 
   if (isEdit && loadingClaim) return <FormSkeleton />;
+  // Never open an edit form blank: saving it would overwrite the claim with empty fields.
+  if (isEdit && claimError && !existing) return <ErrorState message={getApiErrorMessage(claimError, "This claim could not be loaded.")} onRetry={() => refetchClaim()} />;
 
   return (
     <Box>
@@ -152,7 +155,8 @@ export default function ClaimForm() {
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }} >
             <Box sx={{ display: "flex", gap: 1 }}>
-              <TextField select fullWidth label="Payer / TPA" value={form.payerId} onChange={(e) => set("payerId", e.target.value)}>
+              <TextField select fullWidth label="Payer / TPA" value={form.payerId} onChange={(e) => set("payerId", e.target.value)}
+                error={payersFailed} helperText={payersFailed ? "Couldn't load payers - use Add, or reopen the form to try again" : undefined}>
                 <MenuItem value="">- None -</MenuItem>
                 {payerOptions.map((p: any) => <MenuItem key={p.payerId} value={p.payerId}>{p.payerName}</MenuItem>)}
               </TextField>

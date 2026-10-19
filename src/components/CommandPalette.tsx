@@ -148,6 +148,8 @@ export default function CommandPalette() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
   const [patients, setPatients] = useState<any[]>([]);
+  // A failed patient search must not read as "no patient by that name".
+  const [patientSearchFailed, setPatientSearchFailed] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const navigate = useNavigate();
   const location = useLocation();
@@ -225,10 +227,11 @@ export default function CommandPalette() {
           });
           if (reqId !== searchReqId.current) return; // a newer search already superseded this one
           setPatients(res.data?.data || []);
+          setPatientSearchFailed(false);
         } catch {
           if (reqId !== searchReqId.current) return;
-          // Fail silently if not authenticated or error
           setPatients([]);
+          setPatientSearchFailed(true);
         } finally {
           if (reqId === searchReqId.current) setLoading(false);
         }
@@ -236,6 +239,7 @@ export default function CommandPalette() {
     } else {
       searchReqId.current++; // invalidate any in-flight request
       setPatients([]);
+      setPatientSearchFailed(false);
       setLoading(false);
     }
   };
@@ -406,7 +410,12 @@ export default function CommandPalette() {
       </Box>
 
       <List sx={{ p: 1, maxHeight: "60vh", overflowY: "auto" }}>
-        {search.length > 0 && filteredActions.length === 0 && filteredRoutes.length === 0 && patients.length === 0 && !loading && (
+        {patientSearchFailed && !loading && (
+          <Box sx={{ px: 2, py: 1.5, color: "error.main" }}>
+            <Typography variant="body2">Couldn't search patients right now. Check the connection and type again.</Typography>
+          </Box>
+        )}
+        {search.length > 0 && filteredActions.length === 0 && filteredRoutes.length === 0 && patients.length === 0 && !loading && !patientSearchFailed && (
           <Box sx={{ p: 3, textAlign: "center", color: "text.secondary" }}>
             <Typography variant="body2">No results found for "{search}"</Typography>
           </Box>

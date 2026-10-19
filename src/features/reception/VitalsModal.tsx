@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Box, Typography, Button, Grid, TextField, Slider,
-  Divider, IconButton, Chip,
+  Divider, IconButton, Chip, Alert,
 } from "@mui/material";
 import {
   CloseRounded, FavoriteRounded, ThermostatRounded, MonitorHeartRounded,
@@ -103,10 +103,9 @@ export default function VitalsModal({ open, onClose, appointmentId, patientId, p
   const [success, setSuccess] = useState(false);
   const toast = useToast();
 
-  // Vitals load only when the dialog is open. A missing record is a normal
-  // state (patient has no vitals yet), so query errors are intentionally not
-  // surfaced - the form just falls back to defaults.
-  const { data: existingVitals, isLoading: loading } = useQuery({
+  // Vitals load only when the dialog is open. No vitals yet is a normal, successful
+  // answer. A failed load is shown: an empty form would hide readings already taken.
+  const { data: existingVitals, isLoading: loading, error: vitalsError, refetch: refetchVitals } = useQuery({
     queryKey: ["vitals", appointmentId, vitalsReadUrl],
     queryFn: async () => (await axiosInstance.get(vitalsReadUrl)).data.data,
     enabled: open && !!appointmentId,
@@ -245,6 +244,11 @@ export default function VitalsModal({ open, onClose, appointmentId, patientId, p
       </DialogTitle>
 
       <DialogContent sx={{ p: 3, overflowY: "auto" }}>
+        {vitalsError && (vitalsError as { response?: { status?: number } }).response?.status !== 404 && (
+          <Alert severity="error" sx={{ mb: 2 }} action={<Button color="inherit" size="small" onClick={() => refetchVitals()}>Retry</Button>}>
+            {getApiErrorMessage(vitalsError, "Couldn't load the readings already taken for this visit.")}
+          </Alert>
+        )}
         {loading ? (
           <ListSkeleton />
         ) : (

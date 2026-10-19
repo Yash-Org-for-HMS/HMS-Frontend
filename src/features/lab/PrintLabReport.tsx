@@ -4,6 +4,7 @@ import type { LabOrderDetail, LabReportRow } from "./labOrders.types";
 import { formatDate, formatDateTime } from "@/utils/format";
 import { assetUrl } from "@/utils/assetUrl";
 import { getApiErrorMessage } from "@/utils/apiError";
+import ErrorState from "@/components/ErrorState";
 import { Box, Typography, Table, TableBody, TableCell, TableHead, TableRow, Grid, Divider } from "@mui/material";
 import { axiosInstance } from "@/api/axios";
 import DetailSkeleton from "@/components/skeletons/DetailSkeleton";
@@ -14,6 +15,7 @@ export default function PrintLabReport() {
   const [order, setOrder] = useState<LabOrderDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -29,14 +31,15 @@ export default function PrintLabReport() {
       }
     };
     fetchOrder();
-  }, [id]);
+  }, [id, attempt]);
 
   // The old timer also never cleared, so a tab closed mid-wait still called
   // print() on an unmounted page.
   useAutoPrint(!loading && !!order);
 
   if (loading) return <DetailSkeleton />;
-  if (error) return <Typography color="error">{error}</Typography>;
+  const retry = () => { setError(null); setLoading(true); setAttempt((a) => a + 1); };
+  if (error) return <ErrorState message={error} onRetry={retry} />;
   if (!order) return <Typography>Order not found</Typography>;
 
   // The date this report belongs to, NOT the day someone pressed print.

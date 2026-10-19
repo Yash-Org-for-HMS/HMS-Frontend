@@ -2,6 +2,7 @@ import { Fragment, useEffect, useMemo, useState } from "react";
 import { formatDate, formatDateTime } from "@/utils/format";
 import { paidTotal, refundedTotal } from "@/utils/invoiceMoney";
 import { getApiErrorMessage } from "@/utils/apiError";
+import ErrorState from "@/components/ErrorState";
 import { useParams } from "react-router-dom";
 import { Box, Typography, ToggleButton, ToggleButtonGroup, Button } from "@mui/material";
 import { PrintRounded } from "@mui/icons-material";
@@ -68,6 +69,7 @@ export default function PrintIpBill() {
   const [inv, setInv] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
   const [mode, setMode] = useState<"detailed" | "summary">("detailed");
 
   useEffect(() => {
@@ -79,7 +81,7 @@ export default function PrintIpBill() {
         setError(getApiErrorMessage(err, "Failed to load this bill"));
       } finally { setLoading(false); }
     })();
-  }, [invoiceId]);
+  }, [invoiceId, attempt]);
 
   const items: any[] = inv?.InvoiceItem || [];
 
@@ -101,7 +103,8 @@ export default function PrintIpBill() {
   }, [items]);
 
   if (loading) return <DetailSkeleton />;
-  if (error) return <Typography color="error" sx={{ p: 4 }}>{error}</Typography>;
+  const retry = () => { setError(null); setLoading(true); setAttempt((a) => a + 1); };
+  if (error) return <ErrorState message={error} onRetry={retry} />;
   if (!inv) return <Typography sx={{ p: 4 }}>Bill not found</Typography>;
 
   const p = inv.patient, adm = inv.admission, hosp = inv.hospital || {}, dep = inv.deposits;
