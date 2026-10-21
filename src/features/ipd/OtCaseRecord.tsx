@@ -417,16 +417,36 @@ export default function OtCaseRecord() {
  * It adds only what is missing, so pressing it twice is safe, and it says so
  * rather than silently doing nothing.
  */
+type RateKey = "surgeonFee" | "assistantFee" | "anaesthetistFee" | "otHourlyRate" | "anaesthesiaCharge" | "recoveryCharge";
+type StandardRate = { chargeItemId: string; itemName: string; price: number; taxPercent: number };
+const RATE_FIELDS: [RateKey, string][] = [
+  ["surgeonFee", "Surgeon fee"], ["assistantFee", "Assistant fee"], ["anaesthetistFee", "Anaesthetist fee"],
+  ["otHourlyRate", "Theatre, per hour"], ["anaesthesiaCharge", "Anaesthesia"], ["recoveryCharge", "Recovery"],
+];
+/** The Schedule of Charges item each rate is found by (backend OT_RATE_CODES). */
+const RATE_CODE: Record<RateKey, string> = {
+  surgeonFee: "OT-SURGEON", assistantFee: "OT-ASSISTANT", anaesthetistFee: "OT-ANAESTHETIST",
+  otHourlyRate: "OT-THEATRE-HOUR", anaesthesiaCharge: "OT-ANAESTHESIA", recoveryCharge: "OT-RECOVERY",
+};
+/** The field the pricing call takes when a rate comes from its item. */
+const RATE_ITEM_KEY: Record<RateKey, string> = {
+  surgeonFee: "surgeonFeeItemId", assistantFee: "assistantFeeItemId", anaesthetistFee: "anaesthetistFeeItemId",
+  otHourlyRate: "otChargeItemId", anaesthesiaCharge: "anaesthesiaChargeItemId", recoveryCharge: "recoveryChargeItemId",
+};
+
 export function BillingTab({ id }: { id: string }) {
   const toast = useToast();
   const qc = useQueryClient();
   const [f, setF] = useState({ chargeType: "OTHER", description: "", unitPrice: "", quantity: "1", taxPercent: "0" });
-  const [rates, setRates] = useState({ surgeonFee: "", assistantFee: "", anaesthetistFee: "", otHourlyRate: "", anaesthesiaCharge: "", recoveryCharge: "" });
+  // What staff typed. A box left alone shows the standard rate from the
+  // Schedule of Charges and bills from that item.
+  const [rates, setRates] = useState<Partial<Record<RateKey, string>>>({});
 
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["ot-case-charges", id],
     queryFn: async () => (await axiosInstance.get(`/ipd/ot/cases/${id}/charges`)).data.data,
   });
+  const standard = (data?.standardRates ?? {}) as Partial<Record<RateKey, StandardRate | null>>;
 
   const add = useMutation({
     mutationFn: async () => axiosInstance.post(`/ipd/ot/cases/${id}/charges`, {
@@ -445,7 +465,12 @@ export function BillingTab({ id }: { id: string }) {
   });
   const auto = useMutation({
     mutationFn: async () => axiosInstance.post(`/ipd/ot/cases/${id}/charges/auto`, {
-      rates: Object.fromEntries(Object.entries(rates).filter(([, v]) => v !== "").map(([k, v]) => [k, Number(v)])),
+      rates: Object.fromEntries(RATE_FIELDS.flatMap(([k]): [string, string | number][] => {
+        const typed = rates[k];
+        const std = standard[k];
+        if (typed === undefined && std) return [[RATE_ITEM_KEY[k], std.chargeItemId]];
+        return typed ? [[k, Number(typed)]] : [];
+      })),
     }),
     onSuccess: (r) => {
       toast.success(r.data?.data?.note ?? "Priced");
@@ -517,15 +542,17 @@ export function BillingTab({ id }: { id: string }) {
         }
       >
         <Grid container spacing={2.5}>
-          {([
-            ["surgeonFee", "Surgeon fee"], ["assistantFee", "Assistant fee"], ["anaesthetistFee", "Anaesthetist fee"],
-            ["otHourlyRate", "Theatre, per hour"], ["anaesthesiaCharge", "Anaesthesia"], ["recoveryCharge", "Recovery"],
-          ] as [keyof typeof rates, string][]).map(([k, label]) => (
-            <Grid size={{ xs: 6, md: 4 }} key={k}>
-              <TextField fullWidth size="small" label={label} value={rates[k]}
-                onChange={(e) => setRates({ ...rates, [k]: e.target.value })} />
-            </Grid>
-          ))}
+          {RATE_FIELDS.map(([k, label]) => {
+            const std = standard[k];
+            const edited = rates[k] !== undefined && (!std || rates[k] !== String(std.price));
+            return (
+              <Grid size={{ xs: 6, md: 4 }} key={k}>
+                <TextField fullWidth size="small" label={label} value={rates[k] ?? (std ? String(std.price) : "")}
+                  onChange={(e) => setRates({ ...rates, [k]: std && e.target.value === String(std.price) ? undefined : e.target.value })}
+                  helperText={std ? (edited ? `Changed for this case (standard ₹${std.price})` : `Standard rate: ${std.itemName}`) : `No standard rate - item code ${RATE_CODE[k]}`} />
+              </Grid>
+            );
+          })}
         </Grid>
       </Section>
 
