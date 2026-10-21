@@ -362,6 +362,10 @@ export default function OtCaseRecord() {
           {PHASES.map((ph, i) => (
             <Tab key={ph.key} label={<TabMark text={`${i + 1}. ${ph.label}`} state={phaseState[i]} />} />
           ))}
+          {/* What a case costs is a billing decision, on its own tab. The scrub
+              nurse runs the checklist and counts the swabs; she does not set the
+              surgeon's fee, and the API refuses it for her too. */}
+          {!isNurse && <Tab label="Bill" />}
         </Tabs>
       </Paper>
 
@@ -388,12 +392,10 @@ export default function OtCaseRecord() {
         <>
           {/* Counts first: a short swab blocks the sign-out immediately below. */}
           <ChecklistTab id={id} data={checklistQ.data} onSaved={refreshAll} stages={["SIGN_OUT"]} />
-          {/* What a case costs is a billing decision. The scrub nurse runs the
-              checklist and counts the swabs; she does not set the surgeon's
-              fee, and the API refuses it for her too. */}
-          {!isNurse && <BillingTab id={id} />}
         </>
       )}
+
+      {tab === 3 && !isNurse && <BillingTab id={id} onGoTo={setTab} />}
 
       {placing && surgery?.admissionId && (
         <PlaceFromRecoveryDialog
@@ -409,44 +411,47 @@ export default function OtCaseRecord() {
 
 // ── Billing ──────────────────────────────────────────────────────────────────
 
-/**
- * The theatre bill, line by line.
- *
- * "Auto-price" builds the standard lines from what the case already knows - who
- * was in the room, how long the theatre was used for, which implants went in.
- * It adds only what is missing, so pressing it twice is safe, and it says so
- * rather than silently doing nothing.
- */
-type RateKey = "surgeonFee" | "assistantFee" | "anaesthetistFee" | "otHourlyRate" | "anaesthesiaCharge" | "recoveryCharge";
-type StandardRate = { chargeItemId: string; itemName: string; price: number; taxPercent: number };
-const RATE_FIELDS: [RateKey, string][] = [
-  ["surgeonFee", "Surgeon fee"], ["assistantFee", "Assistant fee"], ["anaesthetistFee", "Anaesthetist fee"],
-  ["otHourlyRate", "Theatre, per hour"], ["anaesthesiaCharge", "Anaesthesia"], ["recoveryCharge", "Recovery"],
-];
-/** The Schedule of Charges item each rate is found by (backend OT_RATE_CODES). */
-const RATE_CODE: Record<RateKey, string> = {
-  surgeonFee: "OT-SURGEON", assistantFee: "OT-ASSISTANT", anaesthetistFee: "OT-ANAESTHETIST",
-  otHourlyRate: "OT-THEATRE-HOUR", anaesthesiaCharge: "OT-ANAESTHESIA", recoveryCharge: "OT-RECOVERY",
+/** A line the case should carry, priced, from /charges/proposed. */
+type Proposal = {
+  key: string; chargeType: string; label: string; description: string; who: string | null;
+  quantity: number; unitPrice: number | null; taxPercent: number;
+  priceFrom: "STANDARD" | "TYPED" | "IMPLANT" | "NONE"; hourlyRate?: number; hours?: number;
 };
-/** The field the pricing call takes when a rate comes from its item. */
-const RATE_ITEM_KEY: Record<RateKey, string> = {
-  surgeonFee: "surgeonFeeItemId", assistantFee: "assistantFeeItemId", anaesthetistFee: "anaesthetistFeeItemId",
-  otHourlyRate: "otChargeItemId", anaesthesiaCharge: "anaesthesiaChargeItemId", recoveryCharge: "recoveryChargeItemId",
-};
+/** A line the case cannot have yet, and the part of the record that fixes it. */
+type MissingLine = { chargeType: string; label: string; reason: string; fix: "team" | "times" | "anaesthesia"; optional: boolean };
 
-export function BillingTab({ id }: { id: string }) {
+/** Which tab of the record fixes a missing line. */
+const FIX_TAB: Record<MissingLine["fix"], number> = { team: 0, times: 1, anaesthesia: 1 };
+const FIX_TEXT: Record<MissingLine["fix"], string> = { team: "Open the team", times: "Record the times", anaesthesia: "Record the anaesthesia" };
+
+const rupees = (n: number) => `₹${n.toLocaleString("en-IN")}`;
+
+/**
+ * The case's bill: what is on it, what it should have and does not yet, and a
+ * hand-entry row for the rest.
+ *
+ * One list instead of rate boxes plus a build button: each line it should have
+ * is shown already priced from the Schedule of Charges, ticked, with its price
+ * editable for this case. A line it cannot have yet says why and, on the
+ * operative record, links to the tab that fixes it. Reception sees the same
+ * list on its own page, without the links (it cannot open the record).
+ */
+export function BillingTab({ id, onGoTo }: { id: string; onGoTo?: (tab: number) => void }) {
   const toast = useToast();
-  const qc = useQueryClient();
   const [f, setF] = useState({ chargeType: "OTHER", description: "", unitPrice: "", quantity: "1", taxPercent: "0" });
-  // What staff typed. A box left alone shows the standard rate from the
-  // Schedule of Charges and bills from that item.
-  const [rates, setRates] = useState<Partial<Record<RateKey, string>>>({});
+  // Lines unticked, and prices typed for this case, by line key.
+  const [skip, setSkip] = useState<Record<string, boolean>>({});
+  const [typed, setTyped] = useState<Record<string, string>>({});
 
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["ot-case-charges", id],
     queryFn: async () => (await axiosInstance.get(`/ipd/ot/cases/${id}/charges`)).data.data,
   });
-  const standard = (data?.standardRates ?? {}) as Partial<Record<RateKey, StandardRate | null>>;
+  const proposedQ = useQuery({
+    queryKey: ["ot-case-proposed", id],
+    queryFn: async () => (await axiosInstance.get(`/ipd/ot/cases/${id}/charges/proposed`)).data.data as { lines: Proposal[]; missing: MissingLine[]; billed?: boolean },
+  });
+  const refreshAll = () => { refetch(); proposedQ.refetch(); };
 
   const add = useMutation({
     mutationFn: async () => axiosInstance.post(`/ipd/ot/cases/${id}/charges`, {
@@ -455,28 +460,34 @@ export function BillingTab({ id }: { id: string }) {
       quantity: Number(f.quantity) || 1,
       taxPercent: f.taxPercent ? Number(f.taxPercent) : 0,
     }),
-    onSuccess: () => { toast.success("Line added"); setF({ ...f, description: "", unitPrice: "" }); refetch(); },
+    onSuccess: () => { toast.success("Line added"); setF({ ...f, description: "", unitPrice: "" }); refreshAll(); },
     onError: (e) => toast.error(getApiErrorMessage(e, "Could not add the line")),
   });
   const remove = useMutation({
     mutationFn: async (chargeId: string) => axiosInstance.delete(`/ipd/ot/cases/${id}/charges/${chargeId}`),
-    onSuccess: () => { toast.success("Removed"); refetch(); },
+    onSuccess: () => { toast.success("Removed"); refreshAll(); },
     onError: (e) => toast.error(getApiErrorMessage(e, "Could not remove the line")),
   });
-  const auto = useMutation({
+
+  const lines = proposedQ.data?.lines ?? [];
+  const missing = proposedQ.data?.missing ?? [];
+  const priceOf = (l: Proposal) => typed[l.key] ?? (l.unitPrice != null ? String(l.unitPrice) : "");
+  const picked = lines.filter((l) => !skip[l.key]);
+  const unpriced = picked.filter((l) => priceOf(l).trim() === "" || Number.isNaN(Number(priceOf(l))));
+
+  const apply = useMutation({
     mutationFn: async () => axiosInstance.post(`/ipd/ot/cases/${id}/charges/auto`, {
-      rates: Object.fromEntries(RATE_FIELDS.flatMap(([k]): [string, string | number][] => {
-        const typed = rates[k];
-        const std = standard[k];
-        if (typed === undefined && std) return [[RATE_ITEM_KEY[k], std.chargeItemId]];
-        return typed ? [[k, Number(typed)]] : [];
-      })),
+      pick: picked.map((l) => {
+        const price = Number(priceOf(l));
+        return l.unitPrice != null && price === l.unitPrice ? { key: l.key } : { key: l.key, unitPrice: price };
+      }),
     }),
     onSuccess: (r) => {
-      toast.success(r.data?.data?.note ?? "Priced");
-      qc.invalidateQueries({ queryKey: ["ot-case-charges", id] });
+      toast.success(r.data?.data?.note ?? "Added");
+      setSkip({}); setTyped({});
+      refreshAll();
     },
-    onError: (e) => toast.error(getApiErrorMessage(e, "Could not price the case")),
+    onError: (e) => toast.error(getApiErrorMessage(e, "Could not add the lines")),
   });
 
   if (isLoading) return <ListSkeleton />;
@@ -484,14 +495,16 @@ export function BillingTab({ id }: { id: string }) {
 
   const charges = (data?.charges ?? []) as Record<string, string | number | null>[];
   const s = data?.summary ?? {};
+  const billedCase = !!proposedQ.data?.billed;
 
   return (
     <>
-      <Section title="The bill for this case">
+      <Section title="On the bill">
         {charges.length === 0 ? (
           <Empty>
-            No lines yet. Until there are, this case bills on its single price
-            {s.flatPrice ? ` of ₹${Number(s.flatPrice).toLocaleString("en-IN")}` : ""}.
+            No lines yet.{s.flatPrice
+              ? ` Until there are, this case bills on its package price of ${rupees(Number(s.flatPrice))}.`
+              : " Add them from the list below."}
           </Empty>
         ) : (
           <Stack spacing={1.25}>
@@ -501,13 +514,13 @@ export function BillingTab({ id }: { id: string }) {
                   <Typography variant="body2" sx={{ fontWeight: 700 }}>{String(c.description)}</Typography>
                   <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>
                     {String(c.label)}
-                    {Number(c.quantity) > 1 ? ` · ${c.quantity} × ₹${Number(c.unitPrice).toLocaleString("en-IN")}` : ""}
+                    {Number(c.quantity) > 1 ? ` · ${c.quantity} × ${rupees(Number(c.unitPrice))}` : ""}
                     {Number(c.taxPercent) > 0 ? ` · ${c.taxPercent}% tax` : ""}
-                    {c.invoiceItemId ? " · on a bill" : ""}
+                    {c.invoiceItemId ? " · on the patient's invoice" : ""}
                   </Typography>
                 </Box>
                 <Typography variant="body2" sx={{ fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>
-                  ₹{Number(c.totalPrice).toLocaleString("en-IN")}
+                  {rupees(Number(c.totalPrice))}
                 </Typography>
                 {!c.invoiceItemId && (
                   <IconButton size="small" onClick={() => remove.mutate(String(c.surgeryChargeId))} aria-label="Remove line">
@@ -518,70 +531,126 @@ export function BillingTab({ id }: { id: string }) {
             ))}
             <Box sx={{ display: "flex", justifyContent: "space-between", pt: 2, mt: 0.5, borderTop: "1px solid", borderColor: "divider" }}>
               <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                Total {Number(s.tax) > 0 ? `(including ₹${Number(s.tax).toLocaleString("en-IN")} tax)` : ""}
+                Total {Number(s.tax) > 0 ? `(including ${rupees(Number(s.tax))} tax)` : ""}
               </Typography>
-              <Typography variant="body1" sx={{ fontWeight: 800 }}>₹{Number(s.total ?? 0).toLocaleString("en-IN")}</Typography>
+              <Typography variant="body1" sx={{ fontWeight: 800 }}>{rupees(Number(s.total ?? 0))}</Typography>
             </Box>
             {Number(s.billed) > 0 && (
               <Alert severity="info">
-                {s.billed} of {charges.length} lines are already on a bill and can no longer be removed here.
+                {s.billed} of {charges.length} lines are already on the patient's invoice and can no longer be removed here.
               </Alert>
             )}
           </Stack>
         )}
       </Section>
 
-      <Section
-        title="Price it from what the case knows"
-        description="Builds the standard lines from the team recorded, the theatre time actually used, and the implants entered. Leave a rate blank to skip that line. Running this twice adds nothing."
-        footer={
-          <Button variant="contained" size="large" sx={{ textTransform: "none", fontWeight: 700 }}
-            disabled={auto.isPending} onClick={() => auto.mutate()}>
-            {auto.isPending ? "Pricing…" : "Build the standard lines"}
-          </Button>
-        }
-      >
-        <Grid container spacing={2.5}>
-          {RATE_FIELDS.map(([k, label]) => {
-            const std = standard[k];
-            const edited = rates[k] !== undefined && (!std || rates[k] !== String(std.price));
-            return (
-              <Grid size={{ xs: 6, md: 4 }} key={k}>
-                <TextField fullWidth size="small" label={label} value={rates[k] ?? (std ? String(std.price) : "")}
-                  onChange={(e) => setRates({ ...rates, [k]: std && e.target.value === String(std.price) ? undefined : e.target.value })}
-                  helperText={std ? (edited ? `Changed for this case (standard ₹${std.price})` : `Standard rate: ${std.itemName}`) : `No standard rate - item code ${RATE_CODE[k]}`} />
-              </Grid>
-            );
-          })}
-        </Grid>
-      </Section>
+      {billedCase ? (
+        <Alert severity="info" sx={{ mb: 2.5 }}>
+          This case is already on the patient's invoice. Anything more is charged on the patient's bill in Billing.
+        </Alert>
+      ) : (
+        <>
+          <Section
+            title="Ready to add"
+            description="Priced from the Schedule of Charges. Change a price for this case, or untick a line to leave it off."
+            footer={lines.length > 0 ? (
+              <Button variant="contained" size="large" sx={{ textTransform: "none", fontWeight: 700 }}
+                disabled={apply.isPending || picked.length === 0 || unpriced.length > 0} onClick={() => apply.mutate()}>
+                {apply.isPending ? "Adding…" : `Add ${picked.length} line${picked.length === 1 ? "" : "s"} to the bill`}
+              </Button>
+            ) : undefined}
+          >
+            {proposedQ.isLoading ? <ListSkeleton /> : (
+              <Stack spacing={1.25}>
+                {lines.length === 0 && (
+                  <Empty>Nothing more to add - every line this case can have is on the bill.</Empty>
+                )}
+                {lines.map((l) => {
+                  const on = !skip[l.key];
+                  const price = priceOf(l);
+                  const changed = l.unitPrice != null && price !== "" && Number(price) !== l.unitPrice;
+                  const note = l.priceFrom === "NONE"
+                    ? "No standard rate - enter a price"
+                    : changed ? `Changed for this case (standard ${rupees(l.unitPrice!)})`
+                    : l.priceFrom === "IMPLANT" ? "Price recorded with the implant"
+                    : l.hours != null && l.hourlyRate != null ? `${l.hours} hours × ${rupees(l.hourlyRate)} - standard rate`
+                    : "Standard rate";
+                  return (
+                    <RowCard key={l.key}>
+                      <Checkbox checked={on} onChange={(e) => setSkip({ ...skip, [l.key]: !e.target.checked })}
+                        inputProps={{ "aria-label": `Add ${l.description}` }} />
+                      <Box sx={{ flex: 1, minWidth: 0, opacity: on ? 1 : 0.5 }}>
+                        <Typography variant="body2" sx={{ fontWeight: 700 }}>{l.description}</Typography>
+                        <Typography variant="caption" sx={{ color: l.priceFrom === "NONE" && on && price === "" ? "warning.main" : "text.secondary", display: "block" }}>
+                          {l.label} · {note}
+                          {l.quantity > 1 ? ` · ${l.quantity} × the price` : ""}
+                          {l.taxPercent > 0 ? ` · ${l.taxPercent}% tax` : ""}
+                        </Typography>
+                      </Box>
+                      <TextField size="small" label={l.quantity > 1 ? "Each (₹)" : "Price (₹)"} value={price} disabled={!on}
+                        onChange={(e) => setTyped({ ...typed, [l.key]: e.target.value })}
+                        error={on && (price.trim() === "" || Number.isNaN(Number(price)))}
+                        sx={{ width: 130 }} inputProps={{ inputMode: "decimal" }} />
+                    </RowCard>
+                  );
+                })}
 
-      <Section
-        title="Add a line by hand"
-        footer={
-          <Button variant="contained" size="large" startIcon={<AddRounded />} sx={{ textTransform: "none", fontWeight: 700 }}
-            disabled={!f.description.trim() || add.isPending} onClick={() => add.mutate()}>
-            Add the line
-          </Button>
-        }
-      >
-        <Grid container spacing={2.5}>
-          <Grid size={{ xs: 12, sm: 4 }}>
-            <TextField select fullWidth label="Type" value={f.chargeType} onChange={(e) => setF({ ...f, chargeType: e.target.value })}>
-              {CHARGE_TYPES.map((c) => <MenuItem key={c.value} value={c.value}>{c.label}</MenuItem>)}
-            </TextField>
-          </Grid>
-          <Grid size={{ xs: 12, sm: 8 }}>
-            <TextField fullWidth required label="Description" value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} />
-          </Grid>
-          <Grid size={{ xs: 4 }}><TextField fullWidth label="Price" value={f.unitPrice} onChange={(e) => setF({ ...f, unitPrice: e.target.value })} /></Grid>
-          <Grid size={{ xs: 4 }}><TextField fullWidth type="number" label="Quantity" value={f.quantity} onChange={(e) => setF({ ...f, quantity: e.target.value })} /></Grid>
-          <Grid size={{ xs: 4 }}>
-            <TextField fullWidth label="Tax %" value={f.taxPercent} onChange={(e) => setF({ ...f, taxPercent: e.target.value })}
-              helperText="Charged on top" />
-          </Grid>
-        </Grid>
-      </Section>
+                {missing.length > 0 && (
+                  <Box sx={{ pt: lines.length ? 1 : 0 }}>
+                    <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 700, display: "block", mb: 1 }}>
+                      Not ready yet
+                    </Typography>
+                    <Stack spacing={1}>
+                      {missing.map((m) => (
+                        <Box key={m.chargeType} sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
+                          <Typography variant="body2" sx={{ flex: 1, minWidth: 200 }}>
+                            <b>{m.label}</b>: {m.reason}{m.optional ? " (only if one was there)" : ""}
+                          </Typography>
+                          {onGoTo ? (
+                            <Button size="small" variant="outlined" sx={{ textTransform: "none" }} onClick={() => onGoTo(FIX_TAB[m.fix])}>
+                              {FIX_TEXT[m.fix]}
+                            </Button>
+                          ) : (
+                            <Typography variant="caption" sx={{ color: "text.secondary" }}>The theatre team records this</Typography>
+                          )}
+                        </Box>
+                      ))}
+                    </Stack>
+                  </Box>
+                )}
+              </Stack>
+            )}
+          </Section>
+
+          <Section
+            title="Add a line by hand"
+            description="For anything not listed above: consumables, theatre drugs, a technician's fee."
+            footer={
+              <Button variant="contained" size="large" startIcon={<AddRounded />} sx={{ textTransform: "none", fontWeight: 700 }}
+                disabled={!f.description.trim() || add.isPending} onClick={() => add.mutate()}>
+                Add the line
+              </Button>
+            }
+          >
+            <Grid container spacing={2.5}>
+              <Grid size={{ xs: 12, sm: 4 }}>
+                <TextField select fullWidth label="Type" value={f.chargeType} onChange={(e) => setF({ ...f, chargeType: e.target.value })}>
+                  {CHARGE_TYPES.map((c) => <MenuItem key={c.value} value={c.value}>{c.label}</MenuItem>)}
+                </TextField>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 8 }}>
+                <TextField fullWidth required label="Description" value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} />
+              </Grid>
+              <Grid size={{ xs: 4 }}><TextField fullWidth label="Price" value={f.unitPrice} onChange={(e) => setF({ ...f, unitPrice: e.target.value })} /></Grid>
+              <Grid size={{ xs: 4 }}><TextField fullWidth type="number" label="Quantity" value={f.quantity} onChange={(e) => setF({ ...f, quantity: e.target.value })} /></Grid>
+              <Grid size={{ xs: 4 }}>
+                <TextField fullWidth label="Tax %" value={f.taxPercent} onChange={(e) => setF({ ...f, taxPercent: e.target.value })}
+                  helperText="Charged on top" />
+              </Grid>
+            </Grid>
+          </Section>
+        </>
+      )}
     </>
   );
 }

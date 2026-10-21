@@ -691,8 +691,8 @@ function BookCaseDialog({ date, theatreId, onClose, onDone }: {
             label="Emergency - added out of order, and may already have happened"
           />
 
-          <TextField label="Price" fullWidth value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })}
-            helperText="Leave blank to price it from the schedule of charges later" />
+          <TextField label="Package price (optional)" fullWidth value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })}
+            helperText="One price for the whole case. Used only if the case has no lines on its Bill tab" />
           <TextField label="Notes" fullWidth multiline minRows={2} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
         </Stack>
       </DialogContent>

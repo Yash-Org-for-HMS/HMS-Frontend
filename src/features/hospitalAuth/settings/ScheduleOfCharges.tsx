@@ -45,6 +45,10 @@ const inr = formatINRAuto;
 
 type Category = { chargeCategoryId: string; categoryName: string; categoryCode: string; parentId: string | null; description: string | null; iconName: string | null; sortOrder: number; isActive: boolean; _count?: { items: number } };
 type RoomPrice = { roomClassId: string; price: number | string };
+/** The theatre rates the theatre bill finds by code (backend OT_RATE_CODES). */
+const THEATRE_CODES = ["OT-SURGEON", "OT-ASSISTANT", "OT-ANAESTHETIST", "OT-THEATRE-HOUR", "OT-ANAESTHESIA", "OT-RECOVERY"];
+const isTheatreCode = (code?: string | null) => !!code && THEATRE_CODES.includes(code.trim().toUpperCase());
+
 type Item = { chargeItemId: string; chargeCategoryId: string; itemName: string; itemCode: string | null; price: number | string; taxPercent: number | string; hsnCode?: string | null; unit: string | null; isActive: boolean; itemType?: string; roomPrices?: RoomPrice[];
   /** Prices a branch charges instead of the group's (roomClassId "" = its base). */
   branchPrices?: { branchId: string; roomClassId: string; price: number | string }[] };
@@ -375,6 +379,11 @@ export default function ScheduleOfCharges() {
                             {/* A div, not a paragraph: the type chips inside it are divs. */}
                             <Typography component="div" sx={{ fontWeight: 600, fontSize: "0.875rem" }}>
                               {it.itemName}
+                              {isTheatreCode(it.itemCode) && (
+                                <Tooltip title="The theatre bill prices this line from here. Change the price freely; the code is fixed.">
+                                  <Chip label="Theatre rate" size="small" sx={{ ml: 0.75, height: 17, fontSize: "0.625rem", fontWeight: 700, bgcolor: `${ACCENT}14`, color: ACCENT }} />
+                                </Tooltip>
+                              )}
                               {it.itemType === "RADIOLOGY" && <Chip label="Radiology" size="small" sx={{ ml: 0.75, height: 17, fontSize: "0.625rem", fontWeight: 700, bgcolor: `${ACCENT}14`, color: ACCENT }} />}
                               {it.itemType === "LAB" && <Chip label="Lab" size="small" sx={{ ml: 0.75, height: 17, fontSize: "0.625rem", fontWeight: 700, bgcolor: "rgba(16,185,129,0.14)", color: "success.main" }} />}
                             </Typography>
@@ -874,7 +883,9 @@ function ItemDialog({ mode, item, categoryId, categoryCode, categoryName, roomCl
             <MenuItem value="OT">Theatre charge</MenuItem>
           </TextField>
           <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-            <TextField label="Code (optional)" value={code} onChange={(e) => setCode(e.target.value)} fullWidth />
+            <TextField label="Code (optional)" value={code} onChange={(e) => setCode(e.target.value)} fullWidth
+              disabled={isTheatreCode(item?.itemCode)}
+              helperText={isTheatreCode(item?.itemCode) ? "A theatre rate - the theatre bill finds it by this code" : undefined} />
             <TextField label="Unit (optional)" placeholder="e.g. per day" value={unit} onChange={(e) => setUnit(e.target.value)} fullWidth />
           </Stack>
           <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
