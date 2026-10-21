@@ -12,7 +12,7 @@ import {
 } from "@mui/material";
 import {
   LocalHotelRounded, SearchRounded, SwapHorizRounded, LogoutRounded, MoreVertRounded,
-  CancelRounded, SavingsRounded, UndoRounded, LocalShippingRounded,
+  CancelRounded, SavingsRounded, UndoRounded, LocalShippingRounded, ReceiptLongRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import ErrorState from "@/components/ErrorState";
@@ -358,6 +358,14 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
                           <Tooltip title="Transfer bed"><IconButton size="small" onClick={() => setTransferFor(a)} sx={{ color: "text.secondary", "&:hover": { color: BRAND.action } }}><SwapHorizRounded fontSize="small" /></IconButton></Tooltip>
                           <Tooltip title="Discharge"><IconButton size="small" onClick={() => setDischargeFor(a)} sx={{ color: "text.secondary", "&:hover": { color: SEMANTIC.danger } }}><LogoutRounded fontSize="small" /></IconButton></Tooltip>
                         </>
+                      )}
+                      {/* An advance kept aside at discharge (an insured stay's, until the payer
+                          settles): put it toward what the bill still owes. The server caps it at
+                          the smaller of the advance and the bill's balance. */}
+                      {!readOnly && a.status === "DISCHARGED" && Number(a.depositBalance) > 0 && (
+                        <Tooltip title={`Use the deposit (${inr(a.depositBalance)}) on the discharge bill - pays what the bill still owes`}>
+                          <IconButton size="small" onClick={() => act(a, "apply-deposit", "Deposit used on the bill")} sx={{ color: "#8b5cf6", "&:hover": { color: "#7c3aed" } }}><ReceiptLongRounded fontSize="small" /></IconButton>
+                        </Tooltip>
                       )}
                       {!readOnly && Number(a.depositBalance) > 0 && (
                         <Tooltip title={`Refund deposit (${inr(a.depositBalance)})`}>

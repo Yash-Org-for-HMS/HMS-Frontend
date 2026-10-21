@@ -102,9 +102,13 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
   const taxTotal = pendingTax + extras.reduce((s, e) => s + lineAmount(e) * ((e.taxPercent || 0) / 100), 0);
   const total = bedCharge + nursingCharge + pendingTotal + extrasTotal + taxTotal;
   const deposit = Number(detail?.depositBalance || 0);
-  const depositApplied = Math.min(deposit, total);
+  // With a claim still open the advance is kept aside, not put on the bill: the
+  // payer is claimed the whole bill, and the advance is used on what it leaves
+  // (from the admissions list) once it settles. The server decides the same way.
+  const claimOpen = !!claim && !["SETTLED", "CLOSED", "REJECTED", "PREAUTH_REJECTED"].includes(String(claim.status ?? ""));
+  const depositApplied = claimOpen ? 0 : Math.min(deposit, total);
   const payable = Math.max(0, total - depositApplied);
-  const depositRefundable = Math.max(0, deposit - depositApplied);
+  const depositRefundable = claimOpen ? 0 : Math.max(0, deposit - depositApplied);
   // What the patient must cover after insurance approval (shortfall).
   const patientShortfall = claim ? Math.max(0, total - claimApproved) : null;
   // How far the bill runs past the policy's cover, when the desk entered one.
@@ -323,10 +327,16 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
                 <Typography variant="body2" sx={{ color: "text.secondary" }}>Deposit held</Typography>
                 <Typography variant="body2" sx={{ fontWeight: 700, color: BRAND.action }}>{formatINR(deposit)}</Typography>
               </Box>
-              <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-                <Typography variant="body2" sx={{ color: "text.secondary" }}>Deposit applied</Typography>
-                <Typography variant="body2" sx={{ fontWeight: 700, color: "#8b5cf6" }}>- {formatINR(depositApplied)}</Typography>
-              </Box>
+              {claimOpen ? (
+                <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>
+                  Kept aside for the insurance claim, not taken off the bill. Once the payer settles, use it on what is left from the admissions list, and refund the rest.
+                </Typography>
+              ) : (
+                <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                  <Typography variant="body2" sx={{ color: "text.secondary" }}>Deposit applied</Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 700, color: "#8b5cf6" }}>- {formatINR(depositApplied)}</Typography>
+                </Box>
+              )}
             </>
           )}
           <Box sx={{ display: "flex", justifyContent: "space-between", pt: 0.5, borderTop: deposit > 0 ? "1px dashed" : "none", borderColor: "divider" }}>
