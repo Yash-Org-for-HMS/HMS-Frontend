@@ -449,7 +449,17 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
           <DialogActions sx={{ p: 2 }}>
             <Button color="inherit" onClick={() => setApplyFor(null)} disabled={applying}>Cancel</Button>
             <Button variant="contained" disabled={applying}
-              onClick={async () => { setApplying(true); try { await act(applyFor, "apply-deposit", "Deposit used on the bill"); } finally { setApplying(false); setApplyFor(null); } }}>
+              onClick={async () => {
+                setApplying(true);
+                try {
+                  const r = await axiosInstance.post(`/ipd/admissions/${applyFor.admissionId}/apply-deposit`, {});
+                  const d = r.data?.data;
+                  toast.success(`${inr(d?.applied)} of the deposit used on bill ${d?.invoiceNumber ?? ""}`.trim() + (Number(d?.depositBalance) > 0 ? ` - ${inr(d.depositBalance)} still held to refund` : ""));
+                  refetch();
+                } catch (err: unknown) {
+                  toast.error(getApiErrorMessage(err, "Couldn't use the deposit"));
+                } finally { setApplying(false); setApplyFor(null); }
+              }}>
               {applying ? "Using…" : "Use deposit"}
             </Button>
           </DialogActions>
