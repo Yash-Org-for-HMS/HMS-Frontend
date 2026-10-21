@@ -175,6 +175,9 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
     }
   };
   const [payerFor, setPayerFor] = useState<AdmissionRow | null>(null);
+  // "Use deposit on bill" asks first: it moves money onto the bill.
+  const [applyFor, setApplyFor] = useState<AdmissionRow | null>(null);
+  const [applying, setApplying] = useState(false);
 
   const cancel = async (row: AdmissionRow) => {
     setMenu({ anchor: null, row: null });
@@ -364,7 +367,7 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
                           the smaller of the advance and the bill's balance. */}
                       {!readOnly && a.status === "DISCHARGED" && Number(a.depositBalance) > 0 && (
                         <Tooltip title={`Use the deposit (${inr(a.depositBalance)}) on the discharge bill - pays what the bill still owes`}>
-                          <IconButton size="small" onClick={() => act(a, "apply-deposit", "Deposit used on the bill")} sx={{ color: "#8b5cf6", "&:hover": { color: "#7c3aed" } }}><ReceiptLongRounded fontSize="small" /></IconButton>
+                          <IconButton size="small" onClick={() => setApplyFor(a)} sx={{ color: "#8b5cf6", "&:hover": { color: "#7c3aed" } }}><ReceiptLongRounded fontSize="small" /></IconButton>
                         </Tooltip>
                       )}
                       {!readOnly && Number(a.depositBalance) > 0 && (
@@ -432,6 +435,26 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
       {transferFor && <TransferDialog open admission={transferFor} onClose={() => setTransferFor(null)} onDone={() => { setTransferFor(null); refetch(); }} />}
       {branchTransferFor && <BranchTransferDialog admission={branchTransferFor} onClose={() => setBranchTransferFor(null)} onDone={() => { setBranchTransferFor(null); refetch(); }} />}
       {dischargeFor && <DischargeDialog open admissionId={dischargeFor.admissionId} onClose={() => setDischargeFor(null)} onDone={() => { setDischargeFor(null); refetch(); }} />}
+      {applyFor && (
+        <Dialog open onClose={applying ? undefined : () => setApplyFor(null)} maxWidth="xs" fullWidth>
+          <DialogTitle>Use the deposit on the bill?</DialogTitle>
+          <DialogContent dividers>
+            <Typography variant="body2" sx={{ mb: 1.5 }}>
+              {applyFor.patientName} has {inr(applyFor.depositBalance)} of deposit held.
+            </Typography>
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>
+              It pays what the discharge bill still owes, up to the deposit - never more than the bill. Anything left stays held and can then be refunded.
+            </Typography>
+          </DialogContent>
+          <DialogActions sx={{ p: 2 }}>
+            <Button color="inherit" onClick={() => setApplyFor(null)} disabled={applying}>Cancel</Button>
+            <Button variant="contained" disabled={applying}
+              onClick={async () => { setApplying(true); try { await act(applyFor, "apply-deposit", "Deposit used on the bill"); } finally { setApplying(false); setApplyFor(null); } }}>
+              {applying ? "Using…" : "Use deposit"}
+            </Button>
+          </DialogActions>
+        </Dialog>
+      )}
       {depositFor && <DepositDialog open mode={depositFor.mode} admission={depositFor.row} onClose={() => setDepositFor(null)} onDone={() => { setDepositFor(null); refetch(); }} />}
     </Box>
   );
