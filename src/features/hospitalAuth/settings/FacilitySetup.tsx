@@ -620,6 +620,7 @@ function BulkBedsDialog({ wards, roomClasses, options, onClose, onDone }: { ward
   const [prefix, setPrefix] = useState("");
   const [typeId, setTypeId] = useState("");
   const [roomClassId, setRoomClassId] = useState("");
+  const [isTemporary, setIsTemporary] = useState(false);
   const ward = wards.find((w) => w.wardId === wardId);
   const room = ward?.rooms.find((r) => r.roomId === roomId);
   const n = Math.max(0, Math.min(100, Number(count) || 0));
@@ -634,7 +635,7 @@ function BulkBedsDialog({ wards, roomClasses, options, onClose, onDone }: { ward
   const save = async () => {
     setSaving(true);
     try {
-      const r = await axiosInstance.post("/ipd/beds/bulk", { roomId, count: n, startNumber: first, prefix: prefix || undefined, hospitalBedTypeId: typeId, roomClassId: roomClassId || undefined });
+      const r = await axiosInstance.post("/ipd/beds/bulk", { roomId, count: n, startNumber: first, prefix: prefix || undefined, hospitalBedTypeId: typeId, roomClassId: roomClassId || undefined, isTemporary });
       toast.success(`${r.data.data.created} beds added to room ${room?.roomNumber}`);
       onDone();
     } catch (e) {
@@ -663,6 +664,7 @@ function BulkBedsDialog({ wards, roomClasses, options, onClose, onDone }: { ward
             <MenuItem value=""><em>None (base price)</em></MenuItem>
             {roomClasses.filter((rc) => rc.isActive).map((rc) => <MenuItem key={rc.roomClassId} value={rc.roomClassId}>{rc.name}</MenuItem>)}
           </TextField>
+          <FormControlLabel control={<Switch checked={isTemporary} onChange={(e) => setIsTemporary(e.target.checked)} />} label="Temporary (surge) beds" />
           {preview && <Alert severity="info" icon={<InfoOutlined fontSize="small" />}>Bed codes: <strong>{preview}</strong></Alert>}
         </Stack>
       </DialogContent>

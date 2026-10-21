@@ -14,7 +14,6 @@ import {
   TextField,
   Button,
   Grid,
-  MenuItem,
   Switch,
   FormControlLabel,
 } from "@mui/material";
@@ -222,33 +221,15 @@ export default function HospitalSettings() {
 
         <Box sx={{ p: 4 }}>
 
-          {/* Localization Tab */}
+          {/* Localization Tab - one language, one timezone and one currency for
+              now (the server clock is pinned to IST), so shown, not chosen. */}
           <CustomTabPanel value={tabValue} index={0}>
             <Grid container spacing={3}>
               <Grid size={{ xs: 12, md: 4 }}>
-                <TextField
-                  fullWidth
-                  select
-                  label="Language"
-                  name="languageCode"
-                  value={formData.languageCode}
-                  onChange={handleChange}
-                >
-                  <MenuItem value="en">English (US)</MenuItem>
-                  <MenuItem value="es">Spanish</MenuItem>
-                  <MenuItem value="hi">Hindi</MenuItem>
-                  <MenuItem value="fr">French</MenuItem>
-                </TextField>
+                <TextField fullWidth label="Language" value="English" disabled helperText="Fixed for now" />
               </Grid>
               <Grid size={{ xs: 12, md: 4 }}>
-                <TextField
-                  fullWidth
-                  label="Timezone"
-                  name="timezone"
-                  value={formData.timezone}
-                  onChange={handleChange}
-                  placeholder="e.g. Asia/Kolkata"
-                />
+                <TextField fullWidth label="Timezone" value="India Standard Time (Asia/Kolkata)" disabled helperText="Fixed for now" />
               </Grid>
             </Grid>
           </CustomTabPanel>
@@ -268,8 +249,8 @@ export default function HospitalSettings() {
                   </Grid>
                   <Grid size={{ xs: 12, md: 4 }}>
                     <FormControlLabel
-                      control={<Switch checked={formData.emailEnabled} onChange={handleChange} name="emailEnabled" color="primary" />}
-                      label="Email Notifications"
+                      control={<Switch checked={false} disabled name="emailEnabled" color="primary" />}
+                      label="Email Notifications (coming soon)"
                       sx={{ color: "text.primary" }}
                     />
                   </Grid>
@@ -289,14 +270,7 @@ export default function HospitalSettings() {
           <CustomTabPanel value={tabValue} index={2}>
             <Grid container spacing={3}>
               <Grid size={{ xs: 12, md: 4 }}>
-                <TextField
-                  fullWidth
-                  label="Currency Code"
-                  name="currencyCode"
-                  value={formData.currencyCode}
-                  onChange={handleChange}
-                  placeholder="e.g. USD, INR"
-                />
+                <TextField fullWidth label="Currency" value="INR (₹)" disabled helperText="Fixed for now" />
               </Grid>
               <Grid size={{ xs: 12 }}>
                 <Typography variant="subtitle2" sx={{ color: "text.secondary", mt: 2, mb: 2 }}>Payment Strategy</Typography>

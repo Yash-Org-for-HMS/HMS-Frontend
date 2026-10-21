@@ -24,7 +24,7 @@ async function loadSocCatalog(): Promise<Record<string, CatalogEntry[]>> {
   if (!_socCatalog) _socCatalog = (await import("./socCatalog")).SOC_CATALOG;
   return _socCatalog;
 }
-import { MenuItem, Menu } from "@mui/material";
+import { MenuItem, Menu, Alert } from "@mui/material";
 import { axiosInstance } from "@/api/axios";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import { hasRole } from "@/constants/roles";
@@ -401,7 +401,7 @@ export default function ScheduleOfCharges() {
                           <TableCell align="center" sx={{ whiteSpace: "nowrap" }}>
                             {it.itemType === "LAB" && <Tooltip title="Lab structure (single / profile parameters)"><IconButton size="small" onClick={() => setStructureItem(it)}><ScienceRounded fontSize="small" sx={{ color: "success.main" }} /></IconButton></Tooltip>}
                             <Tooltip title="Price history"><IconButton size="small" onClick={() => setHistoryItem(it)}><HistoryRounded fontSize="small" /></IconButton></Tooltip>
-                            {showBranchPrices && <Tooltip title="Branch exceptions - a different price at one branch"><IconButton size="small" onClick={() => setBranchPriceItem(it)}><ApartmentRounded fontSize="small" /></IconButton></Tooltip>}
+                            {showBranchPrices && it.itemType !== "BED" && <Tooltip title="Branch exceptions - a different price at one branch"><IconButton size="small" onClick={() => setBranchPriceItem(it)}><ApartmentRounded fontSize="small" /></IconButton></Tooltip>}
                             {canEdit && <Tooltip title={multiBranch ? "Edit prices (all branches)" : "Edit"}><IconButton size="small" onClick={() => setItemDialog({ mode: "edit", item: it })}><EditRounded fontSize="small" /></IconButton></Tooltip>}
                             {canEdit && <Tooltip title="Delete"><IconButton size="small" onClick={() => deleteItem(it)}><DeleteRounded fontSize="small" sx={{ color: "error.main" }} /></IconButton></Tooltip>}
                           </TableCell>
@@ -796,6 +796,8 @@ function ItemDialog({ mode, item, categoryId, categoryCode, categoryName, roomCl
   const [unit, setUnit] = useState(item?.unit ?? "");
   const [isActive, setIsActive] = useState(item?.isActive ?? true);
   const [itemType, setItemType] = useState(item?.itemType ?? "GENERAL");
+  // Room rent is priced in Ward & bed setup → Bed tariffs; here only its name and code change.
+  const roomRent = item?.itemType === "BED";
   // Per-room-class prices keyed by roomClassId (blank = use the base price).
   const [roomPrices, setRoomPrices] = useState<Record<string, string>>(() => {
     const m: Record<string, string> = {};
@@ -812,12 +814,14 @@ function ItemDialog({ mode, item, categoryId, categoryCode, categoryName, roomCl
       const roomPricesArr = Object.entries(roomPrices)
         .filter(([, v]) => v !== "" && Number(v) >= 0 && Number.isFinite(Number(v)))
         .map(([roomClassId, v]) => ({ roomClassId, price: Number(v) }));
-      const body = {
-        itemName: name.trim(), itemCode: code.trim() || undefined,
-        price: Number(price), taxPercent: tax === "" ? undefined : Number(tax),
-        hsnCode: hsn.trim() || undefined,
-        unit: unit.trim() || undefined, isActive, itemType, roomPrices: roomPricesArr,
-      };
+      const body = roomRent
+        ? { itemName: name.trim(), itemCode: code.trim() || undefined, hsnCode: hsn.trim() || undefined, unit: unit.trim() || undefined }
+        : {
+          itemName: name.trim(), itemCode: code.trim() || undefined,
+          price: Number(price), taxPercent: tax === "" ? undefined : Number(tax),
+          hsnCode: hsn.trim() || undefined,
+          unit: unit.trim() || undefined, isActive, itemType, roomPrices: roomPricesArr,
+        };
       if (mode === "add") {
         await axiosInstance.post("/hospital/soc/items", { chargeCategoryId: categoryId, ...body });
         toast.success("Charge added");
@@ -854,7 +858,8 @@ function ItemDialog({ mode, item, categoryId, categoryCode, categoryName, roomCl
             }}
             renderInput={(params) => <TextField {...params} label="Charge / procedure name" placeholder={catalog.length ? "Type or pick a predefined name…" : ""} autoFocus />}
           />
-          <TextField select label="Type" value={itemType} onChange={(e) => setItemType(e.target.value)} fullWidth
+          {roomRent && <Alert severity="info">The room rent's prices are set in <strong>Ward &amp; bed setup → Bed tariffs</strong>, which is what bills use. Only the name and code are edited here.</Alert>}
+          <TextField select label="Type" value={itemType} onChange={(e) => setItemType(e.target.value)} fullWidth disabled={roomRent}
             helperText={itemType === "RADIOLOGY" ? "Appears in the radiology order pickers; radiology orders price from this charge."
               : itemType === "LAB" ? "Appears in the lab order pickers; lab orders price from this charge."
               : itemType === "BED" ? "The daily room rent. Set a price per room class below - each bed's daily charge is filled from it. Billed automatically per stay day (not pickable as an extra charge)."
@@ -864,7 +869,7 @@ function ItemDialog({ mode, item, categoryId, categoryCode, categoryName, roomCl
             <MenuItem value="GENERAL">General charge</MenuItem>
             <MenuItem value="RADIOLOGY">Radiology test</MenuItem>
             <MenuItem value="LAB">Lab test</MenuItem>
-            <MenuItem value="BED">Room rent (per day)</MenuItem>
+            {roomRent && <MenuItem value="BED">Room rent (per day)</MenuItem>}
             <MenuItem value="PROCEDURE">Surgical procedure</MenuItem>
             <MenuItem value="OT">Theatre charge</MenuItem>
           </TextField>
@@ -873,10 +878,10 @@ function ItemDialog({ mode, item, categoryId, categoryCode, categoryName, roomCl
             <TextField label="Unit (optional)" placeholder="e.g. per day" value={unit} onChange={(e) => setUnit(e.target.value)} fullWidth />
           </Stack>
           <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-            <TextField label="OPD price (₹)" type="number" value={price} onChange={(e) => setPrice(e.target.value)} fullWidth
+            <TextField label="OPD price (₹)" type="number" value={price} onChange={(e) => setPrice(e.target.value)} fullWidth disabled={roomRent}
               helperText="Outpatient rate · IPD fallback"
               InputProps={{ startAdornment: <InputAdornment position="start">₹</InputAdornment> }} />
-            <TextField label="Tax % (optional)" type="number" value={tax} onChange={(e) => setTax(e.target.value)} fullWidth
+            <TextField label="Tax % (optional)" type="number" value={tax} onChange={(e) => setTax(e.target.value)} fullWidth disabled={roomRent}
               inputProps={{ min: 0, max: 100 }}
               helperText="0 / blank = GST-exempt" />
             <TextField label="HSN/SAC (optional)" value={hsn} onChange={(e) => setHsn(e.target.value)} fullWidth
@@ -892,7 +897,7 @@ function ItemDialog({ mode, item, categoryId, categoryCode, categoryName, roomCl
               <Stack spacing={1.5}>
                 {roomClasses.map((rc) => (
                   <TextField
-                    key={rc.roomClassId} size="small" type="number" label={rc.name} fullWidth
+                    key={rc.roomClassId} size="small" type="number" label={rc.name} fullWidth disabled={roomRent}
                     value={roomPrices[rc.roomClassId] ?? ""}
                     onChange={(e) => setRoomPrices((m) => ({ ...m, [rc.roomClassId]: e.target.value }))}
                     placeholder={`OPD ₹${price || "0"}`}
@@ -903,7 +908,7 @@ function ItemDialog({ mode, item, categoryId, categoryCode, categoryName, roomCl
             </Box>
           )}
 
-          <FormControlLabel control={<Switch checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />} label="Active" />
+          <FormControlLabel control={<Switch checked={isActive} disabled={roomRent} onChange={(e) => setIsActive(e.target.checked)} />} label="Active" />
         </Stack>
       </DialogContent>
       <DialogActions sx={{ p: 2 }}>
