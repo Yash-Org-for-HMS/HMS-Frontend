@@ -429,7 +429,9 @@ function AddItemDialog({ onClose, onDone }: { onClose: () => void; onDone: () =>
     mutationFn: () => axiosInstance.post("/pharmacy/ward-stock/items", {
       ...(picked?.kind === "CHARGE" ? { chargeItemId: picked.id } : { medicineId: picked?.id }),
       stockUnit: unit.trim() || undefined,
-      billsToPatient,
+      // A medicine is floor stock by rule (the server refuses otherwise): a drug
+      // that bills goes through the in-patient medication chart.
+      billsToPatient: picked?.kind === "MED" ? false : billsToPatient,
     }),
     onSuccess: () => { toast.success(`${picked?.name} is now ward stock`); onDone(); onClose(); },
     onError: (e) => toast.error(getApiErrorMessage(e)),
@@ -486,10 +488,16 @@ function AddItemDialog({ onClose, onDone }: { onClose: () => void; onDone: () =>
               placeholder="pair, pack, vial"
               helperText="What the WARD counts - the catalogue unit is often something else entirely."
             />
-            <FormControlLabel
-              control={<Switch checked={billsToPatient} onChange={(e) => setBillsToPatient(e.target.checked)} />}
-              label={billsToPatient ? "Billed to the patient who uses it" : "Floor stock - absorbed, never billed"}
-            />
+            {picked.kind === "MED" ? (
+              <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                A medicine kept on the ward is floor stock - used from the cupboard, never billed. To bill a drug to a patient, order it on the patient's medication chart.
+              </Typography>
+            ) : (
+              <FormControlLabel
+                control={<Switch checked={billsToPatient} onChange={(e) => setBillsToPatient(e.target.checked)} />}
+                label={billsToPatient ? "Billed to the patient who uses it" : "Floor stock - absorbed, never billed"}
+              />
+            )}
           </>
         )}
       </DialogContent>
