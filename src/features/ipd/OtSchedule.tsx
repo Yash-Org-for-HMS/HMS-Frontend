@@ -22,6 +22,7 @@ import SearchableSelect from "@/components/form/SearchableSelect";
 import PageHeader from "@/components/layout/PageHeader";
 import { PatientHistoryDialog } from "@/components/clinical/PatientHistoryButton";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import SocChargePicker from "@/components/billing/SocChargePicker";
 
 /**
  * Tomorrow's operating list.
@@ -268,6 +269,7 @@ export default function OtSchedule({ readOnly = false }: { readOnly?: boolean } 
   const lists: TheatreList[] = data?.lists ?? [];
   const emergencies: OtCase[] = data?.emergencies ?? [];
   const unassigned: OtCase[] = data?.unassigned ?? [];
+  const overdue: OtCase[] = data?.overdue ?? [];
   const s = data?.summary ?? { total: 0, scheduled: 0, inProgress: 0, completed: 0, cancelled: 0, emergencies: 0 };
 
   // Passed rather than closed over, so CaseRow can live at module scope and
@@ -325,6 +327,32 @@ export default function OtSchedule({ readOnly = false }: { readOnly?: boolean } 
           />
         </Paper>
       ) : (
+        <>
+        {/* Left unfinished on an earlier day: shown whatever day is open, since
+            each still holds its patient's discharge until finished or cancelled. */}
+        {overdue.length > 0 && (
+          <Paper elevation={0} sx={{ p: 2, mb: 2, borderRadius: 3, border: "1px solid", borderColor: SEMANTIC.danger }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
+              <WarningAmberRounded sx={{ color: SEMANTIC.danger, fontSize: 20 }} />
+              <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                Not finished from earlier days ({overdue.length})
+              </Typography>
+            </Box>
+            <Typography variant="body2" sx={{ color: "text.secondary", mb: 1.5 }}>
+              Finish or cancel each from its menu - an admitted patient cannot be discharged while one is open.
+            </Typography>
+            <Grid container spacing={1}>
+              {overdue.map((c) => (
+                <Grid key={c.surgeryId} size={{ xs: 12, md: 6, lg: 4 }}>
+                  <Typography variant="caption" sx={{ color: SEMANTIC.danger, fontWeight: 700 }}>
+                    {c.scheduledStart ? new Date(c.scheduledStart).toLocaleDateString("en-IN", { day: "numeric", month: "short" }) : "Undated"}
+                  </Typography>
+                  <CaseRow c={c} showTheatre {...rowProps} />
+                </Grid>
+              ))}
+            </Grid>
+          </Paper>
+        )}
         <Grid container spacing={2}>
           {lists.map((l) => {
             // A cancelled case still belongs on the sheet - it is why the slot
@@ -381,6 +409,7 @@ export default function OtSchedule({ readOnly = false }: { readOnly?: boolean } 
             </Grid>
           )}
         </Grid>
+        </>
       )}
 
       <Menu anchorEl={menu.anchor} open={Boolean(menu.anchor)} onClose={() => setMenu({ anchor: null, row: null })}>
@@ -460,6 +489,9 @@ function BookCaseDialog({ date, theatreId, onClose, onDone }: {
     isEmergency: false, price: "", notes: "",
     assistant: null as TeamPick, anaesthetist: null as TeamPick,
   });
+  // The package price can come from the Schedule of Charges rather than be typed.
+  const [socOpen, setSocOpen] = useState(false);
+  const [socPicked, setSocPicked] = useState<{ itemName: string; price: number; taxPercent: number } | null>(null);
 
   // Doctors AND nursing/technical staff, readable by any ward user.
   const { data: teamOpts } = useQuery({
@@ -691,8 +723,26 @@ function BookCaseDialog({ date, theatreId, onClose, onDone }: {
             label="Emergency - added out of order, and may already have happened"
           />
 
-          <TextField label="Package price (optional)" fullWidth value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })}
-            helperText="One price for the whole case. Used only if the case has no lines on its Bill tab" />
+          <Box sx={{ display: "flex", gap: 1, alignItems: "flex-start" }}>
+            <TextField label="Package price (optional)" fullWidth value={form.price}
+              onChange={(e) => { setForm({ ...form, price: e.target.value }); setSocPicked(null); }}
+              helperText={socPicked
+                ? `From the Schedule of Charges: ${socPicked.itemName}${socPicked.taxPercent > 0 ? " - a package price is billed without GST; add it as a line on the Bill tab to keep the GST" : ""}`
+                : "One price for the whole case. Used only if the case has no lines on its Bill tab"} />
+            <Button variant="outlined" onClick={() => setSocOpen(true)} sx={{ textTransform: "none", whiteSpace: "nowrap", mt: 1 }}>
+              From Schedule of Charges
+            </Button>
+          </Box>
+          <SocChargePicker
+            open={socOpen}
+            onClose={() => setSocOpen(false)}
+            preferCategories={["procedure", "surgery", "operation", "package", "theatre"]}
+            onPick={(c) => {
+              setForm((prev) => ({ ...prev, price: String(c.price), procedureName: prev.procedureName.trim() ? prev.procedureName : c.itemName }));
+              setSocPicked({ itemName: c.itemName, price: c.price, taxPercent: c.taxPercent });
+              setSocOpen(false);
+            }}
+          />
           <TextField label="Notes" fullWidth multiline minRows={2} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
         </Stack>
       </DialogContent>

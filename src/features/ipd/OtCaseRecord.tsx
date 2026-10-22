@@ -22,6 +22,7 @@ import { useToast } from "@/providers/ToastContext";
 import PageHeader from "@/components/layout/PageHeader";
 import SearchableSelect from "@/components/form/SearchableSelect";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import SocChargePicker from "@/components/billing/SocChargePicker";
 
 /**
  * One case, during the case.
@@ -443,6 +444,10 @@ export function BillingTab({ id, onGoTo }: { id: string; onGoTo?: (tab: number) 
   // The printed OT bill opens under this panel (hospital or reception).
   const panelBase = usePanelBase();
   const [f, setF] = useState({ chargeType: "OTHER", description: "", unitPrice: "", quantity: "1", taxPercent: "0" });
+  // A hand line picked from the Schedule of Charges: the server prices it from
+  // the item (with its GST) unless the price is changed here.
+  const [socOpen, setSocOpen] = useState(false);
+  const [socItem, setSocItem] = useState<{ chargeItemId: string; price: number } | null>(null);
   // Lines unticked, and prices typed for this case, by line key.
   const [skip, setSkip] = useState<Record<string, boolean>>({});
   const [typed, setTyped] = useState<Record<string, string>>({});
@@ -460,11 +465,12 @@ export function BillingTab({ id, onGoTo }: { id: string; onGoTo?: (tab: number) 
   const add = useMutation({
     mutationFn: async () => axiosInstance.post(`/ipd/ot/cases/${id}/charges`, {
       chargeType: f.chargeType, description: f.description.trim(),
-      unitPrice: f.unitPrice ? Number(f.unitPrice) : 0,
       quantity: Number(f.quantity) || 1,
-      taxPercent: f.taxPercent ? Number(f.taxPercent) : 0,
+      ...(socItem && Number(f.unitPrice) === socItem.price
+        ? { chargeItemId: socItem.chargeItemId }
+        : { unitPrice: f.unitPrice ? Number(f.unitPrice) : 0, taxPercent: f.taxPercent ? Number(f.taxPercent) : 0 }),
     }),
-    onSuccess: () => { toast.success("Line added"); setF({ ...f, description: "", unitPrice: "" }); refreshAll(); },
+    onSuccess: () => { toast.success("Line added"); setF({ ...f, description: "", unitPrice: "", taxPercent: "0" }); setSocItem(null); refreshAll(); },
     onError: (e) => toast.error(getApiErrorMessage(e, "Could not add the line")),
   });
   const remove = useMutation({
@@ -646,12 +652,17 @@ export function BillingTab({ id, onGoTo }: { id: string; onGoTo?: (tab: number) 
 
           <Section
             title="Add a line by hand"
-            description="For anything not listed above: consumables, theatre drugs, a technician's fee."
+            description="For anything not listed above: the procedure itself, consumables, theatre drugs, a technician's fee."
             footer={
-              <Button variant="contained" size="large" startIcon={<AddRounded />} sx={{ textTransform: "none", fontWeight: 700 }}
-                disabled={!f.description.trim() || add.isPending} onClick={() => add.mutate()}>
-                Add the line
-              </Button>
+              <Stack direction="row" spacing={1}>
+                <Button variant="outlined" size="large" sx={{ textTransform: "none", fontWeight: 700 }} onClick={() => setSocOpen(true)}>
+                  From Schedule of Charges
+                </Button>
+                <Button variant="contained" size="large" startIcon={<AddRounded />} sx={{ textTransform: "none", fontWeight: 700 }}
+                  disabled={!f.description.trim() || add.isPending} onClick={() => add.mutate()}>
+                  Add the line
+                </Button>
+              </Stack>
             }
           >
             <Grid container spacing={2.5}>
@@ -667,9 +678,19 @@ export function BillingTab({ id, onGoTo }: { id: string; onGoTo?: (tab: number) 
               <Grid size={{ xs: 4 }}><TextField fullWidth type="number" label="Quantity" value={f.quantity} onChange={(e) => setF({ ...f, quantity: e.target.value })} /></Grid>
               <Grid size={{ xs: 4 }}>
                 <TextField fullWidth label="Tax %" value={f.taxPercent} onChange={(e) => setF({ ...f, taxPercent: e.target.value })}
-                  helperText="Charged on top" />
+                  helperText={socItem && Number(f.unitPrice) === socItem.price ? "From the Schedule of Charges item" : "Charged on top"} />
               </Grid>
             </Grid>
+            <SocChargePicker
+              open={socOpen}
+              onClose={() => setSocOpen(false)}
+              preferCategories={["procedure", "surgery", "operation", "theatre", "consumable"]}
+              onPick={(c) => {
+                setF((prev) => ({ ...prev, description: c.itemName, unitPrice: String(c.price), taxPercent: String(c.taxPercent) }));
+                setSocItem({ chargeItemId: c.chargeItemId, price: c.price });
+                setSocOpen(false);
+              }}
+            />
           </Section>
         </>
       )}
