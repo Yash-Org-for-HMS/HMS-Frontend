@@ -60,6 +60,8 @@ import { useServerSort } from "@/components/table/useTableSort";
 import SortableHeadCell from "@/components/table/SortableHeadCell";
 
 import type { Patient as PatientBase } from "@/types";
+import { useHospitalAuth } from "@/providers/HospitalAuthContext";
+import { canWrite } from "@/constants/roles";
 import { SEMANTIC, BRAND } from "@/styles/accents";
 
 interface Patient extends PatientBase {
@@ -88,6 +90,16 @@ interface Meta {
 // Operations area mounts it read-only so an admin can see the registry without
 // being bounced into the reception panel. Defaults keep reception fully editable.
 export default function PatientsList({ basePath = "/reception", readOnly = false }: { basePath?: string; readOnly?: boolean } = {}) {
+  // Each action only for a login the server lets do it: billing, the TPA desk
+  // and MRD open this list but do not register, book or admit.
+  const { user } = useHospitalAuth();
+  const may = (method: string, path: string) => !readOnly && canWrite(user, method, path);
+  const canRegister = may("POST", "/api/reception/patients");
+  const canEdit = may("PUT", "/api/reception/patients/x");
+  const canDelete = may("DELETE", "/api/reception/patients/x");
+  const canBook = may("POST", "/api/reception/appointments");
+  const canBill = may("POST", "/api/billing/invoices/x");
+  const canAdmit = may("POST", "/api/ipd/admissions");
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const toast = useToast();
@@ -172,7 +184,7 @@ export default function PatientsList({ basePath = "/reception", readOnly = false
           title="Patient Search & Registry"
           subtitle={`${meta.total} patient${meta.total !== 1 ? "s" : ""} registered`}
           actions={
-            readOnly ? undefined : (
+            !canRegister ? undefined : (
             <Button
               variant="contained"
               startIcon={<PersonAddRounded />}
@@ -299,7 +311,7 @@ export default function PatientsList({ basePath = "/reception", readOnly = false
                         title={search ? "No matches" : "No patients yet"}
                         subtitle={search ? "No patients found matching your search." : "No patients registered yet."}
                       />
-                      {!search && !readOnly && (
+                      {!search && canRegister && (
                         <Button
                           variant="contained"
                           startIcon={<PersonAddRounded />}
@@ -407,21 +419,21 @@ export default function PatientsList({ basePath = "/reception", readOnly = false
                       </TableCell>
                       {/* Actions - primary quick-actions + overflow menu */}
                       <TableCell align="right" sx={{ borderBottom: "1px solid", borderColor: "divider", py: 1.5, whiteSpace: "nowrap" }} onClick={(e) => e.stopPropagation()}>
-                        {!readOnly && <Tooltip title="Book appointment">
+                        {canBook && <Tooltip title="Book appointment">
                           <IconButton size="small"
                             onClick={(e) => { e.stopPropagation(); navigate(`/reception/appointments/new?patientId=${patient.patientId}`); }}
                             sx={{ color: "text.secondary", "&:hover": { color: SEMANTIC.info, bgcolor: "rgba(59,130,246,0.08)" } }}>
                             <CalendarMonthRounded fontSize="small" />
                           </IconButton>
                         </Tooltip>}
-                        {!readOnly && <Tooltip title="Bill / collect payment">
+                        {canBill && <Tooltip title="Bill / collect payment">
                           <IconButton size="small"
                             onClick={(e) => { e.stopPropagation(); navigate(`/reception/billing?patientId=${patient.patientId}`); }}
                             sx={{ color: "text.secondary", "&:hover": { color: SEMANTIC.warning, bgcolor: "rgba(245,158,11,0.08)" } }}>
                             <ReceiptLongRounded fontSize="small" />
                           </IconButton>
                         </Tooltip>}
-                        {!readOnly && <Tooltip title="Admit (IPD)">
+                        {canAdmit && <Tooltip title="Admit (IPD)">
                           <IconButton size="small"
                             onClick={(e) => { e.stopPropagation(); setAdmitPatient(patient); }}
                             sx={{ color: "text.secondary", "&:hover": { color: BRAND.action, bgcolor: "rgba(8,145,178,0.08)" } }}>
@@ -524,12 +536,12 @@ export default function PatientsList({ basePath = "/reception", readOnly = false
           <ListItemIcon><ContentCopyRounded fontSize="small" /></ListItemIcon>
           <ListItemText>Copy UHID</ListItemText>
         </MenuItem>
-        {!readOnly && <Divider />}
-        {!readOnly && <MenuItem onClick={() => { const p = menu.patient!; setMenu({ anchor: null, patient: null }); navigate(`/reception/patients/${p.patientId}/edit`); }}>
+        {(canEdit || canDelete) && <Divider />}
+        {canEdit && <MenuItem onClick={() => { const p = menu.patient!; setMenu({ anchor: null, patient: null }); navigate(`/reception/patients/${p.patientId}/edit`); }}>
           <ListItemIcon><EditRounded fontSize="small" /></ListItemIcon>
           <ListItemText>Edit patient</ListItemText>
         </MenuItem>}
-        {!readOnly && <MenuItem onClick={() => { const p = menu.patient!; setMenu({ anchor: null, patient: null }); setDeleteDialog({ open: true, patient: p }); }} sx={{ color: SEMANTIC.danger }}>
+        {canDelete && <MenuItem onClick={() => { const p = menu.patient!; setMenu({ anchor: null, patient: null }); setDeleteDialog({ open: true, patient: p }); }} sx={{ color: SEMANTIC.danger }}>
           <ListItemIcon><DeleteRounded fontSize="small" sx={{ color: SEMANTIC.danger }} /></ListItemIcon>
           <ListItemText>Delete</ListItemText>
         </MenuItem>}
