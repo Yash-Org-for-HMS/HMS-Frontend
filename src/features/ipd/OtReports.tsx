@@ -480,7 +480,8 @@ function Revenue({ d }: { d: Any }) {
   return (
     <>
       <Grid container spacing={2} sx={{ mb: 2 }}>
-        <Grid size={{ xs: 12, md: 4 }}><Tile label="Itemised theatre revenue" value={inr(val(d, ["itemisedTotal"]) as string)} color={SEMANTIC.success} /></Grid>
+        <Grid size={{ xs: 12, md: 4 }}><Tile label="Theatre revenue (finished cases, before GST)" value={inr(val(d, ["itemisedTotal"]) as string)} color={SEMANTIC.success} /></Grid>
+        <Grid size={{ xs: 12, md: 4 }}><Tile label="GST charged on top" value={inr(val(d, ["gst"]) as string)} color={SEMANTIC.info} /></Grid>
       </Grid>
 
       {Number(notItemised?.cases ?? 0) > 0 && (
