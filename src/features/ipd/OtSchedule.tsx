@@ -23,6 +23,8 @@ import PageHeader from "@/components/layout/PageHeader";
 import { PatientHistoryDialog } from "@/components/clinical/PatientHistoryButton";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import SocChargePicker from "@/components/billing/SocChargePicker";
+import { useHospitalAuth } from "@/providers/HospitalAuthContext";
+import { heldRoles } from "@/constants/roles";
 
 /**
  * Tomorrow's operating list.
@@ -233,7 +235,11 @@ function CaseRow({ c, showTheatre = false, readOnly, onOpen, onMenu }: {
   );
 }
 
-export default function OtSchedule({ readOnly = false }: { readOnly?: boolean } = {}) {
+export default function OtSchedule({ readOnly: readOnlyProp = false }: { readOnly?: boolean } = {}) {
+  // Billing opens the list to price cases, not to book, move or finish them.
+  const { user } = useHospitalAuth();
+  const roles = heldRoles(user);
+  const readOnly = readOnlyProp || (roles.length > 0 && roles.every((r) => r === "BILLING"));
   const toast = useToast();
   const qc = useQueryClient();
   const navigate = useNavigate();
