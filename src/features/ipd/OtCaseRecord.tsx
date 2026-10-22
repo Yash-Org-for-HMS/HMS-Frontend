@@ -499,9 +499,18 @@ export function BillingTab({ id, onGoTo }: { id: string; onGoTo?: (tab: number) 
   const s = data?.summary ?? {};
   const billedCase = !!proposedQ.data?.billed;
 
+  // Where these charges go: there is no separate theatre bill.
+  const kase = (data?.case ?? {}) as { billedOn?: string; invoiceNumber?: string | null; invoiceAmount?: string | null; invoiceStatus?: string | null; admissionNumber?: string | null; status?: string };
+  const destination = kase.billedOn === "INVOICE"
+    ? { severity: "success" as const, text: `Billed on invoice ${kase.invoiceNumber}${kase.admissionNumber ? " - the patient's discharge bill" : ""} (${rupees(Number(kase.invoiceAmount ?? 0))} in all, ${String(kase.invoiceStatus ?? "").toLowerCase()}). Find it in Billing under the patient.` }
+    : kase.billedOn === "DISCHARGE"
+      ? { severity: "info" as const, text: `These charges go on the patient's discharge bill${kase.admissionNumber ? ` for stay ${kase.admissionNumber}` : ""}, together with the room, medicines and tests. Mark the case finished on the OT list before discharge.` }
+      : { severity: "info" as const, text: "A day case: an invoice for these charges is raised when the case is marked finished on the OT list. It then shows in Billing under the patient." };
+
   return (
     <>
-      <Section title="On the bill">
+      <Alert severity={destination.severity} sx={{ mb: 2.5 }}>{destination.text}</Alert>
+      <Section title="Charges for this case">
         {charges.length === 0 ? (
           <Empty>
             No lines yet.{s.flatPrice
@@ -558,7 +567,7 @@ export function BillingTab({ id, onGoTo }: { id: string; onGoTo?: (tab: number) 
             footer={lines.length > 0 ? (
               <Button variant="contained" size="large" sx={{ textTransform: "none", fontWeight: 700 }}
                 disabled={apply.isPending || picked.length === 0 || unpriced.length > 0} onClick={() => apply.mutate()}>
-                {apply.isPending ? "Adding…" : `Add ${picked.length} line${picked.length === 1 ? "" : "s"} to the bill`}
+                {apply.isPending ? "Adding…" : `Add ${picked.length} line${picked.length === 1 ? "" : "s"} to the charges`}
               </Button>
             ) : undefined}
           >
