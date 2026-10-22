@@ -8,7 +8,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Box, Typography, Paper, Grid, Chip, Tabs, Tab, Button, Stack, MenuItem,
   TextField, Checkbox, FormControlLabel, IconButton, Alert, Dialog, DialogTitle,
-  DialogContent, DialogActions, Divider, Collapse,
+  DialogContent, DialogActions, Divider, Collapse, Autocomplete,
 } from "@mui/material";
 import PatientHistoryButton from "@/components/clinical/PatientHistoryButton";
 import {
@@ -21,6 +21,7 @@ import { ListSkeleton } from "@/components/TableRowsSkeleton";
 import { useToast } from "@/providers/ToastContext";
 import PageHeader from "@/components/layout/PageHeader";
 import SearchableSelect from "@/components/form/SearchableSelect";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 
 /**
  * One case, during the case.
@@ -385,6 +386,7 @@ export default function OtCaseRecord() {
           <AnaesthesiaTab id={id} record={recordQ.data?.record} onSaved={refreshAll} show="form" />
           <ProcedureTab id={id} record={recordQ.data?.record} onSaved={refreshAll} />
           <ImplantsTab id={id} implants={recordQ.data?.implants ?? []} onSaved={refreshAll} />
+          <ConsumablesTab id={id} consumables={recordQ.data?.consumables ?? []} onSaved={refreshAll} />
         </>
       )}
 
@@ -415,7 +417,7 @@ export default function OtCaseRecord() {
 type Proposal = {
   key: string; chargeType: string; label: string; description: string; who: string | null;
   quantity: number; unitPrice: number | null; taxPercent: number;
-  priceFrom: "STANDARD" | "TYPED" | "IMPLANT" | "NONE"; hourlyRate?: number; hours?: number;
+  priceFrom: "STANDARD" | "TYPED" | "IMPLANT" | "NONE"; hourlyRate?: number; hours?: number; fromNurse?: boolean;
 };
 /** A line the case cannot have yet, and the part of the record that fixes it. */
 type MissingLine = { chargeType: string; label: string; reason: string; fix: "team" | "times" | "anaesthesia"; optional: boolean };
@@ -570,9 +572,10 @@ export function BillingTab({ id, onGoTo }: { id: string; onGoTo?: (tab: number) 
                   const price = priceOf(l);
                   const changed = l.unitPrice != null && price !== "" && Number(price) !== l.unitPrice;
                   const note = l.priceFrom === "NONE"
-                    ? "No standard rate - enter a price"
+                    ? (l.fromNurse ? "Recorded as used in theatre - enter a price" : "No standard rate - enter a price")
                     : changed ? `Changed for this case (standard ${rupees(l.unitPrice!)})`
                     : l.priceFrom === "IMPLANT" ? "Price recorded with the implant"
+                    : l.fromNurse ? "Recorded as used in theatre - standard rate"
                     : l.hours != null && l.hourlyRate != null ? `${l.hours} hours × ${rupees(l.hourlyRate)} - standard rate`
                     : "Standard rate";
                   return (
@@ -1475,6 +1478,126 @@ function ImplantsTab({ id, implants, onSaved }: { id: string; implants: Record<s
           <Grid size={{ xs: 12, sm: 6 }}><TextField fullWidth label="Serial number" value={f.serialNumber} onChange={(e) => setF({ ...f, serialNumber: e.target.value })} /></Grid>
           <Grid size={{ xs: 6, sm: 3 }}><TextField fullWidth type="number" label="Quantity" value={f.quantity} onChange={(e) => setF({ ...f, quantity: e.target.value })} /></Grid>
           <Grid size={{ xs: 6, sm: 3 }}><TextField fullWidth label="Price" value={f.price} onChange={(e) => setF({ ...f, price: e.target.value })} /></Grid>
+        </Grid>
+      </Section>
+    </>
+  );
+}
+
+// ── Consumables ──────────────────────────────────────────────────────────────
+
+type CatalogItem = { chargeItemId: string; itemName: string; isActive?: boolean; category?: { categoryName: string } | null };
+
+/**
+ * What was used in theatre, as the nurse counts it - sutures, drapes, theatre
+ * drugs. No prices here: picked from the Schedule of Charges, an item is priced
+ * from there on the Bill tab; typed by name, whoever bills the case prices it.
+ */
+function ConsumablesTab({ id, consumables, onSaved }: { id: string; consumables: Record<string, string | number | boolean | null>[]; onSaved: () => void }) {
+  const toast = useToast();
+  const [picked, setPicked] = useState<CatalogItem | string | null>(null);
+  const [text, setText] = useState("");
+  const [quantity, setQuantity] = useState("1");
+  const term = useDebouncedValue(text.trim());
+
+  const options = useQuery({
+    queryKey: ["soc-search", term],
+    queryFn: async () => ((await axiosInstance.get("/hospital/soc/search", { params: { q: term } })).data.data?.items ?? []) as CatalogItem[],
+    enabled: term.length >= 2,
+    staleTime: 60_000,
+  });
+
+  const add = useMutation({
+    mutationFn: async () => {
+      const qty = Number(quantity) || 1;
+      if (picked && typeof picked === "object") return axiosInstance.post(`/ipd/ot/cases/${id}/consumables`, { chargeItemId: picked.chargeItemId, quantity: qty });
+      return axiosInstance.post(`/ipd/ot/cases/${id}/consumables`, { itemName: (typeof picked === "string" ? picked : text).trim(), quantity: qty });
+    },
+    onSuccess: () => {
+      toast.success("Recorded");
+      setPicked(null); setText(""); setQuantity("1");
+      onSaved();
+    },
+    onError: (e) => toast.error(getApiErrorMessage(e, "Could not record it")),
+  });
+  const remove = useMutation({
+    mutationFn: async (consumableId: string) => axiosInstance.delete(`/ipd/ot/cases/${id}/consumables/${consumableId}`),
+    onSuccess: () => { toast.success("Removed"); onSaved(); },
+    onError: (e) => toast.error(getApiErrorMessage(e, "Could not remove it")),
+  });
+
+  const name = picked && typeof picked === "object" ? picked.itemName : (typeof picked === "string" ? picked : text);
+
+  return (
+    <>
+      <Section title="Consumables used" description="Sutures, drapes, theatre drugs - what was used and how many. Billing prices them.">
+        {consumables.length === 0 ? (
+          <Empty>None recorded.</Empty>
+        ) : (
+          <Stack spacing={1.25}>
+            {consumables.map((c) => (
+              <RowCard key={String(c.surgeryConsumableId)}>
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                    {String(c.itemName)} {Number(c.quantity) > 1 ? `× ${c.quantity}` : ""}
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>
+                    {c.chargeItemId ? "From the Schedule of Charges" : "Typed by name - billing sets its price"}
+                    {c.onBill ? " · on the bill" : ""}
+                  </Typography>
+                </Box>
+                {!c.onBill && (
+                  <IconButton size="small" onClick={() => remove.mutate(String(c.surgeryConsumableId))} aria-label="Remove item">
+                    <DeleteOutlineRounded fontSize="small" />
+                  </IconButton>
+                )}
+              </RowCard>
+            ))}
+          </Stack>
+        )}
+      </Section>
+
+      <Section
+        title="Record a consumable"
+        footer={
+          <Button variant="contained" size="large" startIcon={<AddRounded />} sx={{ textTransform: "none", fontWeight: 700 }}
+            disabled={!name.trim() || add.isPending} onClick={() => add.mutate()}>
+            Record it
+          </Button>
+        }
+      >
+        <Grid container spacing={2.5}>
+          <Grid size={{ xs: 12, sm: 9 }}>
+            <Autocomplete
+              freeSolo
+              options={(options.data ?? []).filter((o) => o.isActive !== false)}
+              value={picked}
+              inputValue={text}
+              onInputChange={(_e, v) => setText(v)}
+              onChange={(_e, v) => setPicked(v)}
+              filterOptions={(o) => o}
+              loading={options.isFetching}
+              getOptionLabel={(o) => (typeof o === "string" ? o : o.itemName)}
+              isOptionEqualToValue={(a, b) => typeof a !== "string" && typeof b !== "string" && a.chargeItemId === b.chargeItemId}
+              renderOption={(props, o) => (
+                <li {...props} key={typeof o === "string" ? o : o.chargeItemId}>
+                  <Box>
+                    <Typography variant="body2">{typeof o === "string" ? o : o.itemName}</Typography>
+                    {typeof o !== "string" && o.category?.categoryName && (
+                      <Typography variant="caption" sx={{ color: "text.secondary" }}>{o.category.categoryName}</Typography>
+                    )}
+                  </Box>
+                </li>
+              )}
+              renderInput={(params) => (
+                <TextField {...params} required label="Item"
+                  helperText="Search the Schedule of Charges, or type a name if it is not there" />
+              )}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 3 }}>
+            <TextField fullWidth type="number" label="How many" value={quantity} onChange={(e) => setQuantity(e.target.value)} inputProps={{ min: 1 }} />
+          </Grid>
         </Grid>
       </Section>
     </>
