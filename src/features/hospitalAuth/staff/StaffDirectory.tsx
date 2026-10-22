@@ -26,7 +26,7 @@ import type { StaffRow, StaffListResponse, StaffOptions } from "./staff.types";
 import { STATUS_LABEL, ROLE_IN_DEPT_LABEL } from "./staff.types";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import { hasRole } from "@/constants/roles";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 
 /**
  * Everyone who works at the hospital - with a login or without - with their
@@ -48,7 +48,7 @@ const CELL_SX = { borderBottom: "1px solid", borderColor: "divider", px: 1.5 };
 
 function GiveLoginDialog({ row, options, onClose, onDone }: {
   row: StaffRow; options: StaffOptions; onClose: () => void;
-  onDone: (credentials: { email: string; temporaryPassword: string }) => void;
+  onDone: (credentials: { email: string; temporaryPassword: string }, doctorId: string | null) => void;
 }) {
   const toast = useToast();
   const guess: Record<string, string> = { DOCTOR: "DOCTOR", NURSE: "NURSE", PHARMACIST: "PHARMACIST", TECHNICIAN: "LAB_TECH" };
@@ -60,7 +60,7 @@ function GiveLoginDialog({ row, options, onClose, onDone }: {
     setSaving(true);
     try {
       const res = await axiosInstance.post(`/hospital/staff/${row.staffId}/account`, { email: email.trim(), roleId, ...(password ? { initialPassword: password } : {}) });
-      onDone(res.data.credentials);
+      onDone(res.data.credentials, res.data.doctorId ?? null);
     } catch (err) {
       toast.error(getApiErrorMessage(err, "Couldn't create the login"));
     } finally {
@@ -106,7 +106,14 @@ export default function StaffDirectory() {
   // "Add staff member" on Logins & roles lands here (?add=login): the one place
   // a person is added, with their login already ticked.
   const [searchParams, setSearchParams] = useSearchParams();
-  const addWithLogin = searchParams.get("add") === "login";
+  // "Add Doctor" on the Doctors page lands here too (?add=doctor), as a doctor
+  // with a login; once saved, the doctor profile opens for fees and registration.
+  const addWithLogin = searchParams.get("add") === "login" || searchParams.get("add") === "doctor";
+  const addCategory = searchParams.get("add") === "doctor" ? "DOCTOR" : "";
+  const navigate = useNavigate();
+  // A new doctor's profile, opened once their login details have been shown.
+  const [doctorNext, setDoctorNext] = useState<string | null>(null);
+  const openDoctor = (doctorId: string) => navigate(`/hospital/doctors/${doctorId}/edit?setup=1`);
   // "Change in the Staff Directory" on the organisation chart opens that person here (?edit=).
   const editId = searchParams.get("edit");
   const [loginFor, setLoginFor] = useState<StaffRow | null>(null);
@@ -340,13 +347,17 @@ export default function StaffDirectory() {
           options={options}
           canGiveLogin={canGiveLogins}
           startWithLogin={!dialog && addWithLogin}
+          startCategory={!dialog ? addCategory : ""}
           onClose={closeDialog}
-          onSaved={({ row, warnings, credentials }) => {
+          onSaved={({ row, warnings, credentials, doctorId }) => {
             closeDialog();
             refresh();
             toast.success(openDialog.row ? "Saved" : `${row.name} added`);
             if (warnings.length) toast.warning(warnings.map((w) => w.message).join(" · "));
             if (credentials) setCred({ email: credentials.email, password: credentials.temporaryPassword, name: row.name });
+            if (!openDialog.row && doctorId) {
+              if (credentials) setDoctorNext(doctorId); else openDoctor(doctorId);
+            }
           }}
         />
       )}
@@ -355,8 +366,9 @@ export default function StaffDirectory() {
           row={loginFor}
           options={options}
           onClose={() => setLoginFor(null)}
-          onDone={(c) => {
+          onDone={(c, doctorId) => {
             setCred({ email: c.email, password: c.temporaryPassword, name: loginFor.name });
+            if (doctorId) setDoctorNext(doctorId);
             setLoginFor(null);
             refresh();
           }}
@@ -369,7 +381,10 @@ export default function StaffDirectory() {
         password={cred?.password ?? ""}
         name={cred?.name}
         note="They will be asked to change this password when they first sign in. Share it securely."
-        onClose={() => setCred(null)}
+        onClose={() => {
+          setCred(null);
+          if (doctorNext) { setDoctorNext(null); openDoctor(doctorNext); }
+        }}
       />
     </>
   );

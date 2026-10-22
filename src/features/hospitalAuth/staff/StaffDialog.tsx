@@ -29,8 +29,10 @@ interface Props {
   canGiveLogin?: boolean;
   /** A new person, with "give them a login" already ticked (from Logins & roles). */
   startWithLogin?: boolean;
+  /** A category to start a new person in - "Add Doctor" on the Doctors page opens this form as DOCTOR. */
+  startCategory?: string;
   onClose: () => void;
-  onSaved: (result: { row: StaffRow; warnings: StaffIssue[]; credentials?: { email: string; temporaryPassword: string } }) => void;
+  onSaved: (result: { row: StaffRow; warnings: StaffIssue[]; credentials?: { email: string; temporaryPassword: string }; doctorId?: string | null }) => void;
 }
 
 interface Form {
@@ -61,12 +63,12 @@ const CONTACT_KEYS = [
 
 const day = (iso: string | null | undefined) => (iso ? String(iso).slice(0, 10) : "");
 
-function initialForm(row: StaffRow | null, options: StaffOptions, startWithLogin = false): Form {
+function initialForm(row: StaffRow | null, options: StaffOptions, startWithLogin = false, startCategory = ""): Form {
   const p = row?.posting;
   return {
     firstName: row?.firstName ?? "", lastName: row?.lastName ?? "", gender: row?.gender ?? "", dateOfBirth: day(row?.dateOfBirth),
     phone: row?.phone ?? "", email: row?.email ?? "", councilRegNo: row?.councilRegNo ?? "",
-    staffCategoryCode: row?.staffCategoryCode ?? "", hospitalDesignationId: row?.employment?.hospitalDesignationId ?? "",
+    staffCategoryCode: row?.staffCategoryCode ?? startCategory, hospitalDesignationId: row?.employment?.hospitalDesignationId ?? "",
     employmentTypeCode: row?.employment?.employmentTypeCode ?? "FULL_TIME",
     branchId: row?.employment?.branchId ?? (options.branches.length === 1 ? options.branches[0].branchId : ""),
     alsoWorksAt: (row?.worksAt ?? []).filter((w) => !w.isHome).map((w) => w.branchId),
@@ -80,7 +82,8 @@ function initialForm(row: StaffRow | null, options: StaffOptions, startWithLogin
     // new one starts from the suggestion.
     adminManagerId: row ? row.adminManager?.staffId ?? "" : undefined,
     functionalManagerId: row ? row.functionalManager?.staffId ?? "" : undefined,
-    giveLogin: !row && startWithLogin, loginEmail: "", loginRoleId: "", loginPassword: "",
+    giveLogin: !row && startWithLogin, loginEmail: "", loginPassword: "",
+    loginRoleId: !row && startCategory ? options.roles.find((r) => r.roleCode === DEFAULT_ROLE[startCategory])?.roleId ?? "" : "",
     ...Object.fromEntries(CONTACT_KEYS.map((k) => [k, row?.contact?.[k] ?? ""])) as Pick<Form, (typeof CONTACT_KEYS)[number]>,
   };
 }
@@ -101,10 +104,10 @@ function registrationLabel(council: string | null | undefined): string | null {
 /** The login role a category usually gets - a starting point the admin can change. */
 const DEFAULT_ROLE: Record<string, string> = { DOCTOR: "DOCTOR", NURSE: "NURSE", PHARMACIST: "PHARMACIST", TECHNICIAN: "LAB_TECH" };
 
-export default function StaffDialog({ row, options, onClose, onSaved, canGiveLogin = true, startWithLogin = false }: Props) {
+export default function StaffDialog({ row, options, onClose, onSaved, canGiveLogin = true, startWithLogin = false, startCategory = "" }: Props) {
   const toast = useToast();
   const isNew = !row;
-  const [f, setF] = useState<Form>(() => initialForm(row, options, startWithLogin && canGiveLogin));
+  const [f, setF] = useState<Form>(() => initialForm(row, options, startWithLogin && canGiveLogin, startCategory));
   const [saving, setSaving] = useState(false);
   const set = <K extends keyof Form>(k: K, v: Form[K]) => setF((prev) => ({ ...prev, [k]: v }));
   const onSelect = (k: keyof Form) => (e: { target: { value: unknown } }) => set(k, String(e.target.value ?? "") as never);
@@ -215,7 +218,7 @@ export default function StaffDialog({ row, options, onClose, onSaved, canGiveLog
       const res = isNew
         ? await axiosInstance.post("/hospital/staff", body)
         : await axiosInstance.put(`/hospital/staff/${row!.staffId}`, body);
-      onSaved({ row: res.data.data, warnings: res.data.warnings ?? [], credentials: res.data.credentials });
+      onSaved({ row: res.data.data, warnings: res.data.warnings ?? [], credentials: res.data.credentials, doctorId: res.data.doctorId });
     } catch (err) {
       toast.error(getApiErrorMessage(err, "Couldn't save this staff member"));
     } finally {

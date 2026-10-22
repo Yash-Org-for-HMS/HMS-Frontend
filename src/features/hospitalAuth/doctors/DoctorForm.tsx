@@ -14,11 +14,12 @@ import {
   Tab,
   Chip,
   Stack,
-  Autocomplete
+  Autocomplete,
+  Alert
 } from "@mui/material";
 import { SaveRounded, PersonRounded, LocalHospitalRounded, AccountTreeRounded } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { axiosInstance } from "@/api/axios";
 import ErrorState from "@/components/ErrorState";
 import { useToast } from "@/providers/ToastContext";
@@ -31,6 +32,9 @@ export default function DoctorForm() {
   const navigate = useNavigate();
   const { id } = useParams();
   const isEditing = Boolean(id);
+  // Arrived straight from adding them in the Staff Directory.
+  const [searchParams] = useSearchParams();
+  const justAdded = searchParams.get("setup") === "1";
 
   const [loading, setLoading] = useState(false);
   const toast = useToast();
@@ -235,6 +239,11 @@ export default function DoctorForm() {
           </Button>
         }
       />
+      {justAdded && (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          Finish setting up this doctor: registration number, specialisation, consultation fee and the branches they see patients at. Until there is a fee, they are booked at ₹0.
+        </Alert>
+      )}
 <Paper sx={{ bgcolor: "background.paper", backgroundImage: "none", borderRadius: 2, overflow: "hidden" }}>
         <Tabs
           value={tabIndex}

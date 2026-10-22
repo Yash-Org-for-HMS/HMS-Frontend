@@ -361,7 +361,8 @@ function App() {
             <Route path="/hospital/module-access" element={el(ModuleAccess)} />
             <Route path="/hospital/doctors" element={el(DoctorsList)} />
 
-            <Route path="/hospital/doctors/new" element={el(DoctorForm)} />
+            {/* One place to add a person: the Staff Directory, preset as a doctor. */}
+            <Route path="/hospital/doctors/new" element={<Navigate to="/hospital/staff?add=doctor" replace />} />
             <Route path="/hospital/doctors/:id/edit" element={el(DoctorForm)} />
             <Route path="/hospital/doctors/:id/schedule" element={el(DoctorSchedule)} />
             <Route path="/hospital/doctors/:id/leaves" element={el(DoctorLeaves)} />

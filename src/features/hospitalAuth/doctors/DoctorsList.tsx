@@ -86,7 +86,7 @@ export default function DoctorsList() {
                   variant="contained"
                   startIcon={<AddRounded />}
                   disabled={atLimit}
-                  onClick={() => navigate("/hospital/doctors/new")}
+                  onClick={() => navigate("/hospital/staff?add=doctor")}
                   sx={{ textTransform: "none", fontWeight: 600, px: 3 }}
                 >
                   Add Doctor
@@ -146,6 +146,12 @@ export default function DoctorsList() {
                   <TableRow key={doctor.doctorId} hover sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
                     <TableCell sx={{ borderBottom: "1px solid", borderColor: "divider", color: "text.primary", fontWeight: 500 }}>
                       Dr. {doctor.user?.firstName} {doctor.user?.lastName}
+                      {(!doctor.licenseNumber || !Number(doctor.consultationFee)) && (
+                        <Tooltip title={`Missing ${[!doctor.licenseNumber && "registration number", !Number(doctor.consultationFee) && "consultation fee"].filter(Boolean).join(" and ")}. Open the profile to finish it.`}>
+                          <Chip label="Profile incomplete" size="small" onClick={() => navigate(`/hospital/doctors/${doctor.doctorId}/edit?setup=1`)}
+                            sx={{ ml: 1, height: 20, fontSize: "0.6875rem", fontWeight: 700, bgcolor: "rgba(245,158,11,0.12)", color: "warning.main" }} />
+                        </Tooltip>
+                      )}
                       <Typography variant="caption" display="block" sx={{ color: "text.secondary" }}>
                         {doctor.user?.email}
                       </Typography>
