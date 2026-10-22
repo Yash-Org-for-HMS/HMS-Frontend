@@ -132,6 +132,9 @@ export default function StaffDialog({ row, options, onClose, onSaved, canGiveLog
     // A designation of the old category no longer fits.
     hospitalDesignationId: options.designations.some((d) => d.id === prev.hospitalDesignationId && d.staffCategoryCode === code) ? prev.hospitalDesignationId : "",
     loginRoleId: prev.loginRoleId || (options.roles.find((r) => r.roleCode === DEFAULT_ROLE[code])?.roleId ?? ""),
+    // A doctor's profile (fees, registration, schedule) hangs off their login,
+    // so a new doctor starts with one ticked.
+    ...(isNew && canGiveLogin && code === "DOCTOR" ? { giveLogin: true, loginEmail: prev.loginEmail || prev.email.trim() } : {}),
   }));
 
   // Suggested managers (workbook 14), for whatever the form says right now.
@@ -460,6 +463,11 @@ export default function StaffDialog({ row, options, onClose, onSaved, canGiveLog
             <Typography variant="caption" sx={{ color: "text.secondary", mt: -1.5 }}>
               Not everyone needs one - housekeeping, drivers and visiting staff are often on the list without logging in. You can add one later.
             </Typography>
+            {f.staffCategoryCode === "DOCTOR" && !f.giveLogin && (
+              <Alert severity="warning">
+                Without a login, a doctor is not on the Doctors page: no fees, registration or schedule, and they cannot be booked. Tick this, or give them a login later from the Staff Directory.
+              </Alert>
+            )}
             {f.giveLogin && (
               <Grid container spacing={2}>
                 <Grid size={{ xs: 12, sm: 7 }}>
