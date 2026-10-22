@@ -90,6 +90,7 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
   const pendingTotal = Number(detail?.pendingChargesTotal || 0);
   // Requested, not dispensed: shown but never added to the total.
   const awaitingPharmacy = detail?.awaitingPharmacy ?? [];
+  const theatreWarnings = detail?.theatreWarnings ?? [];
   const awaitingPharmacyTotal = Number(detail?.awaitingPharmacyTotal || 0);
   const extrasTotal = extras.reduce((s, e) => s + lineAmount(e), 0);
   // Per-line GST, from BOTH sources. Charges accrued during the stay carry
@@ -223,6 +224,22 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
               Left unsaid, though, a stay whose medicines are all still waiting
               looks exactly like a stay that had none - and discharging on that
               figure means the pharmacy's confirmation lands after the bill. */}
+          {/* A theatre case puts nothing on this bill until it is finished and
+              its charges are added on the case's Bill tab. Said here, before
+              the bill is made, not found afterwards. */}
+          {theatreWarnings.length > 0 && (
+            <Alert severity="warning" sx={{ borderRadius: 2 }}>
+              <Typography variant="body2" sx={{ fontWeight: 700, mb: 0.5 }}>
+                Theatre charges missing from this bill
+              </Typography>
+              <Stack spacing={0.25}>
+                {theatreWarnings.map((w) => (
+                  <Typography key={w.surgeryId} variant="body2">{w.message}</Typography>
+                ))}
+              </Stack>
+            </Alert>
+          )}
+
           {awaitingPharmacy.length > 0 && (
             <Alert severity="warning" sx={{ borderRadius: 2 }}>
               <Typography variant="body2" sx={{ fontWeight: 700, mb: 0.5 }}>

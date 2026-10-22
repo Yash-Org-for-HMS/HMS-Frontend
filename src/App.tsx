@@ -105,6 +105,7 @@ const TheatreBoard = lazy(() => import("@/features/ipd/TheatreBoard"));
 const OtSchedule = lazy(() => import("@/features/ipd/OtSchedule"));
 const OtCaseRecord = lazy(() => import("@/features/ipd/OtCaseRecord"));
 const OtCaseBilling = lazy(() => import("@/features/ipd/OtCaseBilling"));
+const OtBillPrint = lazy(() => import("@/features/ipd/OtBillPrint"));
 const OtReports = lazy(() => import("@/features/ipd/OtReports"));
 const QueueDashboard = lazy(() => import("@/features/reception/QueueDashboard"));
 const Billing = lazy(() => import("@/features/billing/Billing"));
@@ -393,6 +394,8 @@ function App() {
             <Route path="/hospital/billing" element={elGated(Billing, "Billing", "Billing Overview", { readOnly: true })} />
             {/* Add more hospital routes here as they are built */}
           </Route>
+          {/* Full-page printables, rendered outside the layout shell. */}
+          <Route path="/hospital/ipd/ot-cases/:id/bill/print" element={el(OtBillPrint)} />
         </Route>
 
         {/* ── Reception Panel Routes ─────────────────────── */}
@@ -437,6 +440,7 @@ function App() {
           </Route>
           {/* Full-page printables, rendered outside the layout shell. */}
           <Route path="/reception/billing/invoices/:invoiceId/ip-bill/print" element={el(PrintIpBill)} />
+          <Route path="/reception/ipd/ot-cases/:id/bill/print" element={el(OtBillPrint)} />
           <Route path="/reception/consent-forms/:id/print" element={el(PrintConsentForm)} />
           <Route path="/reception/mrd/certificates/:id/print" element={el(PrintCertificate)} />
         </Route>

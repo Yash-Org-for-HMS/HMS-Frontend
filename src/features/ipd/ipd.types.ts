@@ -110,6 +110,8 @@ export interface AdmissionDetail extends AdmissionRow {
    */
   awaitingPharmacy?: { ipMedOrderId: string; medicineName: string | null; quantity: number | null; totalPrice: Money; orderedAt?: string }[];
   awaitingPharmacyTotal?: Money;
+  /** Theatre cases that will put nothing on this bill: not finished, or no charges added. */
+  theatreWarnings?: { surgeryId: string; procedureName: string; problem: "NOT_FINISHED" | "NO_CHARGES"; message: string }[];
   roomClassId?: string | null;
   roomClassName?: string | null;
   deposits?: { entryType: string; amount: Money; createdAt?: string }[];

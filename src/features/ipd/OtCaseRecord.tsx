@@ -13,7 +13,7 @@ import {
 import PatientHistoryButton from "@/components/clinical/PatientHistoryButton";
 import {
   ArrowBackRounded, CheckCircleRounded, RadioButtonUncheckedRounded, DeleteOutlineRounded,
-  AddRounded, WarningAmberRounded, ScheduleRounded, PersonRounded, DescriptionRounded,
+  AddRounded, WarningAmberRounded, ScheduleRounded, PersonRounded, DescriptionRounded, PrintRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import ErrorState from "@/components/ErrorState";
@@ -440,6 +440,8 @@ const rupees = (n: number) => `₹${n.toLocaleString("en-IN")}`;
  */
 export function BillingTab({ id, onGoTo }: { id: string; onGoTo?: (tab: number) => void }) {
   const toast = useToast();
+  // The printed OT bill opens under this panel (hospital or reception).
+  const panelBase = usePanelBase();
   const [f, setF] = useState({ chargeType: "OTHER", description: "", unitPrice: "", quantity: "1", taxPercent: "0" });
   // Lines unticked, and prices typed for this case, by line key.
   const [skip, setSkip] = useState<Record<string, boolean>>({});
@@ -509,7 +511,15 @@ export function BillingTab({ id, onGoTo }: { id: string; onGoTo?: (tab: number) 
 
   return (
     <>
-      <Alert severity={destination.severity} sx={{ mb: 2.5 }}>{destination.text}</Alert>
+      <Alert severity={destination.severity} sx={{ mb: 2.5 }}
+        action={charges.length > 0 ? (
+          <Button size="small" startIcon={<PrintRounded />} sx={{ textTransform: "none", fontWeight: 600 }}
+            onClick={() => window.open(`${panelBase}/ipd/ot-cases/${id}/bill/print`, "_blank", "noopener")}>
+            Print OT bill
+          </Button>
+        ) : undefined}>
+        {destination.text}
+      </Alert>
       <Section title="Charges for this case">
         {charges.length === 0 ? (
           <Empty>
