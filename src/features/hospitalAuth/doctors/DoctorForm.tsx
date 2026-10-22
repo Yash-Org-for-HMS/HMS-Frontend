@@ -88,6 +88,7 @@ export default function DoctorForm() {
     queryFn: async () => (await axiosInstance.get(`/hospital/doctors/${id}`)).data.data,
     enabled: !!id,
   });
+  const staffId: string | null = docData?.staffId ?? null;
 
   // Seed the form with the existing doctor when editing.
   useEffect(() => {
@@ -261,6 +262,16 @@ export default function DoctorForm() {
         </Tabs>
 
         <Box component="form" onSubmit={handleSubmit} sx={{ p: 4 }}>
+          {isEditing && (
+            <Alert severity="info" sx={{ mb: 3 }}
+              action={staffId ? (
+                <Button size="small" onClick={() => navigate(`/hospital/staff?edit=${staffId}`)} sx={{ textTransform: "none", fontWeight: 600 }}>
+                  Edit in Staff Directory
+                </Button>
+              ) : undefined}>
+              Name, phone and departments are kept on the staff record, in the Staff Directory. This profile holds what is the doctor's own: registration, fees, qualifications and branches.
+            </Alert>
+          )}
           {tabIndex === 0 && (
             <Grid container spacing={3}>
               <Grid size={{ xs: 12, md: 6 }}>
@@ -269,6 +280,7 @@ export default function DoctorForm() {
                   name="firstName"
                   value={formData.firstName}
                   onChange={handleChange}
+                  disabled={isEditing}
                   required
                   error={!!errors.firstName}
                   helperText={errors.firstName}
@@ -281,6 +293,7 @@ export default function DoctorForm() {
                   name="lastName"
                   value={formData.lastName}
                   onChange={handleChange}
+                  disabled={isEditing}
                   required
                   error={!!errors.lastName}
                   helperText={errors.lastName}
@@ -307,6 +320,7 @@ export default function DoctorForm() {
                   name="phone"
                   value={formData.phone}
                   onChange={handleChange}
+                  disabled={isEditing}
                   error={!!errors.phone}
                   helperText={errors.phone}
                   {...textFieldProps}
@@ -325,6 +339,7 @@ export default function DoctorForm() {
                   name="departmentId"
                   value={formData.departmentId}
                   onChange={handleChange}
+                  disabled={isEditing}
                   required
                   error={!!errors.departmentId}
                   helperText={errors.departmentId}
@@ -338,6 +353,7 @@ export default function DoctorForm() {
               <Grid size={{ xs: 12, md: 6 }}>
                 <Autocomplete
                   multiple
+                  disabled={isEditing}
                   options={departments.filter((d) => d.departmentId !== formData.departmentId).map((d) => d.departmentId as string)}
                   value={additionalDepartmentIds.filter((x) => x !== formData.departmentId)}
                   onChange={(_e, v) => setAdditionalDepartmentIds(v)}
@@ -360,7 +376,7 @@ export default function DoctorForm() {
                   onChange={handleChange}
                   required
                   error={!!errors.licenseNumber}
-                  helperText={errors.licenseNumber}
+                  helperText={errors.licenseNumber || "The same number as on their staff record - changing it here changes both"}
                   {...textFieldProps}
                 />
               </Grid>
