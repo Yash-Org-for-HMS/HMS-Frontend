@@ -28,11 +28,10 @@ import PageHeader from "@/components/layout/PageHeader";
 import PatientHistoryButton from "@/components/clinical/PatientHistoryButton";
 import { usePanelBase } from "@/features/ipd/panelBase";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
-import { heldRoles } from "@/constants/roles";
+import { canWrite } from "@/constants/roles";
 
 // Desks whose role covers the money or the papers of a stay, not moving the
 // patient (backend lib/roleCatalog fences): the server refuses them these.
-const NOT_THE_DESK = ["BILLING", "TPA_DESK", "MRD"];
 import { useTableSort } from "@/components/table/useTableSort";
 import SortableHeadCell from "@/components/table/SortableHeadCell";
 
@@ -113,7 +112,11 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
   });
   const canTransferBranch = (transferOptions?.branches.length ?? 0) > 1;
   const { user } = useHospitalAuth();
-  const movesPatients = !heldRoles(user).every((r) => NOT_THE_DESK.includes(r));
+  // What this login may do to a stay, by the server's own rules for its roles:
+  // the admission desk starts a discharge but billing completes it, billing
+  // does not move patients, and so on.
+  const may = (method: string, action: string) => canWrite(user, method, `/api/ipd/admissions/x/${action}`);
+  const movesPatients = may("POST", "initiate-discharge");
   const [dischargeFor, setDischargeFor] = useState<AdmissionRow | null>(null);
   const [depositFor, setDepositFor] = useState<{ row: AdmissionRow; mode: "collect" | "refund" } | null>(null);
   const [menu, setMenu] = useState<{ anchor: HTMLElement | null; row: AdmissionRow | null }>({ anchor: null, row: null });
@@ -358,19 +361,19 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
                         profilePath={`${basePath}/patients/${a.patientId}`} />
                       {!readOnly && a.status === "ADMITTED" && (
                         <>
-                          <Tooltip title="Transfer bed"><IconButton size="small" onClick={() => setTransferFor(a)} sx={{ color: "text.secondary", "&:hover": { color: BRAND.action } }}><SwapHorizRounded fontSize="small" /></IconButton></Tooltip>
-                          <Tooltip title="Discharge"><IconButton size="small" onClick={() => setDischargeFor(a)} sx={{ color: "text.secondary", "&:hover": { color: SEMANTIC.danger } }}><LogoutRounded fontSize="small" /></IconButton></Tooltip>
+                          {may("POST", "transfer") && <Tooltip title="Transfer bed"><IconButton size="small" onClick={() => setTransferFor(a)} sx={{ color: "text.secondary", "&:hover": { color: BRAND.action } }}><SwapHorizRounded fontSize="small" /></IconButton></Tooltip>}
+                          {may("POST", "discharge") && <Tooltip title="Discharge"><IconButton size="small" onClick={() => setDischargeFor(a)} sx={{ color: "text.secondary", "&:hover": { color: SEMANTIC.danger } }}><LogoutRounded fontSize="small" /></IconButton></Tooltip>}
                         </>
                       )}
                       {/* An advance kept aside at discharge (an insured stay's, until the payer
                           settles): put it toward what the bill still owes. The server caps it at
                           the smaller of the advance and the bill's balance. */}
-                      {!readOnly && a.status === "DISCHARGED" && Number(a.depositBalance) > 0 && (
+                      {!readOnly && a.status === "DISCHARGED" && Number(a.depositBalance) > 0 && may("POST", "apply-deposit") && (
                         <Tooltip title={`Use the deposit (${inr(a.depositBalance)}) on the discharge bill - pays what the bill still owes`}>
                           <IconButton size="small" onClick={() => setApplyFor(a)} sx={{ color: "#8b5cf6", "&:hover": { color: "#7c3aed" } }}><ReceiptLongRounded fontSize="small" /></IconButton>
                         </Tooltip>
                       )}
-                      {!readOnly && Number(a.depositBalance) > 0 && (
+                      {!readOnly && Number(a.depositBalance) > 0 && may("POST", "deposit/refund") && (
                         <Tooltip title={`Refund deposit (${inr(a.depositBalance)})`}>
                           <IconButton size="small" onClick={() => setDepositFor({ row: a, mode: "refund" })} sx={{ color: "#8b5cf6", "&:hover": { color: "#7c3aed" } }}><UndoRounded fontSize="small" /></IconButton>
                         </Tooltip>
@@ -394,7 +397,7 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
       </Paper>
 
       <Menu anchorEl={menu.anchor} open={Boolean(menu.anchor)} onClose={() => setMenu({ anchor: null, row: null })}>
-        {menu.row?.status === "ADMITTED" && (
+        {menu.row?.status === "ADMITTED" && may("POST", "deposit") && (
           <MenuItem onClick={() => { const r = menu.row; if (!r) return; setMenu({ anchor: null, row: null }); setDepositFor({ row: r, mode: "collect" }); }}>
             <SavingsRounded fontSize="small" sx={{ mr: 1, color: BRAND.action }} /> Collect deposit
           </MenuItem>
@@ -412,18 +415,18 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
             <UndoRounded fontSize="small" sx={{ mr: 1 }} /> Undo discharge start
           </MenuItem>
         )}
-        {menu.row?.status === "ADMITTED" && (
+        {menu.row?.status === "ADMITTED" && may("PUT", "payer-type") && (
           <MenuItem onClick={() => { const r = menu.row; setMenu({ anchor: null, row: null }); setPayerFor(r); }}>
             <SavingsRounded fontSize="small" sx={{ mr: 1 }} /> Payer: {PAYER_LABEL[menu.row.payerType ?? "CASH"] ?? "Cash"}…
           </MenuItem>
         )}
-        {movesPatients && menu.row?.status === "ADMITTED" && canTransferBranch && (
+        {may("POST", "transfer-branch") && menu.row?.status === "ADMITTED" && canTransferBranch && (
           <MenuItem onClick={() => { const r = menu.row; setMenu({ anchor: null, row: null }); setBranchTransferFor(r); }}>
             <LocalShippingRounded fontSize="small" sx={{ mr: 1, color: BRAND.action }} /> Transfer to another branch…
           </MenuItem>
         )}
         {menu.row?.status === "ADMITTED" && (
-          movesPatients && <MenuItem onClick={() => { if (menu.row) cancel(menu.row); }} sx={{ color: SEMANTIC.danger }}><CancelRounded fontSize="small" sx={{ mr: 1 }} /> Cancel admission</MenuItem>
+          may("POST", "cancel") && <MenuItem onClick={() => { if (menu.row) cancel(menu.row); }} sx={{ color: SEMANTIC.danger }}><CancelRounded fontSize="small" sx={{ mr: 1 }} /> Cancel admission</MenuItem>
         )}
       </Menu>
 

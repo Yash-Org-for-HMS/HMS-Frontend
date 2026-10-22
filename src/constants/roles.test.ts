@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { menuPathsFor, pageOpenFor, homeForUser, panelHomeForUser, hasAction, featuresFor, heldRoles, type RoleHolder } from "./roles";
+import { menuPathsFor, pageOpenFor, homeForUser, panelHomeForUser, hasAction, featuresFor, heldRoles, canWrite, type RoleHolder } from "./roles";
 
 /**
  * What each role opens - decided on the server (backend lib/roleCatalog.ts) and
@@ -119,5 +119,22 @@ describe("an extra role counts at the branch it was given for", () => {
     const everywhere: RoleHolder = { role: "NURSE", roles: [held("NURSE"), held("NURSE_INCHARGE", { actions: ["nurse.roster"] }, false)] };
     expect(heldRoles(everywhere)).toEqual(["NURSE", "NURSE_INCHARGE"]);
     sessionStorage.clear();
+  });
+});
+
+describe("canWrite follows the server's write rules for each role", () => {
+  const desk: RoleHolder = {
+    role: "ADMISSION_DESK",
+    roles: [{ code: "ADMISSION_DESK", name: "Admission Desk", branchId: null, branchName: null, primary: true, pages: ["/reception/desk"], home: "/reception/desk", actions: [],
+      writes: [{ path: "^\/api\/ipd\/admissions(\/[^/]+\/(transfer|initiate-discharge))?$", methods: null }] }],
+  };
+  it("lets the desk start a discharge but not complete it", () => {
+    expect(canWrite(desk, "POST", "/api/ipd/admissions/x/initiate-discharge")).toBe(true);
+    expect(canWrite(desk, "POST", "/api/ipd/admissions/x/discharge")).toBe(false);
+  });
+  it("does not hold back an unfenced role, an admin, or a session without the rules", () => {
+    expect(canWrite({ role: "RECEPTIONIST", roles: [{ code: "RECEPTIONIST", name: "Reception", branchId: null, branchName: null, primary: true, pages: null, home: null, actions: [], writes: null }] }, "POST", "/api/ipd/admissions/x/discharge")).toBe(true);
+    expect(canWrite({ role: "H_ADMIN" }, "POST", "/api/anything")).toBe(true);
+    expect(canWrite({ role: "ADMISSION_DESK" }, "POST", "/api/ipd/admissions/x/discharge")).toBe(true);
   });
 });

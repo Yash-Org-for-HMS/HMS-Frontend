@@ -81,6 +81,8 @@ export interface RoleFeatures {
   pages: string[] | null;
   home: string | null;
   actions: string[];
+  /** Where the role may write (server fence); null/absent = not fenced. */
+  writes?: { path: string; methods: string[] | null }[] | null;
 }
 
 export interface HeldRole extends Partial<RoleFeatures> {
@@ -108,7 +110,7 @@ export function featuresFor(user: RoleHolder | null | undefined, code: string): 
   const sent = user?.features?.[code];
   if (sent) return sent;
   const held = user?.roles?.find((r) => r.code === code);
-  return held && held.pages !== undefined ? { pages: held.pages ?? null, home: held.home ?? null, actions: held.actions ?? [] } : undefined;
+  return held && held.pages !== undefined ? { pages: held.pages ?? null, home: held.home ?? null, actions: held.actions ?? [], writes: held.writes } : undefined;
 }
 
 /**
@@ -216,6 +218,27 @@ export function holdsHome(user: RoleHolder | null | undefined, path: string): bo
 }
 
 /** May this login do one of the things only some roles may (a role's actions)? Admins may. */
+/**
+ * Would the server let this login make this change? The same fence the server
+ * applies (lib/access fenceAllows), from the rules it sent with each role - so a
+ * screen hides what would only be refused, e.g. the final Discharge for the
+ * admission desk. A role with no fence (every original role) may write anywhere
+ * its panel reaches; a session from before the rules were sent is not held back.
+ */
+export function canWrite(user: RoleHolder | null | undefined, method: string, apiPath: string): boolean {
+  if (isAdminUser(user)) return true;
+  const roles = heldRoles(user);
+  if (!roles.length) return true;
+  const fences: { path: string; methods: string[] | null }[] = [];
+  for (const r of roles) {
+    const w = featuresFor(user, r)?.writes;
+    if (!w) return true;
+    fences.push(...w);
+  }
+  const m = method.toUpperCase();
+  return fences.some((f) => (!f.methods || f.methods.includes(m)) && new RegExp(f.path).test(apiPath));
+}
+
 export function hasAction(user: RoleHolder | null | undefined, action: string): boolean {
   if (isAdminUser(user)) return true;
   return heldRoles(user).some((r) => featuresFor(user, r)?.actions.includes(action));
