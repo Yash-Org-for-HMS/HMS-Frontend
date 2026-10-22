@@ -445,9 +445,12 @@ export default function OtSchedule({ readOnly: readOnlyProp = false }: { readOnl
             Mark the case finished
           </MenuItem>
         )}
-        <MenuItem onClick={() => { setCancelling(menu.row); setMenu({ anchor: null, row: null }); }} sx={{ color: SEMANTIC.danger }}>
-          Cancel this case
-        </MenuItem>
+        {/* Not once the patient is in theatre: what was used there is billed by finishing the case. */}
+        {menu.row?.status === "SCHEDULED" && (
+          <MenuItem onClick={() => { setCancelling(menu.row); setMenu({ anchor: null, row: null }); }} sx={{ color: SEMANTIC.danger }}>
+            Cancel this case
+          </MenuItem>
+        )}
       </Menu>
 
       <PatientHistoryDialog

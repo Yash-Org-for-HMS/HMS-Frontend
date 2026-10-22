@@ -1440,7 +1440,10 @@ function ProcedureTab({ id, record, onSaved }: { id: string; record: Record<stri
 
 function ImplantsTab({ id, implants, onSaved }: { id: string; implants: Record<string, string | number | null>[]; onSaved: () => void }) {
   const toast = useToast();
-  const [f, setF] = useState({ implantName: "", manufacturer: "", batchNumber: "", serialNumber: "", quantity: "1", price: "" });
+  const [f, setF] = useState({ implantName: "", manufacturer: "", batchNumber: "", serialNumber: "", quantity: "1", price: "", taxPercent: "0" });
+  // Picked from the Schedule of Charges: the server prices it from the item, GST included.
+  const [socOpen, setSocOpen] = useState(false);
+  const [socItemId, setSocItemId] = useState<string | null>(null);
 
   const add = useMutation({
     mutationFn: async () => axiosInstance.post(`/ipd/ot/cases/${id}/implants`, {
@@ -1449,11 +1452,14 @@ function ImplantsTab({ id, implants, onSaved }: { id: string; implants: Record<s
       batchNumber: f.batchNumber.trim() || undefined,
       serialNumber: f.serialNumber.trim() || undefined,
       quantity: Number(f.quantity) || 1,
-      price: f.price ? Number(f.price) : undefined,
+      ...(socItemId
+        ? { chargeItemId: socItemId }
+        : { price: f.price ? Number(f.price) : undefined, taxPercent: f.taxPercent ? Number(f.taxPercent) : 0 }),
     }),
     onSuccess: () => {
       toast.success("Implant recorded");
-      setF({ implantName: "", manufacturer: "", batchNumber: "", serialNumber: "", quantity: "1", price: "" });
+      setF({ implantName: "", manufacturer: "", batchNumber: "", serialNumber: "", quantity: "1", price: "", taxPercent: "0" });
+      setSocItemId(null);
       onSaved();
     },
     onError: (e) => toast.error(getApiErrorMessage(e, "Could not record it")),
@@ -1502,10 +1508,15 @@ function ImplantsTab({ id, implants, onSaved }: { id: string; implants: Record<s
       <Section
         title="Record an implant"
         footer={
-          <Button variant="contained" size="large" startIcon={<AddRounded />} sx={{ textTransform: "none", fontWeight: 700 }}
-            disabled={!f.implantName.trim() || add.isPending} onClick={() => add.mutate()}>
-            Record it
-          </Button>
+          <Stack direction="row" spacing={1}>
+            <Button variant="outlined" size="large" sx={{ textTransform: "none", fontWeight: 700 }} onClick={() => setSocOpen(true)}>
+              From Schedule of Charges
+            </Button>
+            <Button variant="contained" size="large" startIcon={<AddRounded />} sx={{ textTransform: "none", fontWeight: 700 }}
+              disabled={!f.implantName.trim() || add.isPending} onClick={() => add.mutate()}>
+              Record it
+            </Button>
+          </Stack>
         }
       >
         <Grid container spacing={2.5}>
@@ -1517,8 +1528,31 @@ function ImplantsTab({ id, implants, onSaved }: { id: string; implants: Record<s
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}><TextField fullWidth label="Serial number" value={f.serialNumber} onChange={(e) => setF({ ...f, serialNumber: e.target.value })} /></Grid>
           <Grid size={{ xs: 6, sm: 3 }}><TextField fullWidth type="number" label="Quantity" value={f.quantity} onChange={(e) => setF({ ...f, quantity: e.target.value })} /></Grid>
-          <Grid size={{ xs: 6, sm: 3 }}><TextField fullWidth label="Price" value={f.price} onChange={(e) => setF({ ...f, price: e.target.value })} /></Grid>
+          <Grid size={{ xs: 6, sm: 3 }}>
+            <TextField fullWidth label="Price" value={f.price} disabled={!!socItemId} onChange={(e) => setF({ ...f, price: e.target.value })}
+              helperText={socItemId ? "From the Schedule of Charges" : undefined} />
+          </Grid>
+          <Grid size={{ xs: 6, sm: 3 }}>
+            <TextField fullWidth label="GST %" value={f.taxPercent} disabled={!!socItemId} onChange={(e) => setF({ ...f, taxPercent: e.target.value })} />
+          </Grid>
+          {socItemId && (
+            <Grid size={{ xs: 12 }}>
+              <Button size="small" sx={{ textTransform: "none" }} onClick={() => { setSocItemId(null); setF({ ...f, price: "", taxPercent: "0" }); }}>
+                Enter the price by hand instead
+              </Button>
+            </Grid>
+          )}
         </Grid>
+        <SocChargePicker
+          open={socOpen}
+          onClose={() => setSocOpen(false)}
+          preferCategories={["implant", "prosthe"]}
+          onPick={(c) => {
+            setF((prev) => ({ ...prev, implantName: c.itemName, price: String(c.price), taxPercent: String(c.taxPercent) }));
+            setSocItemId(c.chargeItemId);
+            setSocOpen(false);
+          }}
+        />
       </Section>
     </>
   );
