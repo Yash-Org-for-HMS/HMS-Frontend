@@ -28,6 +28,15 @@ import Mascot from "@/components/Mascot";
 import ErrorState from "@/components/ErrorState";
 import { useToast } from "@/providers/ToastContext";
 import PageHeader from "@/components/layout/PageHeader";
+
+/** The labels under a department's name, each with what it means on hover. */
+type DeptLabel = { text: string; hint: string };
+const DEPT_LABELS: Record<"standard" | "admits" | "opd" | "own", DeptLabel> = {
+  standard: { text: "Standard", hint: "From the standard department list every hospital starts with. What it allows is set in the platform master data." },
+  admits: { text: "admits", hint: "Patients can be admitted under doctors of this department." },
+  opd: { text: "OPD", hint: "Runs an outpatient clinic: appointments can be booked into it." },
+  own: { text: "Added by the hospital", hint: "Created by this hospital. It can admit patients and take OPD appointments." },
+};
 import type { Department as DepartmentBase } from "@/types";
 
 interface Department extends DepartmentBase {
@@ -36,7 +45,7 @@ interface Department extends DepartmentBase {
   headOfDepartment?: { firstName: string; lastName: string } | null;
   /** Set when this department was copied from the platform's standard list. */
   sysDepartmentCode?: string | null;
-  sysDepartment?: { canAdmitPatients: boolean; hasOpd: boolean; ownsWard: boolean; category?: { code: string; name: string; sortOrder: number } } | null;
+  sysDepartment?: { canAdmitPatients: boolean; hasOpd: boolean; category?: { code: string; name: string; sortOrder: number } } | null;
 }
 
 interface Group { key: string; name: string; order: number; rows: Department[] }
@@ -174,10 +183,22 @@ export default function DepartmentsList() {
                         <TableRow key={dept.departmentId} hover sx={{ "&:last-child td": { border: 0 } }}>
                           <TableCell sx={{ pl: 6.5 }}>
                             <Typography variant="body2" sx={{ fontWeight: 600 }}>{dept.departmentName}</Typography>
-                            <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                              {dept.sysDepartment
-                                ? ["Standard", dept.sysDepartment.canAdmitPatients && "admits", dept.sysDepartment.hasOpd && "OPD", dept.sysDepartment.ownsWard && "owns a ward"].filter(Boolean).join(" · ")
-                                : "Added by the hospital"}
+                            <Typography variant="caption" component="div" sx={{ color: "text.secondary" }}>
+                              {(dept.sysDepartment
+                                ? [
+                                    DEPT_LABELS.standard,
+                                    dept.sysDepartment.canAdmitPatients && DEPT_LABELS.admits,
+                                    dept.sysDepartment.hasOpd && DEPT_LABELS.opd,
+                                  ].filter((l): l is DeptLabel => !!l)
+                                : [DEPT_LABELS.own]
+                              ).map((l, i) => (
+                                <span key={l.text}>
+                                  {i > 0 && " · "}
+                                  <Tooltip title={l.hint} arrow>
+                                    <span style={{ cursor: "help", borderBottom: "1px dotted currentColor" }}>{l.text}</span>
+                                  </Tooltip>
+                                </span>
+                              ))}
                             </Typography>
                           </TableCell>
                           <TableCell sx={{ width: 120, color: "text.secondary", fontFamily: "monospace" }}>{dept.departmentCode}</TableCell>
