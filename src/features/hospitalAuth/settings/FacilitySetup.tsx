@@ -277,7 +277,7 @@ export default function FacilitySetup() {
       </Grid>
 
       {dialog && (dialog.kind === "ward" || dialog.kind === "room" || dialog.kind === "bed") && (
-        <SetupDialog kind={dialog.kind} edit={dialog.edit} wards={wards} roomClasses={roomClasses} options={options} onClose={() => setDialog(null)} onDone={done} />
+        <SetupDialog kind={dialog.kind} edit={dialog.edit} wards={wards} roomClasses={roomClasses} options={options} onClose={() => setDialog(null)} onDone={done} onAddFloor={() => setDialog({ kind: "floor" })} />
       )}
       {dialog?.kind === "bulk" && <BulkBedsDialog wards={wards} roomClasses={roomClasses} options={options} onClose={() => setDialog(null)} onDone={done} />}
       {dialog?.kind === "building" && <BuildingDialog edit={dialog.edit} onClose={() => setDialog(null)} onDone={done} />}
@@ -288,7 +288,7 @@ export default function FacilitySetup() {
   );
 }
 
-// ── Buildings & floors (optional) ────────────────────────────────────────────
+// ── Buildings & floors ────────────────────────────────────────────
 
 function BuildingsPanel({ options, onEditBuilding, onEditFloor }: { options?: FacilityOptions; onEditBuilding: (b: Building) => void; onEditFloor: (f: Floor) => void }) {
   const buildings = options?.buildings ?? [];
@@ -305,10 +305,10 @@ function BuildingsPanel({ options, onEditBuilding, onEditFloor }: { options?: Fa
     <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: "1px solid", borderColor: "divider", height: "100%" }}>
       <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>Buildings & floors</Typography>
       <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 1.5 }}>
-        Optional. A single-building hospital can skip this and give each ward a floor number.
+        Add every floor first - each ward is placed on one. A single-building hospital can add floors without a building.
       </Typography>
       {buildings.length === 0 && floors.length === 0 ? (
-        <Typography variant="body2" sx={{ color: "text.disabled" }}>None set up - wards use a plain floor number.</Typography>
+        <Typography variant="body2" sx={{ color: "text.disabled" }}>No floors yet. Add one before adding wards.</Typography>
       ) : (
         <Stack spacing={1}>
           {buildings.map((b) => (
@@ -372,14 +372,13 @@ function typeOptions<T extends { id: string; displayName: string; isActive: bool
   return (list ?? []).filter((t) => t.isActive || t.id === current).map((t) => ({ value: t.id, label: t.displayName, secondary: secondary(t) }));
 }
 
-function SetupDialog({ kind, edit, wards, roomClasses, options, onClose, onDone }: { kind: FacilityKind; edit?: FacilityEditTarget; wards: WardNode[]; roomClasses: RoomClass[]; options?: FacilityOptions; onClose: () => void; onDone: () => void }) {
+function SetupDialog({ kind, edit, wards, roomClasses, options, onClose, onDone, onAddFloor }: { kind: FacilityKind; edit?: FacilityEditTarget; wards: WardNode[]; roomClasses: RoomClass[]; options?: FacilityOptions; onClose: () => void; onDone: () => void; onAddFloor?: () => void }) {
   const toast = useToast();
   const isEdit = Boolean(edit?.wardId || edit?.roomId || edit?.bedId);
   const [saving, setSaving] = useState(false);
   const [f, setF] = useState<SetupForm>(() => ({
     wardId: edit?.wardId, roomId: edit?.roomId, bedId: edit?.bedId,
     wardName: edit?.wardName, roomNumber: edit?.roomNumber, bedNumber: edit?.bedNumber,
-    floorNumber: edit?.floorNumber != null ? String(edit.floorNumber) : "1",
     dailyCharge: edit?.dailyCharge != null ? String(edit.dailyCharge) : "",
     roomClassId: edit?.roomClassId ?? "",
     wardCode: edit?.wardCode ?? "",
@@ -439,7 +438,8 @@ function SetupDialog({ kind, edit, wards, roomClasses, options, onClose, onDone 
     setF((prev) => ({ ...prev, hospitalWardTypeId: id, genderRestriction: allowed.includes(prev.genderRestriction) ? prev.genderRestriction : allowed[0] }));
   };
 
-  const floors = options?.floors ?? [];
+  // A ward must sit on a set-up floor; switched-off floors only show for the ward already on one.
+  const floorChoices = (options?.floors ?? []).filter((x) => x.isActive || x.floorId === f.floorId);
   const bedType = options?.bedTypes.find((t) => t.id === f.hospitalBedTypeId);
 
   const submit = async () => {
@@ -450,7 +450,7 @@ function SetupDialog({ kind, edit, wards, roomClasses, options, onClose, onDone 
           wardName: f.wardName, wardCode: f.wardCode.trim() || undefined, hospitalWardTypeId: f.hospitalWardTypeId,
           departmentId: f.departmentId || null, genderRestriction: f.genderRestriction,
           inChargeStaffId: f.inChargeStaffId || null,
-          ...(f.floorId ? { floorId: f.floorId } : { floorId: null, floorNumber: Number(f.floorNumber) }),
+          floorId: f.floorId,
         };
         if (editingWard) await axiosInstance.put(`/ipd/wards/${f.wardId}`, { ...body, wardCode: f.wardCode.trim() || edit?.wardCode, status });
         else await axiosInstance.post("/ipd/wards", body);
@@ -484,7 +484,7 @@ function SetupDialog({ kind, edit, wards, roomClasses, options, onClose, onDone 
     }
   };
 
-  const valid = kind === "ward" ? f.wardName && f.hospitalWardTypeId && (f.floorId || f.floorNumber !== "")
+  const valid = kind === "ward" ? f.wardName && f.hospitalWardTypeId && f.floorId
     : kind === "room" ? f.wardId && f.roomNumber && f.hospitalRoomTypeId
       : f.roomId && f.bedNumber && f.hospitalBedTypeId;
   const onSelect = (k: keyof SetupForm) => (e: { target: { value: unknown } }) => set(k, String(e.target.value ?? "") as never);
@@ -514,14 +514,15 @@ function SetupDialog({ kind, edit, wards, roomClasses, options, onClose, onDone 
               helperText={genders.length === 1 ? (genders[0] === "FEMALE" ? "This ward type is female-only." : "This ward type is always mixed.") : "Male-only or female-only wards stop the wrong patient being admitted here."}>
               {genders.map((g) => <MenuItem key={g} value={g}>{GENDER_LABEL[g]}</MenuItem>)}
             </TextField>
-            {floors.length > 0 ? (
-              <TextField select fullWidth label="Floor" value={f.floorId} onChange={(e) => set("floorId", e.target.value)}>
-                <MenuItem value=""><em>No floor set up - use a number</em></MenuItem>
-                {floors.filter((x) => x.isActive || x.floorId === f.floorId).map((x) => <MenuItem key={x.floorId} value={x.floorId}>{[x.building?.name, x.name].filter(Boolean).join(" · ")}</MenuItem>)}
+            {floorChoices.length > 0 ? (
+              <TextField select fullWidth required label="Floor" value={f.floorId} onChange={(e) => set("floorId", e.target.value)}
+                helperText={editingWard && !edit?.floorId ? `Was typed as floor ${edit?.floorNumber ?? "-"}. Pick the matching floor.` : "Missing a floor? Add it under Buildings & floors."}>
+                {floorChoices.map((x) => <MenuItem key={x.floorId} value={x.floorId}>{[x.building?.name, x.name].filter(Boolean).join(" · ")}</MenuItem>)}
               </TextField>
-            ) : null}
-            {!f.floorId && (
-              <TextField fullWidth required type="number" label="Floor number" value={f.floorNumber} onChange={(e) => set("floorNumber", e.target.value)} helperText="0 = ground, -1 = basement." />
+            ) : (
+              <Alert severity="info" action={onAddFloor && <Button color="inherit" size="small" onClick={onAddFloor} sx={{ whiteSpace: "nowrap" }}>Add floor</Button>}>
+                No floors set up yet. Add the branch's floors first, then add the ward.
+              </Alert>
             )}
             {editingWard && (
               <TextField select fullWidth label="Ward status" value={status} onChange={(e) => setStatus(e.target.value)}

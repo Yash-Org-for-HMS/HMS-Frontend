@@ -206,7 +206,6 @@ export interface SetupForm {
   roomId?: string;
   bedId?: string;
   wardName?: string;
-  floorNumber: string;
   roomNumber?: string;
   bedNumber?: string;
   dailyCharge?: string;
