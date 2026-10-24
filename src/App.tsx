@@ -69,6 +69,7 @@ const HospitalUserForm = lazy(() => import("@/features/hospitalAuth/users/UserFo
 const StaffDirectory = lazy(() => import("@/features/hospitalAuth/staff/StaffDirectory"));
 const Organogram = lazy(() => import("@/features/hospitalAuth/staff/Organogram"));
 const ModuleAccess = lazy(() => import("@/features/hospitalAuth/settings/ModuleAccess"));
+const SetupImport = lazy(() => import("@/features/hospitalAuth/settings/SetupImport"));
 const DoctorsList = lazy(() => import("@/features/hospitalAuth/doctors/DoctorsList"));
 const DoctorForm = lazy(() => import("@/features/hospitalAuth/doctors/DoctorForm"));
 const DoctorSchedule = lazy(() => import("@/features/hospitalAuth/doctors/DoctorSchedule"));
@@ -360,6 +361,7 @@ function App() {
             <Route path="/hospital/claims/:id" element={el(ClaimDetail)} />
             <Route path="/hospital/nurse-reports" element={el(NurseReports)} />
             <Route path="/hospital/module-access" element={el(ModuleAccess)} />
+            <Route path="/hospital/setup-import" element={el(SetupImport)} />
             <Route path="/hospital/doctors" element={el(DoctorsList)} />
 
             {/* One place to add a person: the Staff Directory, preset as a doctor. */}

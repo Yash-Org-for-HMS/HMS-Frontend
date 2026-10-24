@@ -12,7 +12,7 @@ import {
   Box, Drawer, Divider, useTheme, useMediaQuery,
 } from "@mui/material";
 import {
-  DashboardRounded, LocalHospitalRounded, PeopleRounded, CalendarTodayRounded, SettingsRounded, ApartmentRounded, DomainRounded, BadgeRounded, CardMembershipRounded, AccountTreeRounded, SchemaRounded, WidgetsRounded, MedicalServicesRounded, DatasetRounded, EventNoteRounded, DynamicFormRounded, SecurityRounded, AccountBalanceRounded, AssessmentRounded, HotelRounded, MonitorHeartRounded, VaccinesRounded, MedicationRounded, LocalHotelRounded, ReceiptLongRounded, FormatListNumberedRounded,
+  DashboardRounded, LocalHospitalRounded, PeopleRounded, CalendarTodayRounded, SettingsRounded, ApartmentRounded, DomainRounded, BadgeRounded, CardMembershipRounded, AccountTreeRounded, SchemaRounded, WidgetsRounded, MedicalServicesRounded, DatasetRounded, EventNoteRounded, DynamicFormRounded, SecurityRounded, AccountBalanceRounded, AssessmentRounded, HotelRounded, MonitorHeartRounded, VaccinesRounded, MedicationRounded, LocalHotelRounded, ReceiptLongRounded, FormatListNumberedRounded, UploadFileRounded,
 } from "@mui/icons-material";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import { isAdminUser, menuPathsFor, hasRole } from "@/constants/roles";
@@ -73,6 +73,8 @@ export default function HospitalLayout() {
     { text: "Logins & roles", icon: <BadgeRounded />, path: "/hospital/users", adminOnly: true, needs: ["H_ADMIN"], section: "Set up - in this order" },
 
     // ── Catalogs and forms, as the hospital needs them ──
+    // The data collection workbook, sheet by sheet (backend: H_ADMIN/B_ADMIN).
+    { text: "Import from workbook", icon: <UploadFileRounded />, path: "/hospital/setup-import", adminOnly: true, needs: ["H_ADMIN", "B_ADMIN"], section: "Catalogs & forms" },
     { text: "Medicine Catalog", icon: <MedicationRounded />, path: "/hospital/medicines", adminOnly: true, module: "Pharmacy", section: "Catalogs & forms" },
     { text: "Vaccine Catalog", icon: <VaccinesRounded />, path: "/hospital/vaccines", adminOnly: true, section: "Catalogs & forms" },
     { text: "Ward Chart Settings", icon: <MonitorHeartRounded />, path: "/hospital/ward-chart", adminOnly: true, module: "IPD", section: "Catalogs & forms" },
