@@ -129,13 +129,11 @@ export default function SupplierDirectory() {
       {
         supplierCode: [required("Supplier code")],
         supplierName: [required("Supplier name")],
-        contactPersonName: [required("Contact person")],
         phone: [required("Phone"), isPhone],
-        email: [required("Email"), isEmail],
+        email: [isEmail],
         city: [required("City")],
         stateLoc: [required("State")],
         country: [required("Country")],
-        gstNumber: [required("GST number")],
       },
     );
     if (hasErrors(errors)) {
@@ -287,9 +285,9 @@ export default function SupplierDirectory() {
                     >
                       <TableCell sx={{ fontWeight: 600, fontFamily: 'monospace', color: 'text.secondary' }}>{sup.supplierCode}</TableCell>
                       <TableCell sx={{ fontWeight: 600, color: BRAND.action }}>{sup.supplierName}</TableCell>
-                      <TableCell sx={{ fontWeight: 500 }}>{sup.contactPersonName}</TableCell>
+                      <TableCell sx={{ fontWeight: 500 }}>{sup.contactPersonName || "-"}</TableCell>
                       <TableCell sx={{ color: 'text.secondary' }}>{sup.phone}</TableCell>
-                      <TableCell sx={{ color: 'text.secondary' }}>{sup.email}</TableCell>
+                      <TableCell sx={{ color: 'text.secondary' }}>{sup.email || "-"}</TableCell>
                       <TableCell align="right">
                         <Tooltip title="Edit">
                           <IconButton
@@ -377,7 +375,6 @@ export default function SupplierDirectory() {
                 onChange={(e) => setContactPersonName(e.target.value)}
                 fullWidth
                 variant="outlined"
-                required
                 error={!!fieldErrors.contactPersonName}
                 helperText={fieldErrors.contactPersonName}
               />
@@ -387,7 +384,6 @@ export default function SupplierDirectory() {
                 onChange={(e) => setGstNumber(e.target.value)}
                 fullWidth
                 variant="outlined"
-                required
                 error={!!fieldErrors.gstNumber}
                 helperText={fieldErrors.gstNumber || "15-character GSTIN, e.g. 27AAPFU0939F1ZV"}
               />
@@ -409,7 +405,6 @@ export default function SupplierDirectory() {
                 onChange={(e) => { setEmail(e.target.value); setFieldErrors((p) => ({ ...p, email: undefined })); }}
                 fullWidth
                 variant="outlined"
-                required
                 error={!!fieldErrors.email}
                 helperText={fieldErrors.email}
               />
