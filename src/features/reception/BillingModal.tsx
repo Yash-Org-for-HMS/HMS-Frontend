@@ -21,7 +21,7 @@ import ErrorState from "@/components/ErrorState";
 import { useToast } from "@/providers/ToastContext";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import BillReceipt from "@/components/reception/BillReceipt";
-import SocChargePicker from "@/components/billing/SocChargePicker";
+import SocChargePicker, { type PickedCharge } from "@/components/billing/SocChargePicker";
 import { SEMANTIC, BRAND, alpha } from "@/styles/accents";
 
 interface BillingModalProps {
@@ -282,11 +282,12 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
 
   // Add a charge picked from the Schedule of Charges - the server prices it from
   // the rate card (we send only the id), so no amount is trusted from the client.
-  const handleAddSocCharge = async (chargeItemId: string) => {
+  // A price-at-billing charge carries the price typed in the picker.
+  const handleAddSocCharge = async (c: PickedCharge) => {
     if (!invoice) return;
     try {
       setAddingItem(true);
-      const res = await axiosInstance.post(`/reception/billing/invoices/${invoice.invoiceId}/items`, { chargeItemId });
+      const res = await axiosInstance.post(`/reception/billing/invoices/${invoice.invoiceId}/items`, c.priceAtBilling ? { chargeItemId: c.chargeItemId, unitPrice: c.price } : { chargeItemId: c.chargeItemId });
       if (res.data.success) {
         toast.success("Charge added");
         await fetchBillingData();
@@ -755,7 +756,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
     <SocChargePicker
       open={socPickerOpen}
       onClose={() => setSocPickerOpen(false)}
-      onPick={(c) => handleAddSocCharge(c.chargeItemId)}
+      onPick={(c) => handleAddSocCharge(c)}
       accent={BRAND.action}
     />
     </>

@@ -30,7 +30,7 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
   // A row is either a free-text charge (editable description + amount) or one picked
   // from the Schedule of Charges (carries chargeItemId + its base/room-class prices so
   // the preview can re-derive when the room class changes; the server prices it).
-  type Extra = { description: string; amount: string; chargeItemId?: string; basePrice?: number; roomPrices?: { roomClassId: string; price: number | string }[]; taxPercent?: number };
+  type Extra = { description: string; amount: string; chargeItemId?: string; basePrice?: number; roomPrices?: { roomClassId: string; price: number | string }[]; taxPercent?: number; priceAtBilling?: boolean };
   const [extras, setExtras] = useState<Extra[]>([]);
   const [saving, setSaving] = useState(false);
   const [socPickerOpen, setSocPickerOpen] = useState(false);
@@ -72,7 +72,7 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
   // room class (matrix price else base), so the preview matches what the server will
   // bill even after the class is changed; free-text rows use their typed amount.
   const lineAmount = (e: Extra): number => {
-    if (!e.chargeItemId) return Number(e.amount) || 0;
+    if (!e.chargeItemId || e.priceAtBilling) return Number(e.amount) || 0;
     if (billRoomClassId) {
       const rp = e.roomPrices?.find((r) => r.roomClassId === billRoomClassId);
       if (rp != null) return Number(rp.price);
@@ -130,7 +130,7 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
         roomClassId: billRoomClassId || undefined,
         extraCharges: extras
           .filter((e) => e.chargeItemId || (e.description.trim() && Number(e.amount) > 0))
-          .map((e) => e.chargeItemId ? { chargeItemId: e.chargeItemId } : { description: e.description.trim(), amount: Number(e.amount) }),
+          .map((e) => e.chargeItemId ? (e.priceAtBilling ? { chargeItemId: e.chargeItemId, amount: Number(e.amount) } : { chargeItemId: e.chargeItemId }) : { description: e.description.trim(), amount: Number(e.amount) }),
         advanceHoldReason: advanceAction === "HOLD" ? holdReason.trim() : undefined,
       });
       const inv = res.data?.data?.invoice;
@@ -407,7 +407,7 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
     <SocChargePicker
       open={socPickerOpen}
       onClose={() => setSocPickerOpen(false)}
-      onPick={(c) => setExtras((x) => [...x, { description: c.itemName, amount: String(c.price), chargeItemId: c.chargeItemId, basePrice: c.basePrice, roomPrices: c.roomPrices, taxPercent: c.taxPercent }])}
+      onPick={(c) => setExtras((x) => [...x, { description: c.itemName, amount: String(c.price), chargeItemId: c.chargeItemId, basePrice: c.basePrice, roomPrices: c.roomPrices, taxPercent: c.taxPercent, priceAtBilling: c.priceAtBilling }])}
       accent={BRAND.action}
       roomClassId={billRoomClassId || undefined}
       roomClassName={billRoomClassName || undefined}

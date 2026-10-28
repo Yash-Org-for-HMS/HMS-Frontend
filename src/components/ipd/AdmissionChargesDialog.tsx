@@ -30,7 +30,7 @@ interface ChargeRow {
 }
 
 /** A line queued for recording. Price is display-only - the server re-prices. */
-type Line = { chargeItemId: string; itemName: string; price: number; quantity: number };
+type Line = { chargeItemId: string; itemName: string; price: number; quantity: number; priceAtBilling?: boolean };
 
 /**
  * What the ward used, recorded where it was used.
@@ -64,13 +64,14 @@ export default function AdmissionChargesDialog({
   const addToBasket = (c: PickedCharge) => {
     setBasket((prev) => {
       // Picking the same item twice means two of it, not two lines.
-      const at = prev.findIndex((l) => l.chargeItemId === c.chargeItemId);
+      // A typed price is its own line: the next one may be typed differently.
+      const at = c.priceAtBilling ? -1 : prev.findIndex((l) => l.chargeItemId === c.chargeItemId);
       if (at >= 0) {
         const next = [...prev];
         next[at] = { ...next[at], quantity: next[at].quantity + 1 };
         return next;
       }
-      return [...prev, { chargeItemId: c.chargeItemId, itemName: c.itemName, price: Number(c.price), quantity: 1 }];
+      return [...prev, { chargeItemId: c.chargeItemId, itemName: c.itemName, price: Number(c.price), quantity: 1, priceAtBilling: c.priceAtBilling }];
     });
   };
   const setQty = (i: number, q: number) =>
@@ -83,7 +84,7 @@ export default function AdmissionChargesDialog({
     setSaving(true);
     try {
       const res = await axiosInstance.post(`/ipd/admissions/${admission.admissionId}/charges`, {
-        items: basket.map((l) => ({ chargeItemId: l.chargeItemId, quantity: l.quantity })),
+        items: basket.map((l) => ({ chargeItemId: l.chargeItemId, quantity: l.quantity, ...(l.priceAtBilling ? { unitPrice: l.price } : {}) })),
       });
       toast.success(`${basket.length} item${basket.length === 1 ? "" : "s"} recorded`);
 
@@ -164,7 +165,7 @@ export default function AdmissionChargesDialog({
               TO RECORD
             </Typography>
             {basket.map((l, i) => (
-              <Box key={l.chargeItemId} sx={{ display: "flex", alignItems: "center", gap: 1.5, py: 0.6 }}>
+              <Box key={`${l.chargeItemId}-${i}`} sx={{ display: "flex", alignItems: "center", gap: 1.5, py: 0.6 }}>
                 <Typography variant="body2" sx={{ flex: 1, minWidth: 0, fontWeight: 600 }}>{l.itemName}</Typography>
                 <TextField
                   size="small" type="number" label="Qty" value={l.quantity}

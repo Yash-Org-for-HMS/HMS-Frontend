@@ -51,7 +51,9 @@ const isTheatreCode = (code?: string | null) => !!code && THEATRE_CODES.includes
 
 type Item = { chargeItemId: string; chargeCategoryId: string; itemName: string; itemCode: string | null; price: number | string; taxPercent: number | string; hsnCode?: string | null; unit: string | null; isActive: boolean; itemType?: string; roomPrices?: RoomPrice[];
   /** Prices a branch charges instead of the group's (roomClassId "" = its base). */
-  branchPrices?: { branchId: string; roomClassId: string; price: number | string }[] };
+  branchPrices?: { branchId: string; roomClassId: string; price: number | string }[];
+  /** No price of its own: one is typed on each bill. */
+  priceAtBilling?: boolean };
 type RoomClass = { roomClassId: string; name: string; code: string; sortOrder: number; isActive: boolean };
 
 // Hospital's Schedule of Charges (rate card): categories on the left (seeded from
@@ -257,7 +259,7 @@ export default function ScheduleOfCharges() {
                       {searchRes.items.map((it) => (
                         <ListItemButton key={it.chargeItemId} onClick={() => openCharge(it.category.chargeCategoryId, it)} sx={{ py: 0.6 }}>
                           <ListItemText
-                            primary={it.itemName} secondary={`${it.category.categoryName} · ${inr(Number(it.price))}`}
+                            primary={it.itemName} secondary={`${it.category.categoryName} · ${it.priceAtBilling ? "Price at billing" : inr(Number(it.price))}`}
                             primaryTypographyProps={{ fontSize: "0.875rem", fontWeight: 600, noWrap: true }}
                             secondaryTypographyProps={{ fontSize: "0.75rem", color: "text.secondary", noWrap: true }}
                           />
@@ -394,7 +396,11 @@ export default function ScheduleOfCharges() {
                               </Typography>
                             )}
                           </TableCell>
-                          <TableCell align="right" sx={{ fontWeight: 700, whiteSpace: "nowrap" }}>{inr(Number(it.price))}</TableCell>
+                          <TableCell align="right" sx={{ fontWeight: 700, whiteSpace: "nowrap" }}>
+                            {it.priceAtBilling
+                              ? <Tooltip title="No fixed price - it is typed on each bill"><Chip label="At billing" size="small" sx={{ height: 20, fontSize: "0.6875rem", fontWeight: 700, bgcolor: "rgba(245,158,11,0.14)", color: "warning.dark" }} /></Tooltip>
+                              : inr(Number(it.price))}
+                          </TableCell>
                           {activeRoomClasses.map((rc, i) => {
                             const has = priced.has(rc.roomClassId);
                             return (
@@ -410,7 +416,7 @@ export default function ScheduleOfCharges() {
                           <TableCell align="center" sx={{ whiteSpace: "nowrap" }}>
                             {it.itemType === "LAB" && <Tooltip title="Lab structure (single / profile parameters)"><IconButton size="small" onClick={() => setStructureItem(it)}><ScienceRounded fontSize="small" sx={{ color: "success.main" }} /></IconButton></Tooltip>}
                             <Tooltip title="Price history"><IconButton size="small" onClick={() => setHistoryItem(it)}><HistoryRounded fontSize="small" /></IconButton></Tooltip>
-                            {showBranchPrices && it.itemType !== "BED" && <Tooltip title="Branch exceptions - a different price at one branch"><IconButton size="small" onClick={() => setBranchPriceItem(it)}><ApartmentRounded fontSize="small" /></IconButton></Tooltip>}
+                            {showBranchPrices && it.itemType !== "BED" && !it.priceAtBilling && <Tooltip title="Branch exceptions - a different price at one branch"><IconButton size="small" onClick={() => setBranchPriceItem(it)}><ApartmentRounded fontSize="small" /></IconButton></Tooltip>}
                             {canEdit && <Tooltip title={multiBranch ? "Edit prices (all branches)" : "Edit"}><IconButton size="small" onClick={() => setItemDialog({ mode: "edit", item: it })}><EditRounded fontSize="small" /></IconButton></Tooltip>}
                             {canEdit && <Tooltip title="Delete"><IconButton size="small" onClick={() => deleteItem(it)}><DeleteRounded fontSize="small" sx={{ color: "error.main" }} /></IconButton></Tooltip>}
                           </TableCell>
@@ -593,7 +599,12 @@ function PriceHistoryDialog({ item, onClose }: { item: Item; onClose: () => void
                         <DeltaPill r={r} />
                       </Box>
                       <Box sx={{ mt: 0.25 }}>
-                        {r.changeType === "UPDATE" ? (
+                        {r.scope === "Price at billing" ? (
+                          <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                            {r.oldPrice != null ? <><Box component="span" sx={{ textDecoration: "line-through", color: "text.disabled" }}>{inr(Number(r.oldPrice))}</Box>{" → "}</> : null}
+                            <Box component="span" sx={{ fontWeight: 700, color: "text.primary" }}>typed on each bill</Box>
+                          </Typography>
+                        ) : r.changeType === "UPDATE" ? (
                           <Typography variant="body2" sx={{ color: "text.secondary" }}>
                             <Box component="span" sx={{ textDecoration: "line-through", color: "text.disabled" }}>{inr(Number(r.oldPrice))}</Box>
                             {" → "}<Box component="span" sx={{ fontWeight: 700, color: "text.primary" }}>{inr(Number(r.newPrice))}</Box>
@@ -805,6 +816,11 @@ function ItemDialog({ mode, item, categoryId, categoryCode, categoryName, roomCl
   const [unit, setUnit] = useState(item?.unit ?? "");
   const [isActive, setIsActive] = useState(item?.isActive ?? true);
   const [itemType, setItemType] = useState(item?.itemType ?? "GENERAL");
+  // Price at billing: no fixed price, one is typed on each bill. Not for lab and
+  // radiology tests (priced when ordered) or room rent (Bed tariffs).
+  const [atBilling, setAtBilling] = useState(item?.priceAtBilling ?? false);
+  const canAtBilling = ["GENERAL", "PROCEDURE", "OT"].includes(itemType);
+  const typedAtBilling = atBilling && canAtBilling;
   // Room rent is priced in Ward & bed setup → Bed tariffs; here only its name and code change.
   const roomRent = item?.itemType === "BED";
   // Per-room-class prices keyed by roomClassId (blank = use the base price).
@@ -817,7 +833,8 @@ function ItemDialog({ mode, item, categoryId, categoryCode, categoryName, roomCl
 
   const save = async () => {
     if (!name.trim()) { toast.error("Charge name is required"); return; }
-    if (price === "" || Number(price) < 0 || !Number.isFinite(Number(price))) { toast.error("Enter a valid base price"); return; }
+    if (!typedAtBilling && (price === "" || Number(price) < 0 || !Number.isFinite(Number(price)))) { toast.error("Enter a valid base price"); return; }
+    if (!typedAtBilling && item?.priceAtBilling && !(Number(price) > 0)) { toast.error("Give the charge a price to stop pricing it at billing"); return; }
     setSaving(true);
     try {
       const roomPricesArr = Object.entries(roomPrices)
@@ -827,9 +844,10 @@ function ItemDialog({ mode, item, categoryId, categoryCode, categoryName, roomCl
         ? { itemName: name.trim(), itemCode: code.trim() || undefined, hsnCode: hsn.trim() || undefined, unit: unit.trim() || undefined }
         : {
           itemName: name.trim(), itemCode: code.trim() || undefined,
-          price: Number(price), taxPercent: tax === "" ? undefined : Number(tax),
+          price: typedAtBilling ? undefined : Number(price), taxPercent: tax === "" ? undefined : Number(tax),
           hsnCode: hsn.trim() || undefined,
-          unit: unit.trim() || undefined, isActive, itemType, roomPrices: roomPricesArr,
+          unit: unit.trim() || undefined, isActive, itemType, roomPrices: typedAtBilling ? [] : roomPricesArr,
+          priceAtBilling: typedAtBilling,
         };
       if (mode === "add") {
         await axiosInstance.post("/hospital/soc/items", { chargeCategoryId: categoryId, ...body });
@@ -888,10 +906,18 @@ function ItemDialog({ mode, item, categoryId, categoryCode, categoryName, roomCl
               helperText={isTheatreCode(item?.itemCode) ? "A theatre rate - the theatre bill finds it by this code" : undefined} />
             <TextField label="Unit (optional)" placeholder="e.g. per day" value={unit} onChange={(e) => setUnit(e.target.value)} fullWidth />
           </Stack>
+          {canAtBilling && !roomRent && (
+            <Box>
+              <FormControlLabel control={<Switch checked={atBilling} onChange={(e) => { setAtBilling(e.target.checked); if (!e.target.checked && item?.priceAtBilling) setPrice(""); }} />} label="Price at billing" />
+              <Typography variant="caption" sx={{ display: "block", color: "text.secondary", mt: -0.5 }}>
+                {atBilling ? "No fixed price: whoever bills it types the price each time." : "Turn on when the price changes case to case and is typed on the bill."}
+              </Typography>
+            </Box>
+          )}
           <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-            <TextField label="OPD price (₹)" type="number" value={price} onChange={(e) => setPrice(e.target.value)} fullWidth disabled={roomRent}
+            {!typedAtBilling && <TextField label="OPD price (₹)" type="number" value={price} onChange={(e) => setPrice(e.target.value)} fullWidth disabled={roomRent}
               helperText="Outpatient rate · IPD fallback"
-              InputProps={{ startAdornment: <InputAdornment position="start">₹</InputAdornment> }} />
+              InputProps={{ startAdornment: <InputAdornment position="start">₹</InputAdornment> }} />}
             <TextField label="Tax % (optional)" type="number" value={tax} onChange={(e) => setTax(e.target.value)} fullWidth disabled={roomRent}
               inputProps={{ min: 0, max: 100 }}
               helperText="0 / blank = GST-exempt" />
@@ -899,7 +925,7 @@ function ItemDialog({ mode, item, categoryId, categoryCode, categoryName, roomCl
               inputProps={{ maxLength: 10 }} />
           </Stack>
 
-          {roomClasses.length > 0 && (
+          {roomClasses.length > 0 && !typedAtBilling && (
             <Box>
               <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 0.5 }}>IPD pricing - by room class (optional)</Typography>
               <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 1.5 }}>

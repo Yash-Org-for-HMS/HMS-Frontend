@@ -447,7 +447,7 @@ export function BillingTab({ id, onGoTo }: { id: string; onGoTo?: (tab: number) 
   // A hand line picked from the Schedule of Charges: the server prices it from
   // the item (with its GST) unless the price is changed here.
   const [socOpen, setSocOpen] = useState(false);
-  const [socItem, setSocItem] = useState<{ chargeItemId: string; price: number } | null>(null);
+  const [socItem, setSocItem] = useState<{ chargeItemId: string; price: number; priceAtBilling?: boolean } | null>(null);
   // Lines unticked, and prices typed for this case, by line key.
   const [skip, setSkip] = useState<Record<string, boolean>>({});
   const [typed, setTyped] = useState<Record<string, string>>({});
@@ -466,7 +466,10 @@ export function BillingTab({ id, onGoTo }: { id: string; onGoTo?: (tab: number) 
     mutationFn: async () => axiosInstance.post(`/ipd/ot/cases/${id}/charges`, {
       chargeType: f.chargeType, description: f.description.trim(),
       quantity: Number(f.quantity) || 1,
-      ...(socItem && Number(f.unitPrice) === socItem.price
+      // A price-at-billing item keeps its link and sends whatever price is typed.
+      ...(socItem?.priceAtBilling
+        ? { chargeItemId: socItem.chargeItemId, unitPrice: Number(f.unitPrice) || 0 }
+        : socItem && Number(f.unitPrice) === socItem.price
         ? { chargeItemId: socItem.chargeItemId }
         : { unitPrice: f.unitPrice ? Number(f.unitPrice) : 0, taxPercent: f.taxPercent ? Number(f.taxPercent) : 0 }),
     }),
@@ -687,7 +690,7 @@ export function BillingTab({ id, onGoTo }: { id: string; onGoTo?: (tab: number) 
               preferCategories={["procedure", "surgery", "operation", "theatre", "consumable"]}
               onPick={(c) => {
                 setF((prev) => ({ ...prev, description: c.itemName, unitPrice: String(c.price), taxPercent: String(c.taxPercent) }));
-                setSocItem({ chargeItemId: c.chargeItemId, price: c.price });
+                setSocItem({ chargeItemId: c.chargeItemId, price: c.price, priceAtBilling: c.priceAtBilling });
                 setSocOpen(false);
               }}
             />
@@ -1444,6 +1447,8 @@ function ImplantsTab({ id, implants, onSaved }: { id: string; implants: Record<s
   // Picked from the Schedule of Charges: the server prices it from the item, GST included.
   const [socOpen, setSocOpen] = useState(false);
   const [socItemId, setSocItemId] = useState<string | null>(null);
+  // The picked item has no fixed price: the price typed here is sent with it.
+  const [socAtBilling, setSocAtBilling] = useState(false);
 
   const add = useMutation({
     mutationFn: async () => axiosInstance.post(`/ipd/ot/cases/${id}/implants`, {
@@ -1453,13 +1458,13 @@ function ImplantsTab({ id, implants, onSaved }: { id: string; implants: Record<s
       serialNumber: f.serialNumber.trim() || undefined,
       quantity: Number(f.quantity) || 1,
       ...(socItemId
-        ? { chargeItemId: socItemId }
+        ? (socAtBilling ? { chargeItemId: socItemId, price: Number(f.price) || 0 } : { chargeItemId: socItemId })
         : { price: f.price ? Number(f.price) : undefined, taxPercent: f.taxPercent ? Number(f.taxPercent) : 0 }),
     }),
     onSuccess: () => {
       toast.success("Implant recorded");
       setF({ implantName: "", manufacturer: "", batchNumber: "", serialNumber: "", quantity: "1", price: "", taxPercent: "0" });
-      setSocItemId(null);
+      setSocItemId(null); setSocAtBilling(false);
       onSaved();
     },
     onError: (e) => toast.error(getApiErrorMessage(e, "Could not record it")),
@@ -1529,15 +1534,15 @@ function ImplantsTab({ id, implants, onSaved }: { id: string; implants: Record<s
           <Grid size={{ xs: 12, sm: 6 }}><TextField fullWidth label="Serial number" value={f.serialNumber} onChange={(e) => setF({ ...f, serialNumber: e.target.value })} /></Grid>
           <Grid size={{ xs: 6, sm: 3 }}><TextField fullWidth type="number" label="Quantity" value={f.quantity} onChange={(e) => setF({ ...f, quantity: e.target.value })} /></Grid>
           <Grid size={{ xs: 6, sm: 3 }}>
-            <TextField fullWidth label="Price" value={f.price} disabled={!!socItemId} onChange={(e) => setF({ ...f, price: e.target.value })}
-              helperText={socItemId ? "From the Schedule of Charges" : undefined} />
+            <TextField fullWidth label="Price" value={f.price} disabled={!!socItemId && !socAtBilling} onChange={(e) => setF({ ...f, price: e.target.value })}
+              helperText={socItemId ? (socAtBilling ? "Priced at billing - typed for this case" : "From the Schedule of Charges") : undefined} />
           </Grid>
           <Grid size={{ xs: 6, sm: 3 }}>
             <TextField fullWidth label="GST %" value={f.taxPercent} disabled={!!socItemId} onChange={(e) => setF({ ...f, taxPercent: e.target.value })} />
           </Grid>
           {socItemId && (
             <Grid size={{ xs: 12 }}>
-              <Button size="small" sx={{ textTransform: "none" }} onClick={() => { setSocItemId(null); setF({ ...f, price: "", taxPercent: "0" }); }}>
+              <Button size="small" sx={{ textTransform: "none" }} onClick={() => { setSocItemId(null); setSocAtBilling(false); setF({ ...f, price: "", taxPercent: "0" }); }}>
                 Enter the price by hand instead
               </Button>
             </Grid>
@@ -1549,7 +1554,7 @@ function ImplantsTab({ id, implants, onSaved }: { id: string; implants: Record<s
           preferCategories={["implant", "prosthe"]}
           onPick={(c) => {
             setF((prev) => ({ ...prev, implantName: c.itemName, price: String(c.price), taxPercent: String(c.taxPercent) }));
-            setSocItemId(c.chargeItemId);
+            setSocItemId(c.chargeItemId); setSocAtBilling(!!c.priceAtBilling);
             setSocOpen(false);
           }}
         />

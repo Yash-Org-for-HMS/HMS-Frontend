@@ -12,12 +12,14 @@ const inr = formatINRAuto;
 
 type RoomPrice = { roomClassId: string; price: number | string };
 type Category = { chargeCategoryId: string; categoryName: string; isActive: boolean };
-type Item = { chargeItemId: string; itemName: string; itemCode: string | null; price: number | string; unit: string | null; isActive: boolean; taxPercent?: number | string; itemType?: string; roomPrices?: RoomPrice[] };
+type Item = { chargeItemId: string; itemName: string; itemCode: string | null; price: number | string; unit: string | null; isActive: boolean; taxPercent?: number | string; itemType?: string; roomPrices?: RoomPrice[]; priceAtBilling?: boolean };
 // `basePrice` + `roomPrices` are returned so a caller (e.g. discharge) can re-derive
 // the effective price if its room class changes after the pick; `price` is the
 // effective price at pick time. `taxPercent` lets the caller preview per-line GST.
 // The server always re-prices and re-taxes authoritatively.
-export type PickedCharge = { chargeItemId: string; itemName: string; price: number; basePrice: number; roomPrices: RoomPrice[]; taxPercent: number };
+// `priceAtBilling`: the item has no fixed price; `price` is what was typed here,
+// and the caller must send it - the server refuses the charge without one.
+export type PickedCharge = { chargeItemId: string; itemName: string; price: number; basePrice: number; roomPrices: RoomPrice[]; taxPercent: number; priceAtBilling?: boolean };
 
 // Reusable picker for the hospital's Schedule of Charges. Lets billing screens
 // choose a rate-card charge; the caller sends only the chargeItemId - the server
@@ -32,6 +34,16 @@ export default function SocChargePicker({ open, onClose, onPick, accent = "#0C73
 }) {
   const [categoryId, setCategoryId] = useState("");
   const [search, setSearch] = useState("");
+  // A price-at-billing item picked, waiting for its price.
+  const [typing, setTyping] = useState<Item | null>(null);
+  const [typed, setTyped] = useState("");
+  const close = () => { setTyping(null); setTyped(""); onClose(); };
+  const typedOk = Number(typed) > 0 && Number.isFinite(Number(typed));
+  const addTyped = () => {
+    if (!typing || !typedOk) return;
+    onPick({ chargeItemId: typing.chargeItemId, itemName: typing.itemName, price: Number(typed), basePrice: 0, roomPrices: [], taxPercent: Number(typing.taxPercent) || 0, priceAtBilling: true });
+    close();
+  };
 
   const { data: categories = [], isLoading: catsLoading } = useQuery<Category[]>({
     queryKey: ["soc-picker-categories"],
@@ -76,7 +88,7 @@ export default function SocChargePicker({ open, onClose, onPick, accent = "#0C73
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+    <Dialog open={open} onClose={close} maxWidth="sm" fullWidth>
       <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
         <ReceiptLongRounded sx={{ color: accent }} /> Pick from Schedule of Charges
         {roomClassId && roomClassName && (
@@ -86,6 +98,20 @@ export default function SocChargePicker({ open, onClose, onPick, accent = "#0C73
         )}
       </DialogTitle>
       <DialogContent dividers>
+        {typing && (
+          <Box sx={{ mb: 1.5, p: 1.5, borderRadius: 2, border: "1px solid", borderColor: "warning.light", bgcolor: "rgba(245,158,11,0.06)" }}>
+            <Typography variant="body2" sx={{ fontWeight: 700 }}>{typing.itemName}</Typography>
+            <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 1 }}>This charge has no fixed price. Type the price for this bill.</Typography>
+            <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+              <TextField size="small" type="number" label="Price (₹)" value={typed} autoFocus
+                onChange={(e) => setTyped(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") addTyped(); }}
+                inputProps={{ min: 0, step: "0.01" }} sx={{ width: 180 }}
+                InputProps={{ startAdornment: <InputAdornment position="start">₹</InputAdornment> }} />
+              <Button variant="contained" disabled={!typedOk} onClick={addTyped} sx={{ bgcolor: accent, textTransform: "none" }}>Add</Button>
+              <Button color="inherit" onClick={() => setTyping(null)} sx={{ textTransform: "none" }}>Cancel</Button>
+            </Box>
+          </Box>
+        )}
         <Box sx={{ display: "flex", gap: 1.5, mb: 1.5, flexWrap: "wrap" }}>
           <TextField
             select size="small" label="Category" value={effectiveCategoryId}
@@ -112,7 +138,10 @@ export default function SocChargePicker({ open, onClose, onPick, accent = "#0C73
             {filtered.map((it) => (
               <ListItemButton
                 key={it.chargeItemId}
-                onClick={() => { onPick({ chargeItemId: it.chargeItemId, itemName: it.itemName, price: effPrice(it), basePrice: Number(it.price), roomPrices: it.roomPrices ?? [], taxPercent: Number(it.taxPercent) || 0 }); onClose(); }}
+                onClick={() => {
+                  if (it.priceAtBilling) { setTyping(it); setTyped(""); return; }
+                  onPick({ chargeItemId: it.chargeItemId, itemName: it.itemName, price: effPrice(it), basePrice: Number(it.price), roomPrices: it.roomPrices ?? [], taxPercent: Number(it.taxPercent) || 0 }); close();
+                }}
                 sx={{ borderRadius: 1.5, mb: 0.25 }}
               >
                 <ListItemText
@@ -120,14 +149,14 @@ export default function SocChargePicker({ open, onClose, onPick, accent = "#0C73
                   secondary={[it.itemCode, it.unit].filter(Boolean).join(" · ") || undefined}
                   primaryTypographyProps={{ fontSize: "0.875rem", fontWeight: 600 }}
                 />
-                <Typography sx={{ fontWeight: 700, color: accent, ml: 2 }}>{inr(effPrice(it))}</Typography>
+                <Typography sx={{ fontWeight: 700, color: it.priceAtBilling ? "warning.dark" : accent, ml: 2, whiteSpace: "nowrap", fontSize: it.priceAtBilling ? "0.8rem" : undefined }}>{it.priceAtBilling ? "Type price" : inr(effPrice(it))}</Typography>
               </ListItemButton>
             ))}
           </List>
         )}
       </DialogContent>
       <DialogActions sx={{ p: 2 }}>
-        <Button color="inherit" onClick={onClose}>Close</Button>
+        <Button color="inherit" onClick={close}>Close</Button>
       </DialogActions>
     </Dialog>
   );
