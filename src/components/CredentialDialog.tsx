@@ -8,7 +8,7 @@ interface CredentialDialogProps {
   onClose: () => void;
   /** The one-time password to display. */
   password: string;
-  /** Login email/username - omit for password-only resets. */
+  /** What they sign in with (login ID or email) - omit for password-only resets. */
   email?: string;
   /** Recipient name, shown in the "share with …" line. */
   name?: string;
@@ -79,7 +79,7 @@ export default function CredentialDialog({
 
           {email && (
             <Box sx={{ mb: 2 }}>
-              <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>Email / Username</Typography>
+              <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>Login ID / Email</Typography>
               <CredentialRow value={email} copied={copied === "email"} onCopy={() => copy(email, "email")} />
             </Box>
           )}

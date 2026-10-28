@@ -25,7 +25,7 @@ interface SheetInfo {
 
 type RowStatus = "add" | "skip" | "error" | "pending";
 interface RowResult { row: number; label: string; status: RowStatus; messages: string[]; details?: string }
-interface NewLogin { name: string; email: string; temporaryPassword: string }
+interface NewLogin { name: string; email: string | null; loginId?: string | null; temporaryPassword: string }
 interface ImportResult { sheet: string; applied: boolean; counts: Record<RowStatus, number>; rows: RowResult[]; logins: NewLogin[] }
 
 const STATUS: Record<RowStatus, { label: string; done: string; color: "success" | "default" | "error" | "warning" }> = {
@@ -45,7 +45,7 @@ const countOf = (rows: RowResult[]): Record<RowStatus, number> => ({
 /** The logins as a CSV file the admin keeps: the passwords are never shown again. */
 function downloadLogins(logins: NewLogin[]) {
   const cell = (s: string) => `"${s.replace(/"/g, '""')}"`;
-  const csv = ["Name,Login email,Temporary password", ...logins.map((l) => [l.name, l.email, l.temporaryPassword].map(cell).join(","))].join("\r\n");
+  const csv = ["Name,Login ID,Login email,Temporary password", ...logins.map((l) => [l.name, l.loginId ?? "", l.email ?? "", l.temporaryPassword].map(cell).join(","))].join("\r\n");
   const a = document.createElement("a");
   a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
   a.download = "dolphin-new-logins.csv";
@@ -149,10 +149,10 @@ export default function SetupImport() {
           <Alert severity="warning" sx={{ mb: 2 }}>These temporary passwords are shown only now. Download them before leaving this page; each person sets their own password at first sign-in.</Alert>
           <TableContainer sx={{ maxHeight: 320 }}>
             <Table size="small" stickyHeader>
-              <TableHead><TableRow><TableCell>Name</TableCell><TableCell>Login email</TableCell><TableCell>Temporary password</TableCell></TableRow></TableHead>
+              <TableHead><TableRow><TableCell>Name</TableCell><TableCell>Signs in with</TableCell><TableCell>Temporary password</TableCell></TableRow></TableHead>
               <TableBody>
                 {logins.map((l) => (
-                  <TableRow key={l.email}><TableCell>{l.name}</TableCell><TableCell>{l.email}</TableCell><TableCell sx={{ fontFamily: "monospace" }}>{l.temporaryPassword}</TableCell></TableRow>
+                  <TableRow key={l.loginId || l.email || l.name}><TableCell>{l.name}</TableCell><TableCell>{l.loginId || l.email}</TableCell><TableCell sx={{ fontFamily: "monospace" }}>{l.temporaryPassword}</TableCell></TableRow>
                 ))}
               </TableBody>
             </Table>

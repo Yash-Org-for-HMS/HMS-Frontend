@@ -154,7 +154,7 @@ export default function TopBar({ drawerWidth, onMenu, announcements }: TopBarPro
           <Box sx={{ px: 2, py: 1.25 }}>
             <Typography sx={{ fontWeight: 700, fontSize: "0.875rem" }}>{name}</Typography>
             <Typography sx={{ color: "text.secondary", fontSize: "0.8125rem" }}>{role}</Typography>
-            {user?.email && <Typography sx={{ color: "text.secondary", fontSize: "0.75rem", mt: 0.25 }}>{user.email}</Typography>}
+            {(user?.loginId || user?.email) && <Typography sx={{ color: "text.secondary", fontSize: "0.75rem", mt: 0.25 }}>{user.loginId || user.email}</Typography>}
             <Typography sx={{ color: "text.secondary", fontSize: "0.75rem", mt: 0.5 }}>{hospital?.name}</Typography>
           </Box>
           {otherPanels.length > 0 && <Divider />}

@@ -9,7 +9,9 @@ export interface HospitalUser {
   id: string;
   firstName: string;
   lastName: string;
-  email: string;
+  email: string | null;
+  /** What they sign in with when they have no email (absent on older sessions). */
+  loginId?: string | null;
   employeeCode: string | null;
   role: string;
   roleName: string;

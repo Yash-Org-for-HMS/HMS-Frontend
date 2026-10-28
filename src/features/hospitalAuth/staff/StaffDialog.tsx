@@ -32,7 +32,7 @@ interface Props {
   /** A category to start a new person in - "Add Doctor" on the Doctors page opens this form as DOCTOR. */
   startCategory?: string;
   onClose: () => void;
-  onSaved: (result: { row: StaffRow; warnings: StaffIssue[]; credentials?: { email: string; temporaryPassword: string }; doctorId?: string | null }) => void;
+  onSaved: (result: { row: StaffRow; warnings: StaffIssue[]; credentials?: { email: string | null; loginId?: string | null; temporaryPassword: string }; doctorId?: string | null }) => void;
 }
 
 interface Form {
@@ -49,7 +49,8 @@ interface Form {
   /** undefined = not chosen yet: the suggested manager stands in. "" = deliberately none. */
   adminManagerId: string | undefined;
   functionalManagerId: string | undefined;
-  giveLogin: boolean; loginEmail: string; loginRoleId: string;
+  /** null until typed in: until then the suggested ID is used. */
+  giveLogin: boolean; loginEmail: string; loginId: string | null; loginRoleId: string;
   /** Blank: the server makes one up and shows it once. */
   loginPassword: string;
   addressLine1: string; addressLine2: string; city: string; state: string; postalCode: string;
@@ -82,7 +83,7 @@ function initialForm(row: StaffRow | null, options: StaffOptions, startWithLogin
     // new one starts from the suggestion.
     adminManagerId: row ? row.adminManager?.staffId ?? "" : undefined,
     functionalManagerId: row ? row.functionalManager?.staffId ?? "" : undefined,
-    giveLogin: !row && startWithLogin, loginEmail: "", loginPassword: "",
+    giveLogin: !row && startWithLogin, loginEmail: "", loginId: null, loginPassword: "",
     loginRoleId: !row && startCategory ? options.roles.find((r) => r.roleCode === DEFAULT_ROLE[startCategory])?.roleId ?? "" : "",
     ...Object.fromEntries(CONTACT_KEYS.map((k) => [k, row?.contact?.[k] ?? ""])) as Pick<Form, (typeof CONTACT_KEYS)[number]>,
   };
@@ -108,6 +109,14 @@ export default function StaffDialog({ row, options, onClose, onSaved, canGiveLog
   const toast = useToast();
   const isNew = !row;
   const [f, setF] = useState<Form>(() => initialForm(row, options, startWithLogin && canGiveLogin, startCategory));
+  // A free login ID to start from (hospital short code and a number); the admin may type another.
+  const { data: suggestedId } = useQuery({
+    queryKey: ["staff-login-id-suggestion"],
+    queryFn: async () => (await axiosInstance.get("/hospital/staff/login-id-suggestion")).data.data.loginId as string,
+    enabled: isNew && f.giveLogin,
+    staleTime: 0,
+  });
+  const loginId = f.loginId ?? suggestedId ?? "";
   const [saving, setSaving] = useState(false);
   const set = <K extends keyof Form>(k: K, v: Form[K]) => setF((prev) => ({ ...prev, [k]: v }));
   const onSelect = (k: keyof Form) => (e: { target: { value: unknown } }) => set(k, String(e.target.value ?? "") as never);
@@ -196,7 +205,7 @@ export default function StaffDialog({ row, options, onClose, onSaved, canGiveLog
   ];
 
   const passwordShort = f.giveLogin && f.loginPassword.length > 0 && f.loginPassword.length < 6;
-  const valid = f.firstName.trim() && f.staffCategoryCode && (!f.giveLogin || (f.loginEmail.trim() && f.loginRoleId && !passwordShort));
+  const valid = f.firstName.trim() && f.staffCategoryCode && (!f.giveLogin || ((f.loginEmail.trim() || loginId.trim()) && f.loginRoleId && !passwordShort));
 
   const submit = async () => {
     setSaving(true);
@@ -216,7 +225,7 @@ export default function StaffDialog({ row, options, onClose, onSaved, canGiveLog
         postingWardId: postKind === "ward" ? postId : null, postingServiceUnitId: postKind === "unit" ? postId : null,
         adminManagerId: adminId || null, functionalManagerId: functionalId || null,
         ...Object.fromEntries(CONTACT_KEYS.map((k) => [k, f[k].trim() || null])),
-        ...(isNew && f.giveLogin ? { login: { email: f.loginEmail.trim(), roleId: f.loginRoleId, ...(f.loginPassword ? { initialPassword: f.loginPassword } : {}) } } : {}),
+        ...(isNew && f.giveLogin ? { login: { loginId: loginId.trim() || undefined, email: f.loginEmail.trim() || undefined, roleId: f.loginRoleId, ...(f.loginPassword ? { initialPassword: f.loginPassword } : {}) } } : {}),
       };
       const res = isNew
         ? await axiosInstance.post("/hospital/staff", body)
@@ -265,7 +274,7 @@ export default function StaffDialog({ row, options, onClose, onSaved, canGiveLog
         <Stack spacing={2}>
           {row?.login && (
             <Alert severity="info" sx={{ py: 0 }}>
-              {row.name} logs in as {row.login.email}. Name, phone, address, emergency contact, facility, home department and designation saved here update the login too.
+              {row.name} logs in as {row.login.loginId || row.login.email}. Name, phone, address, emergency contact, facility, home department and designation saved here update the login too.
             </Alert>
           )}
 
@@ -471,7 +480,12 @@ export default function StaffDialog({ row, options, onClose, onSaved, canGiveLog
             {f.giveLogin && (
               <Grid container spacing={2}>
                 <Grid size={{ xs: 12, sm: 7 }}>
-                  <TextField fullWidth required label="Login email" value={f.loginEmail} onChange={(e) => set("loginEmail", e.target.value)} />
+                  <TextField fullWidth label="Login ID" value={loginId} onChange={(e) => set("loginId", e.target.value)}
+                    helperText="What they type to sign in. Made up for you; change it if they already have an ID (e.g. from your old software)." slotProps={{ htmlInput: { maxLength: 50 } }} />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 5 }}>
+                  <TextField fullWidth label={loginId.trim() ? "Login email (optional)" : "Login email"} value={f.loginEmail} onChange={(e) => set("loginEmail", e.target.value)}
+                    helperText="A login ID, an email, or both." />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 5 }}>
                   <TextField select fullWidth required label="Role" value={f.loginRoleId} onChange={(e) => set("loginRoleId", e.target.value)}

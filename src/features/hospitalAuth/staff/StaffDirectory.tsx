@@ -48,18 +48,26 @@ const CELL_SX = { borderBottom: "1px solid", borderColor: "divider", px: 1.5 };
 
 function GiveLoginDialog({ row, options, onClose, onDone }: {
   row: StaffRow; options: StaffOptions; onClose: () => void;
-  onDone: (credentials: { email: string; temporaryPassword: string }, doctorId: string | null) => void;
+  onDone: (credentials: { email: string | null; loginId?: string | null; temporaryPassword: string }, doctorId: string | null) => void;
 }) {
   const toast = useToast();
   const guess: Record<string, string> = { DOCTOR: "DOCTOR", NURSE: "NURSE", PHARMACIST: "PHARMACIST", TECHNICIAN: "LAB_TECH" };
   const [email, setEmail] = useState(row.email ?? "");
+  // null until typed in: until then the suggested ID (hospital short code and a number) is used.
+  const [typedId, setLoginId] = useState<string | null>(null);
+  const { data: suggestedId } = useQuery({
+    queryKey: ["staff-login-id-suggestion"],
+    queryFn: async () => (await axiosInstance.get("/hospital/staff/login-id-suggestion")).data.data.loginId as string,
+    staleTime: 0,
+  });
+  const loginId = typedId ?? suggestedId ?? "";
   const [password, setPassword] = useState("");
   const [roleId, setRoleId] = useState(options.roles.find((r) => r.roleCode === guess[row.staffCategoryCode])?.roleId ?? "");
   const [saving, setSaving] = useState(false);
   const submit = async () => {
     setSaving(true);
     try {
-      const res = await axiosInstance.post(`/hospital/staff/${row.staffId}/account`, { email: email.trim(), roleId, ...(password ? { initialPassword: password } : {}) });
+      const res = await axiosInstance.post(`/hospital/staff/${row.staffId}/account`, { loginId: loginId.trim() || undefined, email: email.trim() || undefined, roleId, ...(password ? { initialPassword: password } : {}) });
       onDone(res.data.credentials, res.data.doctorId ?? null);
     } catch (err) {
       toast.error(getApiErrorMessage(err, "Couldn't create the login"));
@@ -72,7 +80,10 @@ function GiveLoginDialog({ row, options, onClose, onDone }: {
       <DialogTitle>Give {row.name} a login</DialogTitle>
       <DialogContent dividers>
         <Stack spacing={2}>
-          <TextField fullWidth required label="Login email" value={email} onChange={(e) => setEmail(e.target.value)} />
+          <TextField fullWidth label="Login ID" value={loginId} onChange={(e) => setLoginId(e.target.value)}
+            helperText="What they type to sign in. Made up for you; change it if they already have an ID (e.g. from your old software)." slotProps={{ htmlInput: { maxLength: 50 } }} />
+          <TextField fullWidth label={loginId.trim() ? "Email (optional)" : "Email"} value={email} onChange={(e) => setEmail(e.target.value)}
+            helperText="Give a login ID, an email, or both." />
           <TextField select fullWidth required label="Role" value={roleId} onChange={(e) => setRoleId(e.target.value)} helperText="What they can open. Separate from the designation.">
             {options.roles.map((r) => <MenuItem key={r.roleId} value={r.roleId}>{r.roleName}</MenuItem>)}
           </TextField>
@@ -83,7 +94,7 @@ function GiveLoginDialog({ row, options, onClose, onDone }: {
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} disabled={saving} sx={{ textTransform: "none" }}>Cancel</Button>
-        <Button variant="contained" onClick={submit} disabled={!email.trim() || !roleId || saving || (password.length > 0 && password.length < 6)}
+        <Button variant="contained" onClick={submit} disabled={(!email.trim() && !loginId.trim()) || !roleId || saving || (password.length > 0 && password.length < 6)}
           startIcon={saving ? <HeartbeatLoader size={20} /> : undefined} sx={{ textTransform: "none", fontWeight: 600 }}>
           Create login
         </Button>
@@ -118,6 +129,8 @@ export default function StaffDirectory() {
   const editId = searchParams.get("edit");
   const [loginFor, setLoginFor] = useState<StaffRow | null>(null);
   const [cred, setCred] = useState<{ email: string; password: string; name: string } | null>(null);
+  // What the person signs in with: the login ID when they have one.
+  const signInAs = (c: { email: string | null; loginId?: string | null }) => c.loginId || c.email || "";
 
   const list = useQuery<StaffListResponse>({
     queryKey: ["staff-directory"],
@@ -354,7 +367,7 @@ export default function StaffDirectory() {
             refresh();
             toast.success(openDialog.row ? "Saved" : `${row.name} added`);
             if (warnings.length) toast.warning(warnings.map((w) => w.message).join(" · "));
-            if (credentials) setCred({ email: credentials.email, password: credentials.temporaryPassword, name: row.name });
+            if (credentials) setCred({ email: signInAs(credentials), password: credentials.temporaryPassword, name: row.name });
             if (!openDialog.row && doctorId) {
               if (credentials) setDoctorNext(doctorId); else openDoctor(doctorId);
             }
@@ -367,7 +380,7 @@ export default function StaffDirectory() {
           options={options}
           onClose={() => setLoginFor(null)}
           onDone={(c, doctorId) => {
-            setCred({ email: c.email, password: c.temporaryPassword, name: loginFor.name });
+            setCred({ email: signInAs(c), password: c.temporaryPassword, name: loginFor.name });
             if (doctorId) setDoctorNext(doctorId);
             setLoginFor(null);
             refresh();

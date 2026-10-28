@@ -272,7 +272,7 @@ export default function DepartmentForm() {
                 <MenuItem value="">None</MenuItem>
                 {users.map((user) => (
                   <MenuItem key={user.userId} value={user.userId}>
-                    {user.firstName} {user.lastName} ({user.email})
+                    {user.firstName} {user.lastName}{(user.loginId || user.email) && ` (${user.loginId || user.email})`}
                   </MenuItem>
                 ))}
               </TextField>

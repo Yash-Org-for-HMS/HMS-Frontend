@@ -5,7 +5,7 @@ import {
 } from "@mui/material";
 import {
   Visibility, VisibilityOff, KeyboardCapslockRounded,
-  MailOutlined, LockOutlined,
+  PersonOutlineRounded, LockOutlined,
 } from "@mui/icons-material";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import { axiosInstance } from "@/api/axios";
@@ -13,6 +13,9 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "@/providers/ToastContext";
 import { LoginShell, LoginSubmitButton } from "@/features/auth/LoginShell";
 import { loginFieldSx, LOGIN_ACCENT, isValidEmail } from "@/features/auth/loginDesign";
+
+/** Staff sign in with an email or the login ID the hospital gave them; an @ says which. */
+const isValidLogin = (v: string) => (v.includes("@") ? isValidEmail(v) : /^[a-z0-9][a-z0-9._-]{2,49}$/i.test(v.trim()));
 
 export default function HospitalLogin() {
   const [email, setEmail] = useState("");
@@ -29,7 +32,7 @@ export default function HospitalLogin() {
   // Blur only flags what has been typed and is wrong; submit flags anything
   // missing. `touched` fires when the EMAIL blurs, so keying the password
   // message off it would nag about a field the user is on their way to.
-  const emailError = (touched && email.length > 0 && !isValidEmail(email)) || (submitted && !isValidEmail(email));
+  const emailError = (touched && email.length > 0 && !isValidLogin(email)) || (submitted && !isValidLogin(email));
   const passwordError = submitted && password.length === 0;
   // Deliberately NOT gated on the fields being valid. Gating it made the
   // button flip grey→solid mid-word as the email became parseable, which
@@ -39,10 +42,10 @@ export default function HospitalLogin() {
     e.preventDefault();
     setTouched(true);
     setSubmitted(true);
-    if (!isValidEmail(email) || !password) return;
+    if (!isValidLogin(email) || !password) return;
     setIsLoading(true);
     try {
-      const response = await axiosInstance.post("/hospital-auth/login", { email, password });
+      const response = await axiosInstance.post("/hospital-auth/login", { login: email.trim(), password });
       const data = response.data.data;
       if (data.requiresPasswordChange) {
         sessionStorage.setItem("hospitalTempToken", data.tempToken);
@@ -68,15 +71,15 @@ export default function HospitalLogin() {
     <LoginShell title="Hospital Staff Portal">
       <form onSubmit={handleLogin} noValidate>
         <TextField
-          fullWidth variant="outlined" type="email" margin="dense"
+          fullWidth variant="outlined" type="text" margin="dense"
           value={email} onChange={(e) => setEmail(e.target.value)} onBlur={() => setTouched(true)}
-          error={emailError} helperText={emailError ? (email.length === 0 ? "Enter your email address" : "Enter a valid email address") : " "}
-          disabled={isLoading} required sx={loginFieldSx} inputProps={{ autoComplete: "email", "aria-label": "Email" }}
-          placeholder="you@hospital.com"
+          error={emailError} helperText={emailError ? (email.length === 0 ? "Enter your email or login ID" : email.includes("@") ? "Enter a valid email address" : "Enter a valid login ID") : " "}
+          disabled={isLoading} required sx={loginFieldSx} inputProps={{ autoComplete: "username", autoCapitalize: "none", "aria-label": "Email or login ID" }}
+          placeholder="Email or login ID"
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <MailOutlined fontSize="small" className="field-lead-icon" sx={{ color: "text.secondary" }} />
+                <PersonOutlineRounded fontSize="small" className="field-lead-icon" sx={{ color: "text.secondary" }} />
               </InputAdornment>
             ),
           }}

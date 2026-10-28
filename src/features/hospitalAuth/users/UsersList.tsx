@@ -167,7 +167,7 @@ function ResetPasswordDialog({ open, user, onClose, onSuccess }: ResetPasswordDi
               </Box>
               {" · "}
               <Box component="span" sx={{ color: "text.secondary" }}>
-                {user?.email}
+                {user?.loginId || user?.email}
               </Box>
             </Typography>
           </Box>
@@ -500,7 +500,7 @@ export default function UsersList() {
                             {user.firstName} {user.lastName}
                           </Typography>
                           <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                            {user.email}
+                            {user.loginId || user.email}
                             {user.employeeCode && ` · ${user.employeeCode}`}
                           </Typography>
                           {user.mustChangePassword && (
@@ -606,7 +606,7 @@ export default function UsersList() {
       <CredentialDialog
         open={successDialog.open}
         title="Password reset"
-        email={successDialog.user?.email || ""}
+        email={successDialog.user?.loginId || successDialog.user?.email || ""}
         password={successDialog.password}
         name={successDialog.user ? `${successDialog.user.firstName} ${successDialog.user.lastName || ""}`.trim() : undefined}
         note="They will be required to change this password on their next login. Share it securely."

@@ -22,7 +22,9 @@ export interface StaffUser {
   userId: string;
   firstName: string;
   lastName: string;
-  email: string;
+  /** Null for a login that signs in with its login ID. */
+  email: string | null;
+  loginId?: string | null;
 }
 
 // ── Access control (RBAC) ────────────────────────────────────────────────────

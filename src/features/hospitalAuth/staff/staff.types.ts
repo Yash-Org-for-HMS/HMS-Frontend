@@ -26,7 +26,8 @@ export interface StaffRow {
   staffCategoryName: string;
   councilRegNo: string | null;
   status: string;
-  login: { userId: string; email: string; isActive: boolean; roleCode: string; roleName: string } | null;
+  /** Signed in to with loginId, or email when there is no login ID. */
+  login: { userId: string; email: string | null; loginId: string | null; isActive: boolean; roleCode: string; roleName: string } | null;
   employment: {
     employmentId: string;
     branchId: string | null;

@@ -112,6 +112,7 @@ export default function UserForm() {
     firstName: "",
     lastName: "",
     email: "",
+    loginId: "",
     phone: "",
     roleId: "",
     employeeCode: "",
@@ -154,6 +155,7 @@ export default function UserForm() {
       firstName: user.firstName || "",
       lastName: user.lastName || "",
       email: user.email || "",
+      loginId: user.loginId || "",
       phone: user.phone || "",
       roleId: user.roleId || "",
       employeeCode: user.employeeCode || "",
@@ -196,7 +198,8 @@ export default function UserForm() {
     const rules: Parameters<typeof validate<typeof formData>>[1] = {
       firstName: [required("First name")],
       lastName: [required("Last name")],
-      email: [required("Email"), isEmail],
+      // The email is set when the login is made and not changed here; a login may have none (it signs in with its login ID).
+      ...(isEditing ? {} : { email: [required("Email"), isEmail] }),
       phone: [isPhone],
     };
     if (!isEditing && formData.initialPassword) {
@@ -329,11 +332,19 @@ export default function UserForm() {
                     required
                     disabled={isEditing}
                     error={!!errors.email}
-                    helperText={errors.email || (!isEditing ? "This will be the login email" : "Email cannot be changed")}
+                    helperText={errors.email || (!isEditing ? "This will be the login email" : formData.email ? "Email cannot be changed" : "No email - signs in with the login ID")}
                     {...textFieldProps}
                     FormHelperTextProps={{ style: { color: "text.secondary" } }}
                   />
                 </Grid>
+                {isEditing && (
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <TextField label="Login ID" name="loginId" value={formData.loginId} onChange={handleChange} {...textFieldProps}
+                      required={!formData.email}
+                      helperText={formData.email ? "Optional: a short ID to sign in with instead of the email" : "What they type to sign in"}
+                      slotProps={{ htmlInput: { maxLength: 50 } }} />
+                  </Grid>
+                )}
                 <Grid size={{ xs: 12, md: 6 }}>
                   <TextField label="Phone" name="phone" value={formData.phone} onChange={handleChange} error={!!errors.phone} helperText={errors.phone} {...textFieldProps}  inputProps={{ maxLength: 20 }}
               />
@@ -478,7 +489,7 @@ export default function UserForm() {
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
                       <PersonRounded sx={{ color: "text.secondary", fontSize: 18 }} />
                       <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                        Login Email: <strong style={{ color: "text.secondary" }}>{formData.email || "(set email in Personal tab)"}</strong>
+                        Signs in with: <strong style={{ color: "text.secondary" }}>{formData.loginId || formData.email || "(set email in Personal tab)"}</strong>
                       </Typography>
                     </Box>
                   </Grid>
