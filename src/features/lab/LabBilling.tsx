@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { SEMANTIC } from "@/styles/accents";
 import {
   Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Chip, Button, Tabs, Tab, Grid, Pagination,
+  Chip, Button, Tabs, Tab, Grid, Pagination, Tooltip,
 } from "@mui/material";
 import { PointOfSaleRounded, ScienceRounded, BiotechRounded, ReceiptLongRounded, PrintRounded } from "@mui/icons-material";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -15,7 +15,8 @@ import Mascot from "@/components/Mascot";
 import { ListSkeleton } from "@/components/TableRowsSkeleton";
 import ErrorState from "@/components/ErrorState";
 import { apiErrorText } from "@/utils/apiError";
-import PointOfCarePOS from "@/components/billing/PointOfCarePOS";
+import PointOfCarePOS, { type TypedPrice } from "@/components/billing/PointOfCarePOS";
+import TypeOrderPriceDialog from "@/components/billing/TypeOrderPriceDialog";
 import LabReceiptDialog from "@/components/billing/LabReceiptDialog";
 import { useTableSort } from "@/components/table/useTableSort";
 import SortableHeadCell from "@/components/table/SortableHeadCell";
@@ -49,6 +50,9 @@ interface BillableOrder {
   amount: number | null;
   billingDescription: string | null;
   taxPercent: number;
+  // Price at billing: the order's open-priced tests, and why it cannot be billed yet.
+  typedPrices: TypedPrice[] | null;
+  priceBlocked: string | null;
 }
 
 const ACCENT = SEMANTIC.success;
@@ -71,6 +75,8 @@ interface BillableOrderRow {
   amount?: number | null;
   billingDescription?: string | null;
   taxPercent?: number | null;
+  typedPrices?: TypedPrice[] | null;
+  priceBlocked?: string | null;
 }
 
 function normalizeRow(o: BillableOrderRow): BillableOrder {
@@ -89,6 +95,8 @@ function normalizeRow(o: BillableOrderRow): BillableOrder {
     amount: o.amount ?? null,
     billingDescription: o.billingDescription ?? null,
     taxPercent: Number(o.taxPercent || 0),
+    typedPrices: o.typedPrices ?? null,
+    priceBlocked: o.priceBlocked ?? null,
   };
 }
 
@@ -97,6 +105,7 @@ export default function LabBilling() {
   const [tabValue, setTabValue] = useState(0);
   const [payOrder, setPayOrder] = useState<BillableOrder | null>(null);
   const [receiptId, setReceiptId] = useState<string | null>(null);
+  const [priceOrder, setPriceOrder] = useState<BillableOrder | null>(null);
 
   // One page of the selected tab, filtered/sorted/priced server-side.
   //
@@ -220,12 +229,21 @@ export default function LabBilling() {
                         />
                         {o.description}
                       </TableCell>
-                      <TableCell align="right">{amt != null ? formatINR(amt) : "-"}</TableCell>
+                      <TableCell align="right">
+                        {o.priceBlocked
+                          ? <Tooltip title={o.priceBlocked}><Chip label="Price needed" color="warning" size="small" /></Tooltip>
+                          : amt != null ? formatINR(amt) : "-"}
+                      </TableCell>
                       <TableCell>{statusChip(o)}</TableCell>
                       <TableCell align="right">
                         {o.billingLockActive ? (
                           <Button variant="contained" size="small" startIcon={<PointOfSaleRounded />} onClick={() => setPayOrder(o)} sx={{ bgcolor: ACCENT, "&:hover": { bgcolor: SEMANTIC.successDark } }}>
                             Collect Payment
+                          </Button>
+                        ) : o.priceBlocked && o.typedPrices ? (
+                          // Billed later (inpatient or pay-later): the price is typed here, before the bill.
+                          <Button variant="outlined" size="small" color="warning" onClick={() => setPriceOrder(o)}>
+                            Type price
                           </Button>
                         ) : o.paymentStatus === "PAID" ? (
                           <Button variant="outlined" size="small" color="success" startIcon={<PrintRounded />} onClick={() => setReceiptId(o.id)}>
@@ -269,8 +287,15 @@ export default function LabBilling() {
             amount: amountOf(payOrder) || 0,
             taxPercent: payOrder.taxPercent,
             date: payOrder.date,
+            typedPrices: payOrder.typedPrices,
           }}
         />
+      )}
+
+      {priceOrder?.typedPrices && (
+        <TypeOrderPriceDialog open kind={priceOrder.kind} id={priceOrder.id} tests={priceOrder.typedPrices}
+          onClose={() => setPriceOrder(null)}
+          onSaved={() => { setPriceOrder(null); queryClient.invalidateQueries({ queryKey: ["lab-billing"] }); }} />
       )}
 
       {receiptId && (

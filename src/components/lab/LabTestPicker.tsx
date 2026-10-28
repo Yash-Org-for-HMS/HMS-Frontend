@@ -10,8 +10,8 @@ import { formatINRAuto } from "@/utils/format";
 
 const inr = formatINRAuto;
 
-type LabTest = { chargeItemId: string; testName: string; testCode: string | null; price: number | string; category?: string | null };
-export type PickedLabTest = { chargeItemId: string; testName: string; price: number };
+type LabTest = { chargeItemId: string; testName: string; testCode: string | null; price: number | string; category?: string | null; priceAtBilling?: boolean };
+export type PickedLabTest = { chargeItemId: string; testName: string; price: number; priceAtBilling?: boolean };
 
 // Category-browse, MULTI-ADD picker for lab tests (mastered in the Schedule of
 // Charges, organized into categories). Unlike the radiology picker it stays open so
@@ -73,7 +73,7 @@ export default function LabTestPicker({ open, onClose, onToggle, selectedIds, ac
             {filtered.map((t) => {
               const added = selectedIds.has(t.chargeItemId);
               return (
-                <ListItemButton key={t.chargeItemId} onClick={() => onToggle({ chargeItemId: t.chargeItemId, testName: t.testName, price: Number(t.price) })}
+                <ListItemButton key={t.chargeItemId} onClick={() => onToggle({ chargeItemId: t.chargeItemId, testName: t.testName, price: Number(t.price), priceAtBilling: t.priceAtBilling })}
                   sx={{ borderRadius: 1.5, mb: 0.25, bgcolor: added ? `${accent}12` : undefined }}>
                   {added ? <CheckCircleRounded fontSize="small" sx={{ color: accent, mr: 1 }} /> : <AddCircleOutlineRounded fontSize="small" sx={{ color: "text.disabled", mr: 1 }} />}
                   <ListItemText
@@ -81,7 +81,7 @@ export default function LabTestPicker({ open, onClose, onToggle, selectedIds, ac
                     secondary={[t.category, t.testCode].filter(Boolean).join(" · ") || undefined}
                     primaryTypographyProps={{ fontSize: "0.875rem", fontWeight: 600 }}
                   />
-                  <Typography sx={{ fontWeight: 700, color: accent, ml: 2 }}>{inr(Number(t.price))}</Typography>
+                  <Typography sx={{ fontWeight: 700, color: accent, ml: 2 }}>{t.priceAtBilling ? "At billing" : inr(Number(t.price))}</Typography>
                 </ListItemButton>
               );
             })}

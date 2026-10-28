@@ -16,7 +16,7 @@ import { useToast } from "@/providers/ToastContext";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
 import { ListSkeleton } from "@/components/TableRowsSkeleton";
 import LabTestPicker, { type PickedLabTest } from "@/components/lab/LabTestPicker";
-import { formatINR } from "@/utils/format";
+import { testPrice } from "@/components/lab/testPrice";
 
 const DOCTOR_BLUE = BRAND.action;
 
@@ -127,7 +127,7 @@ export default function LabOrderForm({ consultationId, patientId, onRequireSave 
                 {items.map((item, index) => (
                   <TableRow key={item.chargeItemId}>
                     <TableCell>{item.testName}</TableCell>
-                    <TableCell align="right">{formatINR(Number(item.price))}</TableCell>
+                    <TableCell align="right">{testPrice(item)}</TableCell>
                     <TableCell align="center">
                       <IconButton size="small" color="error" onClick={() => handleRemoveItem(index)}>
                         <DeleteRounded fontSize="small" />

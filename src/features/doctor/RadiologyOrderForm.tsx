@@ -22,7 +22,7 @@ import { ListSkeleton } from "@/components/TableRowsSkeleton";
 const DOCTOR_BLUE = BRAND.action;
 
 /** One scan queued for submission. price is display-only - the server prices from SOC. */
-type RadiologyScanLine = { chargeItemId: string; scanType: string; radiologistNotes: string; price: number };
+type RadiologyScanLine = { chargeItemId: string; scanType: string; radiologistNotes: string; price: number; priceAtBilling?: boolean };
 
 interface RadiologyOrderFormProps {
   consultationId?: string | null;
@@ -58,6 +58,7 @@ export default function RadiologyOrderForm({ consultationId, patientId, onRequir
     scanType: t.testName,
     radiologistNotes: radiologistNotes.trim(),
     price: Number(t.price),
+    priceAtBilling: t.priceAtBilling,
   });
 
   const addToBasket = () => {
@@ -135,7 +136,7 @@ export default function RadiologyOrderForm({ consultationId, patientId, onRequir
             </Button>
             {selectedTest && (
               <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                {selectedTest.testName} <Typography component="span" sx={{ color: "text.secondary" }}>· ₹{Number(selectedTest.price).toFixed(0)}</Typography>
+                {selectedTest.testName} <Typography component="span" sx={{ color: "text.secondary" }}>· {selectedTest.priceAtBilling ? "At billing" : `₹${Number(selectedTest.price).toFixed(0)}`}</Typography>
               </Typography>
             )}
             <Button onClick={addToBasket} disabled={!selectedTest} startIcon={<AddRounded />}
@@ -154,7 +155,7 @@ export default function RadiologyOrderForm({ consultationId, patientId, onRequir
                       <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>{s.radiologistNotes}</Typography>
                     )}
                   </Box>
-                  <Typography variant="body2" sx={{ fontWeight: 600, color: "text.secondary" }}>₹{(s.price || 0).toFixed(0)}</Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 600, color: "text.secondary" }}>{s.priceAtBilling ? "At billing" : `₹${(s.price || 0).toFixed(0)}`}</Typography>
                   <IconButton size="small" onClick={() => removeFromBasket(idx)} aria-label={`Remove ${s.scanType}`}>
                     <DeleteRounded fontSize="small" />
                   </IconButton>

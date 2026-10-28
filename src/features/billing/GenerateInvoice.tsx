@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   Box, Typography, Paper, Autocomplete, TextField,
   Table, TableBody, TableCell, TableHead, TableRow, Checkbox,
-  Button, Divider, Grid, Dialog, DialogTitle, DialogContent, DialogActions, alpha, useTheme
+  Button, Divider, Grid, Dialog, DialogTitle, DialogContent, DialogActions, alpha, useTheme, Tooltip
 } from "@mui/material";
 import { ReceiptLongRounded, PaymentRounded, CheckCircleRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
@@ -17,6 +17,7 @@ import { ListSkeleton } from "@/components/TableRowsSkeleton";
 import { useToast } from "@/providers/ToastContext";
 import StatusChip from "@/components/StatusChip";
 import InvoiceViewDialog from "@/components/billing/InvoiceViewDialog";
+import TypeOrderPriceDialog from "@/components/billing/TypeOrderPriceDialog";
 import { formatINR, formatDate } from "@/utils/format";
 import { SEMANTIC } from "@/styles/accents";
 
@@ -106,9 +107,12 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
   }, [paymentMethods]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-select all charges when a fresh set loads (and clear on patient change).
+  // A charge that cannot be billed yet (a price still to type) is left out.
   useEffect(() => {
-    setSelectedItemIds(new Set((unbilledData ?? []).map((i) => i.id)));
+    setSelectedItemIds(new Set((unbilledData ?? []).filter((i) => !i.blocked).map((i) => i.id)));
   }, [unbilledData]);
+  const billable = unbilledItems.filter((i) => !i.blocked);
+  const [priceItem, setPriceItem] = useState<UnbilledItem | null>(null);
 
   const handleToggleItem = (id: string) => {
     const newSelected = new Set(selectedItemIds);
@@ -238,9 +242,9 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
                     <TableRow>
                       <TableCell padding="checkbox">
                         <Checkbox 
-                          checked={selectedItemIds.size === unbilledItems.length && unbilledItems.length > 0}
+                          checked={selectedItemIds.size === billable.length && billable.length > 0}
                           onChange={(e) => {
-                            if (e.target.checked) setSelectedItemIds(new Set(unbilledItems.map(i => i.id)));
+                            if (e.target.checked) setSelectedItemIds(new Set(billable.map(i => i.id)));
                             else setSelectedItemIds(new Set());
                           }}
                         />
@@ -255,7 +259,7 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
                     {unbilledItems.map((item) => (
                       <TableRow key={item.id} hover selected={selectedItemIds.has(item.id)}>
                         <TableCell padding="checkbox">
-                          <Checkbox checked={selectedItemIds.has(item.id)} onChange={() => handleToggleItem(item.id)} />
+                          <Checkbox checked={selectedItemIds.has(item.id)} disabled={!!item.blocked} onChange={() => handleToggleItem(item.id)} />
                         </TableCell>
                         <TableCell>{formatDate(item.date)}</TableCell>
                         <TableCell>
@@ -268,7 +272,15 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
                           </Typography>
                         </TableCell>
                         <TableCell>{item.description}</TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 600 }}>₹{item.amount.toFixed(2)}</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 600 }}>
+                          {item.typedPrices && item.blocked ? (
+                            <Tooltip title={item.blocked}>
+                              <Button size="small" variant="outlined" color="warning" onClick={() => setPriceItem(item)}>Type price</Button>
+                            </Tooltip>
+                          ) : item.blocked ? (
+                            <Tooltip title={item.blocked}><Typography variant="body2" color="warning.dark">Can't bill yet</Typography></Tooltip>
+                          ) : `₹${item.amount.toFixed(2)}`}
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -377,6 +389,12 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
             </Box>
           )}
         </Paper>
+      )}
+
+      {priceItem?.typedPrices && (priceItem.type === "LAB" || priceItem.type === "RADIOLOGY") && (
+        <TypeOrderPriceDialog open kind={priceItem.type} id={priceItem.id} tests={priceItem.typedPrices}
+          onClose={() => setPriceItem(null)}
+          onSaved={() => { setPriceItem(null); refetchUnbilled(); }} />
       )}
 
       {invoiceView && (

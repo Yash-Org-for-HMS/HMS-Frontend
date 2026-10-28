@@ -540,6 +540,7 @@ export default function RadiologyOrdersQueue() {
             description: posItem?.description || `Radiology Scan: ${editOrder.scanType}`,
             amount: Number(posItem?.amount ?? 0),
             taxPercent: Number(posItem?.taxPercent ?? 0),
+            typedPrices: posItem?.typedPrices,
             date: editOrder.orderDate
           }}
         />

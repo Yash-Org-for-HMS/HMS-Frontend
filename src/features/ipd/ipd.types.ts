@@ -91,6 +91,12 @@ export interface PendingCharge {
   hsnCode?: string | null;
   chargeItemId?: string | null;
   itemDate?: string | null;
+  /** The lab/radiology order it comes from. */
+  sourceType?: string;
+  sourceId?: string | null;
+  /** Price at billing: a test whose price is still to be typed holds the discharge. */
+  blocked?: string;
+  typedPrices?: { chargeItemId: string; itemName: string; price: number | null }[];
 }
 
 /** GET /ipd/admissions/:id - the row above plus everything discharge needs. */

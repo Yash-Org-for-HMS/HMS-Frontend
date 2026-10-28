@@ -15,6 +15,7 @@ import { useToast } from "@/providers/ToastContext";
 import HeartbeatLoader from "../HeartbeatLoader";
 import { unitCount } from "@/features/ipd/billingUnit";
 import SocChargePicker from "@/components/billing/SocChargePicker";
+import TypeOrderPriceDialog from "@/components/billing/TypeOrderPriceDialog";
 
 interface Props {
   open: boolean;
@@ -87,6 +88,9 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
   // Clinical charges (doctor visits / lab / radiology) accrued during the stay
   // that will roll onto the final bill - previewed so the total is honest.
   const pendingCharges: PendingCharge[] = detail?.pendingCharges || [];
+  // Price at billing: a lab/radiology test still to be priced holds the discharge bill.
+  const [priceCharge, setPriceCharge] = useState<PendingCharge | null>(null);
+  const unpriced = pendingCharges.filter((c) => c.blocked);
   const pendingTotal = Number(detail?.pendingChargesTotal || 0);
   // Requested, not dispensed: shown but never added to the total.
   const awaitingPharmacy = detail?.awaitingPharmacy ?? [];
@@ -208,7 +212,11 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
                 {pendingCharges.map((c, i) => (
                   <Box key={i} sx={{ display: "flex", justifyContent: "space-between" }}>
                     <Typography variant="body2" sx={{ color: "text.secondary" }}>{c.description}</Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 700 }}>{formatINR(Number(c.totalPrice))}</Typography>
+                    {c.blocked && c.typedPrices && c.sourceId ? (
+                      <Button size="small" variant="outlined" color="warning" sx={{ py: 0 }} onClick={() => setPriceCharge(c)}>Type price</Button>
+                    ) : (
+                      <Typography variant="body2" sx={{ fontWeight: 700 }}>{formatINR(Number(c.totalPrice))}</Typography>
+                    )}
                   </Box>
                 ))}
                 <Divider sx={{ my: 0.5 }} />
@@ -216,6 +224,11 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
                   <Typography variant="body2" sx={{ fontWeight: 700 }}>Clinical charges total</Typography>
                   <Typography variant="body2" sx={{ fontWeight: 700 }}>{formatINR(pendingTotal)}</Typography>
                 </Box>
+                {unpriced.length > 0 && (
+                  <Typography variant="caption" color="warning.dark">
+                    Type the price of {unpriced.length === 1 ? "the test" : `the ${unpriced.length} tests`} priced at billing before discharging.
+                  </Typography>
+                )}
               </Stack>
             </Box>
           )}
@@ -397,13 +410,18 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
         {/* A leftover advance has to be dealt with explicitly: refund or hold,
             and a hold carries its reason. */}
         <Button variant="contained" onClick={submit}
-          disabled={saving || !detail || (depositRefundable > 0 && (!advanceAction || (advanceAction === "HOLD" && holdReason.trim().length < 3)))}
+          disabled={saving || !detail || unpriced.length > 0 || (depositRefundable > 0 && (!advanceAction || (advanceAction === "HOLD" && holdReason.trim().length < 3)))}
           startIcon={saving ? <HeartbeatLoader size={22} /> : <LogoutRounded />}
           sx={{ bgcolor: SEMANTIC.danger, "&:hover": { bgcolor: SEMANTIC.dangerDark } }}>
           Discharge & Bill
         </Button>
       </DialogActions>
     </Dialog>
+    {priceCharge?.typedPrices && priceCharge.sourceId && (priceCharge.sourceType === "LAB" || priceCharge.sourceType === "RADIOLOGY") && (
+      <TypeOrderPriceDialog open kind={priceCharge.sourceType} id={priceCharge.sourceId} tests={priceCharge.typedPrices}
+        onClose={() => setPriceCharge(null)}
+        onSaved={() => { setPriceCharge(null); refetchDetail(); }} />
+    )}
     <SocChargePicker
       open={socPickerOpen}
       onClose={() => setSocPickerOpen(false)}

@@ -8,7 +8,7 @@ import {
 import { InfoOutlined } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
 import { axiosInstance } from "@/api/axios";
-import { formatINR } from "@/utils/format";
+import { testPrice } from "@/components/lab/testPrice";
 import Mascot from "@/components/Mascot";
 import ErrorState from "@/components/ErrorState";
 import PageHeader from "@/components/layout/PageHeader";
@@ -102,7 +102,7 @@ export default function RadiologyCatalog() {
                     <TableRow key={scan.chargeItemId || scan.testName} hover>
                       <TableCell sx={{ fontWeight: 500 }}>{scan.testName}</TableCell>
                       <TableCell sx={{ fontFamily: "monospace", color: "text.secondary" }}>{scan.testCode || "-"}</TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 600 }}>{formatINR(Number(scan.price))}</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 600 }}>{testPrice(scan)}</TableCell>
                     </TableRow>,
                   ])}
                 </TableBody>

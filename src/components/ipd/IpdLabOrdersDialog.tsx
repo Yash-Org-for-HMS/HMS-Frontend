@@ -2,6 +2,7 @@ import { useState } from "react";
 import { SEMANTIC, BRAND } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { formatINR } from "@/utils/format";
+import { testPrice } from "@/components/lab/testPrice";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import {
@@ -136,7 +137,7 @@ export default function IpdLabOrdersDialog({ open, onClose, admission, orderOnly
               <Box sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2, p: 1.5 }}>
                 <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", gap: 1 }}>
                   {basket.map((b) => (
-                    <Chip key={b.chargeItemId} label={`${b.testName} · ${formatINR(Number(b.price))}`} onDelete={() => toggleTest(b)} sx={{ fontWeight: 600 }} />
+                    <Chip key={b.chargeItemId} label={`${b.testName} · ${testPrice(b)}`} onDelete={() => toggleTest(b)} sx={{ fontWeight: 600 }} />
                   ))}
                 </Stack>
                 <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 1 }}>

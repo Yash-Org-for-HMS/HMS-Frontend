@@ -306,6 +306,10 @@ export interface UnbilledItem {
   date?: string | null;
   /** Source links, so the invoice can be tied back to the order or stay. */
   metadata?: { admissionId?: string | null; consultationId?: string | null } | null;
+  /** Why it cannot be billed yet (no doctor fee, or a test whose price is still to be typed). */
+  blocked?: string;
+  /** Lab/radiology tests priced at billing; price null = not typed yet. */
+  typedPrices?: { chargeItemId: string; itemName: string; price: number | null }[];
 }
 
 /**

@@ -209,6 +209,8 @@ export interface CatalogRow {
   testName?: string | null;
   /** A Prisma Decimal - Number() it before arithmetic. */
   price?: Money | null;
+  /** No fixed price: the billing counter types it. */
+  priceAtBilling?: boolean;
   category?: string | null;
 }
 

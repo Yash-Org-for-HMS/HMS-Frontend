@@ -819,7 +819,8 @@ function ItemDialog({ mode, item, categoryId, categoryCode, categoryName, roomCl
   // Price at billing: no fixed price, one is typed on each bill. Not for lab and
   // radiology tests (priced when ordered) or room rent (Bed tariffs).
   const [atBilling, setAtBilling] = useState(item?.priceAtBilling ?? false);
-  const canAtBilling = ["GENERAL", "PROCEDURE", "OT"].includes(itemType);
+  const canAtBilling = ["GENERAL", "PROCEDURE", "OT", "LAB", "RADIOLOGY"].includes(itemType);
+  const isTest = itemType === "LAB" || itemType === "RADIOLOGY";
   const typedAtBilling = atBilling && canAtBilling;
   // Room rent is priced in Ward & bed setup → Bed tariffs; here only its name and code change.
   const roomRent = item?.itemType === "BED";
@@ -910,7 +911,9 @@ function ItemDialog({ mode, item, categoryId, categoryCode, categoryName, roomCl
             <Box>
               <FormControlLabel control={<Switch checked={atBilling} onChange={(e) => { setAtBilling(e.target.checked); if (!e.target.checked && item?.priceAtBilling) setPrice(""); }} />} label="Price at billing" />
               <Typography variant="caption" sx={{ display: "block", color: "text.secondary", mt: -0.5 }}>
-                {atBilling ? "No fixed price: whoever bills it types the price each time." : "Turn on when the price changes case to case and is typed on the bill."}
+                {atBilling
+                  ? (isTest ? "No fixed price: the doctor orders it and the billing counter types the price." : "No fixed price: whoever bills it types the price each time.")
+                  : "Turn on when the price changes case to case and is typed on the bill."}
               </Typography>
             </Box>
           )}

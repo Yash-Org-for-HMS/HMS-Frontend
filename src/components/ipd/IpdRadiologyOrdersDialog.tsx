@@ -13,6 +13,7 @@ import {
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import { formatINR } from "@/utils/format";
+import { testPrice } from "@/components/lab/testPrice";
 import RadiologyTestPicker, { type PickedRadTest } from "@/components/lab/RadiologyTestPicker";
 import { useToast } from "@/providers/ToastContext";
 import { useConfirm } from "@/providers/ConfirmContext";
@@ -46,7 +47,7 @@ export default function IpdRadiologyOrdersDialog({ open, onClose, admission, ord
   const [selectedTest, setSelectedTest] = useState<PickedRadTest | null>(null); // current pick
   const [pickerOpen, setPickerOpen] = useState(false);
   const [notes, setNotes] = useState("");
-  const [basket, setBasket] = useState<{ chargeItemId: string; scanType: string; notes: string; price: number | null }[]>([]);
+  const [basket, setBasket] = useState<{ chargeItemId: string; scanType: string; notes: string; price: number | null; priceAtBilling?: boolean }[]>([]);
   const [priorityId, setPriorityId] = useState(1);
   const [saving, setSaving] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -58,7 +59,7 @@ export default function IpdRadiologyOrdersDialog({ open, onClose, admission, ord
     enabled: open && !!admission?.admissionId,
   });
 
-  const lineFor = (t: PickedRadTest) => ({ chargeItemId: t.chargeItemId, scanType: t.testName, notes: notes.trim(), price: Number(t.price) });
+  const lineFor = (t: PickedRadTest) => ({ chargeItemId: t.chargeItemId, scanType: t.testName, notes: notes.trim(), price: Number(t.price), priceAtBilling: t.priceAtBilling });
 
   const addToBasket = () => {
     if (!selectedTest) return;
@@ -138,7 +139,7 @@ export default function IpdRadiologyOrdersDialog({ open, onClose, admission, ord
                 <Button variant="outlined" fullWidth startIcon={<CameraAltRounded />} onClick={() => setPickerOpen(true)} sx={{ textTransform: "none", justifyContent: "flex-start" }}>
                   {selectedTest ? selectedTest.testName : "Select radiology test"}
                 </Button>
-                {selectedTest && <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 0.5 }}>{formatINR(Number(selectedTest.price))}</Typography>}
+                {selectedTest && <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 0.5 }}>{testPrice(selectedTest)}</Typography>}
               </Box>
               <TextField label="Clinical note (optional)" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="e.g. R/O chest infection" />
               <Button onClick={addToBasket} disabled={!selectedTest} startIcon={<AddRounded />} sx={{ textTransform: "none", mt: 0.5, color: BRAND.action }}>Add</Button>
@@ -153,7 +154,7 @@ export default function IpdRadiologyOrdersDialog({ open, onClose, admission, ord
                         <Typography variant="body2" sx={{ fontWeight: 600 }}>{s.scanType}</Typography>
                         {s.notes && <Typography variant="caption" sx={{ color: "text.secondary" }}>{s.notes}</Typography>}
                       </Box>
-                      {s.price != null && <Typography variant="caption" sx={{ color: "text.secondary" }}>{formatINR(s.price)}</Typography>}
+                      {s.price != null && <Typography variant="caption" sx={{ color: "text.secondary" }}>{testPrice(s)}</Typography>}
                       <IconButton size="small" onClick={() => removeFromBasket(i)} sx={{ color: SEMANTIC.danger }}><DeleteOutlineRounded fontSize="small" /></IconButton>
                     </Box>
                   ))}

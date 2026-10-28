@@ -7,7 +7,7 @@ import {
 import HeartbeatLoader from "../HeartbeatLoader";
 import { useQuery } from "@tanstack/react-query";
 import { axiosInstance } from "@/api/axios";
-import { formatINR } from "@/utils/format";
+import { testPrice } from "@/components/lab/testPrice";
 import { CameraAltRounded, ScienceRounded } from "@mui/icons-material";
 import RadiologyTestPicker, { type PickedRadTest } from "@/components/lab/RadiologyTestPicker";
 import LabTestPicker, { type PickedLabTest } from "@/components/lab/LabTestPicker";
@@ -221,7 +221,7 @@ export default function WalkInOrderDialog({
               {labBasket.length > 0 && (
                 <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75, mt: 1 }}>
                   {labBasket.map((t) => (
-                    <Chip key={t.chargeItemId} label={`${t.testName} · ${formatINR(Number(t.price))}`} size="small" onDelete={() => toggleLabTest(t)} />
+                    <Chip key={t.chargeItemId} label={`${t.testName} · ${testPrice(t)}`} size="small" onDelete={() => toggleLabTest(t)} />
                   ))}
                 </Box>
               )}
@@ -234,7 +234,7 @@ export default function WalkInOrderDialog({
                 </Button>
                 {selectedTest && (
                   <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                    {selectedTest.testName} <Typography component="span" sx={{ color: "text.secondary" }}>· {formatINR(Number(selectedTest.price))}</Typography>
+                    {selectedTest.testName} <Typography component="span" sx={{ color: "text.secondary" }}>· {testPrice(selectedTest)}</Typography>
                   </Typography>
                 )}
               </Box>

@@ -10,8 +10,8 @@ import { formatINRAuto } from "@/utils/format";
 
 const inr = formatINRAuto;
 
-type RadTest = { chargeItemId: string; testName: string; testCode: string | null; price: number | string; category?: string | null };
-export type PickedRadTest = { chargeItemId: string; testName: string; price: number };
+type RadTest = { chargeItemId: string; testName: string; testCode: string | null; price: number | string; category?: string | null; priceAtBilling?: boolean };
+export type PickedRadTest = { chargeItemId: string; testName: string; price: number; priceAtBilling?: boolean };
 
 // Category-browse picker for radiology tests (mastered in the Schedule of Charges,
 // organized into categories like X-Ray / CT / MRI). Each host panel passes the
@@ -79,7 +79,7 @@ export default function RadiologyTestPicker({ open, onClose, onPick, accent = "#
             {filtered.map((t) => (
               <ListItemButton
                 key={t.chargeItemId}
-                onClick={() => { onPick({ chargeItemId: t.chargeItemId, testName: t.testName, price: Number(t.price) }); onClose(); }}
+                onClick={() => { onPick({ chargeItemId: t.chargeItemId, testName: t.testName, price: Number(t.price), priceAtBilling: t.priceAtBilling }); onClose(); }}
                 sx={{ borderRadius: 1.5, mb: 0.25 }}
               >
                 <ListItemText
@@ -87,7 +87,7 @@ export default function RadiologyTestPicker({ open, onClose, onPick, accent = "#
                   secondary={[t.category, t.testCode].filter(Boolean).join(" · ") || undefined}
                   primaryTypographyProps={{ fontSize: "0.875rem", fontWeight: 600 }}
                 />
-                <Typography sx={{ fontWeight: 700, color: accent, ml: 2 }}>{inr(Number(t.price))}</Typography>
+                <Typography sx={{ fontWeight: 700, color: accent, ml: 2 }}>{t.priceAtBilling ? "At billing" : inr(Number(t.price))}</Typography>
               </ListItemButton>
             ))}
           </List>

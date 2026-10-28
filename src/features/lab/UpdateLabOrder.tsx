@@ -459,6 +459,7 @@ export default function UpdateLabOrder() {
             description: posItem?.description || `Lab Tests: ${order.reports?.map((r) => r.labTest?.testName).filter(Boolean).join(', ') || 'Pending Tests'}`,
             amount: Number(posItem?.amount ?? order.reports?.reduce((sum: number, r) => sum + Number(r.labTest?.price || 0), 0) ?? 300),
             taxPercent: Number(posItem?.taxPercent ?? 0),
+            typedPrices: posItem?.typedPrices,
             date: order.createdAt
           }}
         />

@@ -30,8 +30,12 @@ interface PointOfCarePOSProps {
     taxPercent?: number; // per-line GST rate from the rate card (0 = exempt)
     taxAmount?: number;  // precomputed total tax (pharmacy: per-medicine, mixed rates)
     date: Date | string;
+    /** Lab/radiology tests priced at billing: typed here before collecting (price null = not typed yet). */
+    typedPrices?: TypedPrice[] | null;
   };
 }
+
+export type TypedPrice = { chargeItemId: string; itemName: string; price: number | null };
 
 export default function PointOfCarePOS({ open, onClose, onSuccess, onPaid, patientId, patientName, item }: PointOfCarePOSProps) {
   const theme = useTheme();
@@ -43,11 +47,19 @@ export default function PointOfCarePOS({ open, onClose, onSuccess, onPaid, patie
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [receiptData, setReceiptData] = useState<any>(null);
+  // Price at billing: what the counter types per test (blank = keep the saved price).
+  const [typed, setTyped] = useState<Record<string, string>>({});
+  const openTests = item?.typedPrices ?? [];
+  const typedValue = (t: TypedPrice) => typed[t.chargeItemId] ?? (t.price != null ? String(t.price) : "");
+  const missingPrice = openTests.some((t) => !(Number(typedValue(t)) > 0));
 
   // Financial Math - GST comes from the item's rate-card taxPercent (0 = exempt), or
   // a precomputed taxAmount for a mixed-rate pharmacy order (per-medicine). Charged
   // after discount, in proportion; the server re-derives it authoritatively at collection.
-  const grossAmount = Number(item?.amount || 0);
+  // The server's amount already holds any price typed before; swap that part for what is typed now.
+  const grossAmount = Number(item?.amount || 0)
+    - openTests.reduce((s, t) => s + Number(t.price ?? 0), 0)
+    + openTests.reduce((s, t) => s + (Number(typedValue(t)) || 0), 0);
   const discountAmount = Number(discount || 0);
   const discountTooHigh = discountAmount < 0 || discountAmount > grossAmount;
   const taxableAmount = grossAmount - discountAmount;
@@ -59,7 +71,15 @@ export default function PointOfCarePOS({ open, onClose, onSuccess, onPaid, patie
     try {
       setLoading(true);
       setError("");
-      
+
+      // Price at billing: save the typed prices first; the payment then bills at them.
+      if (openTests.length && (openTests.some((t) => t.price == null) || Object.keys(typed).length)) {
+        await axiosInstance.post("/billing/order-prices", {
+          kind: item.type, id: item.id,
+          prices: openTests.map((t) => ({ chargeItemId: t.chargeItemId, price: Number(typedValue(t)) })),
+        });
+      }
+
       const payload = {
         patientId: patientId === "Walk-in" ? null : patientId,
         item,
@@ -126,6 +146,17 @@ export default function PointOfCarePOS({ open, onClose, onSuccess, onPaid, patie
           <Typography variant="body1" fontWeight="600">₹{grossAmount.toFixed(2)}</Typography>
         </Box>
         
+        {openTests.length > 0 && (
+          <Box sx={{ mt: 2, p: 2, borderRadius: 2, bgcolor: alpha(theme.palette.warning.main, 0.08) }}>
+            <Typography variant="subtitle2" color="warning.dark" sx={{ mb: 1.5 }}>Priced at billing - type the price</Typography>
+            {openTests.map((t) => (
+              <TextField key={t.chargeItemId} label={`${t.itemName} (₹)`} type="number" size="small" fullWidth sx={{ mb: 1.5 }}
+                value={typedValue(t)} onChange={(e) => setTyped((p) => ({ ...p, [t.chargeItemId]: e.target.value }))}
+                error={!(Number(typedValue(t)) > 0)} inputProps={{ min: 0.01, step: "0.01" }} />
+            ))}
+          </Box>
+        )}
+
         <Divider sx={{ my: 2 }} />
 
         <Box sx={{ display: "flex", gap: 2, mb: 3 }}>
@@ -180,7 +211,7 @@ export default function PointOfCarePOS({ open, onClose, onSuccess, onPaid, patie
         <Button 
           variant="contained" 
           onClick={handleProcessPayment} 
-          disabled={loading || netAmount < 0 || discountTooHigh}
+          disabled={loading || netAmount < 0 || discountTooHigh || missingPrice}
           startIcon={loading ? <HeartbeatLoader size={22} /> : <ReceiptLongRounded />}
         >
           Confirm & Collect ₹{netAmount.toFixed(2)}
