@@ -3,9 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 import {
   Box, Typography, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Table, TableHead,
   TableRow, TableCell, TableBody, TableContainer, InputAdornment, Alert, Collapse, Chip,
-  MenuItem,
+  MenuItem, Autocomplete,
 } from "@mui/material";
-import { PaymentsRounded, HistoryRounded, AddRounded } from "@mui/icons-material";
+import { PaymentsRounded, HistoryRounded, AddRounded, ListAltRounded, DeleteOutlineRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import { useToast } from "@/providers/ToastContext";
@@ -24,11 +24,18 @@ import { BRAND } from "@/styles/accents";
  *
  * Replaces the old per-class "room rent" box: a cash rent saved here is also
  * the Schedule-of-Charges room rent and each bed's daily charge.
+ *
+ * Payer rate lists (e.g. "Paramount TPA Rates") are columns of their own: an
+ * insured stay whose claim's payer is on a list is billed the list's rent,
+ * else the Insurance column's. The hospital admin names the lists and puts
+ * the payers on them under "Rate lists".
  */
 
-interface Tariff { tariffId: string; roomClassId: string; payerType: string; roomRent: string | number; nursingCharge: string | number; effectiveFrom: string; effectiveTo: string | null }
+interface Tariff { tariffId: string; roomClassId: string; payerType: string; rateListId?: string | null; roomRent: string | number; nursingCharge: string | number; effectiveFrom: string; effectiveTo: string | null }
 interface TariffsResponse {
   payerTypes: { code: string; label: string }[];
+  rateLists: RateList[];
+  payers: { payerId: string; payerName: string; payerType: string }[];
   roomClasses: { roomClassId: string; name: string; isActive: boolean }[];
   current: Tariff[];
   upcoming: Tariff[];
@@ -36,8 +43,11 @@ interface TariffsResponse {
   /** For a branch: the group's tariffs in force, which it follows where it has none. */
   groupCurrent?: Tariff[];
 }
+interface RateList { rateListId: string; name: string; payerIds: string[] }
 type Cell = { rent: string; nursing: string };
 const key = (rc: string, p: string) => `${rc}|${p}`;
+/** A column: a payer type, or a rate list ("RL:" + its id). */
+const colOf = (t: { payerType: string; rateListId?: string | null }) => (t.rateListId ? `RL:${t.rateListId}` : t.payerType);
 const ymd = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 const short = (iso: string) => new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 
@@ -49,6 +59,7 @@ export default function BedTariffsDialog({ onClose, onDone }: { onClose: () => v
   const [edits, setEdits] = useState<Record<string, Cell>>({});
   const [showHistory, setShowHistory] = useState(false);
   const [newClass, setNewClass] = useState("");
+  const [listsOpen, setListsOpen] = useState(false);
   // "" = the group's tariffs (every branch without its own); else one branch's.
   const { availableBranches, isOrgAdmin, activeBranchId } = useHospitalAuth();
   const multiBranch = availableBranches.length > 1;
@@ -58,18 +69,22 @@ export default function BedTariffsDialog({ onClose, onDone }: { onClose: () => v
     queryKey: ["bed-tariffs", branchId],
     queryFn: async () => (await axiosInstance.get("/ipd/bed-tariffs", { params: branchId ? { branchId } : {} })).data.data,
   });
-  const group = new Map((data?.groupCurrent ?? []).map((t) => [key(t.roomClassId, t.payerType), t]));
-  const current = new Map((data?.current ?? []).map((t) => [key(t.roomClassId, t.payerType), t]));
-  const upcoming = new Map((data?.upcoming ?? []).map((t) => [key(t.roomClassId, t.payerType), t]));
+  const group = new Map((data?.groupCurrent ?? []).map((t) => [key(t.roomClassId, colOf(t)), t]));
+  const current = new Map((data?.current ?? []).map((t) => [key(t.roomClassId, colOf(t)), t]));
+  const upcoming = new Map((data?.upcoming ?? []).map((t) => [key(t.roomClassId, colOf(t)), t]));
+  const columns = [
+    ...(data?.payerTypes ?? []).map((p) => ({ code: p.code, label: p.label, rateListId: null as string | null })),
+    ...(data?.rateLists ?? []).map((l) => ({ code: `RL:${l.rateListId}`, label: l.name, rateListId: l.rateListId as string | null })),
+  ];
   const cellOf = (k: string): Cell => {
     if (edits[k]) return edits[k];
     const t = current.get(k);
     return { rent: t ? String(Number(t.roomRent)) : "", nursing: t ? String(Number(t.nursingCharge)) : "" };
   };
 
-  const changed: { roomClassId: string; payerType: string; roomRent: number; nursingCharge: number }[] = [];
+  const changed: { roomClassId: string; payerType: string; rateListId?: string; roomRent: number; nursingCharge: number }[] = [];
   if (data) {
-    for (const rc of data.roomClasses) for (const p of data.payerTypes) {
+    for (const rc of data.roomClasses) for (const p of columns) {
       const k = key(rc.roomClassId, p.code);
       const c = cellOf(k);
       if (c.rent.trim() === "") continue;
@@ -77,7 +92,9 @@ export default function BedTariffsDialog({ onClose, onDone }: { onClose: () => v
       const rent = Number(c.rent), nursing = Number(c.nursing || 0);
       if (!Number.isFinite(rent) || rent < 0 || !Number.isFinite(nursing) || nursing < 0) continue;
       if (t && Number(t.roomRent) === rent && Number(t.nursingCharge) === nursing) continue;
-      changed.push({ roomClassId: rc.roomClassId, payerType: p.code, roomRent: rent, nursingCharge: nursing });
+      changed.push(p.rateListId
+        ? { roomClassId: rc.roomClassId, payerType: "INSURANCE", rateListId: p.rateListId, roomRent: rent, nursingCharge: nursing }
+        : { roomClassId: rc.roomClassId, payerType: p.code, roomRent: rent, nursingCharge: nursing });
     }
   }
 
@@ -106,7 +123,7 @@ export default function BedTariffsDialog({ onClose, onDone }: { onClose: () => v
   };
 
   const name = (id: string) => data?.roomClasses.find((c) => c.roomClassId === id)?.name ?? "Room class";
-  const payer = (code: string) => data?.payerTypes.find((p) => p.code === code)?.label ?? code;
+  const payer = (t: Tariff) => (t.rateListId ? data?.rateLists?.find((l) => l.rateListId === t.rateListId)?.name : data?.payerTypes.find((p) => p.code === t.payerType)?.label) ?? t.payerType;
 
   return (
     <Dialog open onClose={saving ? undefined : onClose} maxWidth="lg" fullWidth>
@@ -129,8 +146,18 @@ export default function BedTariffsDialog({ onClose, onDone }: { onClose: () => v
             <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
               {branchId
                 ? "This branch's own tariffs. A blank cell follows the group's tariff, shown in grey."
-                : "Each stay is billed at the tariff for its bed's room class and its payer type, day by day. Leave a payer blank to bill it at the cash tariff."}
+                : "Each stay is billed at the tariff for its bed's room class and its payer type, day by day. Leave a payer blank to bill it at the cash tariff. An insured stay whose payer is on a rate list is billed the list's rent; a blank list cell bills the Insurance rent."}
             </Typography>
+            {isOrgAdmin && !branchId && (
+              <Box sx={{ mb: 2 }}>
+                <Button size="small" startIcon={<ListAltRounded />} onClick={() => setListsOpen((v) => !v)} sx={{ textTransform: "none" }}>
+                  Rate lists ({data.rateLists?.length ?? 0})
+                </Button>
+                <Collapse in={listsOpen} unmountOnExit>
+                  <RateListsEditor rateLists={data.rateLists ?? []} payers={data.payers ?? []} onSaved={() => { setListsOpen(false); refetch(); }} />
+                </Collapse>
+              </Box>
+            )}
             {data.roomClasses.length === 0 ? (
               <Alert severity="info" sx={{ mb: 2 }}>No room classes switched on yet. Add one below, or switch on a standard bed category in Schedule of Charges → Room classes.</Alert>
             ) : (
@@ -139,7 +166,12 @@ export default function BedTariffsDialog({ onClose, onDone }: { onClose: () => v
                   <TableHead>
                     <TableRow>
                       <TableCell sx={{ fontWeight: 700 }}>Room class</TableCell>
-                      {data.payerTypes.map((p) => <TableCell key={p.code} sx={{ fontWeight: 700, minWidth: 200 }}>{p.label}</TableCell>)}
+                      {columns.map((p) => (
+                        <TableCell key={p.code} sx={{ fontWeight: 700, minWidth: 200 }}>
+                          {p.label}
+                          {p.rateListId && <Typography variant="caption" sx={{ display: "block", color: "text.secondary", fontWeight: 400 }}>Rate list · {data.rateLists?.find((l) => l.rateListId === p.rateListId)?.payerIds.length ?? 0} payers</Typography>}
+                        </TableCell>
+                      ))}
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -148,7 +180,7 @@ export default function BedTariffsDialog({ onClose, onDone }: { onClose: () => v
                         <TableCell sx={{ fontWeight: 600, verticalAlign: "top", pt: 2 }}>
                           {rc.name}{!rc.isActive && <Chip label="switched off" size="small" sx={{ ml: 1, height: 18 }} />}
                         </TableCell>
-                        {data.payerTypes.map((p) => {
+                        {columns.map((p) => {
                           const k = key(rc.roomClassId, p.code);
                           const c = cellOf(k);
                           const next = upcoming.get(k);
@@ -156,7 +188,7 @@ export default function BedTariffsDialog({ onClose, onDone }: { onClose: () => v
                           return (
                             <TableCell key={p.code} sx={{ verticalAlign: "top" }}>
                               <Box sx={{ display: "flex", gap: 1 }}>
-                                <TextField size="small" type="number" placeholder={group.get(k) ? String(Number(group.get(k)!.roomRent)) : p.code === "CASH" ? "Rent" : "cash"} value={c.rent} onChange={(e) => set("rent", e.target.value)}
+                                <TextField size="small" type="number" placeholder={group.get(k) ? String(Number(group.get(k)!.roomRent)) : p.code === "CASH" ? "Rent" : p.rateListId ? "insurance" : "cash"} value={c.rent} onChange={(e) => set("rent", e.target.value)}
                                   slotProps={{ input: { startAdornment: <InputAdornment position="start">₹</InputAdornment> }, htmlInput: { min: 0, "aria-label": `${rc.name} ${p.label} rent` } }} sx={{ width: 120 }} />
                                 <TextField size="small" type="number" placeholder="Nursing" value={c.nursing} onChange={(e) => set("nursing", e.target.value)}
                                   slotProps={{ htmlInput: { min: 0, "aria-label": `${rc.name} ${p.label} nursing` } }} sx={{ width: 110 }} />
@@ -198,7 +230,7 @@ export default function BedTariffsDialog({ onClose, onDone }: { onClose: () => v
                       {data.history.map((t) => (
                         <TableRow key={t.tariffId}>
                           <TableCell>{name(t.roomClassId)}</TableCell>
-                          <TableCell>{payer(t.payerType)}</TableCell>
+                          <TableCell>{payer(t)}</TableCell>
                           <TableCell>₹{Number(t.roomRent)} + ₹{Number(t.nursingCharge)} nursing</TableCell>
                           <TableCell sx={{ color: "text.secondary" }}>{short(t.effectiveFrom)} – {t.effectiveTo ? short(t.effectiveTo) : "…"}</TableCell>
                         </TableRow>
@@ -219,5 +251,59 @@ export default function BedTariffsDialog({ onClose, onDone }: { onClose: () => v
         <Button variant="contained" onClick={save} disabled={saving || !changed.length}>{saving ? "Saving…" : "Save tariffs"}</Button>
       </DialogActions>
     </Dialog>
+  );
+}
+
+/**
+ * The hospital admin's rate lists and the payers on each, saved whole. A payer
+ * is on one list at most; a list with rents cannot be removed (the server says so).
+ */
+function RateListsEditor({ rateLists, payers, onSaved }: { rateLists: RateList[]; payers: TariffsResponse["payers"]; onSaved: () => void }) {
+  const toast = useToast();
+  const [lists, setLists] = useState<{ rateListId: string | null; name: string; payerIds: string[] }[]>(() => rateLists.map((l) => ({ ...l })));
+  const [saving, setSaving] = useState(false);
+  const byId = new Map(payers.map((p) => [p.payerId, p]));
+  const taken = (i: number) => new Set(lists.flatMap((l, j) => (j === i ? [] : l.payerIds)));
+  const set = (i: number, patch: Partial<(typeof lists)[number]>) => setLists((prev) => prev.map((l, j) => (j === i ? { ...l, ...patch } : l)));
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      await axiosInstance.put("/ipd/bed-tariffs/rate-lists", { rateLists: lists.map((l) => ({ ...l, name: l.name.trim() })) });
+      toast.success("Rate lists saved");
+      onSaved();
+    } catch (e) {
+      toast.error(getApiErrorMessage(e, "Couldn't save the rate lists"));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Box sx={{ mt: 1, p: 2, border: 1, borderColor: "divider", borderRadius: 1 }}>
+      <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
+        A rate list is the room rent an insurer or TPA has agreed with the hospital. Put each payer on the list it bills by; a payer on no list is billed the Insurance rent.
+      </Typography>
+      {lists.map((l, i) => (
+        <Box key={l.rateListId ?? `new-${i}`} sx={{ display: "flex", gap: 1, alignItems: "flex-start", mb: 1.5 }}>
+          <TextField size="small" label="Rate list" value={l.name} onChange={(e) => set(i, { name: e.target.value })} slotProps={{ htmlInput: { maxLength: 80 } }} sx={{ width: 220 }} />
+          <Autocomplete multiple size="small" sx={{ flex: 1 }}
+            options={payers.filter((p) => !taken(i).has(p.payerId)).map((p) => p.payerId)}
+            value={l.payerIds.filter((id) => byId.has(id))}
+            getOptionLabel={(id) => byId.get(id)?.payerName ?? id}
+            onChange={(_, v) => set(i, { payerIds: v })}
+            renderInput={(params) => <TextField {...params} label="Payers on this list" />} />
+          <Button color="inherit" onClick={() => setLists((prev) => prev.filter((_, j) => j !== i))} aria-label={`Remove ${l.name || "rate list"}`} sx={{ minWidth: 0, mt: 0.5 }}>
+            <DeleteOutlineRounded fontSize="small" />
+          </Button>
+        </Box>
+      ))}
+      <Box sx={{ display: "flex", gap: 1 }}>
+        <Button size="small" startIcon={<AddRounded />} onClick={() => setLists((prev) => [...prev, { rateListId: null, name: "", payerIds: [] }])} sx={{ textTransform: "none" }}>Add a rate list</Button>
+        <Button size="small" variant="contained" onClick={save} disabled={saving || lists.some((l) => !l.name.trim())} sx={{ ml: "auto" }}>
+          {saving ? "Saving…" : "Save rate lists"}
+        </Button>
+      </Box>
+    </Box>
   );
 }
