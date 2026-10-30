@@ -228,7 +228,7 @@ function RateListsTab({ payers, onChanged }: { payers: Payer[]; onChanged: () =>
     <Box>
       <Stack direction={{ xs: "column", md: "row" }} spacing={1} sx={{ mb: 2, alignItems: { md: "center" } }}>
         <Typography variant="body2" sx={{ color: "text.secondary", flex: 1 }}>
-          A rate list is the room rent an insurer or TPA agreed with the hospital. A room class the list does not price bills the general Insurance rent.
+          A rate list is what an insurer or TPA agreed with the hospital: room rents (below) and service prices (in the Schedule of Charges, with the list picked). What a list does not price bills the usual rate.
         </Typography>
         <Button variant="outlined" startIcon={<ListAltRounded />} onClick={() => setEditing((v) => !v)} sx={{ textTransform: "none" }}>
           {editing ? "Close" : "Change lists and payers"}
@@ -253,7 +253,8 @@ function RateListsTab({ payers, onChanged }: { payers: Payer[]; onChanged: () =>
                 <Box sx={{ p: 2, borderBottom: "1px solid", borderColor: "divider" }}>
                   <Stack direction="row" spacing={1} sx={{ alignItems: "baseline", mb: 1 }}>
                     <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>{l.name}</Typography>
-                    <Typography variant="caption" sx={{ color: "text.secondary" }}>{priced} of {classes.length} room classes priced</Typography>
+                    <Typography variant="caption" sx={{ color: "text.secondary", flex: 1 }}>{priced} of {classes.length} room classes priced</Typography>
+                    <Button size="small" onClick={() => navigate(`/hospital/soc?list=${l.rateListId}`)} sx={{ textTransform: "none" }}>Service prices</Button>
                   </Stack>
                   <Stack direction="row" spacing={0.75} useFlexGap sx={{ flexWrap: "wrap" }}>
                     {l.payerIds.length === 0

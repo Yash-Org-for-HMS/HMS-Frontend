@@ -52,6 +52,8 @@ const isTheatreCode = (code?: string | null) => !!code && THEATRE_CODES.includes
 type Item = { chargeItemId: string; chargeCategoryId: string; itemName: string; itemCode: string | null; price: number | string; taxPercent: number | string; hsnCode?: string | null; unit: string | null; isActive: boolean; itemType?: string; roomPrices?: RoomPrice[];
   /** Prices a branch charges instead of the group's (roomClassId "" = its base). */
   branchPrices?: { branchId: string; roomClassId: string; price: number | string }[];
+  /** Its prices on payer rate lists (roomClassId "" = every room). */
+  listPrices?: { rateListId: string; roomClassId: string; price: number | string }[];
   /** No price of its own: one is typed on each bill. */
   priceAtBilling?: boolean };
 type RoomClass = { roomClassId: string; name: string; code: string; sortOrder: number; isActive: boolean };
@@ -84,6 +86,17 @@ export default function ScheduleOfCharges() {
   const [roomDialogOpen, setRoomDialogOpen] = useState(false);
   const [showEmpty, setShowEmpty] = useState(false);          // reveal the seeded, still-empty categories
   const [manageAnchor, setManageAnchor] = useState<null | HTMLElement>(null);
+  // The price list on show: "" = Standard, else a payer rate list (an insurer's /
+  // TPA's card). ?list= opens one (the Insurance & TPA page links here).
+  const [priceList, setPriceList] = useState<string>(() => new URLSearchParams(window.location.search).get("list") ?? "");
+  const [listPriceItem, setListPriceItem] = useState<Item | null>(null);
+  const { data: rateLists = [] } = useQuery<{ rateListId: string; name: string }[]>({
+    queryKey: ["claim-rate-lists"],
+    queryFn: async () => (await axiosInstance.get("/claims/rate-lists")).data.data,
+    enabled: canEdit,
+  });
+  const listName = rateLists.find((l) => l.rateListId === priceList)?.name;
+  const onList = !!listName;
 
   const { data: categories = [], isLoading, isError, error, refetch } = useQuery<Category[]>({
     queryKey: ["soc-categories"],
@@ -222,6 +235,13 @@ export default function ScheduleOfCharges() {
         subtitle={canEdit ? "Your hospital's rate card - charges and prices, grouped by category." : "The group's rate card, set by the hospital admin - charges and prices, grouped by category."}
         actions={canEdit &&
           <>
+            {rateLists.length > 0 && (
+              <TextField select size="small" label="Price list" value={onList ? priceList : ""} onChange={(e) => setPriceList(e.target.value)}
+                SelectProps={{ displayEmpty: true }} InputLabelProps={{ shrink: true }} sx={{ minWidth: 220, mr: 1 }}>
+                <MenuItem value="">Standard</MenuItem>
+                {rateLists.map((l) => <MenuItem key={l.rateListId} value={l.rateListId}>{l.name}</MenuItem>)}
+              </TextField>
+            )}
             <Button variant="outlined" startIcon={<TuneRounded />} onClick={(e) => setManageAnchor(e.currentTarget)}
               sx={{ textTransform: "none", color: ACCENT, borderColor: `${ACCENT}66` }}>Manage</Button>
             <Menu anchorEl={manageAnchor} open={Boolean(manageAnchor)} onClose={() => setManageAnchor(null)}>
@@ -235,6 +255,12 @@ export default function ScheduleOfCharges() {
           </>
         }
       />
+      {onList && (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          Showing <strong>{listName}</strong>: what an insured patient whose payer is on this list is billed. Grey prices are Standard - the list
+          does not change them. Use the pencil to set this list's price; room rent is set in Ward &amp; Bed Setup, under Bed tariffs.
+        </Alert>
+      )}
 
       <Box sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, gap: 2.5, alignItems: "flex-start" }}>
         {/* Categories */}
@@ -339,10 +365,10 @@ export default function ScheduleOfCharges() {
                     // column-name row pinned - avoids two overlapping sticky rows.
                     <TableRow>
                       <TableCell sx={{ ...headCellSx, position: "static", borderBottom: "none" }} />
-                      <TableCell align="right" sx={{ ...headCellSx, position: "static", borderBottom: "none" }}>OPD</TableCell>
+                      <TableCell align="right" sx={{ ...headCellSx, position: "static", borderBottom: "none" }}>{onList ? "" : "OPD"}</TableCell>
                       <TableCell align="center" colSpan={activeRoomClasses.length}
                         sx={{ ...headCellSx, position: "static", borderBottom: "none", color: ACCENT, borderLeft: "1px solid", borderColor: "divider" }}>
-                        IPD · by room class
+                        {onList ? `${listName} · by room class` : "IPD · by room class"}
                       </TableCell>
                       <TableCell sx={{ ...headCellSx, position: "static", borderBottom: "none" }} />
                       <TableCell sx={{ ...headCellSx, position: "static", borderBottom: "none" }} />
@@ -350,7 +376,7 @@ export default function ScheduleOfCharges() {
                   )}
                   <TableRow>
                     <TableCell sx={headCellSx}>Charge / Procedure</TableCell>
-                    <TableCell align="right" sx={headCellSx}>{activeRoomClasses.length > 0 ? "OPD (Base)" : "Base (OPD)"}</TableCell>
+                    <TableCell align="right" sx={headCellSx}>{onList ? "All rooms" : activeRoomClasses.length > 0 ? "OPD (Base)" : "Base (OPD)"}</TableCell>
                     {activeRoomClasses.map((rc, i) => (
                       <TableCell key={rc.roomClassId} align="right"
                         sx={{ ...headCellSx, ...(i === 0 ? { borderLeft: "1px solid", borderColor: "divider" } : {}) }}>{rc.name}</TableCell>
@@ -375,6 +401,7 @@ export default function ScheduleOfCharges() {
                       // Code / unit / tax collapse into one muted subtitle under the name.
                       const meta = [it.itemCode, it.unit, Number(it.taxPercent) > 0 ? `${Number(it.taxPercent)}% tax` : null, it.hsnCode ? `HSN ${it.hsnCode}` : null].filter(Boolean).join(" · ");
                       const priced = new Map((it.roomPrices ?? []).map((rp) => [rp.roomClassId, Number(rp.price)]));
+                      const listed = onList ? new Map((it.listPrices ?? []).filter((p) => p.rateListId === priceList).map((p) => [p.roomClassId, Number(p.price)])) : null;
                       return (
                         <TableRow key={it.chargeItemId} hover>
                           <TableCell>
@@ -399,9 +426,20 @@ export default function ScheduleOfCharges() {
                           <TableCell align="right" sx={{ fontWeight: 700, whiteSpace: "nowrap" }}>
                             {it.priceAtBilling
                               ? <Tooltip title="No fixed price - it is typed on each bill"><Chip label="At billing" size="small" sx={{ height: 20, fontSize: "0.6875rem", fontWeight: 700, bgcolor: "rgba(245,158,11,0.14)", color: "warning.dark" }} /></Tooltip>
-                              : inr(Number(it.price))}
+                              : listed
+                                ? (listed.has("") ? <Box component="span" sx={{ color: ACCENT }}>{inr(listed.get("")!)}</Box> : <Tooltip title="Standard - not on this list"><Box component="span" sx={{ color: "text.disabled", fontWeight: 400 }}>{inr(Number(it.price))}</Box></Tooltip>)
+                                : inr(Number(it.price))}
                           </TableCell>
                           {activeRoomClasses.map((rc, i) => {
+                            if (listed && !it.priceAtBilling) {
+                              // The list's price for the room, its all-rooms price, then Standard (grey).
+                              const own = listed.get(rc.roomClassId) ?? listed.get("");
+                              return (
+                                <TableCell key={rc.roomClassId} align="right" sx={{ whiteSpace: "nowrap", fontWeight: own !== undefined ? 600 : 400, color: own !== undefined ? ACCENT : "text.disabled", ...(i === 0 ? { borderLeft: "1px solid", borderColor: "divider" } : {}) }}>
+                                  {inr(own ?? priced.get(rc.roomClassId) ?? Number(it.price))}
+                                </TableCell>
+                              );
+                            }
                             const has = priced.has(rc.roomClassId);
                             return (
                               <TableCell key={rc.roomClassId} align="right" sx={{ whiteSpace: "nowrap", fontWeight: has ? 600 : 400, color: has ? ACCENT : "text.disabled", ...(i === 0 ? { borderLeft: "1px solid", borderColor: "divider" } : {}) }}>
@@ -417,8 +455,9 @@ export default function ScheduleOfCharges() {
                             {it.itemType === "LAB" && <Tooltip title="Lab structure (single / profile parameters)"><IconButton size="small" onClick={() => setStructureItem(it)}><ScienceRounded fontSize="small" sx={{ color: "success.main" }} /></IconButton></Tooltip>}
                             <Tooltip title="Price history"><IconButton size="small" onClick={() => setHistoryItem(it)}><HistoryRounded fontSize="small" /></IconButton></Tooltip>
                             {showBranchPrices && it.itemType !== "BED" && !it.priceAtBilling && <Tooltip title="Branch exceptions - a different price at one branch"><IconButton size="small" onClick={() => setBranchPriceItem(it)}><ApartmentRounded fontSize="small" /></IconButton></Tooltip>}
-                            {canEdit && <Tooltip title={multiBranch ? "Edit prices (all branches)" : "Edit"}><IconButton size="small" onClick={() => setItemDialog({ mode: "edit", item: it })}><EditRounded fontSize="small" /></IconButton></Tooltip>}
-                            {canEdit && <Tooltip title="Delete"><IconButton size="small" onClick={() => deleteItem(it)}><DeleteRounded fontSize="small" sx={{ color: "error.main" }} /></IconButton></Tooltip>}
+                            {canEdit && onList && it.itemType !== "BED" && !it.priceAtBilling && <Tooltip title={`${listName} prices`}><IconButton size="small" onClick={() => setListPriceItem(it)}><EditRounded fontSize="small" sx={{ color: ACCENT }} /></IconButton></Tooltip>}
+                            {canEdit && !onList && <Tooltip title={multiBranch ? "Edit prices (all branches)" : "Edit"}><IconButton size="small" onClick={() => setItemDialog({ mode: "edit", item: it })}><EditRounded fontSize="small" /></IconButton></Tooltip>}
+                            {canEdit && !onList && <Tooltip title="Delete"><IconButton size="small" onClick={() => deleteItem(it)}><DeleteRounded fontSize="small" sx={{ color: "error.main" }} /></IconButton></Tooltip>}
                           </TableCell>
                         </TableRow>
                       );
@@ -464,6 +503,10 @@ export default function ScheduleOfCharges() {
       {branchPriceItem && (
         <BranchPricesDialog chargeItemId={branchPriceItem.chargeItemId} itemName={branchPriceItem.itemName}
           onClose={() => setBranchPriceItem(null)} onSaved={() => { setBranchPriceItem(null); refetchItems(); }} />
+      )}
+      {listPriceItem && listName && (
+        <ListPricesDialog item={listPriceItem} rateListId={priceList} listName={listName} roomClasses={activeRoomClasses}
+          onClose={() => setListPriceItem(null)} onSaved={() => { setListPriceItem(null); refetchItems(); }} />
       )}
       {structureItem && (
         <LabStructureDialog chargeItemId={structureItem.chargeItemId} itemName={structureItem.itemName} onClose={() => setStructureItem(null)} />
@@ -1017,6 +1060,64 @@ function RoomClassesDialog({ roomClasses, onClose, onChanged }: { roomClasses: R
       </DialogContent>
       <DialogActions sx={{ p: 2 }}>
         <Button variant="contained" onClick={onClose}>Done</Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
+/**
+ * One charge's prices on a payer rate list. A box left empty is not on the list:
+ * a room class falls back to the list's all-rooms price, then to Standard.
+ */
+function ListPricesDialog({ item, rateListId, listName, roomClasses, onClose, onSaved }: {
+  item: Item; rateListId: string; listName: string; roomClasses: RoomClass[]; onClose: () => void; onSaved: () => void;
+}) {
+  const toast = useToast();
+  const own = new Map((item.listPrices ?? []).filter((p) => p.rateListId === rateListId).map((p) => [p.roomClassId, String(Number(p.price))]));
+  const keys = ["", ...roomClasses.map((r) => r.roomClassId)];
+  const [cells, setCells] = useState<Record<string, string>>(() => Object.fromEntries(keys.map((k) => [k, own.get(k) ?? ""])));
+  const [saving, setSaving] = useState(false);
+  const standard = new Map((item.roomPrices ?? []).map((p) => [p.roomClassId, Number(p.price)]));
+  const bad = keys.some((k) => cells[k].trim() !== "" && !(Number(cells[k]) >= 0));
+  const save = async () => {
+    setSaving(true);
+    try {
+      await axiosInstance.put(`/hospital/soc/items/${item.chargeItemId}/list-prices`, {
+        rateListId,
+        prices: keys.map((roomClassId) => ({ roomClassId, price: cells[roomClassId].trim() === "" ? null : Number(cells[roomClassId]) })),
+      });
+      toast.success("List prices saved");
+      onSaved();
+    } catch (e) {
+      toast.error(getApiErrorMessage(e, "Couldn't save the list prices"));
+    } finally {
+      setSaving(false);
+    }
+  };
+  const field = (k: string, label: string, placeholder: string) => (
+    <TextField key={k} size="small" type="number" label={label} value={cells[k]} placeholder={placeholder}
+      onChange={(e) => setCells((c) => ({ ...c, [k]: e.target.value }))} InputLabelProps={{ shrink: true }}
+      inputProps={{ min: 0, step: "0.01" }} sx={{ width: 180 }} />
+  );
+  return (
+    <Dialog open onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle>{item.itemName} - {listName}</DialogTitle>
+      <DialogContent>
+        <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
+          What an insured patient whose payer is on {listName} is billed. Leave a box empty to bill the Standard price shown in it.
+        </Typography>
+        <Stack spacing={2}>
+          {field("", "All rooms", `Standard ${inr(Number(item.price))}`)}
+          {roomClasses.length > 0 && (
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
+              {roomClasses.map((r) => field(r.roomClassId, r.name, cells[""].trim() !== "" ? `All rooms ${inr(Number(cells[""]))}` : `Standard ${inr(standard.get(r.roomClassId) ?? Number(item.price))}`))}
+            </Box>
+          )}
+        </Stack>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose} sx={{ textTransform: "none" }}>Cancel</Button>
+        <Button variant="contained" onClick={save} disabled={saving || bad} sx={{ textTransform: "none" }}>{saving ? "Saving..." : "Save"}</Button>
       </DialogActions>
     </Dialog>
   );

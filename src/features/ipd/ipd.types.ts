@@ -120,6 +120,8 @@ export interface AdmissionDetail extends AdmissionRow {
   theatreWarnings?: { surgeryId: string; procedureName: string; problem: "NOT_FINISHED" | "NO_CHARGES"; message: string }[];
   roomClassId?: string | null;
   roomClassName?: string | null;
+  /** The payer rate list its services are billed from (none for a cash stay). */
+  serviceRateListId?: string | null;
   deposits?: { entryType: string; amount: Money; createdAt?: string }[];
 }
 

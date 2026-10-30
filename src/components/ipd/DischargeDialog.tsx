@@ -14,7 +14,8 @@ import { axiosInstance } from "@/api/axios";
 import { useToast } from "@/providers/ToastContext";
 import HeartbeatLoader from "../HeartbeatLoader";
 import { unitCount } from "@/features/ipd/billingUnit";
-import SocChargePicker from "@/components/billing/SocChargePicker";
+import SocChargePicker, { type PickedCharge } from "@/components/billing/SocChargePicker";
+import { chargePriceFor } from "@/components/billing/chargePrice";
 import TypeOrderPriceDialog from "@/components/billing/TypeOrderPriceDialog";
 
 interface Props {
@@ -31,7 +32,7 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
   // A row is either a free-text charge (editable description + amount) or one picked
   // from the Schedule of Charges (carries chargeItemId + its base/room-class prices so
   // the preview can re-derive when the room class changes; the server prices it).
-  type Extra = { description: string; amount: string; chargeItemId?: string; basePrice?: number; roomPrices?: { roomClassId: string; price: number | string }[]; taxPercent?: number; priceAtBilling?: boolean };
+  type Extra = { description: string; amount: string; chargeItemId?: string; basePrice?: number; roomPrices?: { roomClassId: string; price: number | string }[]; listPrices?: PickedCharge["listPrices"]; taxPercent?: number; priceAtBilling?: boolean };
   const [extras, setExtras] = useState<Extra[]>([]);
   const [saving, setSaving] = useState(false);
   const [socPickerOpen, setSocPickerOpen] = useState(false);
@@ -72,13 +73,10 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
   // Effective preview amount for a row. Picked SOC rows re-derive from the CURRENT
   // room class (matrix price else base), so the preview matches what the server will
   // bill even after the class is changed; free-text rows use their typed amount.
+  // An insured stay's rate list comes first, as on the bill.
   const lineAmount = (e: Extra): number => {
     if (!e.chargeItemId || e.priceAtBilling) return Number(e.amount) || 0;
-    if (billRoomClassId) {
-      const rp = e.roomPrices?.find((r) => r.roomClassId === billRoomClassId);
-      if (rp != null) return Number(rp.price);
-    }
-    return Number(e.basePrice ?? e.amount) || 0;
+    return chargePriceFor({ ...e, basePrice: e.basePrice ?? (Number(e.amount) || 0) }, billRoomClassId, detail?.serviceRateListId) || 0;
   };
 
   const bedCharge = Number(detail?.estimatedBedCharge || 0);
@@ -425,9 +423,10 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
     <SocChargePicker
       open={socPickerOpen}
       onClose={() => setSocPickerOpen(false)}
-      onPick={(c) => setExtras((x) => [...x, { description: c.itemName, amount: String(c.price), chargeItemId: c.chargeItemId, basePrice: c.basePrice, roomPrices: c.roomPrices, taxPercent: c.taxPercent, priceAtBilling: c.priceAtBilling }])}
+      onPick={(c) => setExtras((x) => [...x, { description: c.itemName, amount: String(c.price), chargeItemId: c.chargeItemId, basePrice: c.basePrice, roomPrices: c.roomPrices, listPrices: c.listPrices, taxPercent: c.taxPercent, priceAtBilling: c.priceAtBilling }])}
       accent={BRAND.action}
       roomClassId={billRoomClassId || undefined}
+      rateListId={detail?.serviceRateListId}
       roomClassName={billRoomClassName || undefined}
     />
     </>
