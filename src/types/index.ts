@@ -296,11 +296,13 @@ export interface BillingLookups {
 export interface UnbilledItem {
   /** Id of the source order/consultation, not of an invoice line. */
   id: string;
-  type: "CONSULTATION" | "LAB" | "RADIOLOGY" | "PHARMACY";
+  type: "CONSULTATION" | "LAB" | "RADIOLOGY" | "PHARMACY" | "PACKAGE";
   description: string;
   amount: number;
   chargeItemId?: string | null;
   taxPercent: number;
+  /** The bill lines it becomes: a pharmacy order's medicines, a package and what it includes (at 0). */
+  lineItems?: { description: string; quantity: number; totalPrice: number }[];
   hsnCode?: string | null;
   /** Authoritative when set - pharmacy orders mix GST rates across medicines. */
   taxAmount?: number;

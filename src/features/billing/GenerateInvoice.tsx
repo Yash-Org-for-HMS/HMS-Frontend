@@ -18,6 +18,7 @@ import { useToast } from "@/providers/ToastContext";
 import StatusChip from "@/components/StatusChip";
 import InvoiceViewDialog from "@/components/billing/InvoiceViewDialog";
 import TypeOrderPriceDialog from "@/components/billing/TypeOrderPriceDialog";
+import SellPackageDialog from "@/components/billing/SellPackageDialog";
 import { formatINR, formatDate } from "@/utils/format";
 import { SEMANTIC } from "@/styles/accents";
 
@@ -113,6 +114,26 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
   }, [unbilledData]);
   const billable = unbilledItems.filter((i) => !i.blocked);
   const [priceItem, setPriceItem] = useState<UnbilledItem | null>(null);
+  // Packages (health check-ups): sold here, cancelled here while unbilled.
+  const [sellOpen, setSellOpen] = useState(false);
+  const [cancelPkg, setCancelPkg] = useState<UnbilledItem | null>(null);
+  const [cancelReason, setCancelReason] = useState("");
+  const [cancelling, setCancelling] = useState(false);
+  const cancelPackage = async () => {
+    if (!cancelPkg) return;
+    setCancelling(true);
+    try {
+      await axiosInstance.post(`/reception/billing/packages/${cancelPkg.id}/cancel`, { reason: cancelReason.trim() });
+      toast.success("Package cancelled - its tests left the lab and radiology lists");
+      setSelectedItemIds((s) => { const n = new Set(s); n.delete(cancelPkg.id); return n; });
+      setCancelPkg(null); setCancelReason("");
+      refetchUnbilled();
+    } catch (e) {
+      toast.error(getApiErrorMessage(e, "Couldn't cancel the package"));
+    } finally {
+      setCancelling(false);
+    }
+  };
 
   const handleToggleItem = (id: string) => {
     const newSelected = new Set(selectedItemIds);
@@ -222,7 +243,10 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
           <Grid size={{ xs: 12, md: 8 }}>
             <Paper elevation={0} sx={{ borderRadius: 3, overflow: "hidden", border: '1px solid', borderColor: 'divider' }}>
               <Box sx={{ p: 2, bgcolor: alpha(theme.palette.primary.main, 0.04), borderBottom: '1px solid', borderColor: 'divider' }}>
-                <Typography variant="h6" fontWeight="700">Unbilled Charges</Typography>
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1 }}>
+                  <Typography variant="h6" fontWeight="700">Unbilled Charges</Typography>
+                  <Button size="small" variant="outlined" onClick={() => setSellOpen(true)} sx={{ textTransform: "none" }}>Add package</Button>
+                </Box>
               </Box>
               
               {itemsLoading ? (
@@ -265,13 +289,23 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
                         <TableCell>
                           <Typography variant="caption" sx={{ 
                             px: 1, py: 0.5, borderRadius: 1, fontWeight: 700,
-                            bgcolor: item.type === "CONSULTATION" ? "#E0E7FF" : item.type === "PHARMACY" ? "#D1FAE5" : "#FEF3C7",
-                            color: item.type === "CONSULTATION" ? "#07456E" : item.type === "PHARMACY" ? "#065F46" : "#92400E"
+                            bgcolor: item.type === "CONSULTATION" ? "#E0E7FF" : item.type === "PHARMACY" ? "#D1FAE5" : item.type === "PACKAGE" ? "#EDE9FE" : "#FEF3C7",
+                            color: item.type === "CONSULTATION" ? "#07456E" : item.type === "PHARMACY" ? "#065F46" : item.type === "PACKAGE" ? "#6D28D9" : "#92400E"
                           }}>
                             {item.type}
                           </Typography>
                         </TableCell>
-                        <TableCell>{item.description}</TableCell>
+                        <TableCell>
+                          {item.description}
+                          {item.type === "PACKAGE" && (
+                            <>
+                              <Typography variant="caption" sx={{ display: "block", color: "text.secondary" }}>
+                                Includes {(item.lineItems ?? []).slice(1).map((l) => l.description.replace(/ - in package$/, "")).join(", ") || "-"}
+                              </Typography>
+                              <Button size="small" color="error" onClick={() => setCancelPkg(item)} sx={{ textTransform: "none", p: 0, minWidth: 0 }}>Cancel package</Button>
+                            </>
+                          )}
+                        </TableCell>
                         <TableCell align="right" sx={{ fontWeight: 600 }}>
                           {item.typedPrices && item.blocked ? (
                             <Tooltip title={item.blocked}>
@@ -391,6 +425,22 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
         </Paper>
       )}
 
+      {sellOpen && selectedPatient && (
+        <SellPackageDialog patientId={selectedPatient.patientId} patientName={selectedPatient.firstName ? `${selectedPatient.firstName} ${selectedPatient.lastName ?? ""}`.trim() : undefined}
+          onClose={() => setSellOpen(false)}
+          onSold={(id) => { setSellOpen(false); refetchUnbilled().then(() => setSelectedItemIds((s) => new Set(s).add(id))); }} />
+      )}
+      <Dialog open={!!cancelPkg} onClose={() => setCancelPkg(null)} maxWidth="xs" fullWidth>
+        <DialogTitle>Cancel {cancelPkg?.description}?</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>It comes off the patient's charges and its tests leave the lab and radiology lists.</Typography>
+          <TextField fullWidth size="small" label="Reason" value={cancelReason} onChange={(e) => setCancelReason(e.target.value)} autoFocus />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setCancelPkg(null)} sx={{ textTransform: "none" }}>Keep it</Button>
+          <Button color="error" variant="contained" disabled={cancelling || cancelReason.trim().length < 3} onClick={cancelPackage} sx={{ textTransform: "none" }}>Cancel package</Button>
+        </DialogActions>
+      </Dialog>
       {priceItem?.typedPrices && (priceItem.type === "LAB" || priceItem.type === "RADIOLOGY") && (
         <TypeOrderPriceDialog open kind={priceItem.type} id={priceItem.id} tests={priceItem.typedPrices}
           onClose={() => setPriceItem(null)}
