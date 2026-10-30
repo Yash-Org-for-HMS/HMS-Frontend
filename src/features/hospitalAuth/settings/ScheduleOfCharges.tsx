@@ -12,7 +12,7 @@ import {
   AddRounded, EditRounded, DeleteRounded, SearchRounded, ReceiptLongRounded,
   ExpandMoreRounded, ChevronRightRounded, MeetingRoomRounded, TuneRounded,
   UnfoldMoreRounded, UnfoldLessRounded, HistoryRounded, ScienceRounded, ApartmentRounded,
-  ArrowUpwardRounded, ArrowDownwardRounded, CloseRounded, LibraryAddRounded,
+  ArrowUpwardRounded, ArrowDownwardRounded, CloseRounded, LibraryAddRounded, Inventory2Rounded,
 } from "@mui/icons-material";
 import type { CatalogEntry } from "./socCatalog";
 import { useClientPage } from "@/components/table/useClientPage";
@@ -34,6 +34,7 @@ import Mascot from "@/components/Mascot";
 import DetailSkeleton from "@/components/skeletons/DetailSkeleton";
 import { TableRowsSkeleton } from "@/components/TableRowsSkeleton";
 import LabStructureDialog from "@/components/soc/LabStructureDialog";
+import PackageContentsDialog from "@/components/soc/PackageContentsDialog";
 import { useToast } from "@/providers/ToastContext";
 import { useConfirm } from "@/providers/ConfirmContext";
 import PageHeader from "@/components/layout/PageHeader";
@@ -55,7 +56,9 @@ type Item = { chargeItemId: string; chargeCategoryId: string; itemName: string; 
   /** Its prices on payer rate lists (roomClassId "" = every room). */
   listPrices?: { rateListId: string; roomClassId: string; price: number | string }[];
   /** No price of its own: one is typed on each bill. */
-  priceAtBilling?: boolean };
+  priceAtBilling?: boolean;
+  /** Set when it is a package: its days of stay and how many things it includes. */
+  packageContents?: { includedDays: number | null; _count: { items: number } } | null };
 type RoomClass = { roomClassId: string; name: string; code: string; sortOrder: number; isActive: boolean };
 
 // Hospital's Schedule of Charges (rate card): categories on the left (seeded from
@@ -82,6 +85,7 @@ export default function ScheduleOfCharges() {
   const showBranchPrices = multiBranch || hasRole(user, "B_ADMIN");
   const [branchPriceItem, setBranchPriceItem] = useState<Item | null>(null);
   const [structureItem, setStructureItem] = useState<Item | null>(null);
+  const [packageItem, setPackageItem] = useState<Item | null>(null);
   const [catalogOpen, setCatalogOpen] = useState(false);
   const [roomDialogOpen, setRoomDialogOpen] = useState(false);
   const [showEmpty, setShowEmpty] = useState(false);          // reveal the seeded, still-empty categories
@@ -415,6 +419,11 @@ export default function ScheduleOfCharges() {
                               )}
                               {it.itemType === "RADIOLOGY" && <Chip label="Radiology" size="small" sx={{ ml: 0.75, height: 17, fontSize: "0.625rem", fontWeight: 700, bgcolor: `${ACCENT}14`, color: ACCENT }} />}
                               {it.itemType === "LAB" && <Chip label="Lab" size="small" sx={{ ml: 0.75, height: 17, fontSize: "0.625rem", fontWeight: 700, bgcolor: "rgba(16,185,129,0.14)", color: "success.main" }} />}
+                              {it.packageContents && (
+                                <Chip label={["Package", it.packageContents._count.items ? `${it.packageContents._count.items} included` : null, it.packageContents.includedDays ? `${it.packageContents.includedDays} days` : null].filter(Boolean).join(" · ")}
+                                  size="small" onClick={() => setPackageItem(it)}
+                                  sx={{ ml: 0.75, height: 17, fontSize: "0.625rem", fontWeight: 700, bgcolor: "rgba(139,92,246,0.14)", color: "#7C3AED", cursor: "pointer" }} />
+                              )}
                             </Typography>
                             {meta && <Typography sx={{ fontSize: "0.75rem", color: "text.secondary" }}>{meta}</Typography>}
                             {showBranchPrices && !!it.branchPrices?.length && (
@@ -454,6 +463,7 @@ export default function ScheduleOfCharges() {
                           <TableCell align="center" sx={{ whiteSpace: "nowrap" }}>
                             {it.itemType === "LAB" && <Tooltip title="Lab structure (single / profile parameters)"><IconButton size="small" onClick={() => setStructureItem(it)}><ScienceRounded fontSize="small" sx={{ color: "success.main" }} /></IconButton></Tooltip>}
                             <Tooltip title="Price history"><IconButton size="small" onClick={() => setHistoryItem(it)}><HistoryRounded fontSize="small" /></IconButton></Tooltip>
+                            {canEdit && !onList && it.itemType !== "BED" && <Tooltip title={it.packageContents ? "What the package includes" : "Make it a package - what it includes"}><IconButton size="small" onClick={() => setPackageItem(it)}><Inventory2Rounded fontSize="small" sx={{ color: it.packageContents ? "#7C3AED" : undefined }} /></IconButton></Tooltip>}
                             {showBranchPrices && it.itemType !== "BED" && !it.priceAtBilling && <Tooltip title="Branch exceptions - a different price at one branch"><IconButton size="small" onClick={() => setBranchPriceItem(it)}><ApartmentRounded fontSize="small" /></IconButton></Tooltip>}
                             {canEdit && onList && it.itemType !== "BED" && !it.priceAtBilling && <Tooltip title={`${listName} prices`}><IconButton size="small" onClick={() => setListPriceItem(it)}><EditRounded fontSize="small" sx={{ color: ACCENT }} /></IconButton></Tooltip>}
                             {canEdit && !onList && <Tooltip title={multiBranch ? "Edit prices (all branches)" : "Edit"}><IconButton size="small" onClick={() => setItemDialog({ mode: "edit", item: it })}><EditRounded fontSize="small" /></IconButton></Tooltip>}
@@ -507,6 +517,10 @@ export default function ScheduleOfCharges() {
       {listPriceItem && listName && (
         <ListPricesDialog item={listPriceItem} rateListId={priceList} listName={listName} roomClasses={activeRoomClasses}
           onClose={() => setListPriceItem(null)} onSaved={() => { setListPriceItem(null); refetchItems(); }} />
+      )}
+      {packageItem && (
+        <PackageContentsDialog chargeItemId={packageItem.chargeItemId} canEdit={canEdit}
+          onClose={() => setPackageItem(null)} onSaved={() => { setPackageItem(null); refetchItems(); }} />
       )}
       {structureItem && (
         <LabStructureDialog chargeItemId={structureItem.chargeItemId} itemName={structureItem.itemName} onClose={() => setStructureItem(null)} />
