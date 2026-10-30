@@ -12,7 +12,7 @@ import {
 } from "@mui/material";
 import {
   LocalHotelRounded, SearchRounded, SwapHorizRounded, LogoutRounded, MoreVertRounded,
-  CancelRounded, SavingsRounded, UndoRounded, LocalShippingRounded, ReceiptLongRounded,
+  CancelRounded, SavingsRounded, UndoRounded, LocalShippingRounded, ReceiptLongRounded, Inventory2Rounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import ErrorState from "@/components/ErrorState";
@@ -24,6 +24,7 @@ import TransferDialog from "@/components/ipd/TransferDialog";
 import DischargeDialog from "@/components/ipd/DischargeDialog";
 import DepositDialog from "@/components/ipd/DepositDialog";
 import BranchTransferDialog from "@/components/ipd/BranchTransferDialog";
+import StayPackageDialog from "@/components/ipd/StayPackageDialog";
 import PageHeader from "@/components/layout/PageHeader";
 import PatientHistoryButton from "@/components/clinical/PatientHistoryButton";
 import { usePanelBase } from "@/features/ipd/panelBase";
@@ -178,6 +179,7 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
     }
   };
   const [payerFor, setPayerFor] = useState<AdmissionRow | null>(null);
+  const [packageFor, setPackageFor] = useState<AdmissionRow | null>(null);
   // "Use deposit on bill" asks first: it moves money onto the bill.
   const [applyFor, setApplyFor] = useState<AdmissionRow | null>(null);
   const [applying, setApplying] = useState(false);
@@ -420,6 +422,11 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
             <SavingsRounded fontSize="small" sx={{ mr: 1 }} /> Payer: {PAYER_LABEL[menu.row.payerType ?? "CASH"] ?? "Cash"}…
           </MenuItem>
         )}
+        {menu.row?.status === "ADMITTED" && may("POST", "package") && (
+          <MenuItem onClick={() => { const r = menu.row; setMenu({ anchor: null, row: null }); setPackageFor(r); }}>
+            <Inventory2Rounded fontSize="small" sx={{ mr: 1, color: "#7C3AED" }} /> Package…
+          </MenuItem>
+        )}
         {may("POST", "transfer-branch") && menu.row?.status === "ADMITTED" && canTransferBranch && (
           <MenuItem onClick={() => { const r = menu.row; setMenu({ anchor: null, row: null }); setBranchTransferFor(r); }}>
             <LocalShippingRounded fontSize="small" sx={{ mr: 1, color: BRAND.action }} /> Transfer to another branch…
@@ -437,6 +444,7 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
       {admitOpen && <AdmitDialog open={admitOpen} onClose={() => setAdmitOpen(false)} onAdmitted={() => { setAdmitOpen(false); refetch(); }} />}
       {transferFor && <TransferDialog open admission={transferFor} onClose={() => setTransferFor(null)} onDone={() => { setTransferFor(null); refetch(); }} />}
       {branchTransferFor && <BranchTransferDialog admission={branchTransferFor} onClose={() => setBranchTransferFor(null)} onDone={() => { setBranchTransferFor(null); refetch(); }} />}
+      {packageFor && <StayPackageDialog admissionId={packageFor.admissionId} patientName={packageFor.patientName} canManage={may("POST", "package")} onClose={() => setPackageFor(null)} />}
       {dischargeFor && <DischargeDialog open admissionId={dischargeFor.admissionId} onClose={() => setDischargeFor(null)} onDone={() => { setDischargeFor(null); refetch(); }} />}
       {applyFor && (
         <Dialog open onClose={applying ? undefined : () => setApplyFor(null)} maxWidth="xs" fullWidth>

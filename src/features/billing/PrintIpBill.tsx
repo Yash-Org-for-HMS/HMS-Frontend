@@ -18,11 +18,11 @@ import { BillLetterhead, BillTitleBar, BillFooter } from "@/components/billing/B
  * line detail to category subtotals for a quick read.
  */
 
-const CATEGORY_ORDER = ["ADMISSION", "ROOM", "DOCTOR_VISIT", "PROCEDURE", "INVESTIGATION", "RADIOLOGY", "PHARMACY", "OTHER"];
+const CATEGORY_ORDER = ["PACKAGE", "ADMISSION", "ROOM", "DOCTOR_VISIT", "PROCEDURE", "INVESTIGATION", "RADIOLOGY", "PHARMACY", "OTHER"];
 const CATEGORY_LABEL: Record<string, string> = {
   ADMISSION: "Admission Charges", ROOM: "Room / Bed Charges", DOCTOR_VISIT: "Doctor Charges",
   PROCEDURE: "Procedures", INVESTIGATION: "Laboratory", RADIOLOGY: "Radiology / Imaging",
-  PHARMACY: "Pharmacy & Medical Supplies", OTHER: "Other Charges",
+  PHARMACY: "Pharmacy & Medical Supplies", OTHER: "Other Charges", PACKAGE: "Package",
 };
 
 // Fallback category for a legacy line with no stored `category`.

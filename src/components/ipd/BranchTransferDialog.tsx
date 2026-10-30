@@ -63,7 +63,8 @@ export default function BranchTransferDialog({ admission, onClose, onDone }: {
 
   // The bill here to date, as the discharge screen estimates it.
   const pendingTax = (detail?.pendingCharges ?? []).reduce((s, c) => s + (Number(c.taxAmount) || 0), 0);
-  const billHere = Number(detail?.estimatedBedCharge || 0) + Number(detail?.estimatedNursingCharge || 0) + Number(detail?.pendingChargesTotal || 0) + pendingTax;
+  // Less the room rent & nursing a package on the stay covers (its price is in the charges).
+  const billHere = Number(detail?.estimatedBedCharge || 0) + Number(detail?.estimatedNursingCharge || 0) - Number(detail?.packageBedCovered || 0) + Number(detail?.pendingChargesTotal || 0) + pendingTax;
   const deposit = Number(detail?.depositBalance ?? admission.depositBalance ?? 0);
   // The advance stays with this branch (it took the cash): what the bill here
   // doesn't use is refunded from here; the other branch takes its own advance.

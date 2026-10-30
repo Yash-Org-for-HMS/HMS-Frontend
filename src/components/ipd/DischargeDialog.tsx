@@ -79,6 +79,23 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
     return chargePriceFor({ ...e, basePrice: e.basePrice ?? (Number(e.amount) || 0) }, billRoomClassId, detail?.serviceRateListId) || 0;
   };
 
+  // A package on the stay takes off what it covers: room rent & nursing (worked
+  // out by the server) and, while it still applies, the extras added here - in
+  // its "Other charges" or as its included services, as the server bills them.
+  const stayPackage = detail?.stayPackage ?? null;
+  const packageBedCovered = Number(detail?.packageBedCovered || 0);
+  const extraInPackage: boolean[] = (() => {
+    const left = new Map((stayPackage?.contents ?? []).filter((c) => c.chargeItemId).map((c) => [c.chargeItemId!, c.left]));
+    return extras.map((e) => {
+      if (!stayPackage?.appliesNow) return false;
+      if (stayPackage.covers.includes("OTHER")) return true;
+      const n = e.chargeItemId ? left.get(e.chargeItemId) ?? 0 : 0;
+      if (n > 0) left.set(e.chargeItemId!, n - 1);
+      return n > 0;
+    });
+  })();
+  const extraAmount = (e: Extra, i: number): number => (extraInPackage[i] ? 0 : lineAmount(e));
+
   const bedCharge = Number(detail?.estimatedBedCharge || 0);
   // The nursing charge a bed tariff carries, billed per unit beside the rent.
   const nursingCharge = Number(detail?.estimatedNursingCharge || 0);
@@ -94,7 +111,7 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
   const awaitingPharmacy = detail?.awaitingPharmacy ?? [];
   const theatreWarnings = detail?.theatreWarnings ?? [];
   const awaitingPharmacyTotal = Number(detail?.awaitingPharmacyTotal || 0);
-  const extrasTotal = extras.reduce((s, e) => s + lineAmount(e), 0);
+  const extrasTotal = extras.reduce((s, e, i) => s + extraAmount(e, i), 0);
   // Per-line GST, from BOTH sources. Charges accrued during the stay carry
   // their own tax - a dispensed medicine is taxed at its rate-card GST - and
   // so do charges picked here. Only the picked ones used to be counted, so a
@@ -102,8 +119,8 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
   // patient actually received. Mirrors the server, which re-taxes
   // authoritatively from the rate card.
   const pendingTax = pendingCharges.reduce((s, c) => s + (Number(c.taxAmount) || 0), 0);
-  const taxTotal = pendingTax + extras.reduce((s, e) => s + lineAmount(e) * ((e.taxPercent || 0) / 100), 0);
-  const total = bedCharge + nursingCharge + pendingTotal + extrasTotal + taxTotal;
+  const taxTotal = pendingTax + extras.reduce((s, e, i) => s + extraAmount(e, i) * ((e.taxPercent || 0) / 100), 0);
+  const total = bedCharge + nursingCharge - packageBedCovered + pendingTotal + extrasTotal + taxTotal;
   const deposit = Number(detail?.depositBalance || 0);
   // With a claim still open the advance is kept aside, not put on the bill: the
   // payer is claimed the whole bill, and the advance is used on what it leaves
@@ -197,6 +214,12 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
               <Box sx={{ display: "flex", justifyContent: "space-between", mt: 0.75 }}>
                 <Typography variant="body2" sx={{ color: "text.secondary" }}>Nursing charges (from the bed tariff)</Typography>
                 <Typography variant="body2" sx={{ fontWeight: 700 }}>{formatINR(nursingCharge)}</Typography>
+              </Box>
+            )}
+            {packageBedCovered > 0 && (
+              <Box sx={{ display: "flex", justifyContent: "space-between", mt: 0.75 }}>
+                <Typography variant="body2" sx={{ color: "#7C3AED" }}>In package ({stayPackage?.name}) - room rent & nursing</Typography>
+                <Typography variant="body2" sx={{ fontWeight: 700, color: "#7C3AED" }}>- {formatINR(packageBedCovered)}</Typography>
               </Box>
             )}
           </Box>
@@ -299,7 +322,8 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
                 <TextField size="small" fullWidth placeholder="Description" value={e.description} disabled={!!e.chargeItemId}
                   onChange={(ev) => setExtras((x) => x.map((r, ri) => ri === i ? { ...r, description: ev.target.value } : r))} />
                 <TextField size="small" type="number" sx={{ width: 130 }} placeholder="Amount" value={e.chargeItemId ? String(lineAmount(e)) : e.amount} disabled={!!e.chargeItemId}
-                  onChange={(ev) => setExtras((x) => x.map((r, ri) => ri === i ? { ...r, amount: ev.target.value } : r))} />
+                  onChange={(ev) => setExtras((x) => x.map((r, ri) => ri === i ? { ...r, amount: ev.target.value } : r))}
+                  helperText={extraInPackage[i] ? "In package - not billed" : undefined} FormHelperTextProps={{ sx: { color: "#7C3AED", mx: 0 } }} />
                 <IconButton size="small" onClick={() => setExtras((x) => x.filter((_, ri) => ri !== i))}><DeleteOutlineRounded fontSize="small" /></IconButton>
               </Box>
             ))}

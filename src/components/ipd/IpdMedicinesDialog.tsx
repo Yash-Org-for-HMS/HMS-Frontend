@@ -18,6 +18,7 @@ import { axiosInstance } from "@/api/axios";
 import { useToast } from "@/providers/ToastContext";
 import { useConfirm } from "@/providers/ConfirmContext";
 import HeartbeatLoader from "../HeartbeatLoader";
+import StayPackageDialog from "./StayPackageDialog";
 import SoftChip from "../SoftChip";
 import MarChart from "./MarChart";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
@@ -64,6 +65,14 @@ export default function IpdMedicinesDialog({ open, onClose, admission, orderOnly
   const [overrideReason, setOverrideReason] = useState("");
 
   const medsKey = ["ipd-admission-meds", admission?.admissionId];
+  // A package with a medicine kit: requested from its own panel, in one go.
+  const [kitOpen, setKitOpen] = useState(false);
+  const { data: stayPackage } = useQuery<{ name: string; kit: { left: number }[] } | null>({
+    queryKey: ["stay-package", admission?.admissionId],
+    queryFn: async () => (await axiosInstance.get(`/ipd/admissions/${admission.admissionId}/package`)).data.data,
+    enabled: open && !!admission?.admissionId && !orderOnly,
+  });
+  const kitLeft = (stayPackage?.kit ?? []).reduce((s, k) => s + k.left, 0);
   const { data, isFetching, refetch } = useQuery<{ medications: InpatientMedicationRow[]; total: number }>({
     queryKey: medsKey,
     queryFn: async () => (await axiosInstance.get(`/ipd/admissions/${admission.admissionId}/medications`)).data.data,
@@ -171,6 +180,12 @@ export default function IpdMedicinesDialog({ open, onClose, admission, orderOnly
         <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
           {admission?.patientName} - assigning a medicine sends a request to the pharmacy; once they confirm it (dispensed from stock), it's added to the discharge bill.
         </Typography>
+        {stayPackage && (stayPackage.kit.length > 0) && (
+          <Alert severity="info" sx={{ mb: 2 }} action={<Button size="small" onClick={() => setKitOpen(true)} sx={{ textTransform: "none" }}>Package kit</Button>}>
+            On the {stayPackage.name} - {kitLeft > 0 ? `${kitLeft} kit medicine${kitLeft === 1 ? "" : "s"} still to request from the pharmacy (not billed).` : "its kit has been requested."}
+          </Alert>
+        )}
+        {kitOpen && <StayPackageDialog admissionId={admission.admissionId} patientName={admission.patientName} canManage={false} onClose={() => setKitOpen(false)} />}
 
         {view === "chart" ? (
           <MarChart admissionId={admission.admissionId} readOnly={orderOnly} />

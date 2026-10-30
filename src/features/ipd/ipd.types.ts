@@ -99,6 +99,23 @@ export interface PendingCharge {
   typedPrices?: { chargeItemId: string; itemName: string; price: number | null }[];
 }
 
+/** A package on an admission, as the discharge screen reads it. */
+export interface StayPackageView {
+  admissionPackageId: string;
+  chargeItemId: string;
+  name: string;
+  price: Money;
+  startAt: string;
+  /** Exclusive; null = until discharge. */
+  endAt: string | null;
+  includedDays: number | null;
+  covers: string[];
+  /** Whether it still applies now - extras added at discharge follow it. */
+  appliesNow: boolean;
+  /** What it includes and how much of each the stay's charges have not used. */
+  contents: { chargeItemId?: string | null; medicineId?: string | null; name: string; quantity: number; left: number }[];
+}
+
 /** GET /ipd/admissions/:id - the row above plus everything discharge needs. */
 export interface AdmissionDetail extends AdmissionRow {
   bedSegments: BedSegment[];
@@ -122,6 +139,10 @@ export interface AdmissionDetail extends AdmissionRow {
   roomClassName?: string | null;
   /** The payer rate list its services are billed from (none for a cash stay). */
   serviceRateListId?: string | null;
+  /** The package on the stay: its price is a line of pendingCharges, what it covers shows there at 0. */
+  stayPackage?: StayPackageView | null;
+  /** Room rent and nursing the package takes off the bed charges above. */
+  packageBedCovered?: Money;
   deposits?: { entryType: string; amount: Money; createdAt?: string }[];
 }
 
