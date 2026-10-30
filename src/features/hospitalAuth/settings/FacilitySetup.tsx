@@ -67,7 +67,8 @@ type DialogState =
 export default function FacilitySetup() {
   const [setupAnchor, setSetupAnchor] = useState<null | HTMLElement>(null);
   const [dialog, setDialog] = useState<DialogState | null>(null);
-  const [rentOpen, setRentOpen] = useState(false);
+  // ?tariffs=1 opens Bed tariffs straight away (the Insurance & TPA page links here for rents).
+  const [rentOpen, setRentOpen] = useState(() => new URLSearchParams(window.location.search).get("tariffs") === "1");
 
   const { data, isLoading, isError, error, refetch } = useQuery<IpdStructure>({
     // Setup needs the beds, not who is in them: no patient names are fetched.

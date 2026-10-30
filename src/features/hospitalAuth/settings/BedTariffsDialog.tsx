@@ -258,7 +258,8 @@ export default function BedTariffsDialog({ onClose, onDone }: { onClose: () => v
  * The hospital admin's rate lists and the payers on each, saved whole. A payer
  * is on one list at most; a list with rents cannot be removed (the server says so).
  */
-function RateListsEditor({ rateLists, payers, onSaved }: { rateLists: RateList[]; payers: TariffsResponse["payers"]; onSaved: () => void }) {
+// Also on the Insurance & TPA page.
+export function RateListsEditor({ rateLists, payers, onSaved }: { rateLists: RateList[]; payers: TariffsResponse["payers"]; onSaved: () => void }) {
   const toast = useToast();
   const [lists, setLists] = useState<{ rateListId: string | null; name: string; payerIds: string[] }[]>(() => rateLists.map((l) => ({ ...l })));
   const [saving, setSaving] = useState(false);
