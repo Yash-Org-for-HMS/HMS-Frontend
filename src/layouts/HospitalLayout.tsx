@@ -12,7 +12,7 @@ import {
   Box, Drawer, Divider, useTheme, useMediaQuery,
 } from "@mui/material";
 import {
-  DashboardRounded, LocalHospitalRounded, PeopleRounded, CalendarTodayRounded, SettingsRounded, ApartmentRounded, DomainRounded, BadgeRounded, CardMembershipRounded, AccountTreeRounded, SchemaRounded, WidgetsRounded, MedicalServicesRounded, DatasetRounded, EventNoteRounded, DynamicFormRounded, SecurityRounded, AccountBalanceRounded, AssessmentRounded, HotelRounded, MonitorHeartRounded, VaccinesRounded, MedicationRounded, LocalHotelRounded, ReceiptLongRounded, FormatListNumberedRounded, UploadFileRounded,
+  DashboardRounded, LocalHospitalRounded, PeopleRounded, CalendarTodayRounded, SettingsRounded, ApartmentRounded, DomainRounded, BadgeRounded, CardMembershipRounded, AccountTreeRounded, SchemaRounded, WidgetsRounded, MedicalServicesRounded, DatasetRounded, EventNoteRounded, DynamicFormRounded, SecurityRounded, AccountBalanceRounded, AssessmentRounded, HotelRounded, MonitorHeartRounded, VaccinesRounded, MedicationRounded, LocalHotelRounded, ReceiptLongRounded, FormatListNumberedRounded, UploadFileRounded, HealthAndSafetyRounded,
   Inventory2Rounded,
 } from "@mui/icons-material";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
@@ -78,6 +78,8 @@ export default function HospitalLayout() {
     { text: "Import from workbook", icon: <UploadFileRounded />, path: "/hospital/setup-import", adminOnly: true, needs: ["H_ADMIN", "B_ADMIN"], section: "Catalogs & forms" },
     { text: "Medicine Catalog", icon: <MedicationRounded />, path: "/hospital/medicines", adminOnly: true, module: "Pharmacy", section: "Catalogs & forms" },
     { text: "Vaccine Catalog", icon: <VaccinesRounded />, path: "/hospital/vaccines", adminOnly: true, section: "Catalogs & forms" },
+    // Insurers, TPAs and schemes, and the rate list each bills by (backend: hospital admin only).
+    { text: "Insurance & TPA", icon: <HealthAndSafetyRounded />, path: "/hospital/insurance", adminOnly: true, needs: ["H_ADMIN"], section: "Catalogs & forms" },
     { text: "Ward Chart Settings", icon: <MonitorHeartRounded />, path: "/hospital/ward-chart", adminOnly: true, module: "IPD", section: "Catalogs & forms" },
     { text: "Form Builder", icon: <DynamicFormRounded />, path: "/hospital/form-builder", adminOnly: true, section: "Catalogs & forms" },
     // Role Management and the Permission Matrix used to live here, commented

@@ -119,6 +119,7 @@ const PlatformMasters = lazy(() => import("@/features/platformMasters/PlatformMa
 const PlatformMessaging = lazy(() => import("@/features/messaging/PlatformMessaging"));
 const PaymentGatewaySettings = lazy(() => import("@/features/paymentGateway/PaymentGatewaySettings"));
 const ClaimsList = lazy(() => import("@/features/claims/ClaimsList"));
+const InsurancePayersPage = lazy(() => import("@/features/claims/InsurancePayersPage"));
 const ClaimForm = lazy(() => import("@/features/claims/ClaimForm"));
 const ClaimDetail = lazy(() => import("@/features/claims/ClaimDetail"));
 const ClaimReports = lazy(() => import("@/features/claims/ClaimReports"));
@@ -376,6 +377,7 @@ function App() {
             <Route path="/hospital/theatres" element={elGated(TheatreBoard, "IPD", "Operating Theatres", { manage: true })} />
             <Route path="/hospital/ward-chart" element={elGated(WardChartSettings, "IPD", "Ward Chart Settings")} />
             <Route path="/hospital/vaccines" element={el(VaccineCatalog)} />
+            <Route path="/hospital/insurance" element={el(InsurancePayersPage)} />
             <Route path="/hospital/store-room" element={el(StoreRoomPage)} />
             <Route path="/hospital/soc" element={el(ScheduleOfCharges)} />
             <Route path="/hospital/medicines" element={elGated(MedicineCatalog, "Pharmacy", "Medicine Catalog")} />

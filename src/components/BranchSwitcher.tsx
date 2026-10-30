@@ -12,7 +12,7 @@ import { useHospitalAuth } from "@/providers/HospitalAuthContext";
  */
 const SHARED_PAGES = [
   "/hospital/profile", "/hospital/settings", "/hospital/branches", "/hospital/module-access", "/hospital/departments",
-  "/hospital/soc", "/hospital/doctors", "/hospital/medicines", "/hospital/vaccines", "/hospital/ward-chart",
+  "/hospital/soc", "/hospital/doctors", "/hospital/medicines", "/hospital/vaccines", "/hospital/insurance", "/hospital/ward-chart",
   "/hospital/form-builder", "/hospital/lookups", "/hospital/organogram",
 ];
 // Shared as a list only: every branch's patients are the hospital's, but one
