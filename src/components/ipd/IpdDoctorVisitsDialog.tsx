@@ -44,8 +44,9 @@ export default function IpdDoctorVisitsDialog({ open, onClose, admission }: Prop
   const byDoctor = data?.byDoctor || [];
 
   const { data: doctors = [], isFetching: docLoading } = useQuery<any[]>({
-    queryKey: ["ipd-visit-doctors"],
-    queryFn: async () => (await axiosInstance.get("/ipd/doctors")).data.data,
+    // On this stay: an insured patient's visits may be priced from their payer's rate list.
+    queryKey: ["ipd-visit-doctors", admission?.admissionId],
+    queryFn: async () => (await axiosInstance.get("/ipd/doctors", { params: { admissionId: admission.admissionId } })).data.data,
     enabled: open,
   });
 
@@ -188,7 +189,7 @@ export default function IpdDoctorVisitsDialog({ open, onClose, admission }: Prop
                 <Box sx={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
                   <span>{o.name}</span>
                   <span style={{ color: o.ipdVisitCharge > 0 ? NEUTRAL.muted : SEMANTIC.danger, fontSize: "0.75rem" }}>
-                    {o.ipdVisitCharge > 0 ? `${formatINR(o.ipdVisitCharge)} / visit` : "no visit charge set"}
+                    {o.ipdVisitCharge > 0 ? `${formatINR(o.ipdVisitCharge)} / visit${o.rateList ? ` · ${o.rateList}` : ""}` : "no visit charge set"}
                   </span>
                 </Box>
               </li>
@@ -202,7 +203,7 @@ export default function IpdDoctorVisitsDialog({ open, onClose, admission }: Prop
           {doctor && (
             <Typography variant="caption" sx={{ color: doctor.ipdVisitCharge > 0 ? "text.secondary" : SEMANTIC.danger }}>
               {doctor.ipdVisitCharge > 0
-                ? <>This visit will be billed at <strong>{formatINR(doctor.ipdVisitCharge)}</strong> and added to the discharge bill.</>
+                ? <>This visit will be billed at <strong>{formatINR(doctor.ipdVisitCharge)}</strong>{doctor.rateList ? <> (the {doctor.rateList} rate)</> : null} and added to the discharge bill.</>
                 : <>This doctor has no IPD visit charge set - the visit will bill at ₹0. Set a charge in Doctor management.</>}
             </Typography>
           )}

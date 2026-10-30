@@ -21,6 +21,7 @@ import { SaveRounded, PersonRounded, LocalHospitalRounded, AccountTreeRounded } 
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { axiosInstance } from "@/api/axios";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import ErrorState from "@/components/ErrorState";
 import { useToast } from "@/providers/ToastContext";
 import PageHeader from "@/components/layout/PageHeader";
@@ -32,6 +33,15 @@ export default function DoctorForm() {
   const navigate = useNavigate();
   const { id } = useParams();
   const isEditing = Boolean(id);
+  // The Schedule of Charges line insurer price lists price this doctor's ward visits by.
+  const [visitLine, setVisitLine] = useState<{ chargeItemId: string; itemName: string } | null>(null);
+  const [visitLineInput, setVisitLineInput] = useState("");
+  const visitLineTerm = useDebouncedValue(visitLineInput, 250);
+  const { data: visitLineOptions = [] } = useQuery<{ chargeItemId: string; itemName: string }[]>({
+    queryKey: ["doctor-visit-lines", visitLineTerm],
+    queryFn: async () => (await axiosInstance.get("/hospital/soc/search", { params: { q: visitLineTerm.trim() || "visit" } })).data.data.items,
+    enabled: isEditing,
+  });
   // Arrived straight from adding them in the Staff Directory.
   const [searchParams] = useSearchParams();
   const justAdded = searchParams.get("setup") === "1";
@@ -108,6 +118,7 @@ export default function DoctorForm() {
       experienceYears: d.experienceYears || "",
     });
     setBranchIds(Array.isArray(d.branchIds) ? d.branchIds : []);
+    setVisitLine(d.visitChargeItem ?? null);
     const fees: Record<string, { consultationFee: string; ipdVisitCharge: string }> = {};
     for (const [b, f] of Object.entries((d.branchFees ?? {}) as Record<string, { consultationFee: number | null; ipdVisitCharge: number | null }>)) {
       fees[b] = { consultationFee: f.consultationFee == null ? "" : String(f.consultationFee), ipdVisitCharge: f.ipdVisitCharge == null ? "" : String(f.ipdVisitCharge) };
@@ -174,7 +185,7 @@ export default function DoctorForm() {
       }
     }
     setLoading(true);
-    const body = { ...formData, additionalDepartmentIds: additionalDepartmentIds.filter((x) => x !== formData.departmentId) };
+    const body = { ...formData, additionalDepartmentIds: additionalDepartmentIds.filter((x) => x !== formData.departmentId), ...(isEditing ? { visitChargeItemId: visitLine?.chargeItemId ?? null } : {}) };
     try {
       if (isEditing) {
         await axiosInstance.put(`/hospital/doctors/${id}`, body);
@@ -408,6 +419,24 @@ export default function DoctorForm() {
                   {...textFieldProps}
                 />
               </Grid>
+              {isEditing && (
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <Autocomplete
+                    options={visitLineOptions}
+                    value={visitLine}
+                    onChange={(_, v) => setVisitLine(v)}
+                    inputValue={visitLineInput}
+                    onInputChange={(_, v) => setVisitLineInput(v)}
+                    filterOptions={(x) => x}
+                    getOptionLabel={(o) => o.itemName}
+                    isOptionEqualToValue={(o, v) => o.chargeItemId === v.chargeItemId}
+                    renderInput={(params) => (
+                      <TextField {...params} label="Visit line on insurer price lists" placeholder="e.g. Doctor visit - Super specialist"
+                        helperText="Optional. An insured patient whose insurer's price list prices this line is billed the list's rate per visit; everyone else pays the charge on the left." />
+                    )}
+                  />
+                </Grid>
+              )}
               <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
                   label="Qualifications (e.g. MBBS, MD)"
