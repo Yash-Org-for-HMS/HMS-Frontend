@@ -52,8 +52,8 @@ const REALMS: Record<Realm, { access: string; refresh: string; refreshUrl: strin
 // or an expired session rather than a missing word in this regex. A new mount
 // can pass every API check (those set the header themselves) and still be dead
 // in the browser. "clinical" was exactly that.
-function realmForUrl(url?: string): Realm {
-  if (url && /^\/(hospital|reception|doctor|nurse|lab|pharmacy|billing|ipd|clinical|vaccination|claims|role-home|ward-round|roster|ward-indents|mrd)\b/.test(url)) {
+export function realmForUrl(url?: string): Realm {
+  if (url && /^\/(hospital|reception|doctor|nurse|lab|pharmacy|billing|ipd|clinical|vaccination|claims|role-home|ward-round|roster|ward-indents|mrd|store-room)\b/.test(url)) {
     return "hospital";
   }
   return "admin";

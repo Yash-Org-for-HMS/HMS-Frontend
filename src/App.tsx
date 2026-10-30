@@ -20,6 +20,7 @@ const DoctorLayout = lazy(() => import("@/layouts/DoctorLayout"));
 const LabLayout = lazy(() => import("@/layouts/LabLayout"));
 const PharmacyLayout = lazy(() => import("@/layouts/PharmacyLayout"));
 const HousekeepingLayout = lazy(() => import("@/layouts/HousekeepingLayout"));
+const StoreLayout = lazy(() => import("@/layouts/StoreLayout"));
 import CommandPalette from "@/components/CommandPalette";
 import AdminCommandPalette from "@/components/AdminCommandPalette";
 import PageSkeleton from "@/components/PageSkeleton";
@@ -79,6 +80,7 @@ const FacilitySetup = lazy(() => import("@/features/hospitalAuth/settings/Facili
 const WardChartSettings = lazy(() => import("@/features/hospitalAuth/settings/WardChartSettings"));
 const TreatmentChart = lazy(() => import("@/features/ipd/TreatmentChart"));
 const VaccineCatalog = lazy(() => import("@/features/hospitalAuth/settings/VaccineCatalog"));
+const StoreRoomPage = lazy(() => import("@/features/storeRoom/StoreRoomPage"));
 const ScheduleOfCharges = lazy(() => import("@/features/hospitalAuth/settings/ScheduleOfCharges"));
 const FormTemplatesList = lazy(() => import("@/features/hospitalAuth/formBuilder/FormTemplatesList"));
 const RefundApprovals = lazy(() => import("@/features/billing/RefundApprovals"));
@@ -374,6 +376,7 @@ function App() {
             <Route path="/hospital/theatres" element={elGated(TheatreBoard, "IPD", "Operating Theatres", { manage: true })} />
             <Route path="/hospital/ward-chart" element={elGated(WardChartSettings, "IPD", "Ward Chart Settings")} />
             <Route path="/hospital/vaccines" element={el(VaccineCatalog)} />
+            <Route path="/hospital/store-room" element={el(StoreRoomPage)} />
             <Route path="/hospital/soc" element={el(ScheduleOfCharges)} />
             <Route path="/hospital/medicines" element={elGated(MedicineCatalog, "Pharmacy", "Medicine Catalog")} />
             <Route path="/hospital/form-builder" element={el(FormTemplatesList)} />
@@ -528,6 +531,14 @@ function App() {
           <Route element={el(HousekeepingLayout)}>
             <Route path="/housekeeping/beds" element={elGated(BedBoard, "IPD", "Bed Board", { housekeeping: true })} />
             <Route path="/housekeeping/announcements" element={el(Announcements)} />
+          </Route>
+        </Route>
+
+        {/* ── Store Keeper: the store room only ── */}
+        <Route element={<HospitalProtectedRoute panel="store" />}>
+          <Route element={el(StoreLayout)}>
+            <Route path="/store" element={el(StoreRoomPage)} />
+            <Route path="/store/announcements" element={el(Announcements)} />
           </Route>
         </Route>
 

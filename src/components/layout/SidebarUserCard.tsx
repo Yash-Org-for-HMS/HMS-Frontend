@@ -71,6 +71,7 @@ const ROLE_BADGE: Record<string, string> = {
   TPA_DESK: "TPA",
   RADIOLOGY: "RADIOLOGY",
   HOUSEKEEPING: "HOUSEKEEP",
+  STORE_KEEPER: "STORE",
   MRD: "RECORDS",
   AUDITOR: "AUDITOR",
   // The platform console has no hospital role. "PLATFORM" rather than

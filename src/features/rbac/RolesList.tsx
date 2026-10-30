@@ -39,6 +39,7 @@ const SYSTEM_ROLES: { code: string; name: string }[] = [
   { code: "TPA_DESK", name: "TPA / Insurance Desk" },
   { code: "RADIOLOGY", name: "Radiology" },
   { code: "HOUSEKEEPING", name: "Housekeeping" },
+  { code: "STORE_KEEPER", name: "Store Keeper" },
   { code: "MRD", name: "Medical Records" },
   { code: "AUDITOR", name: "Auditor / View Only" },
 ];

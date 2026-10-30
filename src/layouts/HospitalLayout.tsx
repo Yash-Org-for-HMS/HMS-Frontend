@@ -13,6 +13,7 @@ import {
 } from "@mui/material";
 import {
   DashboardRounded, LocalHospitalRounded, PeopleRounded, CalendarTodayRounded, SettingsRounded, ApartmentRounded, DomainRounded, BadgeRounded, CardMembershipRounded, AccountTreeRounded, SchemaRounded, WidgetsRounded, MedicalServicesRounded, DatasetRounded, EventNoteRounded, DynamicFormRounded, SecurityRounded, AccountBalanceRounded, AssessmentRounded, HotelRounded, MonitorHeartRounded, VaccinesRounded, MedicationRounded, LocalHotelRounded, ReceiptLongRounded, FormatListNumberedRounded, UploadFileRounded,
+  Inventory2Rounded,
 } from "@mui/icons-material";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import { isAdminUser, menuPathsFor, hasRole } from "@/constants/roles";
@@ -96,6 +97,7 @@ export default function HospitalLayout() {
     { text: "Bed Board", icon: <HotelRounded />, path: "/hospital/ipd/beds", adminOnly: true, module: "IPD", section: "Daily operations" },
     { text: "Operating List", icon: <EventNoteRounded />, path: "/hospital/ipd/ot-schedule", adminOnly: true, module: "IPD", section: "Daily operations" },
     { text: "Billing Overview", icon: <ReceiptLongRounded />, path: "/hospital/billing", adminOnly: true, module: "Billing", section: "Daily operations" },
+    { text: "Store room", icon: <Inventory2Rounded />, path: "/hospital/store-room", adminOnly: true, section: "Daily operations" },
     // Admin-only by design: raising a refund and approving it have to be
     // different people, so this never appears for the desk that raises them.
     { text: "Refund Approvals", icon: <AccountBalanceRounded />, path: "/hospital/refund-approvals", adminOnly: true, module: "Billing", section: "Daily operations" },

@@ -18,7 +18,7 @@ export function isAdmin(role?: string | null): boolean {
 // is deliberately NEVER stricter than the backend: admins bypass everything and
 // a user always reaches their own home panel. The backend still enforces the
 // real data boundary - including what the workbook's newer roles may change.
-export type Panel = "reception" | "nurse" | "doctor" | "lab" | "pharmacy" | "housekeeping" | "hospital";
+export type Panel = "reception" | "nurse" | "doctor" | "lab" | "pharmacy" | "housekeeping" | "store" | "hospital";
 
 /** The panel each role opens. Codes not listed (admins, anything unknown) are the hospital panel. */
 const ROLE_PANEL: Record<string, Exclude<Panel, "hospital">> = {
@@ -29,6 +29,7 @@ const ROLE_PANEL: Record<string, Exclude<Panel, "hospital">> = {
   LAB_ADMIN: "lab", LAB_TECH: "lab", LAB: "lab", RADIOLOGY: "lab",
   PHARMACIST: "pharmacy", PHARMACY: "pharmacy",
   HOUSEKEEPING: "housekeeping",
+  STORE_KEEPER: "store",
 };
 
 export const PANEL_HOME: Record<Panel, string> = {
@@ -38,12 +39,13 @@ export const PANEL_HOME: Record<Panel, string> = {
   lab: "/lab/dashboard",
   pharmacy: "/pharmacy/dashboard",
   housekeeping: "/housekeeping/beds",
+  store: "/store",
   hospital: "/hospital/dashboard",
 };
 
 export const PANEL_LABEL: Record<Panel, string> = {
   reception: "Reception", nurse: "Nurse", doctor: "Doctor", lab: "Lab", pharmacy: "Pharmacy",
-  housekeeping: "Housekeeping", hospital: "Hospital admin",
+  housekeeping: "Housekeeping", store: "Store room", hospital: "Hospital admin",
 };
 
 // The panel a role belongs to. Anything that isn't a known clinical role (admins
@@ -262,6 +264,7 @@ export const ROLE_HINT: Record<string, string> = {
   TPA_DESK: "Pre-authorisation and insurance claims",
   RADIOLOGY: "Radiology orders and reports",
   HOUSEKEEPING: "Marks beds cleaned and available",
+  STORE_KEEPER: "Store room: spare beds, equipment and linen",
   MRD: "Patient records, documents, consent forms",
   AUDITOR: "Sees what an admin sees, changes nothing",
 };
