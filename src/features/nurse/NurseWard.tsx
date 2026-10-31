@@ -27,7 +27,7 @@ import ObservationChartDialog from "@/components/ipd/ObservationChartDialog";
 import FluidBalanceDialog from "@/components/ipd/FluidBalanceDialog";
 import HandoverDialog from "@/components/ipd/HandoverDialog";
 import IpdLabOrdersDialog from "@/components/ipd/IpdLabOrdersDialog";
-import SurgeryDialog from "@/components/ipd/SurgeryDialog";
+import { BookCaseDialog } from "@/features/ipd/OtSchedule";
 import IpdMedicinesDialog from "@/components/ipd/IpdMedicinesDialog";
 import IpdRadiologyOrdersDialog from "@/components/ipd/IpdRadiologyOrdersDialog";
 import AdmissionChargesDialog from "@/components/ipd/AdmissionChargesDialog";
@@ -153,9 +153,9 @@ export default function NurseWard() {
       group: "Record",
       items: [
         { key: "visits", label: "Doctor visits", icon: <MedicalServicesRounded fontSize="small" />, open: setVisitsFor, tone: NEUTRAL.muted },
-        // Full access, same dialog the desk uses: the ward records what actually
-        // happened in theatre. Marking a PRICED surgery completed raises its
-        // charge, so the price field is the one to be careful with.
+        // Books the case on the operating list - the one way a surgery is added,
+        // so it always has a theatre record (consent, checklist, team) and is
+        // priced from the rate card at billing, never typed in on the ward.
         { key: "surgery", label: "Surgery", icon: <MedicalServicesRounded fontSize="small" />, open: setSurgeryFor, tone: NEUTRAL.muted },
         { key: "handover", label: "Handover", icon: <SwapHorizRounded fontSize="small" />, open: setHandoverFor, tone: NEUTRAL.muted },
       ],
@@ -379,7 +379,12 @@ export default function NurseWard() {
       {handoverFor && <HandoverDialog open admission={handoverFor} onClose={() => setHandoverFor(null)} />}
       {labsFor && <IpdLabOrdersDialog open admission={labsFor} onClose={() => setLabsFor(null)} />}
       {radiologyFor && <IpdRadiologyOrdersDialog open admission={radiologyFor} onClose={() => setRadiologyFor(null)} />}
-      {surgeryFor && <SurgeryDialog open admission={surgeryFor} onClose={() => setSurgeryFor(null)} />}
+      {surgeryFor && (
+        <BookCaseDialog
+          date={new Date().toLocaleDateString("en-CA")} theatreId={null}
+          admission={{ admissionId: surgeryFor.admissionId, patientName: surgeryFor.patientName, uhid: surgeryFor.uhid, admissionNumber: surgeryFor.admissionNumber }}
+          onClose={() => setSurgeryFor(null)} onDone={() => setSurgeryFor(null)} />
+      )}
       {assignMedsFor && <IpdMedicinesDialog open admission={assignMedsFor} onClose={() => setAssignMedsFor(null)} />}
       {chargesFor && <AdmissionChargesDialog open admission={chargesFor} onClose={() => setChargesFor(null)} />}
     </Box>

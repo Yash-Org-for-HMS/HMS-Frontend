@@ -40,6 +40,8 @@ import { heldRoles } from "@/constants/roles";
 
 type OtCase = {
   surgeryId: string;
+  /** In progress, but the patient has left theatre: waiting to be finished. */
+  outOfTheatre?: boolean;
   patientId: string | null;
   patientName: string;
   uhid: string;
@@ -193,7 +195,7 @@ function CaseRow({ c, showTheatre = false, readOnly, onOpen, onMenu }: {
             {caseWindow(c)}
           </Typography>
           <Chip
-            size="small" label={STATUS_LABEL[c.status] ?? c.status}
+            size="small" label={c.status === "IN_PROGRESS" && c.outOfTheatre ? "Out - to finish" : STATUS_LABEL[c.status] ?? c.status}
             sx={{ height: 18, fontSize: "0.625rem", fontWeight: 700, bgcolor: `${STATUS_COLOR[c.status]}1a`, color: STATUS_COLOR[c.status] }}
           />
           {c.isEmergency && (
@@ -341,7 +343,7 @@ export default function OtSchedule({ readOnly: readOnlyProp = false }: { readOnl
             <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
               <WarningAmberRounded sx={{ color: SEMANTIC.danger, fontSize: 20 }} />
               <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-                Not finished from earlier days ({overdue.length})
+                Not finished - earlier days or no date ({overdue.length})
               </Typography>
             </Box>
             <Typography variant="body2" sx={{ color: "text.secondary", mb: 1.5 }}>
@@ -484,17 +486,29 @@ export default function OtSchedule({ readOnly: readOnlyProp = false }: { readOnl
  * the patient, no admission) - day-care surgery is a real thing that the old
  * admission-only model could not represent at all.
  */
-function BookCaseDialog({ date, theatreId, onClose, onDone }: {
+function defaultSlot(date: string): { startTime: string; endTime: string } {
+  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  if (date !== today || now.getHours() < 8) return { startTime: "09:00", endTime: "10:00" };
+  const h = Math.min(now.getHours() + 1, 22);
+  return { startTime: `${String(h).padStart(2, "0")}:00`, endTime: `${String(h + 1).padStart(2, "0")}:00` };
+}
+
+export function BookCaseDialog({ date, theatreId, admission, onClose, onDone }: {
   date: string; theatreId: string | null; onClose: () => void; onDone: () => void;
+  /** Opened from a patient (the ward's Surgery button): that stay, already picked. */
+  admission?: { admissionId: string; patientName: string; uhid?: string; admissionNumber?: string | null } | null;
 }) {
   const toast = useToast();
   const [dayCase, setDayCase] = useState(false);
-  const [admissionId, setAdmissionId] = useState("");
+  const [admissionId, setAdmissionId] = useState(admission?.admissionId ?? "");
   const [patientId, setPatientId] = useState("");
   const [patientQuery, setPatientQuery] = useState("");
   const [form, setForm] = useState({
     procedureName: "", surgeryType: "MAJOR", surgeonId: "", anaesthesiaType: "",
-    operatingTheatreId: theatreId ?? "", startTime: "09:00", endTime: "10:00",
+    // Today the first slot still ahead (the next whole hour); 09:00 was already
+    // past by the afternoon and was refused as "in the past".
+    operatingTheatreId: theatreId ?? "", ...defaultSlot(date),
     isEmergency: false, price: "", notes: "",
     assistant: null as TeamPick, anaesthetist: null as TeamPick,
   });
@@ -514,7 +528,7 @@ function BookCaseDialog({ date, theatreId, onClose, onDone }: {
   // Admitted patients are searched on the server (name, UHID, admission no.) as
   // the user types - a fixed first-200 list silently dropped everyone past it.
   const [admissionQuery, setAdmissionQuery] = useState("");
-  const [admissionPick, setAdmissionPick] = useState<Record<string, unknown> | null>(null);
+  const [admissionPick, setAdmissionPick] = useState<Record<string, unknown> | null>(admission ? { ...admission } : null);
   const debouncedAdmissionQuery = useDebouncedValue(admissionQuery);
   const { data: admissions, isFetching: searchingAdmissions } = useQuery({
     queryKey: ["ot-admissions-pick", debouncedAdmissionQuery.trim()],

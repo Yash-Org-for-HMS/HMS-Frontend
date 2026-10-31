@@ -301,6 +301,14 @@ export default function OtCaseRecord() {
         }
       />
 
+      {/* The checklist asks "known allergy reviewed" - so the allergies are on the
+          screen, on every tab, not one click away in the patient's history. */}
+      {(surgery?.allergies?.length ?? 0) > 0 && (
+        <Alert severity="error" icon={<WarningAmberRounded />} sx={{ mb: 2.5, fontWeight: 600 }}>
+          Allergies: {surgery!.allergies!.map((a: { allergen: string; severity?: string | null; reaction?: string | null }) => [a.allergen, a.severity ? `(${a.severity})` : null, a.reaction ? `- ${a.reaction}` : null].filter(Boolean).join(" ")).join("; ")}
+        </Alert>
+      )}
+
       {/* A count that does not match is the one thing this screen shouts about,
           on every tab, until it is resolved. */}
       {counts.correct === false && (
