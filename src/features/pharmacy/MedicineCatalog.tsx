@@ -336,7 +336,7 @@ export default function MedicineCatalog() {
                         ₹{parseFloat(med.sellingPrice).toFixed(2)}
                         {Number(med.gstPercent) > 0 && (
                           <Typography component="span" sx={{ ml: 0.5, fontSize: 11, color: 'text.secondary', fontWeight: 500 }}>
-                            +{Number(med.gstPercent)}% GST
+                            incl. {Number(med.gstPercent)}% GST
                           </Typography>
                         )}
                         {/* GST 0 is not flagged - plenty of drugs are genuinely
@@ -475,7 +475,7 @@ export default function MedicineCatalog() {
                 variant="outlined"
                 inputProps={{ min: 0, max: 100 }}
                 error={!!fieldErrors.gstPercent}
-                helperText={fieldErrors.gstPercent || "0 = zero-rated. Applied per medicine on the bill."}
+                helperText={fieldErrors.gstPercent || "0 = zero-rated. Included in the selling price (as in MRP) - the bill shows it, never adds it on top."}
               />
               <TextField
                 label="Cost / unit (optional)"

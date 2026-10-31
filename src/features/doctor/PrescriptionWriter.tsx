@@ -85,7 +85,7 @@ function dosesPerDay(freq: string): number {
   }
   if (FREQ_INFO[f]) return FREQ_INFO[f].perDay;
   const q = f.match(/^Q\s*(\d+)\s*H$/);
-  if (q) { const h = Number(q[1]); return h > 0 ? Math.round(24 / h) : 0; }
+  if (q) { const h = Number(q[1]); return h > 0 ? 24 / h : 0; }
   return 0;
 }
 
@@ -94,7 +94,7 @@ function describeFreq(freq: string): string {
   const f = freq.trim().toUpperCase();
   if (FREQ_INFO[f]) return FREQ_INFO[f].desc;
   const per = dosesPerDay(freq);
-  return per > 0 ? `${per}/day` : "";
+  return per > 0 ? `${Math.round(per * 100) / 100}/day` : "";
 }
 
 export default function PrescriptionWriter({ consultationId, patientId, patientAllergies = [], patientInfo, patientWeightKg, diagnosis, onRequireSave }: PrescriptionWriterProps) {
@@ -173,7 +173,8 @@ export default function PrescriptionWriter({ consultationId, patientId, patientA
       // Understands numeric dosing (1-0-1) AND shorthand (OD/BD/TDS/Q8H/…).
       const perDay = dosesPerDay(frequency);
       if (perDay > 0) {
-        setQuantity(perDay * durationDays);
+        // Whole units: half doses (0.5-0-0) or every 36 hours round the total up.
+        setQuantity(Math.ceil(perDay * durationDays - 1e-9));
       }
     }
   }, [frequency, durationDays, manualQuantity]);

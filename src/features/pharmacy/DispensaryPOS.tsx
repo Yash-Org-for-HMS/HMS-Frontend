@@ -315,11 +315,14 @@ export default function DispensaryPOS() {
     setCart(cart.filter(item => item.medicineId !== id));
   };
 
-  const cartTotal = cart.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
-  // Per-medicine GST: each line taxes at its own medicine's rate (0 = untaxed), so
-  // the cart preview matches what the payment dialog / invoice actually collect.
-  const cartTax = cart.reduce((sum, item) => sum + (item.quantity * item.unitPrice) * (Number(item.gstPercent || 0) / 100), 0);
-  const cartGrandTotal = cartTotal + cartTax;
+  // A medicine's price includes its GST (MRP is GST-inclusive): the patient pays
+  // the prices, and the GST shown is what is inside them, at each medicine's rate.
+  const cartGrandTotal = cart.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
+  const cartTax = cart.reduce((sum, item) => {
+    const rate = Number(item.gstPercent || 0);
+    return sum + Math.round((item.quantity * item.unitPrice) * rate / (100 + rate) * 100) / 100;
+  }, 0);
+  const cartTotal = cartGrandTotal - cartTax;
 
   const handleCheckout = async () => {
     if (cart.length === 0) return;
@@ -332,7 +335,7 @@ export default function DispensaryPOS() {
       const payload = {
         patientId: patientId || null,
         prescriptionId: selectedPrescriptionId,
-        totalAmount: cartTotal,
+        totalAmount: cartGrandTotal,
         items: cart.map(item => ({
           medicineId: item.medicineId,
           quantity: item.quantity,
@@ -603,7 +606,7 @@ export default function DispensaryPOS() {
               <Box sx={{ flexShrink: 0, p: 2, bgcolor: alpha(theme.palette.primary.main, 0.02), borderRadius: 2, border: '1px solid', borderColor: 'divider', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 4, flexDirection: { xs: 'column', md: 'row' } }}>
                 <Box>
                   <Typography color="text.secondary" variant="body2" sx={{ mb: 0.5 }}>
-                    Subtotal: ₹{cartTotal.toFixed(2)} | GST: ₹{cartTax.toFixed(2)}
+                    Taxable: ₹{cartTotal.toFixed(2)} | GST included: ₹{cartTax.toFixed(2)}
                   </Typography>
                   <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
                     <Typography variant="h5" fontWeight={800}>Total:</Typography>
@@ -760,7 +763,8 @@ export default function DispensaryPOS() {
             id: createdOrder.pharmacyOrderId,
             type: "PHARMACY",
             description: `Pharmacy Sale: ${cart.map((c: CartLine) => c.medicineName).join(', ')}`,
-            amount: Number(createdOrder.totalAmount),
+            // The taxable value: the payment dialog adds the GST inside the prices back on.
+            amount: Number(createdOrder.totalAmount) - cartTax,
             taxAmount: cartTax,
             date: createdOrder.createdAt || new Date()
           }}
