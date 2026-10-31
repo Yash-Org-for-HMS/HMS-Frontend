@@ -162,7 +162,8 @@ export default function IpdLabOrdersDialog({ open, onClose, admission, orderOnly
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1, p: 1.5 }}>
                     <Box sx={{ flex: 1, minWidth: 0 }}>
                       <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                        {o.reports?.length || 0} parameter{(o.reports?.length || 0) === 1 ? "" : "s"} · <span style={{ fontFamily: "monospace" }}>{o.sampleBarcode}</span>
+                        {/* What was ordered by name ("CBC, Dengue NS1 Antigen"), not a count of rows. */}
+                        {o.title || `${o.reports?.length || 0} parameter${(o.reports?.length || 0) === 1 ? "" : "s"}`} · <span style={{ fontFamily: "monospace" }}>{o.sampleBarcode}</span>
                       </Typography>
                       <Typography variant="caption" sx={{ color: "text.secondary" }}>
                         {o.createdAt ? dayjs(o.createdAt).format("DD MMM YYYY, h:mm A") : "-"}

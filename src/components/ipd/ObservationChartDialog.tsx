@@ -6,6 +6,7 @@ import {
   IconButton, Tooltip, MenuItem, Alert, Chip,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
+import { bpTone, pulseTone, tempTone, spo2Tone, respTone, sugarTone, type Tone } from "@/utils/vitalsTone";
 import { MonitorHeartRounded, AddRounded, EditRounded, ChevronLeftRounded, ChevronRightRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import { SEMANTIC, BRAND, NEUTRAL } from "@/styles/accents";
@@ -102,6 +103,8 @@ const outOfRange = (f: FieldDef, raw: number | string | undefined) => {
   if (!Number.isFinite(n)) return false;
   return (f.normalLow !== null && n < f.normalLow) || (f.normalHigh !== null && n > f.normalHigh);
 };
+
+const toneSx = (t: Tone) => (t ? { color: t === "red" ? SEMANTIC.danger : SEMANTIC.warningDark, fontWeight: 800 } : {});
 
 export default function ObservationChartDialog({ open, admission, onClose, readOnly = false }: Props) {
   const toast = useToast();
@@ -316,12 +319,14 @@ export default function ObservationChartDialog({ open, admission, onClose, readO
                           bgcolor: o.correctsId ? alpha(SEMANTIC.warning, 0.06) : "background.paper",
                         }}>
                         <TableCell sx={{ whiteSpace: "nowrap", fontWeight: 600, ...STICKY_TIME_CELL }}>{dayjs(o.observedAt).format("HH:mm")}</TableCell>
-                        <TableCell>{o.temperature === null ? "" : `${o.temperature}°${o.temperatureUnit ?? ""}`}</TableCell>
-                        <TableCell>{cell(o.pulseRate)}</TableCell>
-                        <TableCell>{cell(o.respiratoryRate)}</TableCell>
-                        <TableCell sx={{ whiteSpace: "nowrap" }}>{o.bpSystolic === null ? "" : `${o.bpSystolic}/${o.bpDiastolic}`}</TableCell>
-                        <TableCell>{cell(o.spo2, "%")}</TableCell>
-                        <TableCell>{cell(o.bloodSugar)}</TableCell>
+                        {/* Abnormal readings coloured (adult ranges), as on the doctor's screen - a
+                            fever or a racing pulse looked exactly like a normal reading. */}
+                        <TableCell sx={toneSx(tempTone(o.temperature, o.temperatureUnit))}>{o.temperature === null ? "" : `${o.temperature}°${o.temperatureUnit ?? ""}`}</TableCell>
+                        <TableCell sx={toneSx(pulseTone(o.pulseRate))}>{cell(o.pulseRate)}</TableCell>
+                        <TableCell sx={toneSx(respTone(o.respiratoryRate))}>{cell(o.respiratoryRate)}</TableCell>
+                        <TableCell sx={{ whiteSpace: "nowrap", ...toneSx(bpTone(o.bpSystolic, o.bpDiastolic)) }}>{o.bpSystolic === null ? "" : `${o.bpSystolic}/${o.bpDiastolic}`}</TableCell>
+                        <TableCell sx={toneSx(spo2Tone(o.spo2))}>{cell(o.spo2, "%")}</TableCell>
+                        <TableCell sx={toneSx(sugarTone(o.bloodSugar))}>{cell(o.bloodSugar)}</TableCell>
                         <TableCell>{cell(o.painScore)}</TableCell>
                         {fields.map((f) => {
                           const v = o.extras?.[f.observationFieldId];

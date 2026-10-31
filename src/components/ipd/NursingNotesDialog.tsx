@@ -9,7 +9,7 @@ import {
 import { DescriptionRounded, AddRounded, PersonRounded, DeleteOutlineRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import { useToast } from "@/providers/ToastContext";
-import { useConfirm } from "@/providers/ConfirmContext";
+import { useAskReason } from "@/providers/ConfirmContext";
 import HeartbeatLoader from "../HeartbeatLoader";
 
 interface Props {
@@ -22,7 +22,7 @@ interface Props {
 // never edited or deleted (a nursing record is medico-legal).
 export default function NursingNotesDialog({ open, onClose, admission }: Props) {
   const toast = useToast();
-  const confirm = useConfirm();
+  const askReason = useAskReason();
   const [text, setText] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -48,16 +48,19 @@ export default function NursingNotesDialog({ open, onClose, admission }: Props) 
   };
 
   // Void one's own note (wrong entry / wrong patient). The record is retained.
+  // Struck through, never erased: the note stays on the chart and the reason is
+  // written underneath as a note of its own.
   const remove = async (n: any) => {
-    const ok = await confirm({
-      title: "Remove this note?",
-      message: "The note will be removed from view but kept for the record. You can only remove a note you added yourself.",
-      confirmText: "Remove", destructive: true,
+    const reason = await askReason({
+      title: "Strike out this note?",
+      message: "It stays on the chart, crossed out, with your reason added underneath. You can only strike out a note you added yourself.",
+      label: "Why is it wrong?",
+      confirmText: "Strike out",
     });
-    if (!ok) return;
+    if (!reason) return;
     try {
-      await axiosInstance.delete(`/ipd/admissions/${admission.admissionId}/nursing-notes/${n.nursingNoteId}`);
-      toast.success("Note removed");
+      await axiosInstance.delete(`/ipd/admissions/${admission.admissionId}/nursing-notes/${n.nursingNoteId}`, { data: { reason } });
+      toast.success("Note struck out");
       refetch();
     } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to remove note"));
@@ -72,7 +75,7 @@ export default function NursingNotesDialog({ open, onClose, admission }: Props) 
       </DialogTitle>
       <DialogContent dividers>
         <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
-          {admission?.patientName} - nursing observations & handover for this stay. Notes are permanent (append-only): they can't be edited or deleted.
+          {admission?.patientName} - nursing observations & handover for this stay. Notes are permanent: a wrong one can only be struck out, with a reason.
         </Typography>
 
         <Stack spacing={1.5} sx={{ mb: 2 }}>
@@ -102,13 +105,14 @@ export default function NursingNotesDialog({ open, onClose, admission }: Props) 
                   <Typography variant="caption" sx={{ fontWeight: 700 }}>{n.author}</Typography>
                   <Typography variant="caption" sx={{ color: "text.secondary" }}>· {dayjs(n.createdAt).format("DD MMM YYYY · HH:mm")}</Typography>
                   <Box sx={{ flex: 1 }} />
-                  {n.mine && (
-                    <Tooltip title="Remove this note">
+                  {n.removed && <Typography variant="caption" sx={{ color: "error.main", fontWeight: 700 }}>struck out</Typography>}
+                  {n.mine && !n.removed && (
+                    <Tooltip title="Strike out this note">
                       <IconButton size="small" onClick={() => remove(n)} sx={{ color: "error.main", p: 0.25 }}><DeleteOutlineRounded sx={{ fontSize: 16 }} /></IconButton>
                     </Tooltip>
                   )}
                 </Box>
-                <Typography variant="body2" sx={{ whiteSpace: "pre-wrap" }}>{n.noteText}</Typography>
+                <Typography variant="body2" sx={{ whiteSpace: "pre-wrap", ...(n.removed ? { textDecoration: "line-through", color: "text.disabled" } : {}) }}>{n.noteText}</Typography>
               </Box>
             ))}
           </Stack>

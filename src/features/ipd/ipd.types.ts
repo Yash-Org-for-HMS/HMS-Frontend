@@ -277,6 +277,8 @@ export interface NursingNoteRow {
   createdAt: string;
   /** True when the signed-in nurse wrote it - gates the edit affordance. */
   mine?: boolean;
+  /** Struck out by its author - still shown, crossed through. */
+  removed?: boolean;
 }
 
 export interface HandoverNote {

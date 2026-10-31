@@ -105,7 +105,10 @@ export default function DutyRoster() {
     setDuty(staffId, day, shift, on);
     setBusy((prev) => new Set(prev).add(id));
     try {
-      await axiosInstance.put("/roster/duty", { wardId, staffId, dutyDate: day, shiftName: shift, on });
+      const res = await axiosInstance.put("/roster/duty", { wardId, staffId, dutyDate: day, shiftName: shift, on });
+      // Allowed, but the planner is told: a double shift without a proper break.
+      const warning = res?.data?.data?.warning;
+      if (warning) toast.warning(warning);
     } catch (err) {
       setDuty(staffId, day, shift, !on);
       toast.error(getApiErrorMessage(err, "Couldn't change the roster"));

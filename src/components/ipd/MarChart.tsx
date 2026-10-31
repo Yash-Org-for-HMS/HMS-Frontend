@@ -10,6 +10,7 @@ import {
 import { CheckRounded, CloseRounded, PauseRounded, UndoRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import { useToast } from "@/providers/ToastContext";
+import { useAskReason } from "@/providers/ConfirmContext";
 import HeartbeatLoader from "../HeartbeatLoader";
 import Mascot from "../Mascot";
 
@@ -41,13 +42,27 @@ export default function MarChart({ admissionId, readOnly = false }: { admissionI
   const [correcting, setCorrecting] = useState<any>(null);
   const [correctionReason, setCorrectionReason] = useState("");
 
+  const askReason = useAskReason();
   const setStatus = async (adminId: string, status: string, infusedVolumeMl?: string, reason?: string) => {
+    // Missed or held says why (refused, nil by mouth, not available...) - the
+    // doctor reading the chart needs it, and the server asks for it.
+    let notes: string | null = null;
+    if (status === "MISSED" || status === "HELD") {
+      notes = await askReason({
+        title: status === "MISSED" ? "Dose missed" : "Dose held",
+        message: status === "MISSED" ? "Why was this dose not given?" : "Why is this dose being held?",
+        label: "Reason",
+        confirmText: status === "MISSED" ? "Mark missed" : "Mark held",
+      });
+      if (!notes) return;
+    }
     setBusy(adminId);
     try {
       await axiosInstance.post(`/ipd/mar/${adminId}`, {
         status,
         ...(infusedVolumeMl ? { infusedVolumeMl } : {}),
         ...(reason ? { correctionReason: reason } : {}),
+        ...(notes ? { notes } : {}),
       });
       await refetch();
     } catch (err: unknown) {
@@ -77,8 +92,10 @@ export default function MarChart({ admissionId, readOnly = false }: { admissionI
           </Box>
           <Box sx={{ p: 1 }}>
             {o.doses.map((d: any, i: number) => {
-              const m = DOSE_META[d.status] || DOSE_META.PENDING;
               const isPending = d.status === "PENDING";
+              // Charted when it happens: a dose more than an hour away cannot be marked yet.
+              const notYet = dayjs(d.scheduledAt).diff(dayjs(), "minute") > 60;
+              const m = isPending && notYet ? { label: "Upcoming", color: NEUTRAL.textSecondary, bg: "rgba(100,116,139,0.1)" } : DOSE_META[d.status] || DOSE_META.PENDING;
               return (
                 <Box key={d.ipMedAdminId}>
                   {i > 0 && <Divider component="div" />}
@@ -86,10 +103,13 @@ export default function MarChart({ admissionId, readOnly = false }: { admissionI
                     <Box sx={{ minWidth: 140 }}>
                       <Typography variant="body2" sx={{ fontWeight: 600 }}>{dayjs(d.scheduledAt).format("DD MMM, HH:mm")}</Typography>
                       {d.administeredAt && <Typography variant="caption" sx={{ color: "text.secondary" }}>at {dayjs(d.administeredAt).format("HH:mm")}</Typography>}
+                      {(d.status === "MISSED" || d.status === "HELD") && d.notes && <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>{d.notes}</Typography>}
                     </Box>
                     <Chip size="small" label={m.label} sx={{ bgcolor: m.bg, color: m.color, fontWeight: 700 }} />
                     {!readOnly && <Box sx={{ display: "flex", gap: 0.5 }}>
-                      {isPending ? (
+                      {isPending && notYet ? (
+                        <Typography variant="caption" sx={{ color: "text.disabled", px: 1 }}>not due yet</Typography>
+                      ) : isPending ? (
                         <>
                           <Tooltip title="Given"><Button size="small" variant="outlined" disabled={busy === d.ipMedAdminId} onClick={() => (o.carriesFluid ? (setVolume(""), setAskVolumeFor({ dose: d, med: o })) : setStatus(d.ipMedAdminId, "GIVEN"))} startIcon={<CheckRounded />} sx={{ minWidth: 0, borderColor: "rgba(16,185,129,0.5)", color: "#047857" }}>Give</Button></Tooltip>
                           <Tooltip title="Missed"><Button size="small" variant="outlined" disabled={busy === d.ipMedAdminId} onClick={() => setStatus(d.ipMedAdminId, "MISSED")} sx={{ minWidth: 0, borderColor: "rgba(239,68,68,0.4)", color: "#b91c1c" }}><CloseRounded fontSize="small" /></Button></Tooltip>

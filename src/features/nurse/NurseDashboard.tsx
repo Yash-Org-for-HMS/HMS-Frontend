@@ -60,7 +60,9 @@ export default function NurseDashboard() {
     );
   }
 
-  const totalPatients = tokens.length;
+  // Cancelled visits are not patients seen today - the doctor's dashboard leaves
+  // them out too, and counting them made "1 of 3 recorded" read as 33% done.
+  const totalPatients = tokens.filter((t) => t?.statusCode !== "CANCELLED").length;
   const inProgress = tokens.filter(isInConsultation).length;
 
   // The worklist and the tile above it are now the SAME list. They used to be
@@ -94,7 +96,7 @@ export default function NurseDashboard() {
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            label="Total Patients Today" info="Every OPD queue token created today at this branch, for all doctors, in any state (including finished and cancelled)."
+            label="Total Patients Today" info="Every OPD queue token created today at this branch, for all doctors - waiting, with the doctor or finished. Cancelled visits are not counted."
             value={totalPatients}
             icon={<PeopleAltRounded sx={{ color: NURSE_PURPLE }} />}
             loading={loading}

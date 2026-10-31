@@ -531,7 +531,7 @@ export default function TreatmentChart() {
                     <Typography variant="body2" sx={{ fontWeight: 700 }}>{dayjs(n.createdAt).format("HH:mm")}</Typography>
                     <Typography variant="body2" sx={{ fontWeight: 600 }}>{n.author}</Typography>
                   </Box>
-                  <Typography variant="body2" sx={{ mt: 0.4, whiteSpace: "pre-wrap" }}>{n.noteText}</Typography>
+                  <Typography variant="body2" sx={{ mt: 0.4, whiteSpace: "pre-wrap", ...(n.removed ? { textDecoration: "line-through", color: "text.disabled" } : {}) }}>{n.noteText}</Typography>
                 </Box>
               ))}
             </Box>
