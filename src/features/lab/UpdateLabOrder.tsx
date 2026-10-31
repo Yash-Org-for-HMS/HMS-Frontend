@@ -1,3 +1,5 @@
+import { orderStatusLabel } from "@/utils/statusColors";
+import { evaluateCriticalValue, rangeFlag, isInternalTestCode, needsNumber, isNumberResult } from "@/utils/labFlags";
 import { useState, useEffect } from "react";
 import { usePrintWindow } from "@/utils/usePrintWindow";
 import type { LabOrderDetail, LabReportRow } from "./labOrders.types";
@@ -32,38 +34,8 @@ type ResultDraft = Record<string, { value: string; range: string; remarks: strin
 const LAB = BRAND.action;
 const LAB_DARK = BRAND.actionDark;
 
-// Mirrors the backend's evaluateCriticalValue (lab.service.ts) so this live
-// preview matches what actually gets saved. Handles plain numbers, limit
-// notation ("<0.5", ">1000") and qualitative text - a positive culture or a
-// reactive screen could previously never be flagged, because anything
-// non-numeric fell straight through as "not critical".
-const CRITICAL_QUALITATIVE = ["reactive", "positive", "detected", "growth", "incompatible", "isolated"];
-const QUALITATIVE_NEGATIONS = ["non-reactive", "nonreactive", "non reactive", "not detected", "no growth", "negative", "not isolated", "no organism"];
-
-const evaluateCriticalValue = (testCode: string, resultValue: string): boolean => {
-  const raw = (resultValue ?? "").trim();
-  if (!raw || raw.toUpperCase() === "PENDING") return false;
-
-  const lower = raw.toLowerCase();
-  if (QUALITATIVE_NEGATIONS.some((n) => lower.includes(n))) return false;
-  if (CRITICAL_QUALITATIVE.some((k) => lower.includes(k))) return true;
-
-  const limit = raw.match(/^([<>])\s*(-?\d+(?:\.\d+)?)/);
-  const val = limit ? parseFloat(limit[2]) : parseFloat(raw);
-  if (isNaN(val)) return false;
-  const below = limit?.[1] === "<";
-  const above = limit?.[1] === ">";
-  const range = (low: number, high: number) =>
-    above ? val >= high : below ? val <= low : val < low || val > high;
-
-  const code = testCode?.toUpperCase() || "";
-  if (code === 'HEMO' || code === 'HB' || code === 'CBC-HB') return range(7.0, 20.0);
-  if (code === 'PLT' || code === 'PLATELETS') return range(20000, 1000000);
-  if (code === 'GLU' || code === 'FBS' || code === 'RBS') return range(50, 400);
-  if (code === 'K' || code === 'POTASSIUM') return range(2.5, 6.5);
-  if (code === 'WBC') return range(2000, 30000);
-  return false;
-};
+// The critical rules and the low/high reading are shared with the doctor's
+// results and the printed report (utils/labFlags), mirroring the server.
 
 // A small label/value stack for the summary facts row.
 function Fact({ icon, label, children }: { icon: React.ReactNode; label: string; children: React.ReactNode }) {
@@ -121,7 +93,7 @@ export default function UpdateLabOrder() {
         // undefined = no explicit call yet, so the rules decide. Seeded only when
         // the saved flag DISAGREES with the rules, so reopening a report keeps a
         // human override instead of silently reverting to the automatic verdict.
-        critical: r.isCritical !== evaluateCriticalValue(r.labTest?.testCode || "", r.resultValue || "") ? r.isCritical ?? undefined : undefined,
+        critical: r.isCritical !== evaluateCriticalValue(r.labTest?.testCode || "", r.resultValue || "", r.labTest?.testName) ? r.isCritical ?? undefined : undefined,
       };
     });
     setResults(initialResults);
@@ -194,7 +166,7 @@ export default function UpdateLabOrder() {
   const canEdit = !locked && !gatedByCollection;
 
   const enteredCount = reports.filter((r) => (results[r.labReportId]?.value || "").trim()).length;
-  const criticalCount = reports.filter((r) => evaluateCriticalValue(r.labTest?.testCode || "", results[r.labReportId]?.value || "")).length;
+  const criticalCount = reports.filter((r) => evaluateCriticalValue(r.labTest?.testCode || "", results[r.labReportId]?.value || "", r.labTest?.testName)).length;
   const total = reports.length;
   const pct = total ? Math.round((enteredCount / total) * 100) : 0;
 
@@ -264,7 +236,7 @@ export default function UpdateLabOrder() {
                   variant={paid ? "filled" : "outlined"} sx={{ fontWeight: 700 }} />
               )}
               <Chip size="small" icon={collected ? <CheckCircleRounded /> : undefined}
-                label={order.status || "PENDING"}
+                label={orderStatusLabel(order.status)}
                 color={order.status === "COMPLETED" || order.status === "VERIFIED" ? "success" : "warning"}
                 sx={{ fontWeight: 700 }} />
             </Box>
@@ -333,7 +305,10 @@ export default function UpdateLabOrder() {
           {reports.map((report: LabReportRow) => {
             const rid = report.labReportId;
             const val = results[rid]?.value || "";
-            const autoCritical = evaluateCriticalValue(report.labTest?.testCode || "", val);
+            const autoCritical = evaluateCriticalValue(report.labTest?.testCode || "", val, report.labTest?.testName);
+            // Below or above the normal range - shown beside the result, as on any lab report.
+            const flag = rangeFlag(val, results[rid]?.range);
+            const notANumber = !!val.trim() && needsNumber(results[rid]?.range) && !isNumberResult(val);
             // An explicit call by the technician wins in both directions; the
             // automatic rules only cover five analytes, so anything else that is
             // clinically critical can ONLY be raised by a human.
@@ -359,7 +334,7 @@ export default function UpdateLabOrder() {
                     <Typography sx={{ ...typeScale.bodyStrong, color: isCriticalNow ? SEMANTIC.danger : "text.primary" }}>
                       {report.labTest?.testName || "Test"}
                     </Typography>
-                    {report.labTest?.testCode && (
+                    {report.labTest?.testCode && !isInternalTestCode(report.labTest.testCode) && (
                       <Chip label={report.labTest.testCode} size="small" variant="outlined"
                         sx={{ height: 20, fontFamily: "monospace", "& .MuiChip-label": { px: 0.75, ...typeScale.chip } }} />
                     )}
@@ -390,8 +365,10 @@ export default function UpdateLabOrder() {
                       value={results[rid]?.value || ""}
                       onChange={(e) => set(rid, "value", e.target.value)}
                       disabled={!canEdit}
-                      error={isCriticalNow}
-                      InputProps={{ sx: { fontWeight: 700, ...(isCriticalNow && { color: SEMANTIC.danger }) } }}
+                      error={isCriticalNow || notANumber}
+                      helperText={notANumber ? "Enter a number - the normal range is numeric" : flag ? (flag === "L" ? "Low - below the normal range" : "High - above the normal range") : undefined}
+                      FormHelperTextProps={{ sx: { mx: 0, fontWeight: 700, color: notANumber ? undefined : SEMANTIC.warningDark } }}
+                      InputProps={{ sx: { fontWeight: 700, ...(isCriticalNow ? { color: SEMANTIC.danger } : flag ? { color: SEMANTIC.warningDark } : {}) } }}
                     />
                   </Grid>
                   <Grid size={{ xs: 12, sm: 4 }}>
@@ -452,6 +429,7 @@ export default function UpdateLabOrder() {
             refetch();
           }}
           patientId={order.patientId ?? ""}
+          uhid={order.patient?.uhidNumber}
           patientName={`${order.patient?.firstName || ''} ${order.patient?.lastName || ''}`}
           item={{
             id: order.labOrderId,

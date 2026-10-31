@@ -6,7 +6,7 @@ import { BRAND } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import ErrorState from "@/components/ErrorState";
 import { useConfirm } from "@/providers/ConfirmContext";
-import { orderStatusColor } from "@/utils/statusColors";
+import { orderStatusColor, orderStatusLabel } from "@/utils/statusColors";
 import { Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Alert, Tabs, Tab, Pagination } from "@mui/material";
 import { VisibilityRounded, BloodtypeRounded, AddRounded, CancelRounded, VerifiedRounded } from "@mui/icons-material";
 import { useToast } from "@/providers/ToastContext";
@@ -261,7 +261,7 @@ export default function LabOrdersQueue() {
                   <TableCell>{formatDate(order.createdAt)}</TableCell>
                   <TableCell>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, flexWrap: "wrap" }}>
-                      <Chip label={order.status || "PENDING"} color={orderStatusColor(order.status ?? "PENDING")} size="small" />
+                      <Chip label={orderStatusLabel(order.status)} color={orderStatusColor(order.status ?? "PENDING")} size="small" />
                       {verifies && order.status === "COMPLETED" && (
                         order.verified ? (
                           <Chip icon={<VerifiedRounded sx={{ fontSize: "14px !important" }} />} label="Verified" size="small" color="success" variant="outlined" sx={{ height: 22, fontWeight: 700 }} />
@@ -381,6 +381,7 @@ export default function LabOrdersQueue() {
             setCollectOrder({...collectOrder, paymentStatus: 'PAID', billingLockActive: false});
           }}
           patientId={collectOrder.patientId ?? ""}
+          uhid={collectOrder.patient?.uhidNumber}
           patientName={`${collectOrder.patient?.firstName || ''} ${collectOrder.patient?.lastName || ''}`}
           item={{
             id: collectOrder.labOrderId,

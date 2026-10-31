@@ -17,6 +17,13 @@ export function orderStatusColor(status: string): MuiColor {
   }
 }
 
+/** A lab / radiology order status in words ("Sample collected", not SAMPLE_COLLECTED). */
+export function orderStatusLabel(status: string | null | undefined): string {
+  const s = (status || "PENDING").toUpperCase();
+  const words: Record<string, string> = { PENDING: "Pending", SAMPLE_COLLECTED: "Sample collected", IN_PROGRESS: "In progress", COMPLETED: "Completed", CANCELLED: "Cancelled" };
+  return words[s] ?? s.charAt(0) + s.slice(1).toLowerCase().replace(/_/g, " ");
+}
+
 /** MUI Chip colour for an invoice / order payment status (PaymentState). */
 export function paymentStatusColor(status: string): MuiColor {
   switch (status) {

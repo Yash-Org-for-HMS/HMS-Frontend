@@ -228,7 +228,7 @@ export default function RadiologyOrderForm({ consultationId, patientId, onRequir
                   </Typography>
                 </Box>
                 <Typography variant="body2" sx={{ color: "text.secondary", mb: 1 }}>
-                  {order.radiologistNotes || "No clinical notes provided."}
+                  {order.clinicalNotes || "No clinical notes provided."}
                 </Typography>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                   <Typography variant="caption" sx={{ fontWeight: 600 }}>Status:</Typography>

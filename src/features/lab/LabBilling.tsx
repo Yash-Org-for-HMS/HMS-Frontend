@@ -279,6 +279,7 @@ export default function LabBilling() {
             queryClient.invalidateQueries({ queryKey: ["lab-billing"] });
           }}
           patientId={payOrder.patientId}
+          uhid={payOrder.uhid}
           patientName={payOrder.patientName}
           item={{
             id: payOrder.id,

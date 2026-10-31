@@ -1,3 +1,4 @@
+import { rangeFlag } from "@/utils/labFlags";
 import { useState, useEffect } from "react";
 import { useAutoPrint } from "@/utils/useAutoPrint";
 import type { LabOrderDetail, LabReportRow } from "./labOrders.types";
@@ -184,7 +185,8 @@ export default function PrintLabReport() {
               return (
                 <TableRow key={report.labReportId}>
                   <TableCell sx={{ fontWeight: 600 }}>{report.labTest?.testName}</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>{report.resultValue}</TableCell>
+                  {/* L / H beside a result outside its normal range, as on any printed lab report. */}
+                  <TableCell sx={{ fontWeight: 700 }}>{report.resultValue}{rangeFlag(report.resultValue, report.normalRange) ? ` ${rangeFlag(report.resultValue, report.normalRange)}` : ""}</TableCell>
                   <TableCell>{report.normalRange}</TableCell>
                   <TableCell sx={{ fontStyle: report.remarks ? "italic" : "normal" }}>
                     {report.remarks || "-"}

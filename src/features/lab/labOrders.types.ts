@@ -140,6 +140,8 @@ export interface RadiologyOrderRow {
   orderDate: string;
   status?: string | null;
   radiologistNotes?: string | null;
+  /** The ordering doctor's request (clinical indication), kept apart from the report. */
+  clinicalNotes?: string | null;
   reportUrl?: string | null;
   chargeItemId?: string | null;
   consultationId?: string | null;

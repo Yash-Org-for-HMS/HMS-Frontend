@@ -22,6 +22,8 @@ interface PointOfCarePOSProps {
   onPaid?: () => void;
   patientId: string;
   patientName: string;
+  /** Shown to identify the patient - never the internal patient id. */
+  uhid?: string | null;
   item: {
     id: string; // the specific service ID (labOrderId, radiologyOrderId)
     type: "LAB" | "RADIOLOGY" | "PHARMACY" | "CONSULTATION";
@@ -37,7 +39,7 @@ interface PointOfCarePOSProps {
 
 export type TypedPrice = { chargeItemId: string; itemName: string; price: number | null };
 
-export default function PointOfCarePOS({ open, onClose, onSuccess, onPaid, patientId, patientName, item }: PointOfCarePOSProps) {
+export default function PointOfCarePOS({ open, onClose, onSuccess, onPaid, patientId, patientName, uhid, item }: PointOfCarePOSProps) {
   const theme = useTheme();
   
   const [discount, setDiscount] = useState<number | "">("");
@@ -65,7 +67,8 @@ export default function PointOfCarePOS({ open, onClose, onSuccess, onPaid, patie
   const taxableAmount = grossAmount - discountAmount;
   const grossTax = item?.taxAmount != null ? Number(item.taxAmount) : grossAmount * (Number(item?.taxPercent || 0) / 100);
   const taxAmount = grossAmount > 0 && !discountTooHigh ? grossTax * (taxableAmount / grossAmount) : grossTax;
-  const netAmount = taxableAmount + taxAmount;
+  // Never shown below zero: a discount over the bill is refused, not netted off.
+  const netAmount = Math.max(0, taxableAmount + taxAmount);
 
   const handleProcessPayment = async () => {
     try {
@@ -137,7 +140,7 @@ export default function PointOfCarePOS({ open, onClose, onSuccess, onPaid, patie
         <Box sx={{ mb: 3, p: 2, bgcolor: alpha(theme.palette.primary.main, 0.05), borderRadius: 2 }}>
           <Typography variant="subtitle2" color="primary.main">Patient Details</Typography>
           <Typography variant="body1" fontWeight="600">{patientName}</Typography>
-          <Typography variant="body2" color="text.secondary">Patient ID: {patientId}</Typography>
+          {uhid && <Typography variant="body2" color="text.secondary">UHID: {uhid}</Typography>}
         </Box>
 
         <Typography variant="subtitle1" fontWeight="600" sx={{ mb: 2 }}>Service Billed</Typography>

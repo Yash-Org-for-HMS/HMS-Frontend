@@ -1,3 +1,4 @@
+import { rangeFlag, isInternalTestCode } from "@/utils/labFlags";
 import { SEMANTIC, BRAND } from "@/styles/accents";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
@@ -336,7 +337,7 @@ function LabDetail({ reports }: { reports: any[] }) {
               <Box sx={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "flex-start", gap: 1 }}>
                 <Box sx={{ minWidth: 0, flex: "1 1 auto" }}>
                   <Typography variant="body2" sx={{ fontWeight: 700, color: "text.primary" }}>{rep.testName || "Test"}</Typography>
-                  {rep.testCode && <Typography variant="caption" sx={{ color: "text.secondary", fontFamily: "monospace" }}>{rep.testCode}</Typography>}
+                  {rep.testCode && !isInternalTestCode(rep.testCode) && <Typography variant="caption" sx={{ color: "text.secondary", fontFamily: "monospace" }}>{rep.testCode}</Typography>}
                 </Box>
                 {rep.pending ? (
                   <Chip label="Pending" size="small" sx={{ bgcolor: "rgba(245,158,11,0.15)", color: SEMANTIC.warningDark, fontWeight: 600, height: 22 }} />
@@ -350,6 +351,8 @@ function LabDetail({ reports }: { reports: any[] }) {
                   (() => {
                     const value = String(rep.resultValue ?? "");
                     const long = value.length > 28;
+                    // Below / above the normal range: a low haemoglobin looked like a normal one.
+                    const flag = rangeFlag(value, rep.normalRange);
                     return (
                       <Box sx={{
                         display: "flex", alignItems: "center", gap: 0.5, minWidth: 0,
@@ -361,11 +364,12 @@ function LabDetail({ reports }: { reports: any[] }) {
                           sx={{
                             fontWeight: 800, lineHeight: long ? 1.45 : 1.1, minWidth: 0,
                             overflowWrap: "anywhere",
-                            color: critical ? SEMANTIC.danger : "text.primary",
+                            color: critical ? SEMANTIC.danger : flag ? SEMANTIC.warningDark : "text.primary",
                           }}
                         >
                           {value}
                         </Typography>
+                        {flag && <Chip size="small" label={flag === "L" ? "Low" : "High"} sx={{ height: 20, fontWeight: 800, bgcolor: `${SEMANTIC.warning}22`, color: SEMANTIC.warningDark }} />}
                       </Box>
                     );
                   })()
@@ -400,10 +404,10 @@ function RadiologyDetail({ item }: { item: any }) {
   const hasReport = item.findings || item.impression || url;
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-      {item.radiologistNotes && (
+      {item.clinicalNotes && (
         <Box>
           <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 700 }}>Clinical notes (to radiologist)</Typography>
-          <Typography variant="body2">{item.radiologistNotes}</Typography>
+          <Typography variant="body2">{item.clinicalNotes}</Typography>
         </Box>
       )}
       {!hasReport ? (

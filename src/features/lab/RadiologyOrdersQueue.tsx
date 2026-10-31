@@ -6,7 +6,7 @@ import { formatDate } from "@/utils/format";
 import { BRAND } from "@/styles/accents";
 import { getApiErrorMessage } from "@/utils/apiError";
 import ErrorState from "@/components/ErrorState";
-import { orderStatusColor } from "@/utils/statusColors";
+import { orderStatusColor, orderStatusLabel } from "@/utils/statusColors";
 import { Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem, Link, Alert, Tabs, Tab, Pagination } from "@mui/material";
 import { CheckCircleRounded, EditRounded, CloudUploadRounded, AddRounded, VerifiedRounded } from "@mui/icons-material";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
@@ -359,7 +359,7 @@ export default function RadiologyOrdersQueue() {
                   <TableCell>{order.doctor?.user?.firstName} {order.doctor?.user?.lastName}</TableCell>
                   <TableCell>{formatDate(order.orderDate)}</TableCell>
                   <TableCell>
-                    <Chip label={order.status || "PENDING"} color={orderStatusColor(order.status ?? "PENDING")} size="small" />
+                    <Chip label={orderStatusLabel(order.status)} color={orderStatusColor(order.status ?? "PENDING")} size="small" />
                     {verifies && order.verified && (
                       <Chip icon={<VerifiedRounded sx={{ fontSize: "14px !important" }} />} label="Verified" size="small" color="success" variant="outlined" sx={{ ml: 0.5, height: 22 }} />
                     )}
@@ -470,6 +470,16 @@ export default function RadiologyOrdersQueue() {
               </Box>
             </Box>
 
+            {/* The doctor's request, read-only and kept apart from the report:
+                they shared one field, so the report wrote over the request and
+                the doctor read their own words back as the findings. */}
+            {editOrder?.clinicalNotes && (
+              <Box sx={{ mt: 2, p: 1.5, borderRadius: 2, bgcolor: "action.hover" }}>
+                <Typography variant="caption" sx={{ fontWeight: 700, color: "text.secondary" }}>Doctor's request</Typography>
+                <Typography variant="body2" sx={{ whiteSpace: "pre-wrap" }}>{editOrder.clinicalNotes}</Typography>
+              </Box>
+            )}
+
             <Box sx={{ mt: 2 }}>
               {/* Picking a template appends it, and the same control saves the
                   report you have written as a new one - the dropdown here could
@@ -482,7 +492,7 @@ export default function RadiologyOrdersQueue() {
                 />
               </Box>
               <TextField
-                label="Radiologist Notes"
+                label="Report findings"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               fullWidth
@@ -533,6 +543,7 @@ export default function RadiologyOrdersQueue() {
             setEditOrder({...editOrder, paymentStatus: 'PAID', billingLockActive: false});
           }}
           patientId={editOrder.patientId ?? ""}
+          uhid={editOrder.patient?.uhidNumber}
           patientName={`${editOrder.patient?.firstName || ''} ${editOrder.patient?.lastName || ''}`}
           item={{
             id: editOrder.radiologyOrderId,
