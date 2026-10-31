@@ -334,23 +334,34 @@ export default function ConsultationWorkspace() {
               <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1, display: "flex", alignItems: "center", gap: 1 }}>
                 <MonitorHeartRounded sx={{ color: SEMANTIC.danger, fontSize: 18 }} /> Today's Vitals
               </Typography>
-              {v ? (
+              {v ? (() => {
+                // Adult ranges: red = act now, amber = outside normal. A reading
+                // that needs attention used to look exactly like a normal one.
+                const RED = SEMANTIC.danger, AMBER = SEMANTIC.warningDark;
+                const bp = v.bpSystolic == null || v.bpDiastolic == null ? undefined
+                  : (v.bpSystolic >= 180 || v.bpSystolic < 90 || v.bpDiastolic >= 120 || v.bpDiastolic >= v.bpSystolic) ? RED
+                  : (v.bpSystolic >= 140 || v.bpDiastolic >= 90 || v.bpDiastolic < 60) ? AMBER : undefined;
+                const pulse = v.pulseRate == null ? undefined : (v.pulseRate > 120 || v.pulseRate < 50) ? RED : (v.pulseRate > 100 || v.pulseRate < 60) ? AMBER : undefined;
+                const temp = v.temperatureC == null ? undefined : (v.temperatureC >= 39 || v.temperatureC < 35) ? RED : v.temperatureC >= 37.6 ? AMBER : undefined;
+                const spo2 = v.oxygenSaturation == null ? undefined : v.oxygenSaturation < 90 ? RED : v.oxygenSaturation < 95 ? AMBER : undefined;
+                const tone = (c?: string) => ({ fontWeight: c ? 800 : 600, color: c });
+                return (
                 <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2, mb: 3 }}>
                   <Box>
                     <Typography variant="caption" sx={{ color: "text.secondary" }}>BP</Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 600 }}>{v.bpSystolic != null && v.bpDiastolic != null ? `${v.bpSystolic}/${v.bpDiastolic} mmHg` : "-"}</Typography>
+                    <Typography variant="body2" sx={tone(bp)}>{v.bpSystolic != null && v.bpDiastolic != null ? `${v.bpSystolic}/${v.bpDiastolic} mmHg` : "-"}</Typography>
                   </Box>
                   <Box>
                     <Typography variant="caption" sx={{ color: "text.secondary" }}>Pulse</Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 600 }}>{v.pulseRate != null ? `${v.pulseRate} bpm` : "-"}</Typography>
+                    <Typography variant="body2" sx={tone(pulse)}>{v.pulseRate != null ? `${v.pulseRate} bpm` : "-"}</Typography>
                   </Box>
                   <Box>
                     <Typography variant="caption" sx={{ color: "text.secondary" }}>Temp</Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 600 }}>{v.temperatureC != null ? `${v.temperatureC} °C` : "-"}</Typography>
+                    <Typography variant="body2" sx={tone(temp)}>{v.temperatureC != null ? `${v.temperatureC} °C` : "-"}</Typography>
                   </Box>
                   <Box>
                     <Typography variant="caption" sx={{ color: "text.secondary" }}>SpO2</Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 600 }}>{v.oxygenSaturation != null ? `${v.oxygenSaturation}%` : "-"}</Typography>
+                    <Typography variant="body2" sx={tone(spo2)}>{v.oxygenSaturation != null ? `${v.oxygenSaturation}%` : "-"}</Typography>
                   </Box>
                   <Box>
                     <Typography variant="caption" sx={{ color: "text.secondary" }}>Weight</Typography>
@@ -361,7 +372,8 @@ export default function ConsultationWorkspace() {
                     <Typography variant="body2" sx={{ fontWeight: 600 }}>{v.painScale != null ? `${v.painScale}/10` : "-"}</Typography>
                   </Box>
                 </Box>
-              ) : (
+                );
+              })() : (
                 <Typography variant="body2" sx={{ color: "text.secondary", fontStyle: "italic", mb: 3 }}>
                   No vitals recorded for this visit.
                 </Typography>

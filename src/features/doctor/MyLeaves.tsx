@@ -1,4 +1,5 @@
 import { useState } from "react";
+import LeaveBookedNotice, { type LeaveBooking } from "@/components/doctor/LeaveBookedNotice";
 import { FORM_PAGE_WIDTH } from "@/components/layout/pageWidth";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
@@ -27,6 +28,7 @@ export default function MyLeaves() {
   const [fromDate, setFromDate] = useState(dayjs().format("YYYY-MM-DD"));
   const [toDate, setToDate] = useState("");
   const [reason, setReason] = useState("");
+  const [booked, setBooked] = useState<LeaveBooking[]>([]);
   const [scope, setScope] = useState<LeaveScope>(EMPTY_LEAVE_SCOPE);
   // The branches this doctor signs in to - the ones leave can be for.
   const { availableBranches } = useHospitalAuth();
@@ -50,6 +52,7 @@ export default function MyLeaves() {
       (await axiosInstance.post("/doctor/leaves", { fromDate, toDate: toDate || undefined, reason: reason || undefined, ...leaveScopeBody(scope) })).data,
     onSuccess: (res) => {
       toast.success(res?.message || "Leave added");
+      setBooked(res?.data?.booked ?? []);
       setReason("");
       setToDate("");
       setScope(EMPTY_LEAVE_SCOPE);
@@ -107,6 +110,8 @@ export default function MyLeaves() {
           </Button>
         </Box>
       </Paper>
+
+      <Box sx={{ mb: 2 }}><LeaveBookedNotice booked={booked} onClose={() => setBooked([])} /></Box>
 
       <Alert severity="info" icon={<EventBusyRounded />} sx={{ mb: 2 }}>
         A leave day immediately closes your appointment slots for that day. Removing the leave re-opens them.

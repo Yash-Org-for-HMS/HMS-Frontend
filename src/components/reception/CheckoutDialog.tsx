@@ -45,8 +45,18 @@ export default function CheckoutDialog({ open, onClose, token, onDone }: Checkou
     enabled: open && !!apptId,
   });
 
+  // Tests the doctor ordered in this visit that are not on a bill yet. Without
+  // them a patient with lab and scan orders unpaid read as "Settled".
+  const { data: unbilled } = useQuery<{ total: number | string; items: { type: string; description: string; amount: number }[] }>({
+    queryKey: ["checkout-unbilled", apptId],
+    queryFn: async () => (await axiosInstance.get(`/reception/billing/appointments/${apptId}/unbilled-orders`)).data.data,
+    enabled: open && !!apptId,
+  });
+  const unbilledTotal = Number(unbilled?.total ?? 0);
+
   const totalPaid = paidTotal(invoice);
-  const balance = invoice ? Math.max(0, balanceOf(invoice)) : 0;
+  const billBalance = invoice ? Math.max(0, balanceOf(invoice)) : 0;
+  const balance = billBalance + unbilledTotal;
   const hasDues = balance > 0;
 
   const handleClose = () => {
@@ -97,7 +107,9 @@ export default function CheckoutDialog({ open, onClose, token, onDone }: Checkou
                 severity="warning"
                 action={<Button color="inherit" size="small" startIcon={<PaymentRounded />} onClick={() => setShowBilling(true)}>Collect</Button>}
               >
-                Outstanding balance of ₹{balance.toFixed(2)}. Collect payment, or check out with dues.
+                Outstanding balance of ₹{balance.toFixed(2)}
+                {unbilledTotal > 0 ? ` - including ₹${unbilledTotal.toFixed(2)} of tests ordered in this visit and not billed yet (${(unbilled?.items ?? []).map((i) => i.type === "LAB" ? "lab" : "scan").filter((v, i, a) => a.indexOf(v) === i).join(", ")})` : ""}.
+                {" "}Collect payment, or check out with dues.
               </Alert>
             )}
 

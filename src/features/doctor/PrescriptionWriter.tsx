@@ -44,6 +44,20 @@ interface PrescriptionWriterProps {
 // Dosage strength units the doctor can pick (instead of typing the unit by hand).
 const DOSE_UNITS = ["mg", "mcg", "g", "ml", "IU", "drops", "%", "units", "puff", "tsp"];
 
+// What the quantity is counted in, read off the medicine's name - the catalogue
+// has no dosage-form field. Every line used to say "Tab", syrups and sachets too.
+function packUnitOf(name: string): string {
+  const n = name.toLowerCase();
+  if (/\b(tab|tablet|tablets)\b/.test(n)) return "Tab";
+  if (/\b(cap|capsule|capsules)\b/.test(n)) return "Cap";
+  if (/\b(syrup|suspension|susp|liquid|solution|drop|drops)\b/.test(n)) return "Bottle";
+  if (/\b(sachet|sachets|powder)\b/.test(n)) return "Sachet";
+  if (/\b(inj|injection|vial|amp|ampoule)\b/.test(n)) return "Vial";
+  if (/\b(cream|ointment|gel|lotion)\b/.test(n)) return "Tube";
+  if (/\b(inhaler|rotacap|respule)\b/.test(n)) return "Inhaler";
+  return "Unit";
+}
+
 // Frequency shorthand → doses/day + a human meaning. Lets the doctor type any
 // standard format (OD, BD, TDS, Q8H, 1-0-1, …) and still get the quantity
 // auto-calculated. Anything not recognised is still accepted verbatim; only the
@@ -134,8 +148,10 @@ export default function PrescriptionWriter({ consultationId, patientId, patientA
       const item = items.find((i) => (i.medicineId || i.medicineName || "") === id);
       return ws.map((w) => ({ ...w, medicineName: item?.medicineName || id }));
     });
-    return { warnings, uncheckedFreeTextCount: allergyRaw?.uncheckedFreeTextCount ?? 0 };
+    return { warnings, uncheckedFreeTextCount: allergyRaw?.uncheckedFreeTextCount ?? 0, clashIds: new Set(Object.keys(byMedicine)) };
   }, [allergyRaw, items]);
+  const clashes = (item: { medicineId?: string | null; medicineName?: string | null }) => allergyCheck.clashIds.has(item.medicineId || item.medicineName || "");
+  const setOverrideReason = (index: number, value: string) => setItems(items.map((it, i) => (i === index ? { ...it, allergyOverrideReason: value } : it)));
 
   // Autocomplete state
   const [medicineQuery, setMedicineQuery] = useState("");
@@ -166,7 +182,6 @@ export default function PrescriptionWriter({ consultationId, patientId, patientA
   const [durationDays, setDurationDays] = useState<number | "">("");
   const [quantity, setQuantity] = useState<number | "">("");
   const [manualQuantity, setManualQuantity] = useState(false);
-  const [unit, setUnit] = useState("Tab");
 
   useEffect(() => {
     if (!manualQuantity && frequency && durationDays && typeof durationDays === "number") {
@@ -251,7 +266,7 @@ export default function PrescriptionWriter({ consultationId, patientId, patientA
       frequency,
       durationDays: Number(durationDays) || 0,
       quantity: Number(quantity) || 0,
-      unit,
+      unit: packUnitOf(medName || ""),
       buyOutside: bulkBuyOutside
     };
 
@@ -267,7 +282,6 @@ export default function PrescriptionWriter({ consultationId, patientId, patientA
     setDurationDays("");
     setQuantity("");
     setManualQuantity(false);
-    setUnit("Tab");
   };
 
   // Compares a medicine name/dosage for the duplicate check below. This was
@@ -335,6 +349,13 @@ export default function PrescriptionWriter({ consultationId, patientId, patientA
   };
 
   const handleSave = async () => {
+    // A medicine the patient is allergic to goes on the prescription only with a
+    // reason - the server holds the same rule.
+    const unexplained = items.find((i) => clashes(i) && (i.allergyOverrideReason ?? "").trim().length < 3);
+    if (unexplained) {
+      toast.error(`${unexplained.medicineName} clashes with a recorded allergy - remove it, or give the reason to prescribe it anyway.`);
+      return;
+    }
     try {
       setSaving(true);
       let targetConsultationId = consultationId;
@@ -354,9 +375,8 @@ export default function PrescriptionWriter({ consultationId, patientId, patientA
         reason,
       }));
 
-      // Update status locally based on items
-      const allExternal = items.length > 0 && items.every(i => i.buyOutside);
-      setDispensingStatus(allExternal || !pharmacyEnabled ? "external" : "pending");
+      // The server decides: a draft until the consultation is completed.
+      await refetch();
 
       toast.success("Prescription saved successfully!");
 } catch (err: unknown) {
@@ -523,6 +543,7 @@ export default function PrescriptionWriter({ consultationId, patientId, patientA
 {dispensingStatus && (
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
           <Typography variant="subtitle2" fontWeight={700}>Status:</Typography>
+          {dispensingStatus === "draft" && <Chip label="Draft - goes to the pharmacy when you complete the consultation" size="small" />}
           {dispensingStatus === "pending" && <Chip label="Sent to Pharmacy" color="warning" size="small" />}
           {dispensingStatus === "dispensed" && <Chip label="Dispensed" color="success" size="small" />}
           {dispensingStatus === "external" && <Chip label="Buy Outside (External)" color="default" size="small" />}
@@ -685,9 +706,9 @@ export default function PrescriptionWriter({ consultationId, patientId, patientA
         </Box>
       </Paper>
 
-      {/* Allergy clashes on what is currently on the prescription. This warns
-          and never blocks - overriding is a clinical judgement - and it names
-          the exact salt so the doctor can weigh it rather than guess. */}
+      {/* Allergy clashes on what is currently on the prescription. Overriding is
+          a clinical judgement, so it is allowed - with the reason written on the
+          line (below) - and it names the exact salt so the doctor can weigh it. */}
       {allergyCheck.warnings.length > 0 && (
         <Alert severity="error" icon={<WarningAmberRounded />} sx={{ borderRadius: 2 }}>
           <Typography variant="subtitle2" fontWeight={800} sx={{ mb: 0.5 }}>
@@ -724,11 +745,21 @@ export default function PrescriptionWriter({ consultationId, patientId, patientA
             </TableHead>
             <TableBody>
               {items.map((item, index) => (
-                <TableRow key={index} sx={{ opacity: item.buyOutside ? 0.7 : 1 }}>
+                <TableRow key={index} sx={{ opacity: item.buyOutside ? 0.7 : 1, bgcolor: clashes(item) ? "rgba(239,68,68,0.06)" : undefined }}>
                   <TableCell>
                     <Box>
                       <Typography variant="body2" fontWeight={600}>{item.medicineName || "Custom"}</Typography>
                       {item.genericName && <Typography variant="caption" color="text.secondary">{item.genericName}</Typography>}
+                      {clashes(item) && (
+                        <TextField
+                          size="small" fullWidth required sx={{ mt: 1, minWidth: 220 }}
+                          label="Reason to prescribe anyway"
+                          placeholder="e.g. Tolerated before, allergy doubtful"
+                          value={item.allergyOverrideReason ?? ""}
+                          onChange={(e) => setOverrideReason(index, e.target.value)}
+                          error={(item.allergyOverrideReason ?? "").trim().length < 3}
+                        />
+                      )}
                     </Box>
                   </TableCell>
                   <TableCell>{item.dosage}</TableCell>

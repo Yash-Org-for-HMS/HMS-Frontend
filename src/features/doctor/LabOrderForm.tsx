@@ -135,6 +135,12 @@ export default function LabOrderForm({ consultationId, patientId, onRequireSave 
                     </TableCell>
                   </TableRow>
                 ))}
+                {/* What the order comes to - each price was there, the sum was not. */}
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 700 }}>Total{items.some((i) => i.priceAtBilling) ? " (some priced at billing)" : ""}</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 700 }}>{testPrice({ price: items.reduce((sum, i) => sum + (i.priceAtBilling ? 0 : Number(i.price ?? 0)), 0) })}</TableCell>
+                  <TableCell />
+                </TableRow>
               </TableBody>
             </Table>
             <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
@@ -180,7 +186,8 @@ export default function LabOrderForm({ consultationId, patientId, onRequireSave 
                     {order.reports?.map((report: any, rIdx: number) => (
                       <TableRow key={rIdx}>
                         <TableCell sx={{ pl: 0 }}>
-                          <Typography variant="body2">{report.testName} ({report.testCode})</Typography>
+                          {/* Codes made up for tests created from the rate card (SOCPARAM-…, SOCLAB-…) are internal ids, not lab codes. */}
+                          <Typography variant="body2">{report.testName}{report.testCode && !/^SOC/i.test(report.testCode) ? ` (${report.testCode})` : ""}</Typography>
                         </TableCell>
                         <TableCell align="right" sx={{ pr: 0 }}>
                           <Typography variant="body2" sx={{ 

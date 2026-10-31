@@ -59,7 +59,9 @@ export default function DoctorQueue() {
     return {
       waiting: tokens.filter((t: any) => t.statusCode === "WAITING_FOR_VITALS" || t.statusCode === "READY_FOR_DOCTOR").length,
       inProgress: tokens.filter((t: any) => t.statusCode === "IN_CONSULTATION").length,
-      completed: tokens.filter((t: any) => t.statusCode === "COMPLETED" || t.statusCode === "CANCELLED").length,
+      // Seen by the doctor: finished, or finished and gone on to the pharmacy. A
+      // cancelled visit was never seen and was counted here as "completed".
+      completed: tokens.filter((t: any) => t.statusCode === "COMPLETED" || t.statusCode === "PHARMACY_PENDING").length,
       skipped: skippedTokens.length,
       activeTokens,
       skippedTokens,
@@ -216,7 +218,7 @@ export default function DoctorQueue() {
                             "&:hover": { background: `linear-gradient(135deg, #1d4ed8, ${DOCTOR_BLUE_DARK})` },
                           }}
                         >
-                          {isInProgress ? "Resume Consultation" : "Start Consultation"}
+                          {isInProgress ? "Resume Consultation" : token.statusCode === "PHARMACY_PENDING" ? "View consultation" : "Start Consultation"}
                         </Button>
                       </TableCell>
                     </TableRow>

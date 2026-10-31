@@ -1,4 +1,5 @@
 import { useState } from "react";
+import LeaveBookedNotice, { type LeaveBooking } from "@/components/doctor/LeaveBookedNotice";
 import { FORM_PAGE_WIDTH } from "@/components/layout/pageWidth";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
@@ -28,6 +29,7 @@ export default function DoctorLeaves() {
   const [fromDate, setFromDate] = useState(dayjs().format("YYYY-MM-DD"));
   const [toDate, setToDate] = useState("");
   const [reason, setReason] = useState("");
+  const [booked, setBooked] = useState<LeaveBooking[]>([]);
   const [scope, setScope] = useState<LeaveScope>(EMPTY_LEAVE_SCOPE);
   // Leave can be for one of the doctor's branches (all branches when they have no list).
   const { availableBranches } = useHospitalAuth();
@@ -70,6 +72,7 @@ export default function DoctorLeaves() {
       })).data,
     onSuccess: (res) => {
       toast.success(res?.message || "Leave added");
+      setBooked(res?.data?.booked ?? []);
       setReason("");
       setToDate("");
       setScope(EMPTY_LEAVE_SCOPE);
@@ -139,6 +142,8 @@ export default function DoctorLeaves() {
           </Button>
         </Box>
       </Paper>
+
+      <Box sx={{ mb: 2 }}><LeaveBookedNotice booked={booked} onClose={() => setBooked([])} /></Box>
 
       <Divider sx={{ mb: 2 }} />
 
