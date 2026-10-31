@@ -302,9 +302,9 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
         <Grid size={{ xs: 12, md: 6 }}>
           <TextField
             fullWidth label="Email Address (Optional)" name="email" type="email" value={formData.email}
-            onChange={handleChange} disabled={isEditing} sx={fieldSx}
+            onChange={handleChange} sx={fieldSx}
             error={!!errors.email}
-            helperText={errors.email || (isEditing ? "Email cannot be changed" : undefined)}
+            helperText={errors.email}
             FormHelperTextProps={{ style: { color: "text.secondary" } }}
           />
         </Grid>

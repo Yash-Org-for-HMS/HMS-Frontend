@@ -85,6 +85,9 @@ export default function RefundSection({
   // "the charge stands" is the safe default: it leaves the bill collectable,
   // which is reversible, where voiding hands the charges back to be re-billed.
   const [voidInvoice, setVoidInvoice] = useState(false);
+  // A part refund, by the hospital rule, is for a charge not given: it comes off
+  // the bill so the bill stays settled. "Still owed" is the exception.
+  const [reduceBill, setReduceBill] = useState(true);
   const [busy, setBusy] = useState(false);
   const [receiptFor, setReceiptFor] = useState<string | null>(null);
   /** Units of each medicine physically handed back, keyed by medicineId. */
@@ -140,6 +143,7 @@ export default function RefundSection({
   const reset = () => {
     setOpen(false); setPaymentId(""); setAmount(""); setReason(""); setMethodId(""); setReference("");
     setVoidInvoice(false);
+    setReduceBill(true);
   };
 
   // Does this refund hand back everything the invoice is holding? Only then is
@@ -147,6 +151,8 @@ export default function RefundSection({
   const clearsTheBill = Number(amount) > 0 && Number(amount) >= remaining - 0.005;
   // An IPD bill is voided at its admission, not here.
   const canVoid = clearsTheBill && !invoice?.admissionId;
+  // Only a part refund on an out-patient bill asks; an IPD bill settles at discharge.
+  const asksReduce = Number(amount) > 0 && !clearsTheBill && !invoice?.admissionId;
 
   const submit = async () => {
     const amt = Number(amount);
@@ -159,6 +165,7 @@ export default function RefundSection({
         reason: reason.trim(),
         paymentMethodId: methodId === "" ? null : Number(methodId),
         voidInvoice: canVoid && voidInvoice,
+        reduceBill: asksReduce && reduceBill,
         referenceNumber: reference.trim() || null,
         // Only what was actually handed back. Money can come back without goods
         // (a billing error), so this is never inferred from the amount.
@@ -417,6 +424,39 @@ export default function RefundSection({
                       <Typography variant="body2" sx={{ fontWeight: 700 }}>Cancel the charge</Typography>
                       <Typography variant="caption" sx={{ color: "text.secondary" }}>
                         Nothing is owed. The bill is voided and its services go back to be re-billed.
+                      </Typography>
+                    </Box>
+                  }
+                />
+              </RadioGroup>
+            </Box>
+          )}
+
+          {asksReduce && (
+            <Box sx={{ mb: 2, p: 1.75, borderRadius: 1.5, border: "1px solid", borderColor: "divider" }}>
+              <RadioGroup value={reduceBill ? "reduce" : "owed"} onChange={(e) => setReduceBill(e.target.value === "reduce")}>
+                <FormControlLabel
+                  value="reduce"
+                  sx={{ alignItems: "flex-start", mb: 0.5, mr: 0 }}
+                  control={<Radio size="small" sx={{ pt: 0.25 }} />}
+                  label={
+                    <Box>
+                      <Typography variant="body2" sx={{ fontWeight: 700 }}>Take it off the bill</Typography>
+                      <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                        The charge was not given. The bill goes down by {formatINR(Number(amount) || 0)} and stays settled.
+                      </Typography>
+                    </Box>
+                  }
+                />
+                <FormControlLabel
+                  value="owed"
+                  sx={{ alignItems: "flex-start", mr: 0 }}
+                  control={<Radio size="small" sx={{ pt: 0.25 }} />}
+                  label={
+                    <Box>
+                      <Typography variant="body2" sx={{ fontWeight: 700 }}>The patient still owes it</Typography>
+                      <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                        The bill stays as it is and {formatINR(Number(amount) || 0)} shows as due again.
                       </Typography>
                     </Box>
                   }

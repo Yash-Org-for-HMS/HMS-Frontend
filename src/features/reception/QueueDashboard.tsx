@@ -8,6 +8,7 @@ import {
   Box, Typography, Button, Paper, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, Chip, IconButton, Tooltip,
   Alert, Menu, MenuItem, alpha, InputAdornment,
+  Dialog, DialogTitle, DialogContent, DialogActions, TextField,
 } from "@mui/material";
 import {
   MoreVertRounded, PlayArrowRounded, CheckCircleRounded,
@@ -15,6 +16,8 @@ import {
   MonitorHeartRounded, LogoutRounded, FilterAltRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
+import { useToast } from "@/providers/ToastContext";
+import { getApiErrorMessage } from "@/utils/apiError";
 import Mascot from "@/components/Mascot";
 import StatusChip from "@/components/StatusChip";
 import BillingModal from "./BillingModal";
@@ -215,19 +218,29 @@ export default function QueueDashboard({ readOnly = false }: { readOnly?: boolea
   }, [waitingTokens]);
 
 
+  const toast = useToast();
   const actionMutation = useMutation({
-    mutationFn: async ({ id, action }: { id: string, action: string }) => {
-      return await axiosInstance.put(`/reception/queue/${id}/${action}`);
+    mutationFn: async ({ id, action, body }: { id: string, action: string, body?: Record<string, unknown> }) => {
+      return await axiosInstance.put(`/reception/queue/${id}/${action}`, body);
     },
-    onSuccess: () => {
+    onSuccess: (_res, vars) => {
       queryClient.invalidateQueries({ queryKey: ['queue'] });
-    }
+      if (vars.action === "cancel") toast.success("Visit cancelled and taken off the queue");
+    },
+    // These failed silently: a refused cancel (fee already paid) looked like a
+    // button that did nothing.
+    onError: (err) => toast.error(getApiErrorMessage(err, "Could not update the queue")),
   });
+
+  // Cancelling a token calls off the whole visit, so it is asked, not one click.
+  const [cancelFor, setCancelFor] = useState<{ id: string; name?: string } | null>(null);
+  const [cancelReason, setCancelReason] = useState("");
 
   const handleAction = async (action: 'call' | 'complete' | 'skip' | 'cancel', tokenId?: string) => {
     setAnchorEl(null);
     const idToUse = tokenId || selectedTokenId;
     if (!idToUse) return;
+    if (action === "cancel") { setCancelReason(""); setCancelFor({ id: idToUse, name: selectedAppt?.patientName }); return; }
     actionMutation.mutate({ id: idToUse, action });
   };
 
@@ -594,6 +607,33 @@ export default function QueueDashboard({ readOnly = false }: { readOnly?: boolea
           <CancelRounded fontSize="small" sx={{ mr: 1.5, color: SEMANTIC.danger }} /> Cancel Token
         </MenuItem>
       </Menu>
+
+      <Dialog open={!!cancelFor} onClose={() => setCancelFor(null)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontWeight: 700 }}>Cancel this visit?</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
+            {cancelFor?.name ? `${cancelFor.name} comes off the queue, ` : "The patient comes off the queue, "}
+            the appointment is cancelled and an unpaid fee is voided. If the fee was paid, refund it first.
+          </Typography>
+          <TextField
+            fullWidth size="small" label="Reason (optional)" placeholder="e.g. Patient left, booked by mistake"
+            value={cancelReason} onChange={(e) => setCancelReason(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setCancelFor(null)} sx={{ color: "text.secondary" }}>Keep</Button>
+          <Button
+            variant="contained" color="error" disabled={actionMutation.isPending}
+            onClick={() => {
+              if (!cancelFor) return;
+              actionMutation.mutate({ id: cancelFor.id, action: "cancel", body: cancelReason.trim() ? { reason: cancelReason.trim() } : undefined });
+              setCancelFor(null);
+            }}
+          >
+            Cancel visit
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Billing Modal */}
       {billingDialog.appt?.appointmentId && (

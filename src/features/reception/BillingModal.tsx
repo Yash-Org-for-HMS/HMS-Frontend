@@ -8,7 +8,7 @@ import { getApiErrorMessage } from "@/utils/apiError";
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Button, Box, Typography, Divider, Alert,
-  Grid, TextField, MenuItem, Paper, Chip, Collapse, ButtonBase
+  Grid, TextField, MenuItem, Paper, Chip, Collapse, ButtonBase, FormControlLabel, Checkbox
 } from "@mui/material";
 import {
   ReceiptRounded, CheckCircleRounded, PrintRounded, PaymentRounded, CloseRounded,
@@ -129,6 +129,10 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
   const [showVoid, setShowVoid] = useState(false);
   const [voidReason, setVoidReason] = useState("");
   const [voiding, setVoiding] = useState(false);
+  // A bill voided because the visit was booked in error should take the visit
+  // with it; a bill voided to be raised again for a visit that is happening
+  // should not. The common case at the desk is the first.
+  const [cancelVisit, setCancelVisit] = useState(true);
 
   // Which occasional action is expanded. Closed by default: the common visit is
   // "take the money and print", and nothing else should compete with that.
@@ -153,6 +157,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
       setOpenSection(null);
       setShowVoid(false);
       setVoidReason("");
+      setCancelVisit(true);
     }
   }, [open, appointmentId]);
 
@@ -322,9 +327,9 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
     if (!invoice) return;
     try {
       setVoiding(true);
-      const res = await axiosInstance.post(`/reception/billing/invoices/${invoice.invoiceId}/cancel`, { reason: voidReason.trim() });
+      const res = await axiosInstance.post(`/reception/billing/invoices/${invoice.invoiceId}/cancel`, { reason: voidReason.trim(), cancelVisit: !!invoice.appointmentId && cancelVisit });
       if (res.data.success) {
-        toast.success("Invoice voided");
+        toast.success(res.data?.message || "Invoice voided");
         setShowVoid(false);
         setVoidReason("");
         await fetchBillingData();
@@ -371,6 +376,10 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
   const netAmount = Number(invoice?.netAmount || 0);
   const balance = netAmount - netPaid;
   const isFullyPaid = invoice?.paymentStatus?.statusCode === "PAID" || balance <= 0;
+  const isCancelled = invoice?.invoiceStatus === "CANCELLED";
+  // A bill discounted to nothing reads "paid" with nothing collected; it must
+  // stay correctable, or a mistaken full discount locks it for good.
+  const canAdjust = !isCancelled && (!isFullyPaid || totalPaid <= 0);
 
 
   return (
@@ -502,15 +511,23 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
                       sx={{
                         fontWeight: 800,
                         fontVariantNumeric: "tabular-nums",
-                        color: balance > 0 ? SEMANTIC.danger : SEMANTIC.success,
+                        color: !isCancelled && balance > 0 ? SEMANTIC.danger : SEMANTIC.success,
                       }}
                     >
-                      ₹{Math.max(balance, 0).toFixed(2)}
+                      ₹{(isCancelled ? 0 : Math.max(balance, 0)).toFixed(2)}
                     </Typography>
                   </Box>
                 </Box>
 
-                {!isFullyPaid ? (
+                {isCancelled ? (
+                  <Box sx={{ textAlign: "center", py: 3 }}>
+                    <BlockRounded sx={{ fontSize: 48, color: SEMANTIC.danger, mb: 1 }} />
+                    <Typography variant="h6" sx={{ color: "text.primary", fontWeight: 700 }}>Bill cancelled</Typography>
+                    <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5 }}>
+                      Nothing is owed on it{invoice?.cancellationReason ? ` - ${invoice.cancellationReason}` : ""}.
+                    </Typography>
+                  </Box>
+                ) : !isFullyPaid ? (
                   <>
                     <Grid container spacing={2} sx={{ mb: 2 }}>
                       <Grid size={{ xs: 12, lg: 6 }}>
@@ -581,7 +598,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
                 onChanged={fetchBillingData}
               />
 
-              {!isFullyPaid && (
+              {canAdjust && (
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
                   <Typography
                     variant="overline"
@@ -714,8 +731,22 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
                             value={voidReason}
                             onChange={(e) => setVoidReason(e.target.value)}
                             multiline rows={2}
-                            sx={{ mb: 2 }}
+                            sx={{ mb: invoice?.appointmentId ? 1 : 2 }}
                           />
+                          {invoice?.appointmentId && (
+                            <FormControlLabel
+                              sx={{ mb: 1.5, alignItems: "flex-start" }}
+                              control={<Checkbox size="small" checked={cancelVisit} onChange={(e) => setCancelVisit(e.target.checked)} sx={{ pt: 0.25 }} />}
+                              label={
+                                <Box>
+                                  <Typography variant="body2" sx={{ fontWeight: 600 }}>Also cancel the visit</Typography>
+                                  <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                                    Frees the slot and takes the patient off the queue. Untick to raise a new bill for a visit that is going ahead.
+                                  </Typography>
+                                </Box>
+                              }
+                            />
+                          )}
                           <Box sx={{ display: "flex", gap: 1 }}>
                             <Button fullWidth variant="outlined" onClick={() => { setShowVoid(false); setVoidReason(""); }} disabled={voiding}
                               sx={{ color: "text.secondary", borderColor: "divider", fontWeight: 600 }}>

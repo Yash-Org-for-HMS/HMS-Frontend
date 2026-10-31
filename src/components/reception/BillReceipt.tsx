@@ -25,7 +25,8 @@ export default function BillReceipt({ invoice, hospitalProfile, hospital, patien
   const totalRefunded = refundedTotal(invoice);
   const netPaid = totalPaid - totalRefunded;
   const netAmount = Number(invoice?.netAmount || 0);
-  const balance = netAmount - netPaid;
+  // A voided bill owes nothing, whatever its lines add up to.
+  const balance = invoice?.invoiceStatus === "CANCELLED" ? 0 : netAmount - netPaid;
   // The part of the balance that is money handed back, not money never taken.
   const refundedBalance = balanceFromRefunds(invoice);
   const isFullyPaid = invoice?.paymentStatus?.statusCode === "PAID" || balance <= 0;
@@ -84,7 +85,8 @@ export default function BillReceipt({ invoice, hospitalProfile, hospital, patien
           : undefined,
       }}
       afterTotals={afterTotals}
-      paidWatermark={isFullyPaid && totalRefunded <= 0}
+      paidWatermark={isFullyPaid && totalRefunded <= 0 && invoice?.invoiceStatus !== "CANCELLED"}
+      cancelledWatermark={invoice?.invoiceStatus === "CANCELLED"}
       footer="Thank you for your visit. Get well soon!"
     >
       <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: 12 }}>

@@ -85,6 +85,8 @@ interface Props {
   afterTotals?: ReactNode;
   footer?: ReactNode;
   paidWatermark?: boolean;
+  /** A voided bill, stamped so a reprint cannot pass for a live one. */
+  cancelledWatermark?: boolean;
 }
 
 const INK = "#111827";
@@ -97,7 +99,7 @@ const money = (v: number | undefined) => formatINR(v ?? 0);
 
 export default function BillDocument({
   variant = "receipt", hospital, title, titleRight, metaLeft = [], metaRight = [],
-  children, totals, afterTotals, footer, paidWatermark,
+  children, totals, afterTotals, footer, paidWatermark, cancelledWatermark,
 }: Props) {
   return (
     <div style={{ fontFamily: "'Inter', Arial, sans-serif", color: INK, position: "relative" }}>
@@ -149,6 +151,14 @@ export default function BillDocument({
           fontSize: 92, fontWeight: 900, color: "rgba(16,185,129,0.12)",
           transform: "rotate(-18deg)", pointerEvents: "none", letterSpacing: 8,
         }} aria-hidden>PAID</div>
+      )}
+
+      {cancelledWatermark && (
+        <div style={{
+          position: "absolute", top: "40%", left: 0, right: 0, textAlign: "center",
+          fontSize: 80, fontWeight: 900, color: "rgba(220,38,38,0.14)",
+          transform: "rotate(-18deg)", pointerEvents: "none", letterSpacing: 8,
+        }} aria-hidden>CANCELLED</div>
       )}
 
       {/* The printed-on stamp is not decoration: these documents get reprinted,
