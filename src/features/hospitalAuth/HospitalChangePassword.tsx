@@ -11,6 +11,7 @@ import { axiosInstance } from "@/api/axios";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/providers/ToastContext";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
+import { loginSubmitSx } from "@/features/auth/loginDesign";
 
 const ACCENT = "#0891b2";
 const TEXT = "#0F172A";
@@ -148,11 +149,8 @@ export default function HospitalChangePassword() {
 
           <Button
             fullWidth type="submit" disableElevation disabled={!canSubmit}
-            sx={{
-              py: 1.4, mt: 2, fontWeight: 700, fontSize: "1rem", textTransform: "none", borderRadius: 2.5, color: "#fff",
-              "&.Mui-disabled": { bgcolor: "rgba(15,23,42,0.10)", color: "rgba(15,23,42,0.4)" },
-              transition: "background-color 0.2s ease",
-            }}
+            // The login button's look: without a fill the enabled button was white text on the page and read as disabled.
+            sx={[loginSubmitSx, { mt: 2 }]}
           >
             {isLoading ? <HeartbeatLoader size={22} /> : "Update password & continue"}
           </Button>
