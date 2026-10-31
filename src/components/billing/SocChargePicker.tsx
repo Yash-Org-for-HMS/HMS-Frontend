@@ -12,7 +12,7 @@ import { formatINRAuto } from "@/utils/format";
 const inr = formatINRAuto;
 
 type RoomPrice = { roomClassId: string; price: number | string };
-type Category = { chargeCategoryId: string; categoryName: string; isActive: boolean };
+type Category = { chargeCategoryId: string; categoryName: string; isActive: boolean; _count?: { items: number } };
 type Item = { chargeItemId: string; itemName: string; itemCode: string | null; price: number | string; unit: string | null; isActive: boolean; taxPercent?: number | string; itemType?: string; roomPrices?: RoomPrice[]; listPrices?: ListPrice[]; priceAtBilling?: boolean };
 // `basePrice` + `roomPrices` are returned so a caller (e.g. discharge) can re-derive
 // the effective price if its room class changes after the pick; `price` is the
@@ -65,7 +65,10 @@ export default function SocChargePicker({ open, onClose, onPick, accent = "#0C73
     }
     return "";
   }, [activeCats, preferCategories]);
-  const effectiveCategoryId = categoryId || preferredId || activeCats[0]?.chargeCategoryId || "";
+  // Never open on an empty category ("No charges in this category yet") when
+  // another one has something to pick.
+  const firstWithItems = activeCats.find((c) => (c._count?.items ?? 1) > 0) ?? activeCats[0];
+  const effectiveCategoryId = categoryId || preferredId || firstWithItems?.chargeCategoryId || "";
 
   const { data: items = [], isLoading: itemsLoading } = useQuery<Item[]>({
     queryKey: ["soc-picker-items", effectiveCategoryId],

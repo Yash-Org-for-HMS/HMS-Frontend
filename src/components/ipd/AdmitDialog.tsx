@@ -91,7 +91,8 @@ export default function AdmitDialog({ open, onClose, onAdmitted, prefilledPatien
   // until someone picks another.
   const heldBed = form.patientId ? beds.find((b) => b.reservedForPatientId === form.patientId) : undefined;
   const bedId = form.bedId || heldBed?.bedId || "";
-  const canSubmit = form.patientId && bedId;
+  // Every stay needs a consultant (the server refuses one without).
+  const canSubmit = form.patientId && form.doctorId && bedId;
 
   const handleNewPatient = async (patientId: string, mrn: string) => {
     // Pull the fresh patient into the dropdown, then pre-select it.
@@ -188,10 +189,9 @@ export default function AdmitDialog({ open, onClose, onAdmitted, prefilledPatien
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
               <SearchableSelect
-                label="Admitting doctor" name="doctorId"
+                label="Admitting doctor" name="doctorId" required
                 value={form.doctorId} onChange={(e) => set("doctorId", e.target.value)}
-                placeholder="-"
-                emptyOption={{ value: "", label: "-" }}
+                placeholder="Select a doctor"
                 searchPlaceholder="Search doctors…"
                 options={(dropdowns?.doctors || []).map((d: any) => ({
                   value: d.doctorId,

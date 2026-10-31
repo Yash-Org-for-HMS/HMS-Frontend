@@ -11,6 +11,7 @@ import { axiosInstance } from "@/api/axios";
 import { useToast } from "@/providers/ToastContext";
 import HeartbeatLoader from "../HeartbeatLoader";
 import SearchableSelect from "@/components/form/SearchableSelect";
+import { rateWithUnit } from "@/features/ipd/billingUnit";
 
 interface Props {
   open: boolean;
@@ -74,7 +75,11 @@ export default function TransferDialog({ open, onClose, onDone, admission }: Pro
             options={beds.map((b) => ({
               value: b.bedId,
               label: b.label,
-              secondary: b.status === "RESERVED" ? "reserved" : undefined,
+              // The rate the stay moves onto, as on the admit form.
+              secondary: [
+                b.dailyCharge ? rateWithUnit(`₹${Number(b.dailyCharge).toFixed(0)}`, b.billingMode) : null,
+                b.status === "RESERVED" ? "reserved" : null,
+              ].filter(Boolean).join(" · ") || undefined,
             }))}
             helperText={beds.length === 0 ? "No other beds available" : undefined}
           />

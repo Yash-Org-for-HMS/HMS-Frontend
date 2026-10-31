@@ -19,6 +19,7 @@ import ErrorState from "@/components/ErrorState";
 import Mascot from "@/components/Mascot";
 import { TableRowsSkeleton } from "@/components/TableRowsSkeleton";
 import { useToast } from "@/providers/ToastContext";
+import { useAskReason } from "@/providers/ConfirmContext";
 import AdmitDialog from "@/components/ipd/AdmitDialog";
 import TransferDialog from "@/components/ipd/TransferDialog";
 import DischargeDialog from "@/components/ipd/DischargeDialog";
@@ -67,9 +68,19 @@ const TABS: { label: string; params: Record<string, string> }[] = [
  * check and the ward cannot drift apart.
  */
 function DepositChip({ admission }: {
-  admission: { depositBalance: number | string; status: string; advanceHoldReason?: string | null };
+  admission: { depositBalance: number | string; status: string; advanceHoldReason?: string | null; refundPending?: number | string };
 }) {
   const amount = inr(admission.depositBalance);
+  // A refund already asked for: the money is still held until an admin approves.
+  const pending = Number(admission.refundPending || 0);
+  if (pending > 0) {
+    return (
+      <Tooltip title={`${inr(pending)} refund is waiting for admin approval`}>
+        <Chip label={pending >= Number(admission.depositBalance) ? `${amount} refund pending` : `${amount} held · ${inr(pending)} refund pending`} size="small"
+          sx={{ bgcolor: alpha(SEMANTIC.info, 0.12), color: SEMANTIC.info, fontWeight: 700 }} />
+      </Tooltip>
+    );
+  }
   const closed = admission.status === "DISCHARGED" || admission.status === "CANCELLED";
   if (!closed) {
     return <Chip label={amount} size="small" sx={{ bgcolor: alpha(BRAND.action, 0.12), color: BRAND.action, fontWeight: 700 }} />;
@@ -97,6 +108,7 @@ function DepositChip({ admission }: {
 // keep the IPD/reception panel fully interactive.
 export default function Admissions({ readOnly = false }: { readOnly?: boolean } = {}) {
   const toast = useToast();
+  const askReason = useAskReason();
   const [tab, setTab] = useState(0);
   const [search, setSearch] = useState("");
   const [admitOpen, setAdmitOpen] = useState(false);
@@ -150,7 +162,7 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
   });
   // Only the two fields the badge and summary read, so the split between
   // "no reason recorded" and "deliberately held" stays type-checked.
-  const owedRows: { depositBalance: number | string; advanceHoldReason?: string | null }[] = owedResp?.data || [];
+  const owedRows: { depositBalance: number | string; advanceHoldReason?: string | null; refundPending?: number | string }[] = owedResp?.data || [];
   const owedTotal = owedRows.reduce((t, a) => t + Number(a.depositBalance || 0), 0);
   const admissions: AdmissionRow[] = resp?.data || [];
   const meta = resp?.meta as { total: number; totalPages: number } | undefined;
@@ -186,8 +198,16 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
 
   const cancel = async (row: AdmissionRow) => {
     setMenu({ anchor: null, row: null });
+    // Cancelling is for an admission entered in error - a real stay is discharged.
+    const reason = await askReason({
+      title: `Cancel admission - ${row.patientName}`,
+      message: "Only for an admission made by mistake. The bed is freed and nothing is billed. A stay over a day old, or with visits, tests or charges, must be discharged instead.",
+      label: "Why is it being cancelled?",
+      confirmText: "Cancel admission",
+    });
+    if (!reason) return;
     try {
-      await axiosInstance.post(`/ipd/admissions/${row.admissionId}/cancel`);
+      await axiosInstance.post(`/ipd/admissions/${row.admissionId}/cancel`, { reason });
       toast.success("Admission cancelled");
       refetch();
     } catch (err: unknown) {
@@ -249,8 +269,10 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
           </Box>
           <Box sx={{ display: "flex", gap: 2.5, flexWrap: "wrap" }}>
             {(() => {
-              const unexplained = owedRows.filter((a) => !(a.advanceHoldReason || "").trim());
-              const held = owedRows.length - unexplained.length;
+              // A refund already asked for is being dealt with - not "no reason recorded".
+              const requested = owedRows.filter((a) => Number(a.refundPending || 0) > 0);
+              const unexplained = owedRows.filter((a) => !(Number(a.refundPending || 0) > 0) && !(a.advanceHoldReason || "").trim());
+              const held = owedRows.length - unexplained.length - requested.length;
               return (
                 <>
                   <Typography variant="body2" sx={{ color: "text.secondary" }}>
@@ -259,6 +281,11 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
                   <Typography variant="body2" sx={{ color: "text.secondary" }}>
                     <b>{held}</b> deliberately held
                   </Typography>
+                  {requested.length > 0 && (
+                    <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                      <b style={{ color: SEMANTIC.info }}>{requested.length}</b> refund requested, awaiting approval
+                    </Typography>
+                  )}
                 </>
               );
             })()}
@@ -375,7 +402,7 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
                           <IconButton size="small" onClick={() => setApplyFor(a)} sx={{ color: "#8b5cf6", "&:hover": { color: "#7c3aed" } }}><ReceiptLongRounded fontSize="small" /></IconButton>
                         </Tooltip>
                       )}
-                      {!readOnly && Number(a.depositBalance) > 0 && may("POST", "deposit/refund") && (
+                      {!readOnly && Number(a.depositBalance) - Number(a.refundPending || 0) > 0 && may("POST", "deposit/refund") && (
                         <Tooltip title={`Refund deposit (${inr(a.depositBalance)})`}>
                           <IconButton size="small" onClick={() => setDepositFor({ row: a, mode: "refund" })} sx={{ color: "#8b5cf6", "&:hover": { color: "#7c3aed" } }}><UndoRounded fontSize="small" /></IconButton>
                         </Tooltip>

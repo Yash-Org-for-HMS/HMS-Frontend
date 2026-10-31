@@ -58,6 +58,8 @@ export interface AdmissionRow {
   days?: number | null;
   /** COLLECTED − APPLIED − REFUNDED. Positive on a closed admission = owed back. */
   depositBalance: Money;
+  /** Refund requests still waiting on an admin (the money is still held). */
+  refundPending?: Money;
 }
 
 /** One bed the patient occupied, and what it costs - the discharge bill's basis. */

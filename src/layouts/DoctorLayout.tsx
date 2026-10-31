@@ -93,6 +93,9 @@ export default function DoctorLayout() {
         : []),
     { text: "My Queue", icon: <QueueRounded />, path: "/doctor/queue", badge: badges?.queueWaiting || 0, section: "My Work" },
     { text: "My Patients", icon: <PeopleAltRounded />, path: "/doctor/patients", badge: 0, section: "My Work" },
+    // A consultant's in-patients too (a resident has it as their home, above):
+    // without it the page was reachable only by typing its address.
+    ...(!holdsHome(user, "/doctor/ward-round") ? [{ text: "Ward round", icon: <AirlineSeatFlatRounded />, path: "/doctor/ward-round", badge: 0, section: "My Work", module: "IPD" }] : []),
     { text: "All Patients", icon: <GroupsRounded />, path: "/doctor/all-patients", badge: 0, section: "My Work" },
     { text: "Results", icon: <ScienceRounded />, path: "/doctor/results", badge: badges?.resultsReady || 0, section: "My Work", module: "Laboratory" },
     // Kept beside the other My Work entries. The heading below is emitted when

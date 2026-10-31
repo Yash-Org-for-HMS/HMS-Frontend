@@ -32,7 +32,7 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
   // A row is either a free-text charge (editable description + amount) or one picked
   // from the Schedule of Charges (carries chargeItemId + its base/room-class prices so
   // the preview can re-derive when the room class changes; the server prices it).
-  type Extra = { description: string; amount: string; chargeItemId?: string; basePrice?: number; roomPrices?: { roomClassId: string; price: number | string }[]; listPrices?: PickedCharge["listPrices"]; taxPercent?: number; priceAtBilling?: boolean };
+  type Extra = { description: string; amount: string; qty: string; chargeItemId?: string; basePrice?: number; roomPrices?: { roomClassId: string; price: number | string }[]; listPrices?: PickedCharge["listPrices"]; taxPercent?: number; priceAtBilling?: boolean };
   const [extras, setExtras] = useState<Extra[]>([]);
   const [saving, setSaving] = useState(false);
   const [socPickerOpen, setSocPickerOpen] = useState(false);
@@ -94,7 +94,20 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
       return n > 0;
     });
   })();
-  const extraAmount = (e: Extra, i: number): number => (extraInPackage[i] ? 0 : lineAmount(e));
+  // How many: oxygen by the hour, a monitor by the day - the rate card prices one.
+  const qtyOf = (e: Extra): number => Number(e.qty);
+  const qtyOk = (e: Extra): boolean => Number.isInteger(qtyOf(e)) && qtyOf(e) >= 1 && qtyOf(e) <= 999;
+  // A line the bill cannot carry blocks the discharge instead of being dropped:
+  // the server refuses it, and the total here must be the total billed.
+  const extraProblem = (e: Extra): string | null => {
+    if (!qtyOk(e)) return "Quantity 1 to 999";
+    if (e.chargeItemId) return null;
+    if (!e.description.trim()) return "Add a description";
+    if (!(Number(e.amount) > 0)) return "Amount above 0";
+    return null;
+  };
+  const extraAmount = (e: Extra, i: number): number => (extraInPackage[i] || extraProblem(e) ? 0 : lineAmount(e) * qtyOf(e));
+  const extrasInvalid = extras.some((e) => extraProblem(e) !== null);
 
   const bedCharge = Number(detail?.estimatedBedCharge || 0);
   // The nursing charge a bed tariff carries, billed per unit beside the rent.
@@ -148,14 +161,17 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
         dischargeSummary: summary || undefined,
         roomClassId: billRoomClassId || undefined,
         extraCharges: extras
-          .filter((e) => e.chargeItemId || (e.description.trim() && Number(e.amount) > 0))
-          .map((e) => e.chargeItemId ? (e.priceAtBilling ? { chargeItemId: e.chargeItemId, amount: Number(e.amount) } : { chargeItemId: e.chargeItemId }) : { description: e.description.trim(), amount: Number(e.amount) }),
+          .map((e) => ({ ...(e.chargeItemId ? (e.priceAtBilling ? { chargeItemId: e.chargeItemId, amount: Number(e.amount) } : { chargeItemId: e.chargeItemId }) : { description: e.description.trim(), amount: Number(e.amount) }), quantity: qtyOf(e) })),
         advanceHoldReason: advanceAction === "HOLD" ? holdReason.trim() : undefined,
+        refundLeftover: advanceAction === "REFUND" || undefined,
       });
       const inv = res.data?.data?.invoice;
       const advanceLeft = Number(res.data?.data?.depositRemaining ?? 0);
       toast.success(inv ? `Discharged - invoice ${inv.invoiceNumber} (${formatINR(inv.netAmount)})` : "Patient discharged");
-      if (advanceAction === "REFUND" && advanceLeft > 0) {
+      const refundRequested = Number(res.data?.data?.refundRequested ?? 0);
+      if (refundRequested > 0) {
+        toast.info(`Refund of ${formatINR(refundRequested)} sent for admin approval`);
+      } else if (advanceAction === "REFUND" && advanceLeft > 0) {
         toast.info(`${formatINR(advanceLeft)} advance is still held - use the refund action on this admission to return it.`);
       }
       onDone();
@@ -302,7 +318,7 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
               <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>Additional charges</Typography>
               <Box sx={{ display: "flex", gap: 0.5 }}>
                 <Button size="small" onClick={() => setSocPickerOpen(true)} sx={{ textTransform: "none", color: BRAND.action }}>Pick from Schedule of Charges</Button>
-                <Button size="small" startIcon={<AddRounded />} onClick={() => setExtras((x) => [...x, { description: "", amount: "" }])} sx={{ textTransform: "none", color: BRAND.action }}>Custom</Button>
+                <Button size="small" startIcon={<AddRounded />} onClick={() => setExtras((x) => [...x, { description: "", amount: "", qty: "1" }])} sx={{ textTransform: "none", color: BRAND.action }}>Custom</Button>
               </Box>
             </Box>
             {roomClassOptions.length > 0 && (
@@ -320,10 +336,18 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
                 {/* Rate-card rows are priced by the server, so name + amount are read-only here.
                     Picked rows show the CURRENT room-class price so the preview tracks the server. */}
                 <TextField size="small" fullWidth placeholder="Description" value={e.description} disabled={!!e.chargeItemId}
-                  onChange={(ev) => setExtras((x) => x.map((r, ri) => ri === i ? { ...r, description: ev.target.value } : r))} />
-                <TextField size="small" type="number" sx={{ width: 130 }} placeholder="Amount" value={e.chargeItemId ? String(lineAmount(e)) : e.amount} disabled={!!e.chargeItemId}
+                  onChange={(ev) => setExtras((x) => x.map((r, ri) => ri === i ? { ...r, description: ev.target.value } : r))}
+                  error={!e.chargeItemId && extraProblem(e) === "Add a description"}
+                  helperText={nursingCharge > 0 && /nursing/i.test(e.description) ? "Nursing is already charged from the bed tariff above" : undefined}
+                  FormHelperTextProps={{ sx: { color: SEMANTIC.warning, mx: 0 } }} />
+                <TextField size="small" type="number" sx={{ width: 80, flexShrink: 0 }} label="Qty" value={e.qty}
+                  onChange={(ev) => setExtras((x) => x.map((r, ri) => ri === i ? { ...r, qty: ev.target.value } : r))}
+                  error={!qtyOk(e)} slotProps={{ htmlInput: { min: 1, max: 999, step: 1 } }} />
+                <TextField size="small" type="number" sx={{ width: 130, flexShrink: 0 }} placeholder="Amount" value={e.chargeItemId ? String(lineAmount(e)) : e.amount} disabled={!!e.chargeItemId}
                   onChange={(ev) => setExtras((x) => x.map((r, ri) => ri === i ? { ...r, amount: ev.target.value } : r))}
-                  helperText={extraInPackage[i] ? "In package - not billed" : undefined} FormHelperTextProps={{ sx: { color: "#7C3AED", mx: 0 } }} />
+                  error={!e.chargeItemId && extraProblem(e) === "Amount above 0"}
+                  helperText={extraInPackage[i] ? "In package - not billed" : (!e.chargeItemId && extraProblem(e) === "Amount above 0" ? "Must be above 0" : undefined)}
+                  FormHelperTextProps={{ sx: { color: extraInPackage[i] ? "#7C3AED" : undefined, mx: 0 } }} />
                 <IconButton size="small" onClick={() => setExtras((x) => x.filter((_, ri) => ri !== i))}><DeleteOutlineRounded fontSize="small" /></IconButton>
               </Box>
             ))}
@@ -405,7 +429,7 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
               </Typography>
               <RadioGroup value={advanceAction} onChange={(e) => setAdvanceAction(e.target.value as "REFUND" | "HOLD")} sx={{ mt: 1 }}>
                 <FormControlLabel value="REFUND" control={<Radio size="small" />}
-                  label={<Typography variant="body2">Refund it to the patient</Typography>} />
+                  label={<Typography variant="body2">Refund it to the patient <Box component="span" sx={{ color: "text.secondary" }}>- sent to an admin for approval</Box></Typography>} />
                 <FormControlLabel value="HOLD" control={<Radio size="small" />}
                   label={<Typography variant="body2">Hold it for now</Typography>} />
               </RadioGroup>
@@ -432,7 +456,7 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
         {/* A leftover advance has to be dealt with explicitly: refund or hold,
             and a hold carries its reason. */}
         <Button variant="contained" onClick={submit}
-          disabled={saving || !detail || unpriced.length > 0 || (depositRefundable > 0 && (!advanceAction || (advanceAction === "HOLD" && holdReason.trim().length < 3)))}
+          disabled={saving || !detail || unpriced.length > 0 || extrasInvalid || (depositRefundable > 0 && (!advanceAction || (advanceAction === "HOLD" && holdReason.trim().length < 3)))}
           startIcon={saving ? <HeartbeatLoader size={22} /> : <LogoutRounded />}
           sx={{ bgcolor: SEMANTIC.danger, "&:hover": { bgcolor: SEMANTIC.dangerDark } }}>
           Discharge & Bill
@@ -447,7 +471,7 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
     <SocChargePicker
       open={socPickerOpen}
       onClose={() => setSocPickerOpen(false)}
-      onPick={(c) => setExtras((x) => [...x, { description: c.itemName, amount: String(c.price), chargeItemId: c.chargeItemId, basePrice: c.basePrice, roomPrices: c.roomPrices, listPrices: c.listPrices, taxPercent: c.taxPercent, priceAtBilling: c.priceAtBilling }])}
+      onPick={(c) => setExtras((x) => [...x, { description: c.itemName, amount: String(c.price), qty: "1", chargeItemId: c.chargeItemId, basePrice: c.basePrice, roomPrices: c.roomPrices, listPrices: c.listPrices, taxPercent: c.taxPercent, priceAtBilling: c.priceAtBilling }])}
       accent={BRAND.action}
       roomClassId={billRoomClassId || undefined}
       rateListId={detail?.serviceRateListId}

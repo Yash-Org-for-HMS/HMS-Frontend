@@ -16,7 +16,7 @@ import HeartbeatLoader from "../HeartbeatLoader";
 
 
 /** Only what the dialog reads - see DepositTarget below. */
-export type DepositTarget = Pick<AdmissionRow, "admissionId" | "patientName" | "depositBalance">;
+export type DepositTarget = Pick<AdmissionRow, "admissionId" | "patientName" | "depositBalance" | "refundPending">;
 
 interface Props {
   open: boolean;
@@ -34,6 +34,10 @@ export default function DepositDialog({ open, mode, admission, onClose, onDone }
   const [saving, setSaving] = useState(false);
   const isRefund = mode === "refund";
   const held = Number(admission?.depositBalance || 0);
+  // Refunds already asked for are promised: only the rest can be asked for again.
+  const pending = Number(admission?.refundPending || 0);
+  const refundable = Math.max(0, held - pending);
+  const negative = amount.trim() !== "" && !(Number(amount) > 0);
 
   const { data: lookups } = useQuery<BillingLookups>({
     queryKey: ["billing-lookups"],
@@ -42,7 +46,7 @@ export default function DepositDialog({ open, mode, admission, onClose, onDone }
   });
 
   // A refund is a request an admin approves, and it needs a reason.
-  const canSubmit = Number(amount) > 0 && (isRefund ? Number(amount) <= held + 0.005 && reason.trim().length >= 3 : true);
+  const canSubmit = Number(amount) > 0 && (isRefund ? Number(amount) <= refundable + 0.005 && reason.trim().length >= 3 : true);
 
   const submit = async () => {
     if (!canSubmit) return;
@@ -76,12 +80,13 @@ export default function DepositDialog({ open, mode, admission, onClose, onDone }
             <Typography variant="body2" sx={{ fontWeight: 700 }}>Held: {formatINR(held)}</Typography>
           </Box>
           <TextField fullWidth required type="number" label={`Amount (₹)`} value={amount} onChange={(e) => setAmount(e.target.value)}
-            helperText={isRefund ? `Max refundable: ${formatINR(held)}. An admin approves before the money is paid out.` : undefined}
-            error={isRefund && Number(amount) > held + 0.005}
-            InputProps={isRefund && held > 0 ? {
+            helperText={negative ? "Enter an amount above 0"
+              : isRefund ? `Max refundable: ${formatINR(refundable)}${pending > 0 ? ` (${formatINR(pending)} already waiting for approval)` : ""}. An admin approves before the money is paid out.` : undefined}
+            error={negative || (isRefund && Number(amount) > refundable + 0.005)}
+            InputProps={isRefund && refundable > 0 ? {
               endAdornment: (
                 <InputAdornment position="end">
-                  <Button size="small" onClick={() => setAmount(String(held))}
+                  <Button size="small" onClick={() => setAmount(String(refundable))}
                     sx={{ textTransform: "none", minWidth: 0, px: 1, fontWeight: 700, color: "#8b5cf6" }}>
                     Full
                   </Button>
@@ -91,7 +96,8 @@ export default function DepositDialog({ open, mode, admission, onClose, onDone }
           {!isRefund && (
             <TextField select fullWidth label="Payment method" value={methodId} onChange={(e) => setMethodId(e.target.value)}>
               <MenuItem value="">-</MenuItem>
-              {(lookups?.methods || []).map((m) => <MenuItem key={m.paymentMethodId} value={m.paymentMethodId}>{m.methodName}</MenuItem>)}
+              {/* An advance is the patient's money - an insurer pays the claim, never a deposit. */}
+              {(lookups?.methods || []).filter((m) => !/insurance/i.test(m.methodName)).map((m) => <MenuItem key={m.paymentMethodId} value={m.paymentMethodId}>{m.methodName}</MenuItem>)}
             </TextField>
           )}
           <TextField fullWidth required={isRefund} label={isRefund ? "Reason for refund" : "Note (optional)"} value={reason} onChange={(e) => setReason(e.target.value)} multiline rows={2} />
