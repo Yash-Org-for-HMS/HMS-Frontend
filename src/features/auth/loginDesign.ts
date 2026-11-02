@@ -90,4 +90,6 @@ export const loginSubmitBusySx = {
   cursor: "progress",
 } as const;
 
-export const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+// Trimmed: a space picked up by copy-paste or autofill is not a wrong address
+// (the submit trims it too).
+export const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());

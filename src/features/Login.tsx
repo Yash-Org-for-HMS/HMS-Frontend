@@ -32,7 +32,7 @@ export default function Login() {
   // Deliberately NOT gated on the fields being valid. Gating it made the
   // button flip grey→solid mid-word as the email became parseable, which
   // reads as a fault; and a disabled button never explains itself. The
-  // submit handler already refuses bad input, and now says why.
+  // submit handler already refuses bad input, and now says why.
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setTouched(true);
@@ -40,7 +40,7 @@ export default function Login() {
     if (!isValidEmail(email) || !password) return;
     setIsLoading(true);
     try {
-      const response = await axiosInstance.post("/auth/login", { email, password });
+      const response = await axiosInstance.post("/auth/login", { email: email.trim(), password });
       const { user, tokens } = response.data.data;
       login(tokens.accessToken, tokens.refreshToken, user);
     } catch (err: unknown) {
