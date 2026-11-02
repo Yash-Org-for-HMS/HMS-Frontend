@@ -5,7 +5,7 @@ import { realmForUrl } from "./axios";
 // shows "Missing or malformed Authorization header" (the store room did).
 describe("realmForUrl", () => {
   it("sends hospital-portal calls with the hospital login", () => {
-    for (const url of ["/store-room/items", "/ipd/bed-tariffs", "/mrd/registers", "/ward-indents", "/hospital/staff"]) {
+    for (const url of ["/store-room/items", "/ipd/bed-tariffs", "/mrd/registers", "/ward-indents", "/hospital/staff", "/certificates/to-sign"]) {
       expect(realmForUrl(url)).toBe("hospital");
     }
   });
