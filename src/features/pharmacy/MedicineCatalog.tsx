@@ -19,7 +19,12 @@ import { useToast } from "@/providers/ToastContext";
 import { useConfirm } from "@/providers/ConfirmContext";
 import { useServerSort } from "@/components/table/useTableSort";
 import SortableHeadCell from "@/components/table/SortableHeadCell";
-import { validate, hasErrors, required, isNonNegativeNumber, min, max } from "@/utils/validation";
+import { validate, hasErrors, required, isNonNegativeNumber, min, max, type Rule } from "@/utils/validation";
+
+// The GST rates goods can carry, before and after the Sept 2025 change - the
+// same list the server accepts. A 13 for a 12 taxed every sale wrongly.
+const GST_RATES = [0, 0.25, 3, 5, 12, 18, 28, 40];
+const isGstRate: Rule = (v) => (v === "" || v == null || GST_RATES.includes(Number(v)) ? "" : `Use one of ${GST_RATES.join(", ")}`);
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import BranchLevelsDialog from "@/components/pharmacy/transfers/BranchLevelsDialog";
 
@@ -151,7 +156,7 @@ export default function MedicineCatalog() {
         genericName: [required("Generic name")],
         sellingPrice: [required("Selling price"), isNonNegativeNumber, max(10000000)],
         minStockLevel: [min(0), max(100000)],
-        gstPercent: [min(0), max(100)],
+        gstPercent: [isGstRate],
       },
     );
     if (hasErrors(errors)) {
@@ -485,7 +490,12 @@ export default function MedicineCatalog() {
                 fullWidth
                 variant="outlined"
                 inputProps={{ min: 0, step: "0.01" }}
-                helperText="Used to value stock until a supplier invoice supersedes it"
+                // Not refused (a loss-leader is a choice), but said: selling below
+                // cost was saved without a word.
+                helperText={costPrice !== "" && sellingPrice !== "" && Number(costPrice) > Number(sellingPrice)
+                  ? "Higher than the selling price - each sale loses money"
+                  : "Used to value stock until a supplier invoice supersedes it"}
+                FormHelperTextProps={{ sx: costPrice !== "" && sellingPrice !== "" && Number(costPrice) > Number(sellingPrice) ? { color: "warning.dark", fontWeight: 700 } : undefined }}
               />
             </Box>
 

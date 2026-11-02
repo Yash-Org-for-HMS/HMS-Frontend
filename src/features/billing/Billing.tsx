@@ -98,7 +98,7 @@ export default function Billing({
         title={department ? `${department} billing history` : "Billing"}
         subtitle={
           department
-            ? `Bills carrying ${department.toLowerCase()} charges. Amounts shown are this department's share of each bill.`
+            ? `Bills carrying ${department.toLowerCase()} charges. Amounts shown are this department's share of each bill, with its GST.`
             : readOnly ? "Browse bills across the hospital" : "Browse bills, collect payments, and generate new invoices"
         }
       />

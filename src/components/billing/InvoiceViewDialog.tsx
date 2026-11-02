@@ -235,9 +235,13 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
                     const showTax = invoice.InvoiceItem?.some((it: InvoiceItem) => Number(it.taxPercent ?? 0) > 0);
                     // Halved the same way the server does: CGST rounded, SGST
                     // the remainder, so the two always re-add to the tax.
+                    // In whole paise: 2.03 / 2 is 1.015, which floating point rounded
+                    // DOWN to 1.01 while the server (decimal, half up) made it 1.02 -
+                    // the line and the totals then showed CGST and SGST swapped.
                     const halves = (tax: number) => {
-                      const c = Math.round((tax / 2) * 100) / 100;
-                      return { cgst: c, sgst: Math.round((tax - c) * 100) / 100 };
+                      const paise = Math.round(tax * 100);
+                      const c = Math.round(paise / 2);
+                      return { cgst: c / 100, sgst: (paise - c) / 100 };
                     };
                     return (
                   <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: 12 }}>

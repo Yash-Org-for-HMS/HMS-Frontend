@@ -24,6 +24,7 @@ import { useSocket } from "@/hooks/useSocket";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import PharmacyPage, { ROWS_PER_PAGE } from "./components/PharmacyPage";
 import { useToast } from "@/providers/ToastContext";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { useConfirm } from "@/providers/ConfirmContext";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import { QUEUE_POLL_MS, QUEUE_LIVE_FALLBACK_MS, LIVE_DASHBOARD_FALLBACK_MS } from "@/constants/intervals";
@@ -116,6 +117,21 @@ export default function DispensaryPOS() {
   // Cart state
   const [cart, setCart] = useState<CartLine[]>([]);
   const [patientId, setPatientId] = useState("");
+  // Who the sale is for, picked by name / UHID / phone: the counter asked for a
+  // raw patient id to be typed, so a sale for anyone without a prescription
+  // loaded could not be billed ("not a billable item for this patient").
+  const [patientPick, setPatientPick] = useState<{ patientId: string; name: string; uhid?: string | null } | null>(null);
+  const [patientQuery, setPatientQuery] = useState("");
+  const debouncedPatientQuery = useDebouncedValue(patientQuery);
+  const { data: patientOptions = [], isFetching: searchingPatients } = useQuery<{ patientId: string; firstName?: string; lastName?: string | null; uhidNumber?: string | null; phone?: string | null }[]>({
+    queryKey: ["pharmacy-patient-search", debouncedPatientQuery],
+    queryFn: async () => (await axiosInstance.get("/pharmacy/patients", { params: { search: debouncedPatientQuery, page: 1, limit: 20 } })).data.data || [],
+    enabled: debouncedPatientQuery.trim().length >= 2,
+  });
+  const choosePatient = (p: { patientId: string; name: string; uhid?: string | null } | null) => {
+    setPatientPick(p);
+    setPatientId(p?.patientId ?? "");
+  };
   const [selectedPrescriptionId, setSelectedPrescriptionId] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
   const [showPOS, setShowPOS] = useState(false);
@@ -279,7 +295,7 @@ export default function DispensaryPOS() {
 
   const loadPrescription = (prescription: PendingPrescription) => {
     setSelectedPrescriptionId(prescription.prescriptionId);
-    setPatientId(prescription.patientId || "");
+    choosePatient(prescription.patientId ? { patientId: prescription.patientId, name: prescription.patientName || "Patient", uhid: prescription.uhidNumber } : null);
     
     // The matching and quantity rules live in prescriptionToCart so they can be
     // tested directly - this is the step that decides how much of a drug leaves
@@ -359,7 +375,7 @@ export default function DispensaryPOS() {
   const handlePOSSuccess = () => {
     toast.success("Sale completed and paid successfully!");
     setCart([]);
-    setPatientId("");
+    choosePatient(null);
     setSelectedPrescriptionId(null);
     setShowPOS(false);
     fetchData(); // refresh stock and pending prescriptions
@@ -378,7 +394,7 @@ export default function DispensaryPOS() {
     }
     
     setCart([]);
-    setPatientId("");
+    choosePatient(null);
     setSelectedPrescriptionId(null);
     setShowPOS(false);
     fetchData(); 
@@ -389,7 +405,7 @@ export default function DispensaryPOS() {
       title="Dispensary & POS"
       subtitle="Process sales, auto-load prescriptions, and auto-deduct inventory."
       action={
-        <Button variant="outlined" onClick={() => { setCart([]); setSelectedPrescriptionId(null); setPatientId(""); }}>
+        <Button variant="outlined" onClick={() => { setCart([]); setSelectedPrescriptionId(null); choosePatient(null); }}>
           Clear Cart
         </Button>
       }
@@ -549,16 +565,24 @@ export default function DispensaryPOS() {
                     patient to raise the invoice against. Without one the order
                     was created and the payment then failed, stranding an
                     unpaid order the pharmacist had to go back and fix. */}
-                <TextField 
-                  label="Patient ID" 
-                  required
-                  variant="outlined" 
+                <Autocomplete
                   size="small"
-                  value={patientId}
-                  onChange={(e) => setPatientId(e.target.value)}
-                  sx={{ width: { xs: '100%', md: '250px' } }}
-                  placeholder="e.g. PAT-1234"
-                  helperText={selectedPrescriptionId ? "Auto-filled" : "Needed to bill the sale"}
+                  sx={{ width: { xs: '100%', md: '280px' } }}
+                  options={patientOptions.map((p) => ({ patientId: p.patientId, name: `${p.firstName ?? ""} ${p.lastName ?? ""}`.trim() || "Patient", uhid: p.uhidNumber }))}
+                  value={patientPick}
+                  loading={searchingPatients}
+                  disabled={!!selectedPrescriptionId}
+                  filterOptions={(x) => x}
+                  getOptionLabel={(p) => (p.uhid ? `${p.name} (${p.uhid})` : p.name)}
+                  isOptionEqualToValue={(o, v) => o.patientId === v.patientId}
+                  // Only typing searches: picking sets the text to its label (reason "reset").
+                  onInputChange={(_, v, reason) => { if (reason === "input") setPatientQuery(v); else if (reason === "clear") setPatientQuery(""); }}
+                  onChange={(_, v) => choosePatient(v)}
+                  noOptionsText={patientQuery.trim().length < 2 ? "Type at least 2 characters" : "No matching patient - register them at reception"}
+                  renderInput={(params) => (
+                    <TextField {...params} label="Patient" required placeholder="Name, UHID or phone"
+                      helperText={selectedPrescriptionId ? "From the prescription" : "Needed to bill the sale"} />
+                  )}
                 />
               </Box>
 
@@ -758,7 +782,8 @@ export default function DispensaryPOS() {
           // animation - otherwise Today's Orders shows the sale as unpaid.
           onPaid={() => fetchData()}
           patientId={createdOrder.patientId || patientId || "Walk-in"}
-          patientName={patientId ? `Patient ID: ${patientId}` : "Walk-in Patient"}
+          patientName={patientPick?.name ?? "Walk-in Patient"}
+          uhid={patientPick?.uhid}
           item={{
             id: createdOrder.pharmacyOrderId,
             type: "PHARMACY",
