@@ -23,6 +23,18 @@ import PatientPicker, { type PickedPatient } from "./PatientPicker";
  */
 
 interface FileOut { movementId: string; patientId: string; patientName: string; uhid: string; party: string | null; purpose: string | null; outAt: string; dueBackAt: string | null; overdue: boolean }
+/** What must be on file before a copy goes to each kind of recipient (the server requires it). */
+const PROOF_LABEL: Record<string, string> = {
+  PATIENT: "ID proof seen", NEXT_OF_KIN: "ID proof seen and relationship",
+  INSURER: "Patient's written consent", OTHER: "Patient's written consent",
+  POLICE: "Police request reference", COURT: "Court order / summons reference",
+};
+const PROOF_HINT: Record<string, string> = {
+  PATIENT: "e.g. Aadhaar ending 4321", NEXT_OF_KIN: "e.g. PAN ending 77K, son",
+  INSURER: "e.g. consent form dated 02 Nov, signed by patient", OTHER: "e.g. consent letter dated 02 Nov",
+  POLICE: "e.g. Kothrud PS letter 123/2026", COURT: "e.g. summons in case 45/2026",
+};
+
 interface Copy { movementId: string; patientName: string; uhid: string; party: string; partyType: string; purpose: string | null; documents: string; idProof: string | null; createdAt: string }
 const PARTY: Record<string, string> = { PATIENT: "Patient", NEXT_OF_KIN: "Next of kin", INSURER: "Insurer / TPA", POLICE: "Police", COURT: "Court", OTHER: "Other" };
 
@@ -97,12 +109,13 @@ function CopyDialog({ onClose, onDone }: { onClose: () => void; onDone: () => vo
           </Box>
           <TextField id="copy-documents" required label="What was copied" placeholder="e.g. Discharge summary, lab reports" value={f.documents} onChange={set("documents")} />
           <TextField id="copy-purpose" label="Purpose" placeholder="e.g. Insurance claim" value={f.purpose} onChange={set("purpose")} />
-          <TextField id="copy-id" label="Identity seen" placeholder="e.g. Aadhaar ending 4321, police letter no." value={f.idProof} onChange={set("idProof")} />
+          <TextField id="copy-id" required label={PROOF_LABEL[f.partyType] ?? "Proof on file"} placeholder={PROOF_HINT[f.partyType]} value={f.idProof} onChange={set("idProof")}
+            helperText="Records leave only against this - it is kept with the log" />
         </Stack>
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} color="inherit" disabled={saving}>Cancel</Button>
-        <Button variant="contained" onClick={save} disabled={saving || !patient || !f.party.trim() || !f.documents.trim()}>Log copy</Button>
+        <Button variant="contained" onClick={save} disabled={saving || !patient || !f.party.trim() || !f.documents.trim() || f.idProof.trim().length < 3}>Log copy</Button>
       </DialogActions>
     </Dialog>
   );

@@ -27,16 +27,18 @@ import type { Mlc } from "./MlcRegister";
 
 type CertType = "MEDICAL" | "FITNESS" | "DEATH";
 interface Cert {
-  certificateId: string; certNumber: string; certType: CertType; status: "ISSUED" | "CANCELLED"; issuedAt: string;
+  certificateId: string; certNumber: string; certType: CertType; status: "DRAFT" | "ISSUED" | "CANCELLED"; issuedAt: string;
   patientName: string; uhid: string; doctorName: string; printCount: number; cancelReason: string | null;
 }
 const TYPE_LABEL: Record<CertType, string> = { MEDICAL: "Medical", FITNESS: "Fitness", DEATH: "Death" };
 const MANNERS: Record<string, string> = { NATURAL: "Natural", ACCIDENT: "Accident", SUICIDE: "Suicide", HOMICIDE: "Homicide", PENDING_INVESTIGATION: "Pending investigation" };
 const printPath = (id: string) => `/reception/mrd/certificates/${id}/print`;
 
+/** Rest or fitness can start at most 7 days back (the server refuses earlier). */
+const EARLIEST = dayjs().subtract(7, "day").format("YYYY-MM-DD");
+
 function IssueDialog({ onClose, onDone }: { onClose: () => void; onDone: () => void }) {
   const toast = useToast();
-  const openPrint = usePrintWindow();
   const [issued, setIssued] = useState<{ certificateId: string; certNumber: string } | null>(null);
   const [type, setType] = useState<CertType>("MEDICAL");
   const [patient, setPatient] = useState<PickedPatient | null>(null);
@@ -63,9 +65,8 @@ function IssueDialog({ onClose, onDone }: { onClose: () => void; onDone: () => v
     setSaving(true);
     try {
       const cert = (await axiosInstance.post("/mrd/certificates", { certType: type, patientId: patient!.patientId, doctorId, mlcId: mlcId || undefined, details })).data.data as { certificateId: string; certNumber: string };
-      toast.success(`Issued ${cert.certNumber}`);
+      toast.success(`${cert.certNumber} prepared - sent to the doctor to sign`);
       onDone();
-      // Printed from a click of its own: a tab opened after the request returns is a blocked pop-up.
       setIssued(cert);
     } catch (err) {
       toast.error(getApiErrorMessage(err, "Couldn't issue the certificate"));
@@ -76,16 +77,15 @@ function IssueDialog({ onClose, onDone }: { onClose: () => void; onDone: () => v
 
   return (
     <Dialog open onClose={saving ? undefined : onClose} fullWidth maxWidth="sm">
-      <DialogTitle sx={{ fontWeight: 700 }}>Issue a certificate</DialogTitle>
+      <DialogTitle sx={{ fontWeight: 700 }}>Prepare a certificate</DialogTitle>
       {issued ? (
         <>
           <DialogContent dividers>
-            <Typography variant="body1">Issued <b>{issued.certNumber}</b>.</Typography>
-            <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5 }}>Print it now for the consultant to sign - later prints are marked duplicate.</Typography>
+            <Typography variant="body1">Prepared <b>{issued.certNumber}</b>.</Typography>
+            <Typography variant="body2" sx={{ color: "text.secondary", mt: 0.5 }}>It is waiting for the certifying doctor to sign it in Dolphin. Once signed it can be printed here; later prints are marked duplicate.</Typography>
           </DialogContent>
           <DialogActions>
-            <Button onClick={onClose} color="inherit">Close</Button>
-            <Button variant="contained" startIcon={<PrintRounded />} onClick={() => { if (openPrint(printPath(issued.certificateId))) onClose(); }}>Print</Button>
+            <Button variant="contained" onClick={onClose}>Done</Button>
           </DialogActions>
         </>
       ) : (
@@ -96,21 +96,21 @@ function IssueDialog({ onClose, onDone }: { onClose: () => void; onDone: () => v
             {(Object.keys(TYPE_LABEL) as CertType[]).map((t) => <ToggleButton key={t} value={t}>{TYPE_LABEL[t]}</ToggleButton>)}
           </ToggleButtonGroup>
           <PatientPicker id="cert-patient" value={patient} onChange={(p) => { setPatient(p); setMlcId(""); }} />
-          <TextField id="cert-doctor" select required label="Certifying consultant" value={doctorId} onChange={(e) => setDoctorId(e.target.value)} helperText="Signs the printed certificate">
+          <TextField id="cert-doctor" select required label="Certifying consultant" value={doctorId} onChange={(e) => setDoctorId(e.target.value)} helperText="Signs it in Dolphin before it can be printed">
             {(doctors.data ?? []).map((x) => <MenuItem key={x.doctorId} value={x.doctorId}>{x.name}</MenuItem>)}
           </TextField>
           {type === "MEDICAL" && (
             <>
               <TextField id="cert-diagnosis" required label="Diagnosis" value={d.diagnosis ?? ""} onChange={set("diagnosis")} />
               <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
-                <TextField id="cert-rest-from" required type="date" label="Rest from" value={d.restFrom} onChange={set("restFrom")} InputLabelProps={{ shrink: true }} sx={{ flex: 1, minWidth: 180 }} />
+                <TextField id="cert-rest-from" required type="date" label="Rest from" value={d.restFrom} onChange={set("restFrom")} InputLabelProps={{ shrink: true }} inputProps={{ min: EARLIEST }} helperText="At most 7 days back" sx={{ flex: 1, minWidth: 180 }} />
                 <TextField id="cert-rest-to" required type="date" label="Rest to" value={d.restTo} onChange={set("restTo")} InputLabelProps={{ shrink: true }} sx={{ flex: 1, minWidth: 180 }} error={!!d.restTo && d.restTo < d.restFrom} />
               </Box>
             </>
           )}
           {type === "FITNESS" && (
             <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
-              <TextField id="cert-fit-from" required type="date" label="Fit from" value={d.fitFrom} onChange={set("fitFrom")} InputLabelProps={{ shrink: true }} sx={{ flex: 1, minWidth: 180 }} />
+              <TextField id="cert-fit-from" required type="date" label="Fit from" value={d.fitFrom} onChange={set("fitFrom")} InputLabelProps={{ shrink: true }} inputProps={{ min: EARLIEST }} sx={{ flex: 1, minWidth: 180 }} />
               <TextField id="cert-purpose" required label="Fit to (purpose)" placeholder="e.g. resume duty" value={d.purpose ?? ""} onChange={set("purpose")} sx={{ flex: 2, minWidth: 200 }} />
             </Box>
           )}
@@ -140,7 +140,7 @@ function IssueDialog({ onClose, onDone }: { onClose: () => void; onDone: () => v
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} color="inherit" disabled={saving}>Cancel</Button>
-        <Button variant="contained" onClick={issue} disabled={saving || !ready}>Issue</Button>
+        <Button variant="contained" onClick={issue} disabled={saving || !ready}>Send to doctor to sign</Button>
       </DialogActions>
       </>
       )}
@@ -204,7 +204,7 @@ export default function Certificates() {
           {(Object.keys(TYPE_LABEL) as CertType[]).map((t) => <ToggleButton key={t} value={t}>{TYPE_LABEL[t]}</ToggleButton>)}
         </ToggleButtonGroup>
         <Box sx={{ flex: 1 }} />
-        <Button variant="contained" startIcon={<AddRounded />} onClick={() => setIssuing(true)}>Issue certificate</Button>
+        <Button variant="contained" startIcon={<AddRounded />} onClick={() => setIssuing(true)}>Prepare certificate</Button>
       </Box>
       {q.isError ? <ErrorState title="Couldn't load the certificates" message={apiErrorText(q.error)} onRetry={() => q.refetch()} /> : !q.isLoading && !q.data?.length ? (
         <Paper variant="outlined" sx={{ p: 3 }}><Mascot pose="nothing-here-yet" title="No certificate issued yet" /></Paper>
@@ -241,7 +241,9 @@ export default function Certificates() {
                       <SoftChip label={`Cancelled - ${c.cancelReason ?? ""}`} bg={`${SEMANTIC.danger}1a`} color={SEMANTIC.danger} />
                     ) : (
                       <>
-                        <Button size="small" startIcon={<PrintRounded />} onClick={() => openPrint(printPath(c.certificateId))} sx={{ color: BRAND.action }}>Print</Button>
+                        {c.status === "DRAFT"
+                          ? <SoftChip label="Awaiting doctor's signature" bg={`${SEMANTIC.warning}1a`} color={SEMANTIC.warning} />
+                          : <Button size="small" startIcon={<PrintRounded />} onClick={() => openPrint(printPath(c.certificateId))} sx={{ color: BRAND.action }}>Print</Button>}
                         <Button size="small" color="inherit" onClick={() => setCancelling(c)}>Cancel</Button>
                       </>
                     )}

@@ -54,7 +54,7 @@ describe("Medical records", () => {
     });
     api.post.mockResolvedValue({ data: { data: { certificateId: "c1", certNumber: "DC/MAIN/2627/0001" } } });
     renderWithProviders(<Certificates />);
-    fireEvent.click(await screen.findByRole("button", { name: /Issue certificate/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /Prepare certificate/ }));
     const dialog = await screen.findByRole("dialog");
     fireEvent.click(within(dialog).getByRole("button", { name: "Death" }));
     // Patient, consultant, cause, manner.
@@ -67,10 +67,10 @@ describe("Medical records", () => {
     fireEvent.change(within(dialog).getByLabelText(/Immediate cause/), { target: { value: "Head injury" } });
     fireEvent.mouseDown(within(dialog).getByLabelText(/Manner of death/));
     fireEvent.click(await screen.findByRole("option", { name: "Accident" }));
-    expect(within(dialog).getByRole("button", { name: "Issue" })).toBeDisabled();
+    expect(within(dialog).getByRole("button", { name: "Send to doctor to sign" })).toBeDisabled();
     fireEvent.mouseDown(within(dialog).getByLabelText(/Medico-legal case/));
     fireEvent.click(await screen.findByRole("option", { name: "MLC/MAIN/2627/0001" }));
-    fireEvent.click(within(dialog).getByRole("button", { name: "Issue" }));
+    fireEvent.click(within(dialog).getByRole("button", { name: "Send to doctor to sign" }));
     await waitFor(() => expect(api.post).toHaveBeenCalledWith("/mrd/certificates", expect.objectContaining({ certType: "DEATH", patientId: "p1", doctorId: "d1", mlcId: "1" })));
     expect(await within(dialog).findByText("DC/MAIN/2627/0001")).toBeInTheDocument();
   });

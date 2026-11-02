@@ -144,6 +144,7 @@ const WardsHome = lazy(() => import("@/features/roleHome/WardsHome"));
 const WardRound = lazy(() => import("@/features/roleHome/WardRound"));
 // A resident's notes and orders, co-signed by the consultant (backend wardRound).
 const CosignPage = lazy(() => import("@/features/wardRound/CosignPage"));
+const CertificatesToSign = lazy(() => import("@/features/doctor/CertificatesToSign"));
 
 // Doctor
 const DoctorDashboard = lazy(() => import("@/features/doctor/DoctorDashboard"));
@@ -494,6 +495,7 @@ function App() {
             <Route path="/doctor/dashboard" element={el(DoctorDashboard)} />
             <Route path="/doctor/ward-round" element={el(WardRound)} />
             <Route path="/doctor/cosign" element={el(CosignPage)} />
+            <Route path="/doctor/certificates" element={el(CertificatesToSign)} />
             <Route path="/doctor/queue" element={el(DoctorQueue)} />
             <Route path="/doctor/schedule" element={el(DoctorMySchedule)} />
             <Route path="/doctor/consultation/:appointmentId" element={el(ConsultationWorkspace)} />

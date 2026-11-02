@@ -12,7 +12,7 @@ import {
   Box, Drawer, Divider, useTheme, useMediaQuery,
 } from "@mui/material";
 import {
-  DashboardRounded, PeopleAltRounded, GroupsRounded, QueueRounded, EventNoteRounded, EventBusyRounded, ScienceRounded, AssessmentRounded, AirlineSeatFlatRounded, DoneAllRounded,
+  DashboardRounded, PeopleAltRounded, GroupsRounded, QueueRounded, EventNoteRounded, EventBusyRounded, ScienceRounded, AssessmentRounded, AirlineSeatFlatRounded, DoneAllRounded, DrawRounded,
 } from "@mui/icons-material";
 import { holdsHome, isResidentOnly } from "@/constants/roles";
 import { useEnabledModules } from "@/hooks/useEnabledModules";
@@ -74,7 +74,7 @@ export default function DoctorLayout() {
   });
   const { data: badges } = useQuery({
     queryKey: ["doctor-badges"],
-    queryFn: async () => (await axiosInstance.get("/doctor/badges")).data.data as { resultsReady: number; queueWaiting: number; toCosign?: number },
+    queryFn: async () => (await axiosInstance.get("/doctor/badges")).data.data as { resultsReady: number; queueWaiting: number; toCosign?: number; certificatesToSign?: number },
     refetchInterval: connected ? LIVE_DASHBOARD_FALLBACK_MS : DASHBOARD_POLL_MS,
     refetchOnWindowFocus: true,
   });
@@ -91,6 +91,10 @@ export default function DoctorLayout() {
       : (badges?.toCosign || location.pathname === "/doctor/cosign")
         ? [{ text: "To co-sign", icon: <DoneAllRounded />, path: "/doctor/cosign", badge: badges?.toCosign || 0, section: "Overview" }]
         : []),
+    // Certificates MRD prepared in this doctor's name: shown while some wait (or the page is open).
+    ...((badges?.certificatesToSign || location.pathname === "/doctor/certificates")
+      ? [{ text: "Certificates to sign", icon: <DrawRounded />, path: "/doctor/certificates", badge: badges?.certificatesToSign || 0, section: "Overview" }]
+      : []),
     { text: "My Queue", icon: <QueueRounded />, path: "/doctor/queue", badge: badges?.queueWaiting || 0, section: "My Work" },
     { text: "My Patients", icon: <PeopleAltRounded />, path: "/doctor/patients", badge: 0, section: "My Work" },
     // A consultant's in-patients too (a resident has it as their home, above):
