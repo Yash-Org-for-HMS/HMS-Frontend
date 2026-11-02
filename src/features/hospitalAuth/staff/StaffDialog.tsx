@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { passwordIssue } from "@/utils/validation";
 import { useQuery } from "@tanstack/react-query";
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, MenuItem, Stack, Typography,
@@ -204,7 +205,7 @@ export default function StaffDialog({ row, options, onClose, onSaved, canGiveLog
       .map((u) => ({ value: `unit:${u.serviceUnitId}`, label: u.name, secondary: `Unit · ${u.postingType}`, keywords: u.code })),
   ];
 
-  const passwordShort = f.giveLogin && f.loginPassword.length > 0 && f.loginPassword.length < 6;
+  const passwordShort = f.giveLogin && f.loginPassword.length > 0 && !!passwordIssue(f.loginPassword);
   const valid = f.firstName.trim() && f.staffCategoryCode && (!f.giveLogin || ((f.loginEmail.trim() || loginId.trim()) && f.loginRoleId && !passwordShort));
 
   const submit = async () => {
@@ -496,7 +497,7 @@ export default function StaffDialog({ row, options, onClose, onSaved, canGiveLog
                 <Grid size={{ xs: 12, sm: 7 }}>
                   <TextField fullWidth id="staff-login-password" type="password" autoComplete="new-password" label="Starting password (optional)"
                     value={f.loginPassword} onChange={(e) => set("loginPassword", e.target.value)} error={passwordShort}
-                    helperText={passwordShort ? "At least 6 characters" : "Leave blank and one is made up for you, shown once."} />
+                    helperText={passwordShort ? passwordIssue(f.loginPassword) : "Leave blank and one is made up for you, shown once."} />
                 </Grid>
               </Grid>
             )}

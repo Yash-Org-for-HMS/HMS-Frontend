@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { passwordIssue } from "@/utils/validation";
 import { alpha, type Theme } from "@mui/material/styles";
 import CredentialDialog from "@/components/CredentialDialog";
 import { SEMANTIC, BRAND } from "@/styles/accents";
@@ -97,8 +98,9 @@ function ResetPasswordDialog({ open, user, onClose, onSuccess }: ResetPasswordDi
 
   const handleReset = async () => {
     if (!useDefault) {
-      if (!newPassword || newPassword.length < 6) {
-        toast.error("Password must be at least 6 characters.");
+      const issue = newPassword ? passwordIssue(newPassword) : "Enter a new password";
+      if (issue) {
+        toast.error(issue);
         return;
       }
       if (newPassword !== confirmPassword) {

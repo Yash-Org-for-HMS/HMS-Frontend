@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { passwordIssue } from "@/utils/validation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Box, Typography, Button, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
@@ -88,13 +89,13 @@ function GiveLoginDialog({ row, options, onClose, onDone }: {
             {options.roles.map((r) => <MenuItem key={r.roleId} value={r.roleId}>{r.roleName}</MenuItem>)}
           </TextField>
           <TextField fullWidth id="give-login-password" type="password" autoComplete="new-password" label="Starting password (optional)"
-            value={password} onChange={(e) => setPassword(e.target.value)} error={password.length > 0 && password.length < 6}
-            helperText={password.length > 0 && password.length < 6 ? "At least 6 characters" : "Leave blank and one is made up for them; they change it at first sign-in."} />
+            value={password} onChange={(e) => setPassword(e.target.value)} error={password.length > 0 && !!passwordIssue(password)}
+            helperText={(password.length > 0 && passwordIssue(password)) || "Leave blank and one is made up for them; they change it at first sign-in."} />
         </Stack>
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} disabled={saving} sx={{ textTransform: "none" }}>Cancel</Button>
-        <Button variant="contained" onClick={submit} disabled={(!email.trim() && !loginId.trim()) || !roleId || saving || (password.length > 0 && password.length < 6)}
+        <Button variant="contained" onClick={submit} disabled={(!email.trim() && !loginId.trim()) || !roleId || saving || (password.length > 0 && !!passwordIssue(password))}
           startIcon={saving ? <HeartbeatLoader size={20} /> : undefined} sx={{ textTransform: "none", fontWeight: 600 }}>
           Create login
         </Button>

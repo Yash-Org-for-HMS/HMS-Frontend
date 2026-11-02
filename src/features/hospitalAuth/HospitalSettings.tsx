@@ -140,6 +140,10 @@ export default function HospitalSettings() {
       // so an empty value leaves the setting untouched.
       const raw = formData.refundApprovalThreshold;
       const payload: Record<string, unknown> = { ...formData };
+      // Not edited on this screen: sending them back would only re-submit (and,
+      // if an old value is no longer allowed, fail on) what is already saved.
+      delete payload.taxPercentage;
+      delete payload.currencyCode;
       if (raw === "" || raw == null) delete payload.refundApprovalThreshold;
       else payload.refundApprovalThreshold = Number(raw);
 

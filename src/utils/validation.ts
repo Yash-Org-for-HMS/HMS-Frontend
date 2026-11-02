@@ -48,6 +48,22 @@ export const isPhone: Rule = (v) => {
   return "";
 };
 
+/**
+ * Why a password being SET is too weak, or "" if it will do - the same rule the
+ * server applies (credentialRules.passwordProblem): 8+ characters, a letter and a number.
+ */
+export const passwordIssue = (p: string): string =>
+  p.length < 8 ? "At least 8 characters" : !/[A-Za-z]/.test(p) || !/\d/.test(p) ? "Use at least one letter and one number" : "";
+
+/** Form rule: an optional password, checked only when one is typed. */
+export const strongPassword =
+  (label = "Password"): Rule =>
+  (v) => {
+    if (isBlank(v)) return "";
+    const issue = passwordIssue(String(v));
+    return issue ? `${label}: ${issue.toLowerCase()}` : "";
+  };
+
 export const minLen =
   (n: number, label = "This field"): Rule =>
   (v) =>

@@ -33,7 +33,7 @@ import { useToast } from "@/providers/ToastContext";
 import PageHeader from "@/components/layout/PageHeader";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
 import FormSkeleton from "@/components/skeletons/FormSkeleton";
-import { validate, hasErrors, required, isEmail, isPhone, minLen, match, type Errors } from "@/utils/validation";
+import { validate, hasErrors, required, isEmail, isPhone, match, type Errors, strongPassword } from "@/utils/validation";
 import { useEnabledModules } from "@/hooks/useEnabledModules";
 import type { Role, Department, Branch } from "@/types";
 import ExtraRolesEditor, { type ExtraRoleRow } from "./ExtraRolesEditor";
@@ -203,7 +203,7 @@ export default function UserForm() {
       phone: [isPhone],
     };
     if (!isEditing && formData.initialPassword) {
-      rules.initialPassword = [minLen(6, "Password")];
+      rules.initialPassword = [strongPassword("Password")];
       rules.confirmPassword = [match(formData.initialPassword, "Passwords")];
     }
     const found = validate(formData, rules);
@@ -501,7 +501,7 @@ export default function UserForm() {
                       type={showInitialPassword ? "text" : "password"}
                       value={formData.initialPassword}
                       onChange={handleChange}
-                      placeholder="Min 6 characters (or leave blank for default)"
+                      placeholder="8+ characters with a letter and a number (or leave blank)"
                       error={!!errors.initialPassword}
                       helperText={errors.initialPassword}
                       InputLabelProps={{ style: { color: "text.secondary" } }}
