@@ -19,6 +19,8 @@ import { ListSkeleton } from "../TableRowsSkeleton";
 import ErrorState from "../ErrorState";
 import Mascot from "../Mascot";
 import { useToast } from "@/providers/ToastContext";
+import { useConfirm } from "@/providers/ConfirmContext";
+import axios from "axios";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import dayjs, { Dayjs } from "dayjs";
 import { formatINRAuto } from "@/utils/format";
@@ -94,6 +96,7 @@ function printCertificate(opts: { hospitalName: string; patientName: string; pat
 
 export default function VaccinationsSection({ patientId, patientName, patientUhid, patientDob, readOnly = false }: { patientId: string; patientName: string; patientUhid: string; patientDob: string | null; readOnly?: boolean }) {
   const toast = useToast();
+  const confirm = useConfirm();
   const { hospital } = useHospitalAuth();
   const qc = useQueryClient();
   // Administering a priced vaccine raises a real invoice - the sibling
@@ -180,9 +183,19 @@ export default function VaccinationsSection({ patientId, patientName, patientUhi
     setSaving(true);
     try {
       if (actionTarget.kind === "administer") {
-        const res = await axiosInstance.put(`/vaccination/records/${actionTarget.row.patientVaccinationId}/administer`, {
-          administeredDate, batchNumber: batchNumber || undefined, notes: notes || undefined,
-        });
+        const url = `/vaccination/records/${actionTarget.row.patientVaccinationId}/administer`;
+        const body = { administeredDate, batchNumber: batchNumber || undefined, notes: notes || undefined };
+        let res;
+        try {
+          res = await axiosInstance.put(url, body);
+        } catch (err: unknown) {
+          // An earlier dose of this vaccine is still open: give this one only on a confirm.
+          const data = axios.isAxiosError(err) ? err.response?.data : null;
+          if (data?.code !== "OUT_OF_ORDER") throw err;
+          const ok = await confirm({ title: "Dose out of order", message: data.message, confirmText: "Give this dose" });
+          if (!ok) return;
+          res = await axiosInstance.put(url, { ...body, confirmOutOfOrder: true });
+        }
         invalidateBillingIfCharged(res.data?.data?.invoiceId);
         toast.success(`${actionTarget.row.vaccineName} (${actionTarget.row.doseLabel}) marked administered`);
       } else if (actionTarget.kind === "external") {
@@ -422,11 +435,11 @@ export default function VaccinationsSection({ patientId, patientName, patientUhi
           {actionTarget?.kind === "administer" && (
             <TextField fullWidth label="Batch number (optional)" sx={{ mb: 2 }} value={batchNumber} onChange={(e) => setBatchNumber(e.target.value)} />
           )}
-          <TextField fullWidth multiline minRows={2} label="Notes (optional)" value={notes} onChange={(e) => setNotes(e.target.value)} />
+          <TextField fullWidth multiline minRows={2} label={actionTarget?.kind === "skip" ? "Why is it skipped? (required)" : "Notes (optional)"} value={notes} onChange={(e) => setNotes(e.target.value)} />
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
           <Button onClick={() => setActionTarget(null)} color="inherit" disabled={saving}>Cancel</Button>
-          <Button variant="contained" onClick={submitAction} disabled={saving}>Save</Button>
+          <Button variant="contained" onClick={submitAction} disabled={saving || (actionTarget?.kind === "skip" && notes.trim().length < 3)}>Save</Button>
         </DialogActions>
       </Dialog>
 

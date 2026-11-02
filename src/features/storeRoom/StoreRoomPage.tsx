@@ -232,7 +232,7 @@ function ItemDialog({ id, canEdit, onClose, onChanged }: { id: string; canEdit: 
               onSave={(q, _r, note) => run(() => axiosInstance.post(`/store-room/items/${id}/add`, { quantity: q, note }), "Stock added", "Could not add stock")} />}
             {action === "remove" && <CountForm title="Remove from the store" label="How many to remove" max={item.quantity} withReason onCancel={() => setAction(null)}
               onSave={(q, reason, note) => run(() => axiosInstance.post(`/store-room/items/${id}/remove`, { quantity: q, reason, note }), "Removed", "Could not remove")} />}
-            {action === "count" && <CountForm title="Set the count after a physical check" label="How many are actually there" min={0} onCancel={() => setAction(null)}
+            {action === "count" && <CountForm title="Set the count after a physical check" label="How many are actually there" min={0} booksSay={item.quantity} onCancel={() => setAction(null)}
               onSave={(q, _r, note) => run(() => axiosInstance.post(`/store-room/items/${id}/count`, { quantity: q, note }), "Count saved", "Could not save the count")} />}
             {action === "unit" && <UnitForm onCancel={() => setAction(null)}
               onSave={(body) => run(() => axiosInstance.post(`/store-room/items/${id}/units`, body), "Unit added", "Could not add the unit")} />}
@@ -269,8 +269,10 @@ function ReasonSelect({ value, onChange }: { value: Reason | ""; onChange: (r: R
   );
 }
 
-function CountForm({ title, label, min = 1, max, withReason, onCancel, onSave }: {
-  title: string; label: string; min?: number; max?: number; withReason?: boolean; onCancel: () => void;
+function CountForm({ title, label, min = 1, max, withReason, booksSay, onCancel, onSave }: {
+  title: string; label: string; min?: number; max?: number; withReason?: boolean;
+  /** For a physical count: the store's figure, so a shortfall can ask for a note. */
+  booksSay?: number; onCancel: () => void;
   onSave: (quantity: number, reason: Reason | undefined, note: string | undefined) => Promise<void>;
 }) {
   const [q, setQ] = useState("");
@@ -278,7 +280,9 @@ function CountForm({ title, label, min = 1, max, withReason, onCancel, onSave }:
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const n = Number(q);
-  const ok = q !== "" && Number.isInteger(n) && n >= min && (max === undefined || n <= max) && (!withReason || !!reason);
+  const short = booksSay !== undefined && q !== "" && n < booksSay;
+  const ok = q !== "" && Number.isInteger(n) && n >= min && (max === undefined || n <= max) && (!withReason || !!reason)
+    && (!short || note.trim().length >= 3);
   return (
     <Paper variant="outlined" sx={{ p: 2, mb: 2, borderRadius: 2 }}>
       <Typography variant="subtitle2" sx={{ mb: 1.5 }}>{title}</Typography>
@@ -286,7 +290,7 @@ function CountForm({ title, label, min = 1, max, withReason, onCancel, onSave }:
         <TextField size="small" type="number" label={label} value={q} onChange={(e) => setQ(e.target.value)} inputProps={{ min, max }} sx={{ minWidth: 200 }}
           helperText={max !== undefined ? `${max} in the store` : undefined} />
         {withReason && <ReasonSelect value={reason} onChange={setReason} />}
-        <TextField size="small" label="Note (optional)" value={note} onChange={(e) => setNote(e.target.value)} inputProps={{ maxLength: 500 }} sx={{ flex: 1 }} />
+        <TextField size="small" label={short ? `Why ${booksSay! - n} short? (required)` : "Note (optional)"} value={note} onChange={(e) => setNote(e.target.value)} inputProps={{ maxLength: 500 }} sx={{ flex: 1 }} />
       </Stack>
       <Stack direction="row" spacing={1} sx={{ mt: 1.5, justifyContent: "flex-end" }}>
         <Button size="small" onClick={onCancel} sx={{ textTransform: "none" }}>Cancel</Button>
