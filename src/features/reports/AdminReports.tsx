@@ -1,4 +1,5 @@
 import SmsRounded from "@mui/icons-material/SmsRounded";
+import { TRIALS_OFFERED } from "@/constants/commercial";
 import { SEMANTIC, NEUTRAL, BRAND } from "@/styles/accents";
 import SimpleTable from "@/features/reports/kit/SimpleTable";
 import KpiCard from "@/features/reports/kit/KpiCard";
@@ -98,7 +99,7 @@ function OverviewReport() {
           promising a page that doesn't exist. */}
       <Grid container spacing={2}>
         <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<LocalHospitalRounded />} label="Hospitals" info="Hospitals on the platform (deleted ones left out). Below: how many are active." value={data.totalHospitals ?? 0} sub={`${data.activeHospitals ?? 0} active`} href="/reports?view=hospitals" /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<TimerRounded />} label="Active Trials" info="Free trials running right now." value={data.activeTrials ?? 0} sub={`${data.expiredHospitals ?? 0} expired`} accent={SEMANTIC.warning} href="/reports?view=trials&status=active" /></Grid>
+        {TRIALS_OFFERED && (<Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<TimerRounded />} label="Active Trials" info="Free trials running right now." value={data.activeTrials ?? 0} sub={`${data.expiredHospitals ?? 0} expired`} accent={SEMANTIC.warning} href="/reports?view=trials&status=active" /></Grid>)}
         <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PersonSearchRounded />} label="Leads" info="All sales leads ever recorded. Below: how many became paying hospitals." value={data.totalLeads ?? 0} sub={`${data.convertedLeads ?? 0} converted`} accent="#8b5cf6" href="/reports?view=leads" /></Grid>
         <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<AccountBalanceWalletRounded />} label="Est. MRR" info="Monthly recurring revenue: each hospital's plan price per month added up (annual plans divided by 12). Same figure as Subscription billing." value={inr(data.totalRevenue)} sub="monthly recurring" accent={SEMANTIC.success} href="/reports?view=subscriptions" /></Grid>
         <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CardMembershipRounded />} label="Plans" info="Subscription plans set up on the platform." value={data.activePlans ?? 0} accent="#0891b2" href="/reports?view=subscriptions" /></Grid>
@@ -249,7 +250,7 @@ function LeadsReport() {
       <Grid container spacing={2}>
         <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PeopleAltRounded />} label="Total leads" info="All sales leads in this list." value={data.length} accent="#8b5cf6" /></Grid>
         <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CheckCircleRounded />} label="Converted" info="Leads that became paying hospitals." value={counts["converted"] || 0} accent={SEMANTIC.success} /></Grid>
-        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<RocketLaunchRounded />} label="Trialing" info="Leads currently on a free trial." value={counts["trialing"] || 0} accent={SEMANTIC.warning} /></Grid>
+        {TRIALS_OFFERED && (<Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<RocketLaunchRounded />} label="Trialing" info="Leads currently on a free trial." value={counts["trialing"] || 0} accent={SEMANTIC.warning} /></Grid>)}
         <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<HighlightOffRounded />} label="Lost" info="Leads marked as lost." value={counts["lost"] || 0} accent={SEMANTIC.danger} /></Grid>
       </Grid>
       <ReportStatusChips
@@ -312,7 +313,7 @@ function TrialsReport() {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
       <Grid container spacing={2}>
-        <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<TimerRounded />} label="Total trials" info="All free trials ever started." value={data.length} accent={SEMANTIC.warning} /></Grid>
+        {TRIALS_OFFERED && (<Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<TimerRounded />} label="Total trials" info="All free trials ever started." value={data.length} accent={SEMANTIC.warning} /></Grid>)}
         <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<RocketLaunchRounded />} label="Active" info="Trials running right now." value={byState("active")} accent={BRAND.action} /></Grid>
         <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<WarningAmberRounded />} label="Expiring in 7 days" info="Active trials that end within the next 7 days. Follow up before they lapse." value={expiringSoon} accent={expiringSoon ? SEMANTIC.danger : NEUTRAL.muted} /></Grid>
         <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CheckCircleRounded />} label="Converted" info="Trials that turned into a paying hospital." value={byState("converted")} accent={SEMANTIC.success} /></Grid>

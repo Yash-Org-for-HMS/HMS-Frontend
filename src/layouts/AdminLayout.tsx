@@ -1,4 +1,5 @@
 import { useState, useEffect, type ReactNode } from "react";
+import { TRIALS_OFFERED } from "@/constants/commercial";
 import { isNavItemActive } from "@/components/layout/navActive";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -76,7 +77,7 @@ export default function AdminLayout() {
       heading: t("nav.group.salesPipeline", "Sales Pipeline"),
       items: [
         { text: t("nav.leads"), icon: <PeopleAltRounded />, path: "/leads" },
-        { text: t("nav.trials"), icon: <TimerRounded />, path: "/trials" },
+        ...(TRIALS_OFFERED ? [{ text: t("nav.trials"), icon: <TimerRounded />, path: "/trials" }] : []),
       ],
     },
     {

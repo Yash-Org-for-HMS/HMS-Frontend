@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { TRIALS_OFFERED } from "@/constants/commercial";
 import { Dialog, Box, InputBase, Typography, List, ListItemButton, ListItemIcon, ListItemText, Chip } from "@mui/material";
 import {
   SearchRounded, DashboardRounded, ApartmentRounded, WorkspacePremiumRounded, ReceiptLongRounded,
@@ -17,7 +18,7 @@ const ADMIN_ROUTES = [
   { name: "Plans", path: "/plans", icon: <WorkspacePremiumRounded /> },
   { name: "Subscription Billing", path: "/subscription-billing", icon: <ReceiptLongRounded /> },
   { name: "Leads", path: "/leads", icon: <TrendingUpRounded /> },
-  { name: "Trials", path: "/trials", icon: <ScienceRounded /> },
+  ...(TRIALS_OFFERED ? [{ name: "Trials", path: "/trials", icon: <ScienceRounded /> }] : []),
   { name: "Onboarding", path: "/onboarding", icon: <RocketLaunchRounded /> },
   { name: "Super Admins", path: "/super-admins", icon: <BadgeRounded /> },
   { name: "Roles", path: "/rbac/roles", icon: <BadgeRounded /> },
