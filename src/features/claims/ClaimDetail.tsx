@@ -18,7 +18,7 @@ import ErrorState from "@/components/ErrorState";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
 import ClaimDocumentsSection from "./ClaimDocumentsSection";
 import DiagnosisPanel from "@/components/clinical/DiagnosisPanel";
-import { statusMeta } from "./claimMeta";
+import { statusMeta, CLAIM_DOC_CATALOG } from "./claimMeta";
 
 const ACCENT = BRAND.action;
 
@@ -233,23 +233,51 @@ export default function ClaimDetail() {
         options={claim.allowedTransitions || []}
         onDone={() => { setAdvOpen(false); refetch(); }}
         claimId={id!}
+        claim={claim}
       />
     </Box>
   );
 }
 
-function AdvanceStatusDialog({ open, onClose, options, onDone, claimId }: { open: boolean; onClose: () => void; options: string[]; onDone: () => void; claimId: string }) {
+/** The amounts the status dialog prefills from. */
+interface ClaimAmounts {
+  preAuthApprovedAmount?: string | number | null;
+  preAuthRequestedAmount?: string | number | null;
+  finalClaimedAmount?: string | number | null;
+  invoice?: { netAmount?: string | number | null } | null;
+}
+
+function AdvanceStatusDialog({ open, onClose, options, onDone, claimId, claim }: { open: boolean; onClose: () => void; options: string[]; onDone: () => void; claimId: string; claim: ClaimAmounts }) {
   const toast = useToast();
   const [toStatus, setToStatus] = useState("");
   const [note, setNote] = useState("");
+  const [amount, setAmount] = useState("");
   const [saving, setSaving] = useState(false);
+  // Approval records what the payer approved; submission records what is claimed.
+  const amountLabel = toStatus === "PREAUTH_APPROVED" ? "Amount approved by the payer (₹)" : toStatus === "CLAIM_SUBMITTED" ? "Final amount claimed (₹)" : "";
+  const pickStatus = (v: string) => {
+    setToStatus(v);
+    const prefill = v === "PREAUTH_APPROVED" ? (claim?.preAuthApprovedAmount ?? claim?.preAuthRequestedAmount)
+      : v === "CLAIM_SUBMITTED" ? (claim?.finalClaimedAmount ?? claim?.invoice?.netAmount) : null;
+    setAmount(prefill != null ? String(Number(prefill)) : "");
+  };
+  // Pre-auth papers still missing: a warning, not a block (some payers take them later).
+  const { data: docs = [] } = useQuery({
+    queryKey: ["claim-docs", claimId],
+    queryFn: async () => (await axiosInstance.get(`/claims/${claimId}/documents`)).data.data as { docType: string }[],
+    enabled: open && toStatus === "PREAUTH_SUBMITTED",
+  });
+  const missingDocs = toStatus === "PREAUTH_SUBMITTED"
+    ? CLAIM_DOC_CATALOG.filter((d) => d.stage === "PREAUTH" && d.required && !docs.some((x) => x.docType === d.code)).map((d) => d.label)
+    : [];
   const submit = async () => {
     if (!toStatus) { toast.error("Pick a status"); return; }
+    if (amountLabel && !(Number(amount) > 0)) { toast.error(`Enter the ${toStatus === "PREAUTH_APPROVED" ? "approved" : "claimed"} amount`); return; }
     setSaving(true);
     try {
-      await axiosInstance.post(`/claims/${claimId}/transition`, { toStatus, note: note || undefined });
+      await axiosInstance.post(`/claims/${claimId}/transition`, { toStatus, note: note || undefined, ...(amountLabel ? { amount: Number(amount) } : {}) });
       toast.success("Status updated");
-      setToStatus(""); setNote("");
+      setToStatus(""); setNote(""); setAmount("");
       onDone();
     } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to update status"));
@@ -260,9 +288,15 @@ function AdvanceStatusDialog({ open, onClose, options, onDone, claimId }: { open
       <DialogTitle>Advance claim status</DialogTitle>
       <DialogContent>
         <Stack spacing={2} sx={{ pt: 1 }}>
-          <TextField select label="Move to" value={toStatus} onChange={(e) => setToStatus(e.target.value)} fullWidth>
+          <TextField select label="Move to" value={toStatus} onChange={(e) => pickStatus(e.target.value)} fullWidth>
             {options.map((s) => <MenuItem key={s} value={s}>{statusMeta(s).label}</MenuItem>)}
           </TextField>
+          {amountLabel && (
+            <TextField label={amountLabel} type="number" value={amount} onChange={(e) => setAmount(e.target.value)} fullWidth required />
+          )}
+          {missingDocs.length > 0 && (
+            <Alert severity="warning">Required pre-auth papers not uploaded yet: {missingDocs.join(", ")}. The payer may query the pre-auth without them.</Alert>
+          )}
           <TextField label="Note (optional)" value={note} onChange={(e) => setNote(e.target.value)} fullWidth multiline rows={2} placeholder="e.g. Pre-auth approved for ₹40,000; query on discharge summary…" />
         </Stack>
       </DialogContent>
@@ -317,14 +351,24 @@ function RecordSettlementDialog({ open, onClose, claimId, onDone }: { open: bool
   const toast = useToast();
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
+  const [methodId, setMethodId] = useState("");
+  const [reference, setReference] = useState("");
   const [saving, setSaving] = useState(false);
+  const { data: methods = [] } = useQuery<{ paymentMethodId: number; methodName: string }[]>({
+    queryKey: ["billing-lookups-methods"],
+    queryFn: async () => (await axiosInstance.get("/reception/billing/lookups")).data?.data?.methods ?? [],
+    enabled: open,
+  });
   const submit = async () => {
     if (!amount || Number(amount) <= 0) { toast.error("Enter a settlement amount"); return; }
     setSaving(true);
     try {
-      await axiosInstance.post(`/claims/${claimId}/settlement`, { amount: Number(amount), note: note || undefined });
+      await axiosInstance.post(`/claims/${claimId}/settlement`, {
+        amount: Number(amount), note: note || undefined,
+        paymentMethodId: methodId === "" ? null : Number(methodId), referenceNumber: reference.trim() || null,
+      });
       toast.success("Settlement recorded");
-      setAmount(""); setNote("");
+      setAmount(""); setNote(""); setMethodId(""); setReference("");
       onDone();
     } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to record settlement"));
@@ -336,7 +380,12 @@ function RecordSettlementDialog({ open, onClose, claimId, onDone }: { open: bool
       <DialogContent>
         <Stack spacing={2} sx={{ pt: 1 }}>
           <TextField label="Amount received (₹)" type="number" value={amount} onChange={(e) => setAmount(e.target.value)} fullWidth autoFocus />
-          <TextField label="Note (optional)" value={note} onChange={(e) => setNote(e.target.value)} fullWidth multiline rows={2} placeholder="e.g. NEFT ref 12345; part settlement" />
+          <TextField select label="Received by (optional)" value={methodId} onChange={(e) => setMethodId(e.target.value)} fullWidth>
+            <MenuItem value="">- Not recorded -</MenuItem>
+            {methods.map((m) => <MenuItem key={m.paymentMethodId} value={String(m.paymentMethodId)}>{m.methodName}</MenuItem>)}
+          </TextField>
+          <TextField label="UTR / reference (optional)" value={reference} onChange={(e) => setReference(e.target.value)} fullWidth inputProps={{ maxLength: 80 }} />
+          <TextField label="Note (optional)" value={note} onChange={(e) => setNote(e.target.value)} fullWidth multiline rows={2} placeholder="e.g. part settlement, deductions" />
           <Typography variant="caption" sx={{ color: "text.secondary" }}>Recorded as a payer payment against the linked bill; the claim moves to (Partially) Settled automatically.</Typography>
         </Stack>
       </DialogContent>

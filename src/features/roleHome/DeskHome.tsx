@@ -50,7 +50,7 @@ interface Tpa {
   queried: Short<ClaimRow>;
   preAuthPending: Short<ClaimRow>;
   ageing: Short<ClaimRow>;
-  insuredWithoutClaim: Short<{ admissionId: string; patientName: string; bed: string | null; payerType: string | null }>;
+  insuredWithoutClaim: Short<{ admissionId: string; patientId?: string | null; patientName: string; bed: string | null; payerType: string | null }>;
   roomsOverLimit: Short<{ admissionId: string; patientName: string; bed: string | null; limit: number; rent: number; over: number }>;
 }
 interface Mrd {
@@ -192,7 +192,7 @@ export default function DeskHome() {
               <Grid size={half}>
                 <AttentionList title="Insured stays with no claim" subtitle="In hospital on insurance or a scheme, and no claim registered" loading={tpa.isLoading}
                   totalCount={tpa.data?.insuredWithoutClaim.count}
-                  items={(tpa.data?.insuredWithoutClaim.rows ?? []).map((r) => ({ id: r.admissionId, primary: r.patientName, secondary: r.bed ?? undefined, severity: "warning" as const, icon: <AssignmentLateRounded sx={{ fontSize: 18 }} />, onClick: () => navigate("/reception/claims/new") }))} />
+                  items={(tpa.data?.insuredWithoutClaim.rows ?? []).map((r) => ({ id: r.admissionId, primary: r.patientName, secondary: r.bed ?? undefined, severity: "warning" as const, icon: <AssignmentLateRounded sx={{ fontSize: 18 }} />, onClick: () => navigate(`/reception/claims/new?patientId=${r.patientId ?? ""}&admissionId=${r.admissionId}`) }))} />
               </Grid>
             )}
             {(tpa.data?.roomsOverLimit.count ?? 0) > 0 && (

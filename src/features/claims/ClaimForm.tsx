@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import dayjs from "dayjs";
 import { getApiErrorMessage } from "@/utils/apiError";
 import ErrorState from "@/components/ErrorState";
 import { useQuery } from "@tanstack/react-query";
@@ -18,7 +19,7 @@ import { SCHEME_OPTIONS, PAYER_TYPE_OPTIONS, RELATION_OPTIONS } from "./claimMet
 
 const ACCENT = BRAND.action;
 const empty = {
-  patientId: "", schemeType: "INSURANCE", payerId: "", policyOrCardNumber: "", tpaName: "",
+  patientId: "", admissionId: "", schemeType: "INSURANCE", payerId: "", policyOrCardNumber: "", tpaName: "",
   patientRelation: "Self", estimatedCost: "", preAuthRequestedAmount: "", preAuthApprovedAmount: "",
   finalClaimedAmount: "", roomRentLimit: "", sumInsured: "", portalReference: "", remarks: "",
 };
@@ -30,9 +31,34 @@ export default function ClaimForm() {
   const toast = useToast();
   const [params] = useSearchParams();
 
-  const [form, setForm] = useState<typeof empty>({ ...empty, patientId: params.get("patientId") || "" });
+  const [form, setForm] = useState<typeof empty>({ ...empty, patientId: params.get("patientId") || "", admissionId: params.get("admissionId") || "" });
   const [patientLabel, setPatientLabel] = useState("");
   const [saving, setSaving] = useState(false);
+
+  // Opened for a known patient (e.g. from the desk's "Insured stays with no
+  // claim"): show who it is instead of an empty search.
+  useEffect(() => {
+    const pid = params.get("patientId");
+    if (isEdit || !pid) return;
+    let cancelled = false;
+    axiosInstance.get(`/reception/patients/${pid}`)
+      .then((res) => { const d = res.data?.data; if (!cancelled && d) setPatientLabel(`${d.firstName || ""} ${d.lastName || ""} (${d.uhidNumber})`.trim()); })
+      .catch(() => { /* the search box still works */ });
+    return () => { cancelled = true; };
+  }, [isEdit, params]);
+
+  // The patient's in-patient stays: a claim tied to its stay is what makes the
+  // stay insured (payer prices, room-rent check, deposit kept at discharge).
+  const { data: stays = [] } = useQuery<{ admissionId: string; admissionNumber: string; status: string; admissionDate: string }[]>({
+    queryKey: ["claim-patient-stays", form.patientId],
+    queryFn: async () => (await axiosInstance.get(`/ipd/patients/${form.patientId}/admissions`)).data.data ?? [],
+    enabled: !!form.patientId,
+  });
+  // A new claim for someone in hospital now is almost always for that stay, so
+  // it is the default until the desk picks otherwise.
+  const [admissionTouched, setAdmissionTouched] = useState(false);
+  const admissionValue = form.admissionId
+    || (!isEdit && !admissionTouched ? stays.find((st) => st.status === "ADMITTED")?.admissionId ?? "" : "");
 
   // Patient search (create mode only).
   const [pSearch, setPSearch] = useState("");
@@ -64,6 +90,7 @@ export default function ClaimForm() {
     if (!existing) return;
     setForm({
       patientId: existing.patientId || "",
+      admissionId: existing.admissionId || "",
       schemeType: existing.schemeType || "INSURANCE",
       payerId: existing.payerId || "",
       policyOrCardNumber: existing.policyOrCardNumber || "",
@@ -92,6 +119,7 @@ export default function ClaimForm() {
       const num = (v: string) => (v === "" ? undefined : Number(v));
       const payload = {
         patientId: form.patientId,
+        admissionId: admissionValue || null,
         schemeType: form.schemeType,
         payerId: form.payerId || undefined,
         policyOrCardNumber: form.policyOrCardNumber || undefined,
@@ -120,7 +148,13 @@ export default function ClaimForm() {
     }
   };
 
-  const payerOptions = useMemo(() => payers, [payers]);
+  // Government schemes for MAA / PMJAY, insurers and TPAs for private cover.
+  const payerOptions = useMemo(() => payers.filter((p: { payerId: string; payerType?: string }) =>
+    p.payerId === form.payerId || form.schemeType === "OTHER"
+    || (form.schemeType === "MAA" || form.schemeType === "PMJAY") === (p.payerType === "GOVT_SCHEME")), [payers, form.schemeType, form.payerId]);
+  // The approved amount is the payer's decision: entered when the claim moves to
+  // Pre-auth Approved, editable after that.
+  const approvalPending = !isEdit || ["REGISTERED", "PREAUTH_SUBMITTED", "PREAUTH_QUERIED", "PREAUTH_REJECTED"].includes(existing?.status);
 
   if (isEdit && loadingClaim) return <FormSkeleton />;
   // Never open an edit form blank: saving it would overwrite the claim with empty fields.
@@ -132,7 +166,7 @@ export default function ClaimForm() {
       <Paper elevation={0} sx={{ p: { xs: 2, md: 3 }, borderRadius: 3, border: "1px solid", borderColor: "divider", maxWidth: 900 }}>
         <Grid container spacing={2.5}>
           <Grid size={12} >
-            {isEdit ? (
+            {isEdit || (patientLabel && form.patientId) ? (
               <TextField fullWidth label="Patient" value={patientLabel} disabled />
             ) : (
               <Autocomplete
@@ -148,8 +182,21 @@ export default function ClaimForm() {
             )}
           </Grid>
 
+          {form.patientId && (
+            <Grid size={12} >
+              <TextField select fullWidth label="In-patient stay" value={admissionValue} onChange={(e) => { setAdmissionTouched(true); set("admissionId", e.target.value); }}
+                helperText={stays.length ? "Tie the claim to the stay it pays for, so the stay is billed as insured." : "No in-patient stays for this patient - an OPD or day-care claim."}>
+                <MenuItem value="">- Not an in-patient stay -</MenuItem>
+                {stays.map((st) => (
+                  <MenuItem key={st.admissionId} value={st.admissionId}>
+                    {st.admissionNumber} · {st.status === "ADMITTED" ? "In hospital" : st.status.toLowerCase()} · {dayjs(st.admissionDate).format("DD MMM YYYY")}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Grid>
+          )}
           <Grid size={{ xs: 12, sm: 6 }} >
-            <TextField select fullWidth label="Scheme type" value={form.schemeType} onChange={(e) => set("schemeType", e.target.value)}>
+            <TextField select fullWidth label="Scheme type" value={form.schemeType} onChange={(e) => setForm((f) => ({ ...f, schemeType: e.target.value, payerId: "" }))}>
               {SCHEME_OPTIONS.map((o) => <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>)}
             </TextField>
           </Grid>
@@ -182,7 +229,8 @@ export default function ClaimForm() {
           <Grid size={12} ><Divider><Typography variant="caption" sx={{ color: "text.secondary" }}>Amounts (₹) - fill in as the case progresses</Typography></Divider></Grid>
           <Grid size={{ xs: 12, sm: 6, md: 4 }} ><TextField fullWidth type="number" label="Estimated cost" value={form.estimatedCost} onChange={(e) => set("estimatedCost", e.target.value)} /></Grid>
           <Grid size={{ xs: 12, sm: 6, md: 4 }} ><TextField fullWidth type="number" label="Pre-auth requested" value={form.preAuthRequestedAmount} onChange={(e) => set("preAuthRequestedAmount", e.target.value)} /></Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 4 }} ><TextField fullWidth type="number" label="Pre-auth approved" value={form.preAuthApprovedAmount} onChange={(e) => set("preAuthApprovedAmount", e.target.value)} /></Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 4 }} ><TextField fullWidth type="number" label="Pre-auth approved" value={form.preAuthApprovedAmount} onChange={(e) => set("preAuthApprovedAmount", e.target.value)}
+            disabled={approvalPending} helperText={approvalPending ? "Entered when the payer approves (Advance status)" : undefined} /></Grid>
           <Grid size={{ xs: 12, sm: 6, md: 4 }} ><TextField fullWidth type="number" label="Final claimed" value={form.finalClaimedAmount} onChange={(e) => set("finalClaimedAmount", e.target.value)} /></Grid>
           <Grid size={{ xs: 12, sm: 6, md: 4 }} >
             <TextField fullWidth type="number" label="Room rent limit / day" value={form.roomRentLimit} onChange={(e) => set("roomRentLimit", e.target.value)}
