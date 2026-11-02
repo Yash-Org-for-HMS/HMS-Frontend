@@ -1,4 +1,5 @@
 import { useState } from "react";
+import dayjs from "dayjs";
 import { useQuery } from "@tanstack/react-query";
 import {
   Alert, AlertTitle, Box, Button, Chip, Paper, Table, TableBody, TableCell, TableContainer,
@@ -36,11 +37,11 @@ type GstData = {
   };
 };
 
+// Local calendar dates: toISOString() shifts the 1st back a day in IST and
+// would pull the previous month's last day into this month's return.
 function monthBounds() {
-  const now = new Date();
-  const first = new Date(now.getFullYear(), now.getMonth(), 1);
-  const iso = (d: Date) => d.toISOString().slice(0, 10);
-  return { from: iso(first), to: iso(now) };
+  const now = dayjs();
+  return { from: now.startOf("month").format("YYYY-MM-DD"), to: now.format("YYYY-MM-DD") };
 }
 
 const HEAD_SX = { fontWeight: 700 } as const;

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import {
   Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Typography, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Stack,
+  Typography, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Stack, MenuItem,
 } from "@mui/material";
 import { CheckCircleRounded, CancelRounded } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
@@ -41,11 +41,27 @@ export default function DepositRefundApprovals() {
     queryFn: async () => (await axiosInstance.get("/ipd/deposit-refunds/pending")).data.data ?? [],
   });
 
-  const approve = async (r: PendingDepositRefund) => {
+  // Approving pays the money out, so it asks how it went back (for the cash book).
+  const [approving, setApproving] = useState<PendingDepositRefund | null>(null);
+  const [methodId, setMethodId] = useState("");
+  const [reference, setReference] = useState("");
+  const { data: methods = [] } = useQuery<{ paymentMethodId: number; methodName: string }[]>({
+    queryKey: ["billing-payment-methods-payout"],
+    queryFn: async () => ((await axiosInstance.get("/reception/billing/lookups")).data?.data?.methods || [])
+      .filter((m: { methodName: string }) => !/insurance/i.test(m.methodName)),
+    enabled: !!approving,
+  });
+
+  const approve = async () => {
+    const r = approving;
+    if (!r || !methodId) return;
     try {
       setBusyId(r.requestId);
-      const res = await axiosInstance.post(`/ipd/deposit-refunds/${r.requestId}/approve`);
+      const res = await axiosInstance.post(`/ipd/deposit-refunds/${r.requestId}/approve`, {
+        paymentMethodId: Number(methodId), referenceNumber: reference.trim() || null,
+      });
       toast.success(res.data?.message || "Deposit refund approved");
+      setApproving(null);
       await refetch();
     } catch (err) {
       toast.error(getApiErrorMessage(err, "Could not approve this refund"));
@@ -122,7 +138,7 @@ export default function DepositRefundApprovals() {
                     <TableCell align="right">
                       <Stack direction="row" spacing={1} justifyContent="flex-end">
                         <Button size="small" variant="contained" startIcon={<CheckCircleRounded />} disabled={busyId === r.requestId}
-                          onClick={() => void approve(r)} sx={{ textTransform: "none", fontWeight: 700, bgcolor: SEMANTIC.success }}>
+                          onClick={() => { setMethodId(""); setReference(""); setApproving(r); }} sx={{ textTransform: "none", fontWeight: 700, bgcolor: SEMANTIC.success }}>
                           Approve
                         </Button>
                         <Button size="small" variant="outlined" color="error" startIcon={<CancelRounded />} disabled={busyId === r.requestId}
@@ -138,6 +154,29 @@ export default function DepositRefundApprovals() {
           </Table>
         </TableContainer>
       )}
+
+      <Dialog open={!!approving} onClose={() => setApproving(null)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ fontWeight: 800 }}>Approve and pay back</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
+            {approving ? `${inr(approving.amount)} goes back to ${approving.patientName || "this patient"} from the deposit. Record how it was paid.` : ""}
+          </Typography>
+          <Stack spacing={2}>
+            <TextField select fullWidth label="Paid back by (required)" value={methodId} onChange={(e) => setMethodId(e.target.value)}>
+              {methods.map((m) => <MenuItem key={m.paymentMethodId} value={String(m.paymentMethodId)}>{m.methodName}</MenuItem>)}
+            </TextField>
+            <TextField fullWidth label="Reference / UTR (optional)" value={reference}
+              onChange={(e) => setReference(e.target.value)} inputProps={{ maxLength: 60 }} />
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setApproving(null)} color="inherit">Cancel</Button>
+          <Button variant="contained" disabled={!methodId || busyId === approving?.requestId}
+            onClick={() => void approve()} sx={{ textTransform: "none", fontWeight: 700, bgcolor: SEMANTIC.success }}>
+            Approve {approving ? inr(approving.amount) : ""}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Dialog open={!!rejecting} onClose={() => setRejecting(null)} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ fontWeight: 800 }}>Reject this deposit refund</DialogTitle>

@@ -1,4 +1,5 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
+import dayjs from "dayjs";
 import { formatDate, formatDateTime } from "@/utils/format";
 import { paidTotal, refundedTotal } from "@/utils/invoiceMoney";
 import { getApiErrorMessage } from "@/utils/apiError";
@@ -92,7 +93,7 @@ export default function PrintIpBill() {
       if (!rows.length) return null;
       const byDate = new Map<string, any[]>();
       for (const r of rows) {
-        const key = r.itemDate ? new Date(r.itemDate).toISOString().slice(0, 10) : "-";
+        const key = r.itemDate ? dayjs(r.itemDate).format("YYYY-MM-DD") : "-"; // local day, not UTC
         (byDate.get(key) ?? byDate.set(key, []).get(key)!).push(r);
       }
       const dates = [...byDate.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([date, rs]) => ({ date, rows: rs }));

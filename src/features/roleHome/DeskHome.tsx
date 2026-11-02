@@ -41,7 +41,7 @@ interface AdmissionDesk {
 }
 interface Billing {
   collectedToday: number;
-  unpaidBills: { count: number; totalDue: number; rows: { invoiceId: string; invoiceNumber: string; balance: number; ageDays: number }[] };
+  unpaidBills: { count: number; totalDue: number; rows: { invoiceId: string; invoiceNumber: string; patientName?: string | null; balance: number; ageDays: number }[] };
   finalBillsToMake: Short<{ admissionId: string; patientName: string; bed: string | null; since: string }>;
   staysWithoutAdvance: Short<{ admissionId: string; patientName: string; bed: string | null; days: number | null }>;
 }
@@ -154,7 +154,7 @@ export default function DeskHome() {
             <Grid size={half}>
               <AttentionList title="Unpaid bills" subtitle="Oldest first" loading={billing.isLoading}
                 emptyText="Every bill is paid." totalCount={billing.data?.unpaidBills.count}
-                items={(billing.data?.unpaidBills.rows ?? []).map((r) => ({ id: r.invoiceId, primary: r.invoiceNumber, secondary: `${inr(r.balance)} owed`, meta: `${r.ageDays}d`, severity: r.ageDays > 30 ? "critical" as const : "warning" as const, icon: <ReceiptLongRounded sx={{ fontSize: 18 }} />, onClick: () => navigate("/reception/billing") }))} />
+                items={(billing.data?.unpaidBills.rows ?? []).map((r) => ({ id: r.invoiceId, primary: r.patientName || r.invoiceNumber, secondary: r.patientName ? `${r.invoiceNumber} - ${inr(r.balance)} owed` : `${inr(r.balance)} owed`, meta: `${r.ageDays}d`, severity: r.ageDays > 30 ? "critical" as const : "warning" as const, icon: <ReceiptLongRounded sx={{ fontSize: 18 }} />, onClick: () => navigate("/reception/billing") }))} />
             </Grid>
             {(billing.data?.staysWithoutAdvance.count ?? 0) > 0 && (
               <Grid size={half}>

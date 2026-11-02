@@ -168,7 +168,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
       // 1. Fetch lookups
       const lookupsRes = await axiosInstance.get("/reception/billing/lookups");
       if (lookupsRes.data.success) {
-        setPaymentMethods(lookupsRes.data.data.methods);
+        setPaymentMethods(lookupsRes.data.data.methods.filter((m: PaymentMethodRef) => !/insurance/i.test(m.methodName))); // payer settles via Claims
         setHospitalProfile(lookupsRes.data.data.hospital || null);
       }
 

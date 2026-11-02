@@ -5,7 +5,7 @@ import { axiosInstance } from "@/api/axios";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { useToast } from "@/providers/ToastContext";
 import {
-  refundablePayments, isPendingRefund, paidTotal, refundedTotal, pendingRefundTotal, totalRefundable,
+  refundablePayments, isPendingRefund, paidTotal, refundedTotal, pendingRefundTotal, totalRefundable, balanceOf,
 } from "@/utils/invoiceMoney";
 import { formatINR } from "@/utils/format";
 import RefundReceiptDialog from "@/components/billing/RefundReceiptDialog";
@@ -119,6 +119,8 @@ export default function RefundSection({
   const returned = refundedTotal(invoice);
   const awaiting = pendingRefundTotal(invoice);
   const remaining = totalRefundable(invoice);
+  // A part-paid bill still has a balance after the refund comes off it.
+  const stillDue = invoice?.netAmount != null && balanceOf({ ...invoice, netAmount: invoice.netAmount }) > 0.005;
 
   // Which payment a refund was taken from - ambiguous from the amount alone once
   // an invoice has more than one payment, which is exactly when it matters.
@@ -443,7 +445,7 @@ export default function RefundSection({
                     <Box>
                       <Typography variant="body2" sx={{ fontWeight: 700 }}>Take it off the bill</Typography>
                       <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                        The charge was not given. The bill goes down by {formatINR(Number(amount) || 0)} and stays settled.
+                        The charge was not given. The bill goes down by {formatINR(Number(amount) || 0)}{stillDue ? "; the balance still due is unchanged." : " and stays settled."}
                       </Typography>
                     </Box>
                   }

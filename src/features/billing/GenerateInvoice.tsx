@@ -99,7 +99,7 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
   // method) are consistent across every billing screen instead of a hardcoded four.
   const { data: paymentMethods = [] } = useQuery<PaymentMethodRef[]>({
     queryKey: ["billing-payment-methods"],
-    queryFn: async () => (await axiosInstance.get("/reception/billing/lookups")).data?.data?.methods || [],
+    queryFn: async () => ((await axiosInstance.get("/reception/billing/lookups")).data?.data?.methods || []).filter((m: PaymentMethodRef) => !/insurance/i.test(m.methodName)), // the payer settles via Claims, never at the counter
     staleTime: 5 * 60 * 1000,
   });
   // Default the tender to the first configured method once they load.
@@ -172,6 +172,7 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
       // Prefill from the created invoice's actual net (the refetch below clears
       // the selected items, so the derived netAmount would otherwise read 0).
       setPaymentAmount(Number(res.data.data?.netAmount ?? netAmount));
+      setDiscount(""); // belongs to the bill just made, not the next one
       toast.success(`Invoice ${res.data.data?.invoiceNumber || ""} generated`);
       // The billed items are no longer unbilled; the new invoice now shows in the
       // patient's history panel below (whether they pay now or later).
@@ -217,7 +218,7 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
           value={selectedPatient}
           // Only typing searches: picking a result sets the text to its label (reason "reset"), which is not a new search.
               onInputChange={(_, v, reason) => { if (reason === "input") setPatientQuery(v); else if (reason === "clear") setPatientQuery(""); }}
-          onChange={(e, val) => setSelectedPatient(val)}
+          onChange={(e, val) => { setSelectedPatient(val); setDiscount(""); }}
           renderInput={(params) => (
             <TextField
               {...params}
@@ -339,7 +340,7 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
                   size="small" type="number" 
                   value={discount} onChange={e => setDiscount(e.target.value === "" ? "" : Number(e.target.value))}
                   error={discountTooHigh}
-                  helperText={discountTooHigh ? "Above bill total" : undefined}
+                  helperText={discountTooHigh ? (discountAmount < 0 ? "Cannot be negative" : "Above bill total") : undefined}
                   sx={{ width: 100 }}
                   inputProps={{ style: { textAlign: 'right' } }}
                 />
@@ -354,7 +355,7 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
               
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 4, mt: 2 }}>
                 <Typography variant="h5" fontWeight={800}>Net Total</Typography>
-                <Typography variant="h5" fontWeight={800} color="primary.main">₹{netAmount.toFixed(2)}</Typography>
+                <Typography variant="h5" fontWeight={800} color="primary.main">{discountTooHigh ? "-" : `₹${netAmount.toFixed(2)}`}</Typography>
               </Box>
 
               <Button

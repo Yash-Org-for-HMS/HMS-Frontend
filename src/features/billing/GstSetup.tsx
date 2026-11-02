@@ -25,7 +25,9 @@ type Row = {
 type Config = { gstin: string | null; medicines: Row[]; chargeItems: Row[] };
 
 /** The only rates GST uses. Anything else is a typo. */
-const RATES = [0, 5, 12, 18, 28];
+// Same list as the medicine catalogue and the server (pharmacy GST_RATES): old and
+// post-Sept-2025 slabs, so items still at an old rate can be kept or moved.
+const RATES = [0, 0.25, 3, 5, 12, 18, 28, 40];
 
 /**
  * The catalogue behind the GST return, editable where the return is read.

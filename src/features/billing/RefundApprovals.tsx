@@ -1,8 +1,9 @@
 import { useState } from "react";
 import {
   Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Typography, Button, Chip, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Stack, Pagination,
+  Typography, Button, Chip, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Stack, Pagination, Tooltip,
 } from "@mui/material";
+import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import { CheckCircleRounded, CancelRounded } from "@mui/icons-material";
 import PageHeader from "@/components/layout/PageHeader";
 import { TableRowsSkeleton } from "@/components/TableRowsSkeleton";
@@ -34,6 +35,7 @@ interface PendingRefund {
   referenceNumber?: string | null;
   refundMethod?: string | null;
   raisedBy?: string | null;
+  raisedById?: string | null;
   raisedAt?: string | null;
   invoiceId: string;
   invoiceNumber: string;
@@ -51,6 +53,7 @@ const when = (d?: string | null) =>
 
 export default function RefundApprovals() {
   const toast = useToast();
+  const { user } = useHospitalAuth();
   const [busyId, setBusyId] = useState<string | null>(null);
   const [rejecting, setRejecting] = useState<PendingRefund | null>(null);
   const [rejectReason, setRejectReason] = useState("");
@@ -74,6 +77,10 @@ export default function RefundApprovals() {
     placeholderData: keepPreviousData,
   });
   const rows = data?.rows ?? [];
+  // The raiser cannot approve their own refund (server refuses it), so it is not
+  // "awaiting you" and its Approve button is off.
+  const isMine = (r: PendingRefund) => !!user?.id && r.raisedById === user.id;
+  const awaitingMe = (data?.count ?? rows.length) - rows.filter(isMine).length;
   const totalPages = data?.totalPages ?? 1;
   // Approving the last refund on the last page: step back rather than strand on an empty page.
   if (!isPlaceholderData && page > Math.max(1, totalPages)) setPage(Math.max(1, totalPages));
@@ -129,7 +136,7 @@ export default function RefundApprovals() {
             <Paper variant="outlined" sx={{ p: 2, mb: 2, borderRadius: 2, display: "flex", gap: 3, alignItems: "center" }}>
               <Box>
                 <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 700, letterSpacing: 0.4 }}>AWAITING YOU</Typography>
-                <Typography variant="h5" sx={{ fontWeight: 800 }}>{data?.count ?? rows.length}</Typography>
+                <Typography variant="h5" sx={{ fontWeight: 800 }}>{awaitingMe}</Typography>
               </Box>
               <Box>
                 <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 700, letterSpacing: 0.4 }}>TOTAL HELD</Typography>
@@ -210,14 +217,18 @@ export default function RefundApprovals() {
                       </TableCell>
                       <TableCell align="right">
                         <Stack direction="row" spacing={1} justifyContent="flex-end">
-                          <Button
-                            size="small" variant="contained" startIcon={<CheckCircleRounded />}
-                            disabled={busyId === r.refundId}
-                            onClick={() => void approve(r)}
-                            sx={{ textTransform: "none", fontWeight: 700 }}
-                          >
-                            Approve
-                          </Button>
+                          <Tooltip title={isMine(r) ? "You raised this refund - another administrator approves it" : ""}>
+                            <span>
+                              <Button
+                                size="small" variant="contained" startIcon={<CheckCircleRounded />}
+                                disabled={busyId === r.refundId || isMine(r)}
+                                onClick={() => void approve(r)}
+                                sx={{ textTransform: "none", fontWeight: 700 }}
+                              >
+                                Approve
+                              </Button>
+                            </span>
+                          </Tooltip>
                           <Button
                             size="small" variant="outlined" startIcon={<CancelRounded />}
                             disabled={busyId === r.refundId}

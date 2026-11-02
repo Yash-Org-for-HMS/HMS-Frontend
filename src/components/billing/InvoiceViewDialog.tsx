@@ -74,6 +74,8 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
     queryFn: async () => (await axiosInstance.get(`${basePath}/lookups`)).data.data,
     enabled: open,
   });
+  // The payer settles an insured bill through Claims, never at the counter.
+  const counterMethods = (lookups?.methods || []).filter((m) => !/insurance/i.test(m.methodName));
   const { data: invoice, isLoading, isError, error, refetch } = useQuery<InvoiceDetail>({
     queryKey: ["invoice-detail", invoiceId],
     queryFn: async () => (await axiosInstance.get(`${basePath}/invoices/${invoiceId}/detail`)).data.data,
@@ -317,7 +319,7 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
                     </Grid>
                     <Grid size={{ xs: 4 }}>
                       <TextField select fullWidth size="small" label="Method" value={methodId} onChange={(e) => setMethodId(e.target.value)}>
-                        {(lookups?.methods || []).map((m) => <MenuItem key={m.paymentMethodId} value={m.paymentMethodId}>{m.methodName}</MenuItem>)}
+                        {counterMethods.map((m) => <MenuItem key={m.paymentMethodId} value={m.paymentMethodId}>{m.methodName}</MenuItem>)}
                       </TextField>
                     </Grid>
                     <Grid size={{ xs: 3 }}>
@@ -345,7 +347,7 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
                 <RefundSection
                   invoice={invoice}
                   readOnly={readOnly}
-                  paymentMethods={lookups?.methods ?? []}
+                  paymentMethods={counterMethods}
                   onChanged={async () => { await refetch(); onChanged?.(); }}
                 />
               </Box>
