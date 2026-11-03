@@ -99,6 +99,8 @@ export interface PendingCharge {
   /** Price at billing: a test whose price is still to be typed holds the discharge. */
   blocked?: string;
   typedPrices?: { chargeItemId: string; itemName: string; price: number | null }[];
+  /** Names the line for a price change on the discharge bill (same on the preview and the bill). */
+  priceKey?: string;
 }
 
 /** A package on an admission, as the discharge screen reads it. */

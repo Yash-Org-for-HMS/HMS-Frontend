@@ -1,5 +1,5 @@
 import { printHtml } from "@/utils/printHtml";
-import type { InvoiceDetail, UnbilledItem, PaymentMethodRef, HospitalBillingProfile } from "@/types";
+import type { InvoiceDetail, InvoiceItem, UnbilledItem, PaymentMethodRef, HospitalBillingProfile } from "@/types";
 import { useState, useEffect, useRef, type ReactNode } from "react";
 import { paidTotal, refundedTotal } from "@/utils/invoiceMoney";
 import RefundSection from "@/components/billing/RefundSection";
@@ -12,7 +12,7 @@ import {
 } from "@mui/material";
 import {
   ReceiptRounded, CheckCircleRounded, PrintRounded, PaymentRounded, CloseRounded,
-  ExpandMoreRounded, LocalOfferRounded, AddCircleOutlineRounded, BlockRounded
+  ExpandMoreRounded, LocalOfferRounded, AddCircleOutlineRounded, BlockRounded, EditRounded
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import HeartbeatLoader from "@/components/HeartbeatLoader";
@@ -22,6 +22,8 @@ import { useToast } from "@/providers/ToastContext";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import BillReceipt from "@/components/reception/BillReceipt";
 import SocChargePicker, { type PickedCharge } from "@/components/billing/SocChargePicker";
+import ChangePriceDialog, { type PriceChange } from "@/components/billing/ChangePriceDialog";
+import { priceableLines, medicineMrp, shownUnitPrice } from "@/components/billing/priceableLines";
 import { SEMANTIC, BRAND, alpha } from "@/styles/accents";
 
 interface BillingModalProps {
@@ -33,7 +35,7 @@ interface BillingModalProps {
 }
 
 /** Which of the occasional actions is open. Only ever one. */
-type SectionKey = "discount" | "charge" | "void";
+type SectionKey = "discount" | "charge" | "price" | "void";
 
 /**
  * One collapsible action in the right-hand column.
@@ -91,6 +93,10 @@ function ActionSection({ icon, label, accent, open, onToggle, children }: {
 export default function BillingModal({ open, onClose, appointmentId, patientName, appointmentDate }: BillingModalProps) {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  // The doctor has no fee set: the visit is billed once the counter gives a price.
+  const [needsFee, setNeedsFee] = useState(false);
+  const [feeDialog, setFeeDialog] = useState(false);
+  const [priceLine, setPriceLine] = useState<InvoiceItem | null>(null);
   const toast = useToast();
   const navigate = useNavigate();
   const { hospital } = useHospitalAuth();
@@ -165,6 +171,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
     try {
       setLoading(true);
       setLoadError(null);
+      setNeedsFee(false);
       // 1. Fetch lookups
       const lookupsRes = await axiosInstance.get("/reception/billing/lookups");
       if (lookupsRes.data.success) {
@@ -217,9 +224,37 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
     } catch (err: unknown) {
       const msg = getApiErrorMessage(err, "Failed to load billing data");
       setLoadError(msg);
-      toast.error(msg);
+      if (/no consultation fee set/i.test(msg)) setNeedsFee(true);
+      else toast.error(msg);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Bill the visit at a price given here (this bill only, with a reason).
+  const billAtPrice = async (change: PriceChange | null) => {
+    if (!change) return;
+    try {
+      await axiosInstance.post(`/reception/billing/appointments/${appointmentId}/generate-invoice`, { priceChange: change });
+      setFeeDialog(false);
+      await fetchBillingData();
+    } catch (err: unknown) {
+      toast.error(getApiErrorMessage(err, "Couldn't bill the visit"));
+    }
+  };
+
+  // Change one line's price on this unpaid bill (the rate card is untouched).
+  const changeLinePrice = async (line: InvoiceItem, change: PriceChange | null) => {
+    if (!invoice) return;
+    const original = medicineMrp(line) ?? Number(line.originalUnitPrice ?? line.unitPrice);
+    const body = change ?? { price: original, reason: "Back to the rate card price" };
+    try {
+      await axiosInstance.put(`/reception/billing/invoices/${invoice.invoiceId}/items/${line.invoiceItemId}/price`, body);
+      toast.success("Price changed on this bill");
+      setPriceLine(null);
+      await fetchBillingData();
+    } catch (err: unknown) {
+      toast.error(getApiErrorMessage(err, "Couldn't change the price"));
     }
   };
 
@@ -380,6 +415,9 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
   // A bill discounted to nothing reads "paid" with nothing collected; it must
   // stay correctable, or a mistaken full discount locks it for good.
   const canAdjust = !isCancelled && (!isFullyPaid || totalPaid <= 0);
+  // Prices change only before any money is taken; medicines are priced by batch
+  // and a package's contents stay at 0.
+  const priceLines = priceableLines(invoice, totalPaid);
 
 
   return (
@@ -408,6 +446,11 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
       <DialogContent sx={{ py: 3 }}>
         {loading ? (
           <ListSkeleton />
+        ) : needsFee ? (
+          <Alert severity="warning" sx={{ borderRadius: 2 }}
+            action={<Button color="inherit" size="small" onClick={() => setFeeDialog(true)} sx={{ textTransform: "none", fontWeight: 700 }}>Set price</Button>}>
+            {loadError} Or set a price for this visit now.
+          </Alert>
         ) : loadError ? (
           <ErrorState message={loadError} onRetry={fetchBillingData} />
         ) : invoice ? (
@@ -646,6 +689,32 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
                     </Button>
                   </ActionSection>
 
+                  {priceLines.length > 0 && (
+                    <ActionSection
+                      icon={<EditRounded fontSize="small" />}
+                      label="Change a price"
+                      accent={SEMANTIC.warning}
+                      open={openSection === "price"}
+                      onToggle={() => toggleSection("price")}
+                    >
+                      <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 1.5 }}>
+                        For this bill only - the rate card stays as it is. A reason is required.
+                      </Typography>
+                      {priceLines.map((l) => (
+                        <Box key={l.invoiceItemId} sx={{ display: "flex", alignItems: "center", gap: 1, py: 0.75, borderBottom: "1px solid", borderColor: "divider" }}>
+                          <Box sx={{ flex: 1, minWidth: 0 }}>
+                            <Typography variant="body2" noWrap title={l.description ?? ""}>{l.description}</Typography>
+                            {l.originalUnitPrice != null && (
+                              <Typography variant="caption" sx={{ color: "warning.dark" }}>Was ₹{Number(l.originalUnitPrice).toFixed(2)} - {l.priceChangeReason}</Typography>
+                            )}
+                          </Box>
+                          <Typography variant="body2" fontWeight={600}>₹{shownUnitPrice(l).toFixed(2)}{l.quantity > 1 ? ` x ${l.quantity}` : ""}</Typography>
+                          <Button size="small" onClick={() => setPriceLine(l)} sx={{ textTransform: "none" }}>Change</Button>
+                        </Box>
+                      ))}
+                    </ActionSection>
+                  )}
+
                   <ActionSection
                     icon={<AddCircleOutlineRounded fontSize="small" />}
                     label="Add a charge"
@@ -784,6 +853,15 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
         </Button>
       </DialogActions>
     </Dialog>
+    {feeDialog && (
+      <ChangePriceDialog itemName={`Consultation${patientName ? ` - ${patientName}` : ""}`} ratePrice={0}
+        onClose={() => setFeeDialog(false)} onSave={billAtPrice} />
+    )}
+    {priceLine && (
+      <ChangePriceDialog itemName={priceLine.description ?? "Charge"} ratePrice={medicineMrp(priceLine) ?? Number(priceLine.originalUnitPrice ?? priceLine.unitPrice)} maxPrice={medicineMrp(priceLine)}
+        current={priceLine.originalUnitPrice != null ? { price: shownUnitPrice(priceLine), reason: priceLine.priceChangeReason ?? "" } : null}
+        onClose={() => setPriceLine(null)} onSave={(c) => changeLinePrice(priceLine, c)} />
+    )}
     <SocChargePicker
       open={socPickerOpen}
       onClose={() => setSocPickerOpen(false)}

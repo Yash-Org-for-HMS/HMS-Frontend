@@ -7,7 +7,7 @@ import {
 } from "./Reports";
 import { InPatients, Discharges, IpRegistrations, IpAdvances, Occupancy, OverdueDoses } from "../ipd/IpdReports";
 import { Outstanding, PatientStatement, Receipts, ServiceWise, PharmacyExpense, UnreturnedAdvances } from "../billing/BillingReports";
-import { DayBook, RevenueAnalytics, RefundRegister, DiscountRegister, CancelledInvoices, DoctorProductivity } from "../billing/FinanceReports";
+import { DayBook, RevenueAnalytics, RefundRegister, DiscountRegister, PriceChangeRegister, CancelledInvoices, DoctorProductivity } from "../billing/FinanceReports";
 import { LabOverview, TestWise, Turnaround, Pending, CriticalResults, OrderRegister } from "../lab/LabReports";
 import { PharmacyOverview } from "../pharmacy/PharmacyReports";
 import { StockValuation, ExpiryLoss, PurchaseConsumption, ReorderList, SupplierLedger, Movers, OpdIpdSplit } from "../pharmacy/InventoryReports";
@@ -92,6 +92,7 @@ const GROUPS: ReportGroup[] = [
       { key: "pharmacy-expense", label: "Pharmacy Expense", Comp: PharmacyExpense },
       { key: "refund-register", label: "Refund Register", Comp: RefundRegister },
       { key: "discount-register", label: "Discount Register", Comp: DiscountRegister },
+      { key: "price-changes", label: "Price Changes", Comp: PriceChangeRegister },
       { key: "cancelled-invoices", label: "Cancelled Invoices", Comp: CancelledInvoices },
     ],
   },

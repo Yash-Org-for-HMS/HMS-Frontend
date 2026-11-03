@@ -3,7 +3,7 @@ import { apiGet } from "@/api/client";
 import type {
   DayBookResponse, DayBookModeRow, DayBookSourceRow, DayBookCollectorRow, DayBookRow,
   RevenueResponse, RevenueCategoryRow, RevenueDoctorRow, RevenueDepartmentRow,
-  RefundRegisterResponse, RefundRow, DiscountRegisterResponse, DiscountRow,
+  RefundRegisterResponse, RefundRow, DiscountRegisterResponse, DiscountRow, PriceChangeRegisterResponse, PriceChangeRow,
   CancelledInvoiceResponse, CancelledInvoiceRow,
   DoctorProductivityResponse, DoctorProductivityRow,
 } from "./financeReports.types";
@@ -274,6 +274,70 @@ export function RefundRegister() {
             ]}
             rows={rows}
             truncated={data.truncated} totalRows={data.totalRows} shownRows={data.shownRows}
+          />
+        </Box>
+      )}
+    </Box>
+  );
+}
+
+// ── Price changes: lines billed at a price other than the rate card's ─────────
+// Anyone who bills may change a line's price (with a reason); this is where the
+// admin sees them. An item changed again and again has a rate-card price to fix.
+export function PriceChangeRegister() {
+  const [range, setRange] = useState<DateRange>(() => rangeFrom(29));
+  const paging = useReportPaging();
+  const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
+    queryKey: ["finance-price-changes", range.from, range.to, paging.page, paging.pageSize],
+    queryFn: () => apiGet<PriceChangeRegisterResponse>("/reception/reports/price-changes", { params: { from: range.from, to: range.to, ...paging.params } }),
+    placeholderData: (prev) => prev,
+  });
+  const allRows = async () =>
+    ((await apiGet<PriceChangeRegisterResponse>("/reception/reports/price-changes", { params: { from: range.from, to: range.to } })).rows ?? []) as unknown as Record<string, unknown>[];
+  const rows: PriceChangeRow[] = data?.rows ?? [];
+  const signed = (v: unknown) => { const n = Number(v); return `${n > 0 ? "+" : n < 0 ? "-" : ""}${inr(Math.abs(n))}`; };
+
+  return (
+    <Box>
+      <ReportFilters value={range} onChange={paging.onFilterChange(setRange)} />
+      {isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : isLoading || !data ? <ReportSkeleton /> : (
+        <Box>
+          <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<NumbersRounded />} accent="#8b5cf6" label="Prices changed" info="Bill lines in the selected dates whose price was changed at billing time instead of the rate card's. Cancelled bills are left out." value={String(data.totals.count)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<NorthEastRounded />} accent={SEMANTIC.success} label="Billed more" info="How much more those lines were billed than the rate card would have charged, where the price was raised." value={inr(data.totals.raised)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<SouthEastRounded />} accent={SEMANTIC.warning} label="Billed less" info="How much less those lines were billed than the rate card would have charged, where the price was lowered. Discounts are separate (Discount Register)." value={inr(data.totals.lowered)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<SwapVertRounded />} accent={SEMANTIC.info} label="Net difference" info="Billed more minus billed less: above 0, the changes added to what was billed; below 0, they took from it." value={signed(data.totals.net)} /></Grid>
+          </Grid>
+          <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
+            <Grid size={{ xs: 12, md: 7 }}>
+              <ReportTable title="Most changed items (fix these on the rate card)" filename={`price_changes_by_item_${range.from}_${range.to}`} maxHeight={300}
+                columns={[{ key: "item", label: "Item" }, { key: "count", label: "Times", align: "right" }, { key: "difference", label: "Difference", align: "right", format: signed, value: (r) => Number(r.difference) }]}
+                rows={data.byItem} />
+            </Grid>
+            <Grid size={{ xs: 12, md: 5 }}>
+              <ReportTable title="By staff (who changed)" filename={`price_changes_by_user_${range.from}_${range.to}`} maxHeight={300}
+                columns={[{ key: "user", label: "Staff" }, { key: "count", label: "Times", align: "right" }, { key: "difference", label: "Difference", align: "right", format: signed, value: (r) => Number(r.difference) }]}
+                rows={data.byUser} />
+            </Grid>
+          </Grid>
+          <ReportTable
+            title="Price changes"
+            filename={`price_changes_${range.from}_${range.to}`}
+            columns={[
+              { key: "date", label: "Date", format: (v) => (v ? dayjs(v).format("DD MMM YYYY") : "-"), value: (r) => ts(r.date) },
+              { key: "invoiceNumber", label: "Invoice" },
+              { key: "patientName", label: "Patient" },
+              { key: "item", label: "Item" },
+              { key: "quantity", label: "Qty", align: "right" },
+              money("ratePrice", "Rate card"),
+              money("billedPrice", "Billed at"),
+              { key: "difference", label: "Difference", align: "right", format: signed, value: (r) => Number(r.difference) },
+              { key: "reason", label: "Reason" },
+              { key: "changedBy", label: "Changed by" },
+            ]}
+            rows={rows}
+            pagination={paging.bind(data.totalRows ?? rows.length, isFetching)}
+            exportRows={allRows}
           />
         </Box>
       )}

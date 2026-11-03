@@ -9,7 +9,7 @@ import {
   Stack, Typography, Box, IconButton, Divider,
   RadioGroup, FormControlLabel, Radio, Alert,
 } from "@mui/material";
-import { LogoutRounded, AddRounded, DeleteOutlineRounded } from "@mui/icons-material";
+import { LogoutRounded, AddRounded, DeleteOutlineRounded, EditRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import { useToast } from "@/providers/ToastContext";
 import HeartbeatLoader from "../HeartbeatLoader";
@@ -17,6 +17,7 @@ import { unitCount } from "@/features/ipd/billingUnit";
 import SocChargePicker, { type PickedCharge } from "@/components/billing/SocChargePicker";
 import { chargePriceFor } from "@/components/billing/chargePrice";
 import TypeOrderPriceDialog from "@/components/billing/TypeOrderPriceDialog";
+import ChangePriceDialog, { type PriceChange } from "@/components/billing/ChangePriceDialog";
 
 interface Props {
   open: boolean;
@@ -32,7 +33,7 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
   // A row is either a free-text charge (editable description + amount) or one picked
   // from the Schedule of Charges (carries chargeItemId + its base/room-class prices so
   // the preview can re-derive when the room class changes; the server prices it).
-  type Extra = { description: string; amount: string; qty: string; chargeItemId?: string; basePrice?: number; roomPrices?: { roomClassId: string; price: number | string }[]; listPrices?: PickedCharge["listPrices"]; taxPercent?: number; priceAtBilling?: boolean };
+  type Extra = { description: string; amount: string; qty: string; chargeItemId?: string; basePrice?: number; roomPrices?: { roomClassId: string; price: number | string }[]; listPrices?: PickedCharge["listPrices"]; taxPercent?: number; priceAtBilling?: boolean; priceChange?: PriceChange };
   const [extras, setExtras] = useState<Extra[]>([]);
   const [saving, setSaving] = useState(false);
   const [socPickerOpen, setSocPickerOpen] = useState(false);
@@ -75,6 +76,7 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
   // bill even after the class is changed; free-text rows use their typed amount.
   // An insured stay's rate list comes first, as on the bill.
   const lineAmount = (e: Extra): number => {
+    if (e.priceChange) return e.priceChange.price;
     if (!e.chargeItemId || e.priceAtBilling) return Number(e.amount) || 0;
     return chargePriceFor({ ...e, basePrice: e.basePrice ?? (Number(e.amount) || 0) }, billRoomClassId, detail?.serviceRateListId) || 0;
   };
@@ -109,17 +111,44 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
   const extraAmount = (e: Extra, i: number): number => (extraInPackage[i] || extraProblem(e) ? 0 : lineAmount(e) * qtyOf(e));
   const extrasInvalid = extras.some((e) => extraProblem(e) !== null);
 
-  const bedCharge = Number(detail?.estimatedBedCharge || 0);
-  // The nursing charge a bed tariff carries, billed per unit beside the rent.
-  const nursingCharge = Number(detail?.estimatedNursingCharge || 0);
+  // Prices changed on this bill, by the line's key (this bill only, with a reason).
+  const [changes, setChanges] = useState<Record<string, PriceChange>>({});
   const bedSegments: BedSegment[] = detail?.bedSegments || [];
+  // Bed rent and nursing per run of one rate, named as the bill names them, so a
+  // rate can be changed for this bill. Not while a package covers the room.
+  const bedRates = bedSegments.flatMap((seg, si) => (seg.days > 0 ? (seg.runs ?? []) : []).flatMap((run, ri) => ([
+    { key: `BED:${si}:${ri}:RENT`, label: `Room rent - ${seg.label}`, rate: Number(run.rent), units: run.days, unit: seg.unit },
+    { key: `BED:${si}:${ri}:NURSING`, label: `Nursing - ${seg.label}`, rate: Number(run.nursing), units: run.days, unit: seg.unit },
+  ]).filter((r) => r.rate > 0)));
+  const bedDelta = (kind: "RENT" | "NURSING") => bedRates.filter((r) => r.key.endsWith(kind) && changes[r.key]).reduce((s, r) => s + (changes[r.key].price - r.rate) * r.units, 0);
+  const [showBedRates, setShowBedRates] = useState(false);
+  const bedCharge = Number(detail?.estimatedBedCharge || 0) + bedDelta("RENT");
+  // The nursing charge a bed tariff carries, billed per unit beside the rent.
+  const nursingCharge = Number(detail?.estimatedNursingCharge || 0) + bedDelta("NURSING");
   // Clinical charges (doctor visits / lab / radiology) accrued during the stay
   // that will roll onto the final bill - previewed so the total is honest.
   const pendingCharges: PendingCharge[] = detail?.pendingCharges || [];
   // Price at billing: a lab/radiology test still to be priced holds the discharge bill.
   const [priceCharge, setPriceCharge] = useState<PendingCharge | null>(null);
   const unpriced = pendingCharges.filter((c) => c.blocked);
-  const pendingTotal = Number(detail?.pendingChargesTotal || 0);
+  // Any billed line can change; what the package covers (at 0) cannot, and a
+  // medicine only comes down (never above its MRP).
+  const [changing, setChanging] = useState<{ name: string; ratePrice: number; maxPrice?: number; key?: string; extraIndex?: number } | null>(null);
+  const canChange = (c: PendingCharge) => !!c.priceKey && !c.blocked && Number(c.totalPrice) > 0;
+  const isMedicine = (c: PendingCharge) => c.category === "PHARMACY";
+  // A medicine is priced GST-inclusive (MRP): the price given is per unit with GST inside.
+  const mrpOf = (c: PendingCharge) => (Number(c.totalPrice) + (Number(c.taxAmount) || 0)) / (c.quantity || 1);
+  const changedTotal = (c: PendingCharge) => {
+    const ch = changes[c.priceKey ?? ""];
+    if (!ch) return Number(c.totalPrice);
+    return isMedicine(c) ? (ch.price * c.quantity * 100) / (100 + (Number(c.taxPercent) || 0)) : ch.price * c.quantity;
+  };
+  const changedTax = (c: PendingCharge) => {
+    const ch = changes[c.priceKey ?? ""];
+    if (!ch) return Number(c.taxAmount) || 0;
+    return isMedicine(c) ? ch.price * c.quantity - changedTotal(c) : changedTotal(c) * (Number(c.taxPercent) || 0) / 100;
+  };
+  const pendingTotal = Number(detail?.pendingChargesTotal || 0) + pendingCharges.reduce((s, c) => s + changedTotal(c) - Number(c.totalPrice), 0);
   // Requested, not dispensed: shown but never added to the total.
   const awaitingPharmacy = detail?.awaitingPharmacy ?? [];
   const theatreWarnings = detail?.theatreWarnings ?? [];
@@ -131,7 +160,7 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
   // stay with any medicines showed a "Final bill total" below the invoice the
   // patient actually received. Mirrors the server, which re-taxes
   // authoritatively from the rate card.
-  const pendingTax = pendingCharges.reduce((s, c) => s + (Number(c.taxAmount) || 0), 0);
+  const pendingTax = pendingCharges.reduce((s, c) => s + changedTax(c), 0);
   const taxTotal = pendingTax + extras.reduce((s, e, i) => s + extraAmount(e, i) * ((e.taxPercent || 0) / 100), 0);
   const total = bedCharge + nursingCharge - packageBedCovered + pendingTotal + extrasTotal + taxTotal;
   const deposit = Number(detail?.depositBalance || 0);
@@ -162,6 +191,11 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
         roomClassId: billRoomClassId || undefined,
         extraCharges: extras
           .map((e) => ({ ...(e.chargeItemId ? (e.priceAtBilling ? { chargeItemId: e.chargeItemId, amount: Number(e.amount) } : { chargeItemId: e.chargeItemId }) : { description: e.description.trim(), amount: Number(e.amount) }), quantity: qtyOf(e) })),
+        priceChanges: [
+          ...bedRates.filter((r) => changes[r.key]).map((r) => ({ key: r.key, ...changes[r.key] })),
+          ...pendingCharges.filter((c) => c.priceKey && changes[c.priceKey]).map((c) => ({ key: c.priceKey!, ...changes[c.priceKey!] })),
+          ...extras.flatMap((e, i) => (e.priceChange ? [{ key: `EXTRA:${i}`, ...e.priceChange }] : [])),
+        ],
         advanceHoldReason: advanceAction === "HOLD" ? holdReason.trim() : undefined,
         refundLeftover: advanceAction === "REFUND" || undefined,
       });
@@ -232,6 +266,27 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
                 <Typography variant="body2" sx={{ fontWeight: 700 }}>{formatINR(nursingCharge)}</Typography>
               </Box>
             )}
+            {packageBedCovered === 0 && bedRates.length > 0 && (
+              <Box sx={{ mt: 0.75 }}>
+                <Button size="small" onClick={() => setShowBedRates((v) => !v)} sx={{ textTransform: "none", p: 0, minWidth: 0 }}>
+                  {showBedRates ? "Hide bed rates" : "Change a bed rate"}
+                </Button>
+                {showBedRates && bedRates.map((r) => (
+                  <Box key={r.key} sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1, mt: 0.5 }}>
+                    <Typography variant="body2" sx={{ color: "text.secondary" }}>{r.label} - {unitCount(r.units, r.unit ?? null)}</Typography>
+                    <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.5 }}>
+                      {changes[r.key] && <Typography variant="caption" sx={{ textDecoration: "line-through", color: "text.secondary" }}>{formatINR(r.rate)}</Typography>}
+                      <Typography variant="body2" sx={{ fontWeight: 700, color: changes[r.key] ? "warning.dark" : undefined }} title={changes[r.key]?.reason}>
+                        @ {formatINR(changes[r.key]?.price ?? r.rate)}
+                      </Typography>
+                      <IconButton size="small" aria-label="Change rate" sx={{ p: 0.25 }} onClick={() => setChanging({ name: `${r.label} (per ${r.unit ?? "day"})`, ratePrice: r.rate, key: r.key })}>
+                        <EditRounded sx={{ fontSize: 14 }} />
+                      </IconButton>
+                    </Box>
+                  </Box>
+                ))}
+              </Box>
+            )}
             {packageBedCovered > 0 && (
               <Box sx={{ display: "flex", justifyContent: "space-between", mt: 0.75 }}>
                 <Typography variant="body2" sx={{ color: "#7C3AED" }}>In package ({stayPackage?.name}) - room rent & nursing</Typography>
@@ -252,7 +307,18 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
                     {c.blocked && c.typedPrices && c.sourceId ? (
                       <Button size="small" variant="outlined" color="warning" sx={{ py: 0 }} onClick={() => setPriceCharge(c)}>Type price</Button>
                     ) : (
-                      <Typography variant="body2" sx={{ fontWeight: 700 }}>{formatINR(Number(c.totalPrice))}</Typography>
+                      <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.5, flexShrink: 0 }}>
+                        {c.priceKey && changes[c.priceKey] && (
+                          <Typography variant="caption" sx={{ textDecoration: "line-through", color: "text.secondary" }} title={changes[c.priceKey].reason}>{formatINR(Number(c.totalPrice))}</Typography>
+                        )}
+                        <Typography variant="body2" sx={{ fontWeight: 700, color: c.priceKey && changes[c.priceKey] ? "warning.dark" : undefined }}>{formatINR(changedTotal(c))}</Typography>
+                        {canChange(c) && (
+                          <IconButton size="small" aria-label="Change price" title="Change price on this bill" sx={{ p: 0.25 }}
+                            onClick={() => setChanging({ name: c.description, ratePrice: isMedicine(c) ? mrpOf(c) : Number(c.unitPrice), maxPrice: isMedicine(c) ? mrpOf(c) : undefined, key: c.priceKey })}>
+                            <EditRounded sx={{ fontSize: 14 }} />
+                          </IconButton>
+                        )}
+                      </Box>
                     )}
                   </Box>
                 ))}
@@ -348,6 +414,13 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
                   error={!e.chargeItemId && extraProblem(e) === "Amount above 0"}
                   helperText={extraInPackage[i] ? "In package - not billed" : (!e.chargeItemId && extraProblem(e) === "Amount above 0" ? "Must be above 0" : undefined)}
                   FormHelperTextProps={{ sx: { color: extraInPackage[i] ? "#7C3AED" : undefined, mx: 0 } }} />
+                {e.chargeItemId && !e.priceAtBilling && (
+                  <IconButton size="small" aria-label="Change price" title={e.priceChange ? `Changed on this bill: ${e.priceChange.reason}` : "Change price on this bill"}
+                    color={e.priceChange ? "warning" : "default"}
+                    onClick={() => setChanging({ name: e.description, ratePrice: chargePriceFor({ ...e, basePrice: e.basePrice ?? (Number(e.amount) || 0) }, billRoomClassId, detail?.serviceRateListId) || 0, extraIndex: i })}>
+                    <EditRounded fontSize="small" />
+                  </IconButton>
+                )}
                 <IconButton size="small" onClick={() => setExtras((x) => x.filter((_, ri) => ri !== i))}><DeleteOutlineRounded fontSize="small" /></IconButton>
               </Box>
             ))}
@@ -477,6 +550,21 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
       rateListId={detail?.serviceRateListId}
       roomClassName={billRoomClassName || undefined}
     />
+    {changing && (
+      <ChangePriceDialog itemName={changing.name} ratePrice={changing.ratePrice} maxPrice={changing.maxPrice}
+        current={changing.key ? changes[changing.key] ?? null : changing.extraIndex != null ? extras[changing.extraIndex]?.priceChange ?? null : null}
+        onClose={() => setChanging(null)}
+        onSave={(change) => {
+          if (changing.key) {
+            const key = changing.key;
+            setChanges((c) => { const n = { ...c }; if (change) n[key] = change; else delete n[key]; return n; });
+          } else if (changing.extraIndex != null) {
+            const idx = changing.extraIndex;
+            setExtras((x) => x.map((r, ri) => (ri === idx ? { ...r, priceChange: change ?? undefined } : r)));
+          }
+          setChanging(null);
+        }} />
+    )}
     </>
   );
 }

@@ -161,6 +161,9 @@ export interface InvoiceItem {
   uom?: string | null;
   manufacturer?: string | null;
   orderingDoctor?: string | null;
+  /** Price changed on this bill: what it would have been, and why (null = not changed). */
+  originalUnitPrice?: Money | null;
+  priceChangeReason?: string | null;
 }
 
 export interface Invoice {
@@ -302,7 +305,7 @@ export interface UnbilledItem {
   chargeItemId?: string | null;
   taxPercent: number;
   /** The bill lines it becomes: a pharmacy order's medicines, a package and what it includes (at 0). */
-  lineItems?: { description: string; quantity: number; totalPrice: number }[];
+  lineItems?: { description: string; quantity: number; totalPrice: number; unitPrice?: number; taxPercent?: number; taxAmount?: number; /** A medicine's order line: names it for a price change. */ lineId?: string }[];
   hsnCode?: string | null;
   /** Authoritative when set - pharmacy orders mix GST rates across medicines. */
   taxAmount?: number;
@@ -407,6 +410,7 @@ export interface PendingPrescription {
 }
 
 export interface PharmacyOrderLine {
+  pharmacyOrderItemId?: string;
   medicineId: string;
   medicineName?: string;
   quantity: number;

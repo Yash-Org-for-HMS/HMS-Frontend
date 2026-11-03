@@ -6,9 +6,9 @@ import { useQuery } from "@tanstack/react-query";
 import {
   Box, Typography, Paper, Autocomplete, TextField,
   Table, TableBody, TableCell, TableHead, TableRow, Checkbox,
-  Button, Divider, Grid, Dialog, DialogTitle, DialogContent, DialogActions, alpha, useTheme, Tooltip
+  Button, Divider, Grid, Dialog, DialogTitle, DialogContent, DialogActions, alpha, useTheme, Tooltip, IconButton
 } from "@mui/material";
-import { ReceiptLongRounded, PaymentRounded, CheckCircleRounded } from "@mui/icons-material";
+import { ReceiptLongRounded, PaymentRounded, CheckCircleRounded, EditRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import ErrorState from "@/components/ErrorState";
@@ -19,6 +19,7 @@ import StatusChip from "@/components/StatusChip";
 import InvoiceViewDialog from "@/components/billing/InvoiceViewDialog";
 import TypeOrderPriceDialog from "@/components/billing/TypeOrderPriceDialog";
 import SellPackageDialog from "@/components/billing/SellPackageDialog";
+import ChangePriceDialog, { type PriceChange } from "@/components/billing/ChangePriceDialog";
 import { formatINR, formatDate } from "@/utils/format";
 import { SEMANTIC } from "@/styles/accents";
 
@@ -109,10 +110,32 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
 
   // Auto-select all charges when a fresh set loads (and clear on patient change).
   // A charge that cannot be billed yet (a price still to type) is left out.
+  // Prices changed on this bill (by charge id), kept only while those charges are still unbilled.
+  const [changes, setChanges] = useState<Record<string, PriceChange>>({});
+  const [changeItem, setChangeItem] = useState<UnbilledItem | null>(null);
+  const [medChange, setMedChange] = useState<{ key: string; name: string; mrp: number } | null>(null);
   useEffect(() => {
     setSelectedItemIds(new Set((unbilledData ?? []).filter((i) => !i.blocked).map((i) => i.id)));
+    setChanges((c) => Object.fromEntries(Object.entries(c).filter(([id]) => (unbilledData ?? []).some((i) => i.id === id.split("#")[0]))));
   }, [unbilledData]);
-  const billable = unbilledItems.filter((i) => !i.blocked);
+  // A doctor with no fee set can be billed once a price is given here; medicines
+  // are priced by batch and a test priced at billing has its own "Type price".
+  const canChangePrice = (i: UnbilledItem) => i.type !== "PHARMACY" && !(i.typedPrices && i.blocked) && (!i.blocked || i.type === "CONSULTATION");
+  const isBillable = (i: UnbilledItem) => !i.blocked || !!changes[i.id];
+  // A pharmacy sale: each medicine at its price (GST inside), or lower if changed - "<sale id>#<line id>".
+  type MedLine = NonNullable<UnbilledItem["lineItems"]>[number];
+  const medKey = (i: UnbilledItem, l: MedLine) => `${i.id}#${l.lineId}`;
+  const medMrp = (l: MedLine) => Math.round(((Number(l.totalPrice) + Number(l.taxAmount ?? 0)) / (l.quantity || 1)) * 100) / 100;
+  const medFigures = (i: UnbilledItem) => (i.lineItems ?? []).reduce((acc, l) => {
+    const ch = l.lineId ? changes[medKey(i, l)] : undefined;
+    if (!ch) return { gross: acc.gross + Number(l.totalPrice), tax: acc.tax + Number(l.taxAmount ?? 0) };
+    const paid = ch.price * l.quantity;
+    const taxable = (paid * 100) / (100 + Number(l.taxPercent ?? 0));
+    return { gross: acc.gross + taxable, tax: acc.tax + paid - taxable };
+  }, { gross: 0, tax: 0 });
+  const medChanged = (i: UnbilledItem) => i.type === "PHARMACY" && (i.lineItems ?? []).some((l) => l.lineId && changes[medKey(i, l)]);
+  const priceOf = (i: UnbilledItem) => (medChanged(i) ? medFigures(i).gross : changes[i.id]?.price ?? i.amount);
+  const billable = unbilledItems.filter(isBillable);
   const [priceItem, setPriceItem] = useState<UnbilledItem | null>(null);
   // Packages (health check-ups): sold here, cancelled here while unbilled.
   const [sellOpen, setSellOpen] = useState(false);
@@ -143,7 +166,7 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
   };
 
   const selectedItemsList = unbilledItems.filter(i => selectedItemIds.has(i.id));
-  const grossAmount = selectedItemsList.reduce((sum, item) => sum + item.amount, 0);
+  const grossAmount = selectedItemsList.reduce((sum, item) => sum + priceOf(item), 0);
   const discountAmount = Number(discount || 0);
   const taxableAmount = grossAmount - discountAmount;
   const discountTooHigh = discountAmount < 0 || discountAmount > grossAmount;
@@ -151,7 +174,7 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
   // for the preview). A pharmacy order carries a precomputed taxAmount (per-medicine,
   // mixed rates). GST is charged after discount: the discount is spread over the
   // lines by value, so the tax shrinks in the same proportion.
-  const grossTax = selectedItemsList.reduce((sum, item) => sum + (item.taxAmount != null ? Number(item.taxAmount) : item.amount * (Number(item.taxPercent || 0) / 100)), 0);
+  const grossTax = selectedItemsList.reduce((sum, item) => sum + (medChanged(item) ? medFigures(item).tax : item.taxAmount != null && !changes[item.id] ? Number(item.taxAmount) : priceOf(item) * (Number(item.taxPercent || 0) / 100)), 0);
   const taxAmount = grossAmount > 0 && !discountTooHigh ? grossTax * (taxableAmount / grossAmount) : grossTax;
   const netAmount = taxableAmount + taxAmount;
   // Amount the payment dialog collects against. Once the invoice is created the
@@ -163,9 +186,13 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
     if (!selectedPatient || selectedItemIds.size === 0) return;
     try {
       setIsGenerating(true);
+      const priceChanges = Object.entries(changes)
+        .filter(([id]) => selectedItemIds.has(id.split("#")[0]))
+        .map(([id, c]) => ({ id, ...c }));
       const payload = {
         selectedItems: selectedItemsList,
         discountAmount,
+        ...(priceChanges.length ? { priceChanges } : {}),
       };
       const res = await axiosInstance.post(`/billing/invoices/${selectedPatient.patientId}`, payload);
       setGeneratedInvoice(res.data.data);
@@ -284,7 +311,7 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
                     {unbilledItems.map((item) => (
                       <TableRow key={item.id} hover selected={selectedItemIds.has(item.id)}>
                         <TableCell padding="checkbox">
-                          <Checkbox checked={selectedItemIds.has(item.id)} disabled={!!item.blocked} onChange={() => handleToggleItem(item.id)} />
+                          <Checkbox checked={selectedItemIds.has(item.id)} disabled={!isBillable(item)} onChange={() => handleToggleItem(item.id)} />
                         </TableCell>
                         <TableCell>{formatDate(item.date)}</TableCell>
                         <TableCell>
@@ -298,6 +325,26 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
                         </TableCell>
                         <TableCell>
                           {item.description}
+                          {item.type === "PHARMACY" && (item.lineItems ?? []).some((l) => l.lineId) && (
+                            <Box sx={{ mt: 0.5 }}>
+                              {(item.lineItems ?? []).filter((l) => l.lineId).map((l) => {
+                                const ch = changes[medKey(item, l)];
+                                return (
+                                  <Box key={l.lineId} sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                                    <Typography variant="caption" sx={{ color: "text.secondary" }}>{l.description} x {l.quantity} @</Typography>
+                                    {ch && <Typography variant="caption" sx={{ textDecoration: "line-through", color: "text.secondary" }}>₹{medMrp(l).toFixed(2)}</Typography>}
+                                    <Typography variant="caption" sx={{ fontWeight: 700, color: ch ? "warning.dark" : "text.secondary" }} title={ch?.reason}>₹{(ch?.price ?? medMrp(l)).toFixed(2)}</Typography>
+                                    <Tooltip title="Lower this medicine's price on this bill">
+                                      <IconButton size="small" aria-label="Change price" sx={{ p: 0.25 }}
+                                        onClick={() => setMedChange({ key: medKey(item, l), name: l.description, mrp: medMrp(l) })}>
+                                        <EditRounded sx={{ fontSize: 14 }} />
+                                      </IconButton>
+                                    </Tooltip>
+                                  </Box>
+                                );
+                              })}
+                            </Box>
+                          )}
                           {item.type === "PACKAGE" && (
                             <>
                               <Typography variant="caption" sx={{ display: "block", color: "text.secondary" }}>
@@ -312,9 +359,28 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
                             <Tooltip title={item.blocked}>
                               <Button size="small" variant="outlined" color="warning" onClick={() => setPriceItem(item)}>Type price</Button>
                             </Tooltip>
+                          ) : changes[item.id] ? (
+                            <Tooltip title={`Changed on this bill: ${changes[item.id].reason}`}>
+                              <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 0.5 }}>
+                                {item.amount > 0 && <Typography component="span" variant="caption" sx={{ textDecoration: "line-through", color: "text.secondary" }}>₹{item.amount.toFixed(2)}</Typography>}
+                                <Typography component="span" variant="body2" fontWeight={700} color="warning.dark">₹{changes[item.id].price.toFixed(2)}</Typography>
+                                <IconButton size="small" aria-label="Change price" onClick={() => setChangeItem(item)}><EditRounded fontSize="inherit" /></IconButton>
+                              </Box>
+                            </Tooltip>
+                          ) : item.blocked && canChangePrice(item) ? (
+                            <Tooltip title={item.blocked}>
+                              <Button size="small" variant="outlined" color="warning" onClick={() => setChangeItem(item)}>Set price</Button>
+                            </Tooltip>
                           ) : item.blocked ? (
                             <Tooltip title={item.blocked}><Typography variant="body2" color="warning.dark">Can't bill yet</Typography></Tooltip>
-                          ) : `₹${item.amount.toFixed(2)}`}
+                          ) : (
+                            <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 0.5 }}>
+                              ₹{item.amount.toFixed(2)}
+                              {canChangePrice(item) && (
+                                <Tooltip title="Change price on this bill"><IconButton size="small" aria-label="Change price" onClick={() => setChangeItem(item)}><EditRounded fontSize="inherit" /></IconButton></Tooltip>
+                              )}
+                            </Box>
+                          )}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -442,6 +508,26 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
           <Button color="error" variant="contained" disabled={cancelling || cancelReason.trim().length < 3} onClick={cancelPackage} sx={{ textTransform: "none" }}>Cancel package</Button>
         </DialogActions>
       </Dialog>
+      {medChange && (
+        <ChangePriceDialog itemName={medChange.name} ratePrice={medChange.mrp} maxPrice={medChange.mrp} current={changes[medChange.key]}
+          onClose={() => setMedChange(null)}
+          onSave={(change) => {
+            const key = medChange.key;
+            setChanges((c) => { const n = { ...c }; if (change) n[key] = change; else delete n[key]; return n; });
+            setMedChange(null);
+          }} />
+      )}
+      {changeItem && (
+        <ChangePriceDialog itemName={changeItem.description} ratePrice={changeItem.amount} current={changes[changeItem.id]}
+          onClose={() => setChangeItem(null)}
+          onSave={(change) => {
+            const id = changeItem.id;
+            setChanges((c) => { const n = { ...c }; if (change) n[id] = change; else delete n[id]; return n; });
+            // A charge held only for its price is ready once it has one.
+            setSelectedItemIds((sel) => { const n = new Set(sel); if (change) n.add(id); else if (changeItem.blocked) n.delete(id); return n; });
+            setChangeItem(null);
+          }} />
+      )}
       {priceItem?.typedPrices && (priceItem.type === "LAB" || priceItem.type === "RADIOLOGY") && (
         <TypeOrderPriceDialog open kind={priceItem.type} id={priceItem.id} tests={priceItem.typedPrices}
           onClose={() => setPriceItem(null)}

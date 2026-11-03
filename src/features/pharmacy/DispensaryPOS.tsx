@@ -791,7 +791,12 @@ export default function DispensaryPOS() {
             // The taxable value: the payment dialog adds the GST inside the prices back on.
             amount: Number(createdOrder.totalAmount) - cartTax,
             taxAmount: cartTax,
-            date: createdOrder.createdAt || new Date()
+            date: createdOrder.createdAt || new Date(),
+            // Each medicine by its order line, at its price (GST inside), so one can be lowered.
+            medicines: (createdOrder.items ?? []).flatMap((line) => {
+              const c = cart.find((x: CartLine) => x.medicineId === line.medicineId);
+              return line.pharmacyOrderItemId && c ? [{ lineId: line.pharmacyOrderItemId, description: c.medicineName ?? "Medicine", quantity: line.quantity, mrp: Number(line.unitPrice), taxPercent: Number(c.gstPercent || 0) }] : [];
+            }),
           }}
         />
       )}

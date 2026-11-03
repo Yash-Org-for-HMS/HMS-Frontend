@@ -13,6 +13,8 @@ import { axiosInstance } from "@/api/axios";
 import type { InvoiceDetail, BillingLookups, InvoiceItem, Payment } from "@/types";
 import BillDocument from "@/components/billing/BillDocument";
 import RefundSection from "@/components/billing/RefundSection";
+import ChangePriceDialog, { type PriceChange } from "@/components/billing/ChangePriceDialog";
+import { priceableLines, medicineMrp, shownUnitPrice } from "@/components/billing/priceableLines";
 import HeartbeatLoader from "../HeartbeatLoader";
 import { ListSkeleton } from "../TableRowsSkeleton";
 import ErrorState from "../ErrorState";
@@ -92,6 +94,22 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
   const fullyPaid = invoice?.paymentStatus?.statusCode === "PAID" || isSettled(invoice);
 
   const hp = invoice?.hospital;
+
+  // Change a line's price while nothing is paid (this bill only, with a reason).
+  const priceLines = readOnly ? [] : priceableLines(invoice, totalPaid);
+  const [priceLine, setPriceLine] = useState<InvoiceItem | null>(null);
+  const changeLinePrice = async (line: InvoiceItem, change: PriceChange | null) => {
+    const body = change ?? { price: medicineMrp(line) ?? Number(line.originalUnitPrice ?? line.unitPrice), reason: "Back to the rate card price" };
+    try {
+      await axiosInstance.put(`${basePath}/invoices/${invoiceId}/items/${line.invoiceItemId}/price`, body);
+      toast.success("Price changed on this bill");
+      setPriceLine(null);
+      await refetch();
+      onChanged?.();
+    } catch (e) {
+      toast.error(getApiErrorMessage(e, "Couldn't change the price"));
+    }
+  };
 
   const pay = async () => {
     const amt = Number(amount);
@@ -285,6 +303,30 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
                   })()}
                 </BillDocument>
               </Box>
+
+              {priceLines.length > 0 && (
+                <Box sx={{ mt: 3, p: 2, borderRadius: 2, border: "1px dashed", borderColor: "divider" }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 0.5 }}>Change a price</Typography>
+                  <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 1 }}>For this bill only - the rate card stays as it is. A reason is required.</Typography>
+                  {priceLines.map((l) => (
+                    <Box key={l.invoiceItemId} sx={{ display: "flex", alignItems: "center", gap: 1, py: 0.5 }}>
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography variant="body2" noWrap title={l.description ?? ""}>{l.description}</Typography>
+                        {l.originalUnitPrice != null && (
+                          <Typography variant="caption" sx={{ color: "warning.dark" }}>Was {formatINR(Number(l.originalUnitPrice))} - {l.priceChangeReason}</Typography>
+                        )}
+                      </Box>
+                      <Typography variant="body2" fontWeight={600}>{formatINR(shownUnitPrice(l))}{l.quantity > 1 ? ` x ${l.quantity}` : ""}</Typography>
+                      <Button size="small" onClick={() => setPriceLine(l)} sx={{ textTransform: "none" }}>Change</Button>
+                    </Box>
+                  ))}
+                </Box>
+              )}
+              {priceLine && (
+                <ChangePriceDialog itemName={priceLine.description ?? "Charge"} ratePrice={medicineMrp(priceLine) ?? Number(priceLine.originalUnitPrice ?? priceLine.unitPrice)} maxPrice={medicineMrp(priceLine)}
+                  current={priceLine.originalUnitPrice != null ? { price: shownUnitPrice(priceLine), reason: priceLine.priceChangeReason ?? "" } : null}
+                  onClose={() => setPriceLine(null)} onSave={(c) => changeLinePrice(priceLine, c)} />
+              )}
 
               {/* Record payment (only if balance outstanding, and not in read-only oversight mode) */}
               {fullyPaid ? (

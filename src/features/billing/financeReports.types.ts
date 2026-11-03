@@ -162,6 +162,32 @@ export interface DiscountRegisterResponse extends Truncatable {
   rows: DiscountRow[];
 }
 
+// ── Price changes (changed on the bill at billing time) ─────────────────────
+
+export interface PriceChangeRow {
+  date: string | null;
+  invoiceNumber: string;
+  patientName: string;
+  uhid: string;
+  item: string;
+  quantity: number;
+  /** Per unit; a medicine's with its GST inside. */
+  ratePrice: Money;
+  billedPrice: Money;
+  /** (billed - rate) x quantity: above 0 billed more, below 0 billed less. */
+  difference: Money;
+  reason: string;
+  changedBy: string;
+}
+
+export interface PriceChangeRegisterResponse extends Truncatable {
+  range: DateRangeEcho;
+  totals: { count: number; raised: Money; lowered: Money; net: Money };
+  byItem: { item: string; count: number; difference: Money }[];
+  byUser: { user: string; count: number; difference: Money }[];
+  rows: PriceChangeRow[];
+}
+
 // ── Cancelled invoices ──────────────────────────────────────────────────────
 
 export interface CancelledInvoiceRow {
