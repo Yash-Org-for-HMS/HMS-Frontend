@@ -324,16 +324,16 @@ export function PriceChangeRegister() {
             title="Price changes"
             filename={`price_changes_${range.from}_${range.to}`}
             columns={[
-              { key: "date", label: "Date", format: (v) => (v ? dayjs(v).format("DD MMM YYYY") : "-"), value: (r) => ts(r.date) },
-              { key: "invoiceNumber", label: "Invoice" },
-              { key: "patientName", label: "Patient" },
               { key: "item", label: "Item" },
-              { key: "quantity", label: "Qty", align: "right" },
               money("ratePrice", "Rate card"),
               money("billedPrice", "Billed at"),
               { key: "difference", label: "Difference", align: "right", format: signed, value: (r) => Number(r.difference) },
-              { key: "reason", label: "Reason" },
               { key: "changedBy", label: "Changed by" },
+              { key: "reason", label: "Reason", maxWidth: 240, format: (v) => <Box component="span" sx={{ display: "block", whiteSpace: "normal", minWidth: 140 }}>{String(v)}</Box> },
+              { key: "quantity", label: "Qty", align: "right" },
+              { key: "date", label: "Date", format: (v) => (v ? dayjs(v).format("DD MMM YYYY") : "-"), value: (r) => ts(r.date) },
+              { key: "invoiceNumber", label: "Invoice" },
+              { key: "patientName", label: "Patient" },
             ]}
             rows={rows}
             pagination={paging.bind(data.totalRows ?? rows.length, isFetching)}
