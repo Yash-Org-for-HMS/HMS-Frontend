@@ -353,29 +353,34 @@ export default function HospitalProfile({ embedded = false }: { embedded?: boole
           borderRadius: 3,
         }}
       >
-        <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+        {/* Inside the Hospital page, whose own tabs run along the top, these
+            sections go down the side - one row of tabs on the screen, not two. */}
+        <Box sx={{ display: embedded ? "flex" : "block" }}>
+        <Box sx={embedded ? { borderRight: 1, borderColor: "divider", flexShrink: 0, py: 2 } : { borderBottom: 1, borderColor: "divider" }}>
           <Tabs
+            orientation={embedded ? "vertical" : "horizontal"}
             value={tabValue}
             onChange={handleTabChange}
             variant="scrollable"
             scrollButtons="auto"
             sx={{
-              px: 2,
+              px: embedded ? 0 : 2,
               "& .MuiTab-root": {
                 color: "text.secondary",
                 textTransform: "none",
                 fontWeight: 600,
                 fontSize: "0.875rem",
-                minHeight: 64,
+                minHeight: embedded ? 52 : 64,
+                ...(embedded ? { justifyContent: "flex-start", px: 3 } : {}),
               },
               "& .Mui-selected": {
                 color: "#10b981 !important",
               },
               "& .MuiTabs-indicator": {
                 backgroundColor: SEMANTIC.success,
-                height: 3,
-                borderTopLeftRadius: 3,
-                borderTopRightRadius: 3,
+                ...(embedded
+                  ? { width: 3, left: 0, borderTopRightRadius: 3, borderBottomRightRadius: 3 }
+                  : { height: 3, borderTopLeftRadius: 3, borderTopRightRadius: 3 }),
               },
             }}
           >
@@ -390,7 +395,7 @@ export default function HospitalProfile({ embedded = false }: { embedded?: boole
           </Tabs>
         </Box>
 
-        <Box sx={{ p: 4, display: "grid" }}>
+        <Box sx={{ p: 4, display: "grid", flex: 1, minWidth: 0 }}>
           {/* General Information Tab */}
           <CustomTabPanel value={tabValue} index={0}>
             <Grid container spacing={3}>
@@ -604,6 +609,7 @@ export default function HospitalProfile({ embedded = false }: { embedded?: boole
               </Grid>
             </Grid>
           </CustomTabPanel>
+        </Box>
         </Box>
 
         {canEdit && (

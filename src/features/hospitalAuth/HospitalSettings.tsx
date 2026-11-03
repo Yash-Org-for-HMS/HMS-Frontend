@@ -191,29 +191,34 @@ export default function HospitalSettings({ embedded = false }: { embedded?: bool
           borderRadius: 3,
         }}
       >
-        <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+        {/* Inside the Hospital page, whose own tabs run along the top, these
+            sections go down the side - one row of tabs on the screen, not two. */}
+        <Box sx={{ display: embedded ? "flex" : "block" }}>
+        <Box sx={embedded ? { borderRight: 1, borderColor: "divider", flexShrink: 0, py: 2 } : { borderBottom: 1, borderColor: "divider" }}>
           <Tabs
+            orientation={embedded ? "vertical" : "horizontal"}
             value={tabValue}
             onChange={handleTabChange}
             variant="scrollable"
             scrollButtons="auto"
             sx={{
-              px: 2,
+              px: embedded ? 0 : 2,
               "& .MuiTab-root": {
                 color: "text.secondary",
                 textTransform: "none",
                 fontWeight: 600,
                 fontSize: "0.875rem",
-                minHeight: 64,
+                minHeight: embedded ? 52 : 64,
+                ...(embedded ? { justifyContent: "flex-start", px: 3 } : {}),
               },
               "& .Mui-selected": {
                 color: "#10b981 !important",
               },
               "& .MuiTabs-indicator": {
                 backgroundColor: SEMANTIC.success,
-                height: 3,
-                borderTopLeftRadius: 3,
-                borderTopRightRadius: 3,
+                ...(embedded
+                  ? { width: 3, left: 0, borderTopRightRadius: 3, borderBottomRightRadius: 3 }
+                  : { height: 3, borderTopLeftRadius: 3, borderTopRightRadius: 3 }),
               },
             }}
           >
@@ -225,7 +230,7 @@ export default function HospitalSettings({ embedded = false }: { embedded?: bool
           </Tabs>
         </Box>
 
-        <Box sx={{ p: 4 }}>
+        <Box sx={{ p: 4, flex: 1, minWidth: 0 }}>
 
           {/* Localization Tab - one language, one timezone and one currency for
               now (the server clock is pinned to IST), so shown, not chosen. */}
@@ -494,6 +499,7 @@ export default function HospitalSettings({ embedded = false }: { embedded?: bool
           <CustomTabPanel value={tabValue} index={4}>
             <MessagingSettings />
           </CustomTabPanel>
+        </Box>
         </Box>
 
         {/* Hidden on Messaging: that tab saves each gateway and template on its
