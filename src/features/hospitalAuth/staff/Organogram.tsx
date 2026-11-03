@@ -412,6 +412,15 @@ export default function Organogram() {
   const byId = useMemo(() => new Map(people.map((p) => [p.staffId, p])), [people]);
   const forest = useMemo(() => buildForest(people, line), [people, line]);
   const { tops, unplaced } = useMemo(() => splitUnplaced(forest), [forest]);
+  // Once the chart has reporting lines, whoever is left without one was left
+  // so on purpose (a visiting consultant, someone alone in their role): they
+  // are part of the chart, grouped by designation, not a "not placed" warning.
+  const standAlone = tops.length > 0;
+  const unplacedGroups = useMemo(() => {
+    const m = new Map<string, OrgPerson[]>();
+    for (const p of unplaced) { const k = p.designation ?? p.category; m.set(k, [...(m.get(k) ?? []), p]); }
+    return [...m.entries()].sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]));
+  }, [unplaced]);
   // At first: everything for a small organisation, two levels for a big one.
   const open = chosenOpen ?? openToDepth(tops, people.length <= 20 ? 99 : 2);
   const lanes = useMemo(() => (data ? departmentLanes(data, line) : []), [data, line]);
@@ -470,7 +479,7 @@ export default function Organogram() {
                     <Typography variant="caption" sx={{ color: "text.secondary" }}>{name}</Typography>
                   </Box>
                 ))}
-                {unplaced.length > 0 && <Chip icon={<WarningAmberRounded />} label={<><b>{unplaced.length}</b> without a manager</>} sx={{ bgcolor: `${SEMANTIC.warning}1a`, color: SEMANTIC.warningDark, fontSize: 13, "& .MuiChip-icon": { color: SEMANTIC.warningDark } }} />}
+                {unplaced.length > 0 && !standAlone && <Chip icon={<WarningAmberRounded />} label={<><b>{unplaced.length}</b> without a manager</>} sx={{ bgcolor: `${SEMANTIC.warning}1a`, color: SEMANTIC.warningDark, fontSize: 13, "& .MuiChip-icon": { color: SEMANTIC.warningDark } }} />}
               </Box>
 
               <Paper variant="outlined" sx={{ p: 1.5, mb: 2, display: "flex", gap: 1.5, alignItems: "center", flexWrap: "wrap", borderRadius: 3 }}>
@@ -525,7 +534,26 @@ export default function Organogram() {
                         action={canEdit ? <Button variant="contained" startIcon={<EditRounded />} onClick={() => navigate("/hospital/staff")} sx={{ textTransform: "none", fontWeight: 700 }}>Set reporting lines</Button> : undefined} />
                     </Paper>
                   )}
-                  {unplaced.length > 0 && (
+                  {unplaced.length > 0 && standAlone && (
+                    <Paper variant="outlined" sx={{ mt: 2, p: 2, borderRadius: 3 }}>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>Stand-alone ({unplaced.length})</Typography>
+                      <Typography variant="caption" sx={{ color: "text.secondary" }}>They report to no one and no one reports to them, such as visiting consultants or someone alone in their role. To put someone under a manager, set it in the Staff Directory.</Typography>
+                      <Stack spacing={2} sx={{ mt: 1.5 }}>
+                        {unplacedGroups.map(([title, group]) => (
+                          <Box key={title}>
+                            <Typography variant="caption" sx={{ fontWeight: 700, color: "text.secondary" }}>{title} ({group.length})</Typography>
+                            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, mt: 0.75 }}>
+                              {group.map((p) => (
+                                <PersonCard key={p.staffId} p={p} compact onOpen={setPanelFor} line={line} byId={byId} showBranch={showBranch}
+                                  highlighted={focus === p.staffId || (!!highlightDept && inDept(p, highlightDept))} dimmed={!!highlightDept && !inDept(p, highlightDept)} />
+                              ))}
+                            </Box>
+                          </Box>
+                        ))}
+                      </Stack>
+                    </Paper>
+                  )}
+                  {unplaced.length > 0 && !standAlone && (
                     <Paper variant="outlined" sx={{ mt: 2, p: 2, borderRadius: 3, borderColor: `${SEMANTIC.warning}66`, bgcolor: `${SEMANTIC.warning}0a` }}>
                       <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>Not placed in the hierarchy yet ({unplaced.length})</Typography>
                       <Typography variant="caption" sx={{ color: "text.secondary" }}>Nobody is set as their manager. Give them one in the Staff Directory and they join the chart.</Typography>

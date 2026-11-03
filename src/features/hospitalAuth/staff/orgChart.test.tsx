@@ -91,10 +91,11 @@ describe("the organisation chart page", () => {
     me.role = "H_ADMIN";
   });
 
-  it("draws the chart, lists who is not placed, and finds a person", async () => {
+  it("draws the chart, shows who stands alone, and finds a person", async () => {
     renderWithProviders(<Organogram />);
     expect(await screen.findByRole("button", { name: "Anil Ceo, D-ceo" })).toBeInTheDocument();
-    expect(screen.getByText("Not placed in the hierarchy yet (1)")).toBeInTheDocument();
+    expect(screen.getByText("Stand-alone (1)")).toBeInTheDocument();
+    expect(screen.queryByText(/without a manager/)).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Rita Consultant, D-rita" })).toBeInTheDocument(); // a small chart opens fully
 
     // Close everything, then find Rita: the way down to her opens again.
