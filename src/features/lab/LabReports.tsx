@@ -62,7 +62,7 @@ export function LabOverview() {
             <Grid size={{ xs: 6, sm: 4, md: 3 }}><KpiCard icon={<MonitorHeartRounded />} accent={BRAND.action} label="Radiology orders" info="Radiology orders raised in the selected dates." value={s?.radiologyOrders || 0} current={s?.radiologyOrders} previous={p?.radiologyOrders} /></Grid>
             <Grid size={{ xs: 6, sm: 4, md: 3 }}><KpiCard icon={<WarningAmberRounded />} accent={SEMANTIC.danger} label="Critical results" info="Lab results flagged critical on orders from the selected dates." value={s?.criticalResults || 0} current={s?.criticalResults} previous={p?.criticalResults} higherIsBetter={false} /></Grid>
             <Grid size={{ xs: 6, sm: 4, md: 3 }}><KpiCard icon={<AccessTimeRounded />} accent={BRAND.actionDark} label="Avg time to result" info="For completed lab orders in the selected dates: average hours from sample collection to the last result being entered." value={`${s?.avgTurnaroundHours || 0} hrs`} current={s?.avgTurnaroundHours} previous={p?.avgTurnaroundHours} higherIsBetter={false} /></Grid>
-            <Grid size={{ xs: 6, sm: 4, md: 3 }}><KpiCard icon={<CurrencyRupeeRounded />} accent={SEMANTIC.success} label="Lab billed value" info="Value of lab orders raised in the selected dates: the order amount, or the test price list where no amount was recorded. Billed, not necessarily paid." value={inr(s?.revenueEstimate)} sub="Priced per order" current={s?.revenueEstimate} previous={p?.revenueEstimate} /></Grid>
+            <Grid size={{ xs: 6, sm: 4, md: 3 }}><KpiCard icon={<CurrencyRupeeRounded />} accent={SEMANTIC.success} label="Lab billed value" info="What the bills charged for lab orders raised in the selected dates: after any price change and the bill's discount share, before GST. Billed, not necessarily paid. Tests inside a package count 0 (billed under the package). Orders not billed yet, or whose bill was cancelled, are left out and counted in the line below." value={inr(s?.revenueEstimate)} sub={`${s?.notBilledOrders ?? 0} ordered, not billed (${inr(s?.notBilledValue ?? 0)})`} current={s?.revenueEstimate} previous={p?.revenueEstimate} /></Grid>
           </Grid>
 
           <Grid container spacing={2.5}>
@@ -417,7 +417,7 @@ export function OrderRegister() {
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ScienceRounded />} accent={SEMANTIC.success} label="Lab orders" info="Lab orders in the register for the selected dates and filters." value={String(data.totals.labOrders)} sub={`${data.totals.labCompleted} completed`} /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<MonitorHeartRounded />} accent={BRAND.action} label="Radiology orders" info="Radiology orders in the register for the selected dates and filters." value={String(data.totals.radOrders)} sub={`${data.totals.radReported} reported`} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CurrencyRupeeRounded />} accent={SEMANTIC.success} label="Order value" info="Total value of the lab and radiology orders in the register." value={inr(Number(data.totals.labValue) + Number(data.totals.radValue))} sub={`${data.totals.unpaid} unpaid`} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CurrencyRupeeRounded />} accent={SEMANTIC.success} label="Billed value" info="What the bills charged for the lab and radiology orders in the register: after any price change and the bill's discount share, before GST (GST is in its own column). Tests and scans inside a package count 0. Orders not billed yet, or whose bill was cancelled, are left out and counted in the line below." value={inr(Number(data.totals.labValue) + Number(data.totals.radValue))} sub={`${inr(Number(data.totals.labNotBilled?.value ?? 0) + Number(data.totals.radNotBilled?.value ?? 0))} ordered, not billed · ${data.totals.unpaid} unpaid`} /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<WarningAmberRounded />} accent={SEMANTIC.danger} label="With a critical result" info="Lab orders in the register with at least one critical result." value={String(data.totals.labCritical)} /></Grid>
           </Grid>
 
@@ -440,7 +440,10 @@ export function OrderRegister() {
                 { key: "tatHours", label: "Turnaround (h)", align: "right", value: (r) => (r.tatHours == null ? "" : Number(r.tatHours)) },
                 { key: "doctor", label: "Ordering doctor" },
                 ...(verifies ? [{ key: "verified", label: "Verified" }] : []),
-                money("amount", "Amount"),
+                money("amount", "Billed ₹"),
+                money("gst", "GST ₹"),
+                { key: "billing", label: "Billing" },
+                money("orderedValue", "Ordered ₹"),
                 { key: "paymentStatus", label: "Payment" },
               ]}
               rows={labRows}
@@ -463,7 +466,10 @@ export function OrderRegister() {
               { key: "tatHours", label: "Turnaround (h)", align: "right", value: (r) => (r.tatHours == null ? "" : Number(r.tatHours)) },
               { key: "doctor", label: "Ordering doctor" },
               ...(verifies ? [{ key: "verified", label: "Verified" }] : []),
-              money("amount", "Amount"),
+              money("amount", "Billed ₹"),
+              money("gst", "GST ₹"),
+              { key: "billing", label: "Billing" },
+              money("orderedValue", "Ordered ₹"),
               { key: "paymentStatus", label: "Payment" },
             ]}
             rows={radRows}

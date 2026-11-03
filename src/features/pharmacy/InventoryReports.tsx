@@ -296,10 +296,10 @@ export function OpdIpdSplit() {
       {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<StorefrontRounded />} accent={BRAND.action} label="OPD billed" info="Value of pharmacy sales (outpatient counter) in the selected dates, not counting cancelled ones." value={inr(data.totals.opd.value)} sub={`${data.totals.opd.orders} orders · ${data.totals.opd.qty} units`} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<LocalPharmacyRounded />} accent={BRAND.action} label="IPD meds issued" info="Value of medicines issued to admitted patients in the selected dates (active or already billed)." value={inr(data.totals.ipd.value)} sub={`${data.totals.ipd.orders} orders · ${data.totals.ipd.qty} units`} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CurrencyRupeeRounded />} accent={SEMANTIC.success} label="Combined value" info="OPD sales plus IPD issues for the selected dates." value={inr(data.totals.combined.value)} sub={`${data.totals.combined.qty} units`} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<DonutLargeRounded />} accent={SEMANTIC.info} label="IPD share" info="IPD issues as a share of the combined value." value={`${ipdShare}%`} sub="of pharmacy value" /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<StorefrontRounded />} accent={BRAND.action} label="OPD billed" info="What the bills charged for pharmacy counter sales in the selected dates: after any price change and the bill's discount share, before GST (the GST inside the medicine price is shown in its own column). Sales not billed yet, or whose bill was cancelled, are left out and counted in the line below." value={inr(data.totals.opd.value)} sub={`GST ${inr(data.totals.opd.gst ?? 0)} · ${inr(data.totals.opd.notBilled?.value ?? 0)} not billed`} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<LocalPharmacyRounded />} accent={BRAND.action} label="IPD meds billed" info="What discharge bills charged for medicines issued to admitted patients in the selected dates, before GST. Medicines on a stay not discharged yet are not billed: they are left out and counted in the line below." value={inr(data.totals.ipd.value)} sub={`GST ${inr(data.totals.ipd.gst ?? 0)} · ${inr(data.totals.ipd.notBilled?.value ?? 0)} not billed yet`} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CurrencyRupeeRounded />} accent={SEMANTIC.success} label="Combined billed" info="OPD plus IPD billed value for the selected dates, before GST." value={inr(data.totals.combined.value)} sub={`${data.totals.combined.qty} units`} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<DonutLargeRounded />} accent={SEMANTIC.info} label="IPD share" info="IPD billed value as a share of the combined billed value." value={`${ipdShare}%`} sub="of pharmacy value" /></Grid>
           </Grid>
           <ReportTable
             title="OPD vs IPD dispensing, by medicine"
@@ -307,11 +307,13 @@ export function OpdIpdSplit() {
             columns={[
               { key: "medicine", label: "Medicine" },
               num("opdQty", "OPD qty"),
-              money("opdValue", "OPD ₹"),
+              money("opdValue", "OPD billed ₹"),
+              money("opdGst", "OPD GST ₹"),
               num("ipdQty", "IPD qty"),
-              money("ipdValue", "IPD ₹"),
+              money("ipdValue", "IPD billed ₹"),
+              money("ipdGst", "IPD GST ₹"),
               num("totalQty", "Total qty"),
-              money("totalValue", "Total ₹"),
+              money("totalValue", "Total billed ₹"),
             ]}
             rows={rows}
             truncated={data.truncated} totalRows={data.totalRows} shownRows={data.shownRows}

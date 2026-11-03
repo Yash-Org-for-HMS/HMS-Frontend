@@ -99,7 +99,8 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
   const priceLines = readOnly ? [] : priceableLines(invoice, totalPaid);
   const [priceLine, setPriceLine] = useState<InvoiceItem | null>(null);
   const changeLinePrice = async (line: InvoiceItem, change: PriceChange | null) => {
-    const body = change ?? { price: medicineMrp(line) ?? Number(line.originalUnitPrice ?? line.unitPrice), reason: "Back to the rate card price" };
+    // Back to the rate card: the server restores the price the line was billed at.
+    const body = change ?? { reset: true };
     try {
       await axiosInstance.put(`${basePath}/invoices/${invoiceId}/items/${line.invoiceItemId}/price`, body);
       toast.success("Price changed on this bill");

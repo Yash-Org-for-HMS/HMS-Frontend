@@ -36,8 +36,17 @@ export interface LabOverviewSummary {
   radiologyOrders: number;
   criticalResults: number;
   avgTurnaroundHours: number;
-  /** `.toNumber()`d server-side, unlike the test-wise revenues below. */
+  /**
+   * What the bills charged for the window's lab orders (after price changes and
+   * the discount share, before GST; package contents 0). `.toNumber()`d
+   * server-side, unlike the test-wise revenues below.
+   */
   revenueEstimate: number;
+  /** GST charged on those lines. */
+  revenueGst?: number;
+  /** Orders not on a live bill (never billed, or bill cancelled), at their ordered value. */
+  notBilledOrders?: number;
+  notBilledValue?: number;
 }
 
 export interface TopTestRow {
@@ -223,7 +232,13 @@ export interface RegisterRow {
   verified: string;
   reportedOn: string;
   tatHours: number | null;
+  /** What the bill charged (after price change and discount share, before GST); 0 when not billed or inside a package. */
   amount: Money;
+  gst?: Money;
+  /** "Billed" | "In package" | "Not billed" (never billed, or its bill was cancelled). */
+  billing?: string;
+  /** The order's own value, as ordered. */
+  orderedValue?: Money;
   paymentStatus: string;
   barcode?: string;
   tests?: string;

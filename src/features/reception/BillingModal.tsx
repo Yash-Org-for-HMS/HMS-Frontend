@@ -246,8 +246,8 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
   // Change one line's price on this unpaid bill (the rate card is untouched).
   const changeLinePrice = async (line: InvoiceItem, change: PriceChange | null) => {
     if (!invoice) return;
-    const original = medicineMrp(line) ?? Number(line.originalUnitPrice ?? line.unitPrice);
-    const body = change ?? { price: original, reason: "Back to the rate card price" };
+    // Back to the rate card: the server restores the price the line was billed at.
+    const body = change ?? { reset: true };
     try {
       await axiosInstance.put(`/reception/billing/invoices/${invoice.invoiceId}/items/${line.invoiceItemId}/price`, body);
       toast.success("Price changed on this bill");

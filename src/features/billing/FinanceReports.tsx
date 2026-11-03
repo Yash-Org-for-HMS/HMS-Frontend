@@ -190,7 +190,7 @@ export function RevenueAnalytics() {
       {isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : isLoading || !data ? <ReportSkeleton /> : (
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<TrendingUpRounded />} accent={SEMANTIC.success} label="Net revenue (billed)" info="Total of issued bills dated in the selected range, after discount and with tax. This is what was billed, not what was collected. Draft and cancelled bills are left out." value={inr(data.totals.net)} current={Number(data.totals.net)} previous={prev ? Number(prev.net) : undefined} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<TrendingUpRounded />} accent={SEMANTIC.success} label="Net revenue (billed)" info="Total of issued bills dated in the selected range, after discount and with tax. This is what was billed, not what was collected. Draft and cancelled bills are left out. Revenue by category adds up to this figure." value={inr(data.totals.net)} current={Number(data.totals.net)} previous={prev ? Number(prev.net) : undefined} /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ReceiptLongRounded />} accent="#8b5cf6" label="Gross" info="Total of those bills before discount and tax." value={inr(data.totals.gross)} current={Number(data.totals.gross)} previous={prev ? Number(prev.gross) : undefined} /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<LocalOfferRounded />} accent={SEMANTIC.warning} label="Discount" info="Total discount given on those bills." value={inr(data.totals.discount)} current={Number(data.totals.discount)} previous={prev ? Number(prev.discount) : undefined} higherIsBetter={false} /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<AccountBalanceWalletRounded />} accent={SEMANTIC.info} label="Tax (GST)" info="Total GST charged on those bills." value={inr(data.totals.tax)} current={Number(data.totals.tax)} previous={prev ? Number(prev.tax) : undefined} /></Grid>
@@ -212,7 +212,7 @@ export function RevenueAnalytics() {
           <Grid container spacing={2.5}>
             <Grid size={{ xs: 12, md: 6 }}>
               <ReportTable title="Revenue by category" filename={`revenue_by_category_${range.from}_${range.to}`} maxHeight={340}
-                columns={[{ key: "category", label: "Category" }, money("amount", "Revenue")]} rows={byCategory} />
+                columns={[{ key: "category", label: "Category" }, money("amount", "Net revenue")]} rows={byCategory} />
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
               <ReportTable title="Revenue by department" filename={`revenue_by_department_${range.from}_${range.to}`} maxHeight={340}
