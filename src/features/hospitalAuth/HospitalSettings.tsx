@@ -63,7 +63,7 @@ function a11yProps(index: number) {
   };
 }
 
-export default function HospitalSettings() {
+export default function HospitalSettings({ embedded = false }: { embedded?: boolean } = {}) {
   const [tabValue, setTabValue] = useState(0);
   const [saving, setSaving] = useState(false);
   const toast = useToast();
@@ -175,11 +175,13 @@ export default function HospitalSettings() {
   }
 
   return (
-    <Box sx={{ maxWidth: FORM_PAGE_WIDTH, mx: "auto", width: "100%" }}>
-      <PageHeader
-        title="Hospital Settings"
-        subtitle="Configure appointments, localization, notifications, and billing defaults."
-      />
+    <Box sx={{ maxWidth: embedded ? "none" : FORM_PAGE_WIDTH, mx: "auto", width: "100%" }}>
+      {!embedded && (
+        <PageHeader
+          title="Hospital Settings"
+          subtitle="Configure appointments, localization, notifications, and billing defaults."
+        />
+      )}
 <Paper
         component="form"
         onSubmit={handleSubmit}

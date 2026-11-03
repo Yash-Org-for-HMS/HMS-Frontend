@@ -91,7 +91,7 @@ function TabLabel({ text, flag }: { text: string; flag?: boolean }) {
   );
 }
 
-export default function HospitalProfile() {
+export default function HospitalProfile({ embedded = false }: { embedded?: boolean } = {}) {
   const { user, hospital, updateHospital } = useHospitalAuth();
   // The backend only lets H_ADMIN edit the hospital profile - mirror that here
   // so staff see a read-only view instead of filling out a form that 403s on save.
@@ -317,11 +317,13 @@ export default function HospitalProfile() {
   }
 
   return (
-    <Box sx={{ maxWidth: FORM_PAGE_WIDTH, mx: "auto", width: "100%" }}>
-      <PageHeader
-        title="Organisation profile"
-        subtitle="The organisation as a whole - its name, branding, registered address and compliance details."
-      />
+    <Box sx={{ maxWidth: embedded ? "none" : FORM_PAGE_WIDTH, mx: "auto", width: "100%" }}>
+      {!embedded && (
+        <PageHeader
+          title="Organisation profile"
+          subtitle="The organisation as a whole - its name, branding, registered address and compliance details."
+        />
+      )}
       {/* This page is the group's; each branch's own address and registration are on Branches. */}
       <Alert severity="info" sx={{ mb: 2 }}
         action={canEdit ? <Button color="inherit" size="small" onClick={() => navigate("/hospital/branches")} sx={{ textTransform: "none", fontWeight: 700, whiteSpace: "nowrap" }}>Open Branches</Button> : undefined}>

@@ -22,7 +22,7 @@ interface ModuleAccessData {
   planName?: string;
 }
 
-export default function ModuleAccess() {
+export default function ModuleAccess({ embedded = false }: { embedded?: boolean } = {}) {
   const toast = useToast();
   const confirm = useConfirm();
   const queryClient = useQueryClient();
@@ -69,11 +69,13 @@ export default function ModuleAccess() {
   };
 
   return (
-    <Box sx={{ maxWidth: FORM_PAGE_WIDTH, mx: "auto", width: "100%" }}>
-      <PageHeader
-        title="Module Access"
-        subtitle="Turn modules your plan includes on or off. Modules outside your plan are locked - contact your provider to upgrade."
-      />
+    <Box sx={{ maxWidth: embedded ? "none" : FORM_PAGE_WIDTH, mx: "auto", width: "100%" }}>
+      {!embedded && (
+        <PageHeader
+          title="Module Access"
+          subtitle="Turn modules your plan includes on or off. Modules outside your plan are locked - contact your provider to upgrade."
+        />
+      )}
 
       <Paper sx={{ p: 3, mb: 3, bgcolor: "rgba(12, 115, 181, 0.08)", borderRadius: 2, border: "1px solid rgba(12, 115, 181, 0.2)" }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>

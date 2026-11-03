@@ -58,9 +58,8 @@ const AdminReports = lazy(() => import("@/features/reports/AdminReports"));
 // Hospital Admin
 const HospitalChangePassword = lazy(() => import("@/features/hospitalAuth/HospitalChangePassword"));
 const HospitalDashboard = lazy(() => import("@/features/hospitalAuth/HospitalDashboard"));
-const HospitalProfile = lazy(() => import("@/features/hospitalAuth/HospitalProfile"));
-const HospitalSettings = lazy(() => import("@/features/hospitalAuth/HospitalSettings"));
-const BranchesPage = lazy(() => import("@/features/hospitalAuth/branches/BranchesPage"));
+// Profile, settings, branches and modules - one page with a tab each.
+const HospitalSetup = lazy(() => import("@/features/hospitalAuth/HospitalSetup"));
 const BranchSettingsPage = lazy(() => import("@/features/hospitalAuth/branches/BranchSettingsPage"));
 const MySubscription = lazy(() => import("@/features/hospitalAuth/MySubscription"));
 const DepartmentsList = lazy(() => import("@/features/hospitalAuth/departments/DepartmentsList"));
@@ -69,7 +68,6 @@ const HospitalUsersList = lazy(() => import("@/features/hospitalAuth/users/Users
 const HospitalUserForm = lazy(() => import("@/features/hospitalAuth/users/UserForm"));
 const StaffDirectory = lazy(() => import("@/features/hospitalAuth/staff/StaffDirectory"));
 const Organogram = lazy(() => import("@/features/hospitalAuth/staff/Organogram"));
-const ModuleAccess = lazy(() => import("@/features/hospitalAuth/settings/ModuleAccess"));
 const SetupImport = lazy(() => import("@/features/hospitalAuth/settings/SetupImport"));
 const DoctorsList = lazy(() => import("@/features/hospitalAuth/doctors/DoctorsList"));
 const DoctorForm = lazy(() => import("@/features/hospitalAuth/doctors/DoctorForm"));
@@ -309,9 +307,9 @@ function App() {
           <Route element={el(HospitalLayout)}>
             <Route path="/hospital/announcements" element={el(Announcements)} />
             <Route path="/hospital/dashboard" element={el(HospitalDashboard)} />
-            <Route path="/hospital/profile" element={el(HospitalProfile)} />
-            <Route path="/hospital/settings" element={el(HospitalSettings)} />
-            <Route path="/hospital/branches" element={el(BranchesPage)} />
+            <Route path="/hospital/profile" element={el(HospitalSetup)} />
+            <Route path="/hospital/settings" element={el(HospitalSetup)} />
+            <Route path="/hospital/branches" element={el(HospitalSetup)} />
             <Route path="/hospital/branch-settings" element={el(BranchSettingsPage)} />
             <Route path="/hospital/subscription" element={el(MySubscription)} />
             <Route path="/hospital/departments" element={el(DepartmentsList)} />
@@ -364,7 +362,7 @@ function App() {
             <Route path="/hospital/claims/reports" element={el(ClaimReports)} />
             <Route path="/hospital/claims/:id" element={el(ClaimDetail)} />
             <Route path="/hospital/nurse-reports" element={el(NurseReports)} />
-            <Route path="/hospital/module-access" element={el(ModuleAccess)} />
+            <Route path="/hospital/module-access" element={el(HospitalSetup)} />
             <Route path="/hospital/setup-import" element={el(SetupImport)} />
             <Route path="/hospital/doctors" element={el(DoctorsList)} />
 

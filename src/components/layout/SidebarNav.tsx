@@ -12,6 +12,8 @@ export interface SidebarNavItem {
   text: string;
   icon: ReactNode;
   path: string;
+  /** Other addresses this entry stands for (a page whose tabs keep their own paths). */
+  alsoActiveFor?: string[];
   /** Group heading this entry sits under. */
   section: string;
   /** Count shown on the icon; 0 or absent renders nothing. */
@@ -53,7 +55,7 @@ export default function SidebarNav({
     <ScrollFade>
       <List sx={{ px: 2, pt: 2, ...sx }}>
       {items.map((item, idx, arr) => {
-        const isActive = isNavItemActive(currentPath, item.path);
+        const isActive = isNavItemActive(currentPath, item.path) || !!item.alsoActiveFor?.some((p) => isNavItemActive(currentPath, p));
         const locked = isLocked?.(item) ?? false;
         // First row of its section, not merely a change from the previous row -
         // so an entry listed away from its group cannot print the heading twice.

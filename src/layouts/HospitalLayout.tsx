@@ -12,7 +12,7 @@ import {
   Box, Drawer, Divider, useTheme, useMediaQuery,
 } from "@mui/material";
 import {
-  DashboardRounded, LocalHospitalRounded, PeopleRounded, CalendarTodayRounded, SettingsRounded, ApartmentRounded, DomainRounded, BadgeRounded, CardMembershipRounded, AccountTreeRounded, SchemaRounded, WidgetsRounded, MedicalServicesRounded, DatasetRounded, EventNoteRounded, DynamicFormRounded, SecurityRounded, AccountBalanceRounded, AssessmentRounded, HotelRounded, MonitorHeartRounded, VaccinesRounded, MedicationRounded, LocalHotelRounded, ReceiptLongRounded, FormatListNumberedRounded, UploadFileRounded, HealthAndSafetyRounded,
+  DashboardRounded, LocalHospitalRounded, PeopleRounded, CalendarTodayRounded, ApartmentRounded, DomainRounded, BadgeRounded, CardMembershipRounded, AccountTreeRounded, SchemaRounded, MedicalServicesRounded, DatasetRounded, EventNoteRounded, DynamicFormRounded, SecurityRounded, AccountBalanceRounded, AssessmentRounded, HotelRounded, MonitorHeartRounded, VaccinesRounded, MedicationRounded, LocalHotelRounded, ReceiptLongRounded, FormatListNumberedRounded, UploadFileRounded, HealthAndSafetyRounded,
   Inventory2Rounded,
 } from "@mui/icons-material";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
@@ -53,11 +53,9 @@ export default function HospitalLayout() {
     { text: "Dashboard", icon: <DashboardRounded />, path: "/hospital/dashboard", section: "Overview" },
 
     // ── Set up, in this order ──
-    { text: "Organisation profile", icon: <LocalHospitalRounded />, path: "/hospital/profile", adminOnly: true, needs: ["H_ADMIN"], section: "Set up - in this order" },
-    { text: "System Settings", icon: <SettingsRounded />, path: "/hospital/settings", adminOnly: true, needs: ["H_ADMIN"], section: "Set up - in this order" },
-    { text: "Branches", icon: <ApartmentRounded />, path: "/hospital/branches", adminOnly: true, needs: ["H_ADMIN"], section: "Set up - in this order" },
+    // Profile, settings, branches and modules: one page, a tab each (HospitalSetup).
+    { text: "Hospital", icon: <LocalHospitalRounded />, path: "/hospital/profile", alsoActiveFor: ["/hospital/settings", "/hospital/branches", "/hospital/module-access"], adminOnly: true, needs: ["H_ADMIN"], section: "Set up - in this order" },
     { text: "Branch settings", icon: <ApartmentRounded />, path: "/hospital/branch-settings", adminOnly: true, needs: ["B_ADMIN"], section: "Set up - in this order" },
-    { text: "Module Access", icon: <WidgetsRounded />, path: "/hospital/module-access", adminOnly: true, needs: ["H_ADMIN"], section: "Set up - in this order" },
     { text: "Departments", icon: <DomainRounded />, path: "/hospital/departments", adminOnly: true, section: "Set up - in this order" },
     { text: "Schedule of Charges", icon: <ReceiptLongRounded />, path: "/hospital/soc", adminOnly: true, section: "Set up - in this order" },
     // Backend restricts these strictly to H_ADMIN/B_ADMIN (requireRole, no

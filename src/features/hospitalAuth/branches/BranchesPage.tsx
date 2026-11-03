@@ -40,7 +40,7 @@ function ownSettings(b: BranchRow): string[] {
   return out;
 }
 
-export default function BranchesPage() {
+export default function BranchesPage({ embedded = false }: { embedded?: boolean } = {}) {
   const [editing, setEditing] = useState<BranchRow | null>(null);
   const { data, isLoading, isError, error, refetch } = useQuery<BranchesResponse>({
     queryKey: ["hospital-branches"],
@@ -59,11 +59,13 @@ export default function BranchesPage() {
   );
 
   return (
-    <Box sx={{ maxWidth: 1100, mx: "auto", width: "100%" }}>
-      <PageHeader
-        title="Branches"
-        subtitle="Where each branch is and how it is registered."
-      />
+    <Box sx={{ maxWidth: embedded ? "none" : 1100, mx: "auto", width: "100%" }}>
+      {!embedded && (
+        <PageHeader
+          title="Branches"
+          subtitle="Where each branch is and how it is registered."
+        />
+      )}
       <Alert severity="info" sx={{ mb: 2 }}>
         To add, rename or close a branch, or change its plan, contact your Dolphin administrator. Anything left empty here follows the hospital's own details.
         How a branch works - who records vitals, lab billing, refund approvals, OPD hours - is set by that branch's admin.
