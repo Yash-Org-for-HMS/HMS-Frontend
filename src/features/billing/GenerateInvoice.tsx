@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import type { Invoice, PaymentMethodRef, UnbilledItem } from "@/types";
+import type { Invoice, InvoicePreview, PaymentMethodRef, UnbilledItem } from "@/types";
 import type { PatientSearchRow, PatientStatementInvoice, PatientStatementResponse } from "./billingReports.types";
 import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
 import { useQuery } from "@tanstack/react-query";
@@ -71,6 +71,7 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
   const patientId = selectedPatient?.patientId;
   const {
     data: unbilledData,
+    dataUpdatedAt: unbilledAt,
     isLoading: itemsLoading,
     isError: itemsError,
     error: itemsErr,
@@ -166,17 +167,45 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
   };
 
   const selectedItemsList = unbilledItems.filter(i => selectedItemIds.has(i.id));
-  const grossAmount = selectedItemsList.reduce((sum, item) => sum + priceOf(item), 0);
   const discountAmount = Number(discount || 0);
-  const taxableAmount = grossAmount - discountAmount;
-  const discountTooHigh = discountAmount < 0 || discountAmount > grossAmount;
-  // Per-line GST from the rate card (server is authoritative; this only mirrors it
-  // for the preview). A pharmacy order carries a precomputed taxAmount (per-medicine,
-  // mixed rates). GST is charged after discount: the discount is spread over the
-  // lines by value, so the tax shrinks in the same proportion.
-  const grossTax = selectedItemsList.reduce((sum, item) => sum + (medChanged(item) ? medFigures(item).tax : item.taxAmount != null && !changes[item.id] ? Number(item.taxAmount) : priceOf(item) * (Number(item.taxPercent || 0) / 100)), 0);
-  const taxAmount = grossAmount > 0 && !discountTooHigh ? grossTax * (taxableAmount / grossAmount) : grossTax;
-  const netAmount = taxableAmount + taxAmount;
+  const priceChanges = Object.entries(changes)
+    .filter(([id]) => selectedItemIds.has(id.split("#")[0]))
+    .map(([id, c]) => ({ id, ...c }));
+
+  // The bill as the server will make it: POST .../preview runs the same
+  // calculation as generating (a medicine's discount off its MRP, GST per rate
+  // after discount, price changes, packages, rounding) and writes nothing. The
+  // sums below are only a rough placeholder while it answers - they cannot
+  // follow the server to the paisa, and the figures shown must be the bill.
+  const previewBody = JSON.stringify({ patientId, at: unbilledAt, ids: selectedItemsList.map((i) => i.id), discountAmount, priceChanges });
+  const settledBody = useDebouncedValue(previewBody, 300);
+  const previewDue = !!patientId && selectedItemsList.length > 0 && discountAmount >= 0;
+  const previewCurrent = previewDue && settledBody === previewBody;
+  const { data: preview, error: previewErr, isFetching: previewFetching } = useQuery<InvoicePreview>({
+    queryKey: ["invoice-preview", settledBody],
+    queryFn: async () => {
+      const b = JSON.parse(settledBody) as { patientId: string; ids: string[]; discountAmount: number; priceChanges: unknown[] };
+      return (await axiosInstance.post(`/billing/invoices/${b.patientId}/preview`, {
+        selectedItems: b.ids.map((id) => ({ id })),
+        discountAmount: b.discountAmount,
+        ...(b.priceChanges.length ? { priceChanges: b.priceChanges } : {}),
+      })).data.data;
+    },
+    enabled: previewCurrent,
+    retry: false,
+    staleTime: 0,
+  });
+  const previewReady = previewCurrent && !previewFetching && !!preview && !previewErr;
+  // What the server refuses (a discount above the bill, a charge no longer billable) - generating would refuse it too.
+  const previewRefused = previewCurrent && !previewFetching && previewErr ? (apiErrorText(previewErr) ?? "The bill could not be worked out - try again") : null;
+
+  const grossEstimate = selectedItemsList.reduce((sum, item) => sum + priceOf(item), 0);
+  const grossTaxEstimate = selectedItemsList.reduce((sum, item) => sum + (medChanged(item) ? medFigures(item).tax : item.taxAmount != null && !changes[item.id] ? Number(item.taxAmount) : priceOf(item) * (Number(item.taxPercent || 0) / 100)), 0);
+  const taxEstimate = grossEstimate > 0 ? grossTaxEstimate * (Math.max(0, grossEstimate - discountAmount) / grossEstimate) : grossTaxEstimate;
+  const grossAmount = previewReady ? preview.grossAmount : grossEstimate;
+  const taxAmount = previewReady ? preview.taxAmount : taxEstimate;
+  const netAmount = previewReady ? preview.netAmount : grossEstimate - discountAmount + taxEstimate;
+  const discountTooHigh = discountAmount < 0 || (!!previewRefused && /exceed/i.test(previewRefused));
   // Amount the payment dialog collects against. Once the invoice is created the
   // selected items are refetched away (no longer "unbilled"), so the derived
   // netAmount above collapses to 0 - read the created invoice's own net instead.
@@ -186,9 +215,6 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
     if (!selectedPatient || selectedItemIds.size === 0) return;
     try {
       setIsGenerating(true);
-      const priceChanges = Object.entries(changes)
-        .filter(([id]) => selectedItemIds.has(id.split("#")[0]))
-        .map(([id, c]) => ({ id, ...c }));
       const payload = {
         selectedItems: selectedItemsList,
         discountAmount,
@@ -396,8 +422,8 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
               <Typography variant="h6" fontWeight="700" mb={3}>Invoice Summary</Typography>
               
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                <Typography color="text.secondary">Gross Amount</Typography>
-                <Typography fontWeight={600}>₹{grossAmount.toFixed(2)}</Typography>
+                <Typography color="text.secondary">Gross Amount (before GST)</Typography>
+                <Typography fontWeight={600} sx={{ color: previewReady ? undefined : "text.secondary" }}>₹{grossAmount.toFixed(2)}</Typography>
               </Box>
 
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
@@ -411,25 +437,44 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
                   inputProps={{ style: { textAlign: 'right' } }}
                 />
               </Box>
+              {/* The bill's discount is before GST: a medicine's rupees off its MRP carry GST, so part
+                  of what was typed comes off the GST instead - said here; the gross stays put. */}
+              {previewReady && preview.discountGstShare > 0 && (
+                <Box sx={{ mb: 2 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <Typography color="text.secondary">Discount (before GST)</Typography>
+                    <Typography fontWeight={600}>-₹{preview.discountAmount.toFixed(2)}</Typography>
+                  </Box>
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'right' }}>
+                    ₹{preview.discountGiven.toFixed(2)} off MRP, incl. GST ₹{preview.discountGstShare.toFixed(2)}
+                  </Typography>
+                </Box>
+              )}
 
               <Divider sx={{ mb: 2 }} />
 
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                 <Typography color="text.secondary">GST (CGST + SGST)</Typography>
-                <Typography fontWeight={600}>₹{taxAmount.toFixed(2)}</Typography>
+                <Typography fontWeight={600} sx={{ color: previewReady ? undefined : "text.secondary" }}>₹{taxAmount.toFixed(2)}</Typography>
               </Box>
               
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 4, mt: 2 }}>
                 <Typography variant="h5" fontWeight={800}>Net Total</Typography>
-                <Typography variant="h5" fontWeight={800} color="primary.main">{discountTooHigh ? "-" : `₹${netAmount.toFixed(2)}`}</Typography>
+                <Typography variant="h5" fontWeight={800} color={previewReady ? "primary.main" : "text.secondary"}>{discountTooHigh ? "-" : `₹${netAmount.toFixed(2)}`}</Typography>
               </Box>
+              {/* The figures are the server's bill; until it answers they are an estimate, and what it refuses is said here. */}
+              {previewRefused && !discountTooHigh ? (
+                <Typography variant="caption" color="error" sx={{ display: "block", mt: -3, mb: 2 }}>{previewRefused}</Typography>
+              ) : previewDue && !previewReady && !previewRefused ? (
+                <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: -3, mb: 2 }}>Working out the bill...</Typography>
+              ) : null}
 
               <Button
                 variant="contained"
                 fullWidth
                 size="large"
                 startIcon={<ReceiptLongRounded />}
-                disabled={selectedItemIds.size === 0 || isGenerating || discountTooHigh}
+                disabled={selectedItemIds.size === 0 || isGenerating || discountTooHigh || !previewReady}
                 onClick={handleGenerateInvoice}
                 sx={{ py: 1.5, borderRadius: 2, fontWeight: 700 }}
               >

@@ -2,6 +2,7 @@ import { Fragment, useEffect, useMemo, useState } from "react";
 import dayjs from "dayjs";
 import { formatDate, formatDateTime } from "@/utils/format";
 import { paidTotal, refundedTotal } from "@/utils/invoiceMoney";
+import { discountNote } from "@/components/billing/priceableLines";
 import { getApiErrorMessage } from "@/utils/apiError";
 import ErrorState from "@/components/ErrorState";
 import { useParams } from "react-router-dom";
@@ -257,9 +258,11 @@ export default function PrintIpBill() {
           <div style={{ width: 320, border: `1px solid ${LINE}`, borderRadius: 6, padding: "10px 14px" }}>
             <TotalRow k="Taxable value" v={inr(inv.grossAmount)} />
             {n(inv.discountAmount) > 0 && <TotalRow k="Discount" v={`- ${inr(inv.discountAmount)}`} color="#059669" />}
+            {n(inv.discountAmount) > 0 && discountNote(inv) && <div style={{ fontSize: 9.5, color: SUB, textAlign: "right", marginBottom: 3 }}>{discountNote(inv)}</div>}
             <TotalRow k="CGST" v={inr(inv.cgstAmount)} />
             <TotalRow k="SGST" v={inr(inv.sgstAmount)} />
             {n(inv.igstAmount) > 0 && <TotalRow k="IGST" v={inr(inv.igstAmount)} />}
+            {Math.abs(n(inv.roundOff)) >= 0.005 && <TotalRow k="Round off" v={`${n(inv.roundOff) > 0 ? "+" : "-"} ${inr(Math.abs(n(inv.roundOff)))}`} />}
             <div style={{ borderTop: `1px solid ${LINE}`, margin: "5px 0" }} />
             <TotalRow k="Net payable" v={inr(inv.netAmount)} bold big />
             <div style={{ borderTop: `1px dashed ${LINE}`, margin: "6px 0" }} />

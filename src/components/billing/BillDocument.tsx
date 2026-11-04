@@ -47,11 +47,15 @@ export interface BillMetaItem {
 
 export interface BillTotals {
   subtotal?: number; // gross
-  discount?: number;
+  discount?: number; // before GST
+  /** Under the discount: what came off a medicine's MRP and the GST in it ("Rs 50.00 off MRP, incl. GST Rs 5.35"). */
+  discountNote?: string;
   tax?: number;      // combined tax (fallback when cgst/sgst not supplied)
   taxLabel?: string;
   cgst?: number;     // when supplied (and non-zero), CGST + SGST print as two lines
   sgst?: number;
+  /** Paise that land a refund-reduced bill on its exact total; printed only when non-zero. */
+  roundOff?: number;
   total: number; // net payable
   paid?: number;
   refunded?: number;
@@ -119,6 +123,9 @@ export default function BillDocument({
         <div style={{ width: 300, borderTop: `2px solid ${INK}`, paddingTop: 8 }}>
           {totals.subtotal != null && <TotalLine label="Subtotal" value={money(totals.subtotal)} />}
           {totals.discount ? <TotalLine label="Discount" value={`- ${money(totals.discount)}`} color={POS} /> : null}
+          {totals.discount && totals.discountNote ? (
+            <div style={{ fontSize: 10.5, color: SUB, textAlign: "right", marginTop: -2, marginBottom: 4 }}>{totals.discountNote}</div>
+          ) : null}
           {/* CGST/SGST as separate lines when supplied and non-zero; otherwise the
               combined tax line; nothing when the bill is fully exempt (all zero). */}
           {totals.cgst || totals.sgst ? (
@@ -128,6 +135,9 @@ export default function BillDocument({
             </>
           ) : totals.tax ? (
             <TotalLine label={totals.taxLabel || "Tax"} value={`+ ${money(totals.tax)}`} />
+          ) : null}
+          {totals.roundOff && Math.abs(totals.roundOff) >= 0.005 ? (
+            <TotalLine label="Round off" value={`${totals.roundOff > 0 ? "+" : "-"} ${money(Math.abs(totals.roundOff))}`} />
           ) : null}
           <TotalLine label="Total" value={money(totals.total)} bold />
           {totals.paid != null && <TotalLine label="Paid" value={money(totals.paid)} />}

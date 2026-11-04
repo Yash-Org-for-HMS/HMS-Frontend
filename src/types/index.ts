@@ -164,6 +164,12 @@ export interface InvoiceItem {
   /** Price changed on this bill: what it would have been, and why (null = not changed). */
   originalUnitPrice?: Money | null;
   priceChangeReason?: string | null;
+  /**
+   * A medicine's price with GST inside, before the bill discount (null on other
+   * lines). Its totalPrice is the taxable value of this and does not move; the
+   * rupees off it show as discountAmount (before GST) and a lower taxAmount.
+   */
+  mrpAmount?: Money | null;
 }
 
 export interface Invoice {
@@ -179,6 +185,12 @@ export interface Invoice {
   cgstAmount?: Money;
   sgstAmount?: Money;
   igstAmount?: Money;
+  /** Paise that land a refund-reduced bill on its exact net (net = gross - discount + tax + roundOff). */
+  roundOff?: Money;
+  /** The discount as the patient sees it: a medicine's rupees off its MRP, GST included (bill detail). */
+  discountGiven?: Money;
+  /** The GST part of discountGiven - discountGiven less discountAmount (bill detail). */
+  discountGstShare?: Money;
   invoiceDate: string;
   dueDate?: string;
   invoiceStatus: string;
@@ -317,6 +329,26 @@ export interface UnbilledItem {
   blocked?: string;
   /** Lab/radiology tests priced at billing; price null = not typed yet. */
   typedPrices?: { chargeItemId: string; itemName: string; price: number | null }[];
+}
+
+/**
+ * POST /billing/invoices/:patientId/preview - the bill the server would make for
+ * the same body as generating it, to the paisa, nothing written.
+ */
+export interface InvoicePreview {
+  grossAmount: number;
+  discountAmount: number;
+  taxAmount: number;
+  netAmount: number;
+  cgstAmount: number;
+  sgstAmount: number;
+  /** The discount as typed - what the patient is let off, GST included on medicines. */
+  discountGiven: number;
+  /** The GST part of the medicines' rupees off (discountGiven - discountAmount). */
+  discountGstShare: number;
+  /** The most that can come off: a service before GST, a medicine its MRP. */
+  maxDiscount: number;
+  lines: { serviceId: string; category: string | null; description: string; quantity: number; unitPrice: number; totalPrice: number; discountAmount: number; taxPercent: number; taxAmount: number; mrpAmount: number | null; priceChanged: boolean }[];
 }
 
 /**

@@ -365,9 +365,9 @@ export function DiscountRegister() {
       {isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : isLoading || !data ? <ReportSkeleton /> : (
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<LocalOfferRounded />} accent={SEMANTIC.warning} label="Total discount" info="Total discount on bills dated in the selected range that had a discount. Cancelled bills are left out." value={inr(data.totals.totalDiscount)} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<LocalOfferRounded />} accent={SEMANTIC.warning} label="Total discount" info={`Total discount given on bills dated in the selected range that had a discount - what the patients were let off. A medicine's discount comes off its MRP, so it counts with the GST in it (${inr(data.totals.gstShare)} of this total is GST not charged). Cancelled bills are left out.`} value={inr(data.totals.totalDiscount)} /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<NumbersRounded />} accent="#8b5cf6" label="Discounted invoices" info="Number of bills in the selected dates that had any discount. Cancelled bills are left out." value={String(data.totals.count)} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PercentRounded />} accent={SEMANTIC.info} label="Avg discount" info="Total discount as a share of those bills' amount before discount." value={`${data.totals.avgPct}%`} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<PercentRounded />} accent={SEMANTIC.info} label="Avg discount" info="The bills' discount before GST as a share of their gross amount before GST and discount." value={`${data.totals.avgPct}%`} /></Grid>
           </Grid>
           <Box sx={{ mb: 2.5 }}>
             <ReportTable title="By staff (who applied)" filename={`discounts_by_user_${range.from}_${range.to}`} maxHeight={300}
@@ -382,6 +382,7 @@ export function DiscountRegister() {
               { key: "patientName", label: "Patient" },
               money("gross", "Gross"),
               money("discount", "Discount"),
+              money("gstShare", "GST in discount"),
               money("net", "Net"),
               { key: "discountPct", label: "Disc %", align: "right", format: (v) => `${v}%`, value: (r) => Number(r.discountPct) },
               { key: "appliedBy", label: "Applied by" },

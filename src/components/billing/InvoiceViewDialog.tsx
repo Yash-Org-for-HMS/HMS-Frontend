@@ -14,7 +14,7 @@ import type { InvoiceDetail, BillingLookups, InvoiceItem, Payment } from "@/type
 import BillDocument from "@/components/billing/BillDocument";
 import RefundSection from "@/components/billing/RefundSection";
 import ChangePriceDialog, { type PriceChange } from "@/components/billing/ChangePriceDialog";
-import { priceableLines, medicineMrp, shownUnitPrice } from "@/components/billing/priceableLines";
+import { priceableLines, medicineMrp, shownUnitPrice, discountNote } from "@/components/billing/priceableLines";
 import HeartbeatLoader from "../HeartbeatLoader";
 import { ListSkeleton } from "../TableRowsSkeleton";
 import ErrorState from "../ErrorState";
@@ -189,8 +189,10 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
                   totals={{
                     subtotal: Number(invoice.grossAmount || 0),
                     discount: Number(invoice.discountAmount || 0),
+                    discountNote: discountNote(invoice),
                     tax: Number(invoice.taxAmount || 0), taxLabel: "Tax (CGST+SGST)",
                     cgst: Number(invoice.cgstAmount || 0), sgst: Number(invoice.sgstAmount || 0),
+                    roundOff: Number(invoice.roundOff || 0),
                     total: Number(invoice.netAmount || 0), paid: totalPaid, refunded: totalRefunded, balance,
                     balanceNote: reopenedByRefund > 0.005
                       ? (wholeBalanceIsRefund
@@ -294,7 +296,8 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
                           {showTax && <td style={{ ...cell, textAlign: "right" }}>{formatINR(taxable)}</td>}
                           {showTax && <td style={{ ...cell, textAlign: "right" }}>{rate > 0 ? formatINR(cgst) : "-"}</td>}
                           {showTax && <td style={{ ...cell, textAlign: "right" }}>{rate > 0 ? formatINR(sgst) : "-"}</td>}
-                          <td style={{ ...cell, textAlign: "right" }}>{formatINR(Number(it.totalPrice ?? 0) + tax)}</td>
+                          {/* A medicine at its MRP (GST inside) before the discount, as it is sold. */}
+                          <td style={{ ...cell, textAlign: "right" }}>{formatINR(it.mrpAmount != null ? Number(it.mrpAmount) : Number(it.totalPrice ?? 0) + tax)}</td>
                         </tr>
                         );
                       })}

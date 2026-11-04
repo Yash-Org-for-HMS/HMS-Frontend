@@ -147,9 +147,12 @@ export interface DiscountRow {
   patientName: string;
   uhid: string;
   gross: Money;
+  /** The discount the patient was given: a medicine's rupees off its MRP count with their GST. */
   discount: Money;
+  /** The GST part of that discount (medicines only); the rest is the bill's discount before GST. */
+  gstShare: Money;
   net: Money;
-  /** Already a percentage number, computed server-side. */
+  /** Already a percentage number, computed server-side: the discount before GST over the gross. */
   discountPct: number;
   appliedBy: string;
   reason: string;
@@ -157,7 +160,7 @@ export interface DiscountRow {
 
 export interface DiscountRegisterResponse extends Truncatable {
   range: DateRangeEcho;
-  totals: { count: number; totalDiscount: Money; avgPct: number };
+  totals: { count: number; totalDiscount: Money; gstShare: Money; avgPct: number };
   byUser: { user: string; count: number; amount: Money }[];
   rows: DiscountRow[];
 }

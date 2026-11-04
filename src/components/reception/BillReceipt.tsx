@@ -3,6 +3,7 @@ import type { InvoiceDetail, HospitalBillingProfile } from "@/types";
 import { paidTotal, refundedTotal, balanceOf, isSettled, balanceFromRefunds } from "@/utils/invoiceMoney";
 import { formatINR, formatDate } from "@/utils/format";
 import BillDocument from "@/components/billing/BillDocument";
+import { discountNote } from "@/components/billing/priceableLines";
 
 interface Props {
   invoice: InvoiceDetail;
@@ -75,8 +76,10 @@ export default function BillReceipt({ invoice, hospitalProfile, hospital, patien
       totals={{
         subtotal: Number(invoice?.grossAmount || 0),
         discount: Number(invoice?.discountAmount || 0),
+        discountNote: discountNote(invoice),
         tax: Number(invoice?.taxAmount || 0), taxLabel: "Tax (CGST + SGST)",
         cgst: Number(invoice?.cgstAmount || 0), sgst: Number(invoice?.sgstAmount || 0),
+        roundOff: Number(invoice?.roundOff || 0),
         total: netAmount, paid: totalPaid, refunded: totalRefunded, balance,
         balanceNote: refundedBalance > 0.005
           ? (refundedBalance >= balance - 0.005

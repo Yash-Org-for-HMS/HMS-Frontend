@@ -476,12 +476,14 @@ function Revenue({ d }: { d: Any }) {
   const byType = rows<Record<string, string | number>>(d, "byType");
   const byDoctor = rows<Record<string, string>>(d, "byDoctor");
   const notItemised = val(d, ["notItemised"]) as Record<string, string | number> | undefined;
+  const notBilled = val(d, ["notBilled"]) as Record<string, string | number> | undefined;
 
   return (
     <>
       <Grid container spacing={2} sx={{ mb: 2 }}>
-        <Grid size={{ xs: 12, md: 4 }}><Tile label="Theatre revenue (finished cases, before GST)" value={inr(val(d, ["itemisedTotal"]) as string)} color={SEMANTIC.success} /></Grid>
+        <Grid size={{ xs: 12, md: 4 }}><Tile label="Theatre billed value (finished cases, before GST)" value={inr(val(d, ["itemisedTotal"]) as string)} sub="What the bills charged, after price changes and discount; cancelled bills left out" color={SEMANTIC.success} /></Grid>
         <Grid size={{ xs: 12, md: 4 }}><Tile label="GST charged on top" value={inr(val(d, ["gst"]) as string)} color={SEMANTIC.info} /></Grid>
+        <Grid size={{ xs: 12, md: 4 }}><Tile label="Finished, not billed yet" value={inr((notBilled?.value ?? 0) as string)} sub={`${notBilled?.cases ?? 0} case${Number(notBilled?.cases ?? 0) === 1 ? "" : "s"} at their price - not revenue`} /></Grid>
       </Grid>
 
       {Number(notItemised?.cases ?? 0) > 0 && (

@@ -1,5 +1,8 @@
 import React, { useState } from "react";
-import { getApiErrorMessage } from "@/utils/apiError";
+import { getApiErrorMessage, apiErrorText } from "@/utils/apiError";
+import { useQuery } from "@tanstack/react-query";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import type { InvoicePreview } from "@/types";
 import { 
   Dialog, DialogTitle, DialogContent, DialogActions, 
   Button, Typography, Box, Alert,
@@ -76,20 +79,58 @@ export default function PointOfCarePOS({ open, onClose, onSuccess, onPaid, patie
     return { gross: acc.gross + taxable, tax: acc.tax + paid - taxable };
   }, { gross: 0, tax: 0 });
 
-  // Financial Math - GST comes from the item's rate-card taxPercent (0 = exempt), or
-  // a precomputed taxAmount for a mixed-rate pharmacy order (per-medicine). Charged
-  // after discount, in proportion; the server re-derives it authoritatively at collection.
+  // Rough local figures - GST from the item's rate-card taxPercent (0 = exempt), or
+  // a precomputed taxAmount for a mixed-rate pharmacy order (per-medicine), in
+  // proportion after discount. Only a placeholder: the server's preview below is
+  // what is shown and collected.
   // The server's amount already holds any price typed before; swap that part for what is typed now.
-  const grossAmount = medsChanged ? medFigures.gross : priceChanged ? Number(newPrice) : Number(item?.amount || 0)
+  const grossEstimate = medsChanged ? medFigures.gross : priceChanged ? Number(newPrice) : Number(item?.amount || 0)
     - openTests.reduce((s, t) => s + Number(t.price ?? 0), 0)
     + openTests.reduce((s, t) => s + (Number(typedValue(t)) || 0), 0);
   const discountAmount = Number(discount || 0);
-  const discountTooHigh = discountAmount < 0 || discountAmount > grossAmount;
-  const taxableAmount = grossAmount - discountAmount;
-  const grossTax = medsChanged ? medFigures.tax : item?.taxAmount != null && !priceChanged ? Number(item.taxAmount) : grossAmount * (Number(item?.taxPercent || 0) / 100);
-  const taxAmount = grossAmount > 0 && !discountTooHigh ? grossTax * (taxableAmount / grossAmount) : grossTax;
+  const grossTax = medsChanged ? medFigures.tax : item?.taxAmount != null && !priceChanged ? Number(item.taxAmount) : grossEstimate * (Number(item?.taxPercent || 0) / 100);
+  const taxEstimate = grossEstimate > 0 ? grossTax * (Math.max(0, grossEstimate - discountAmount) / grossEstimate) : grossTax;
+
+  // The bill as the server will make it (POST /billing/invoices/:patientId/preview -
+  // the same calculation the collection runs, nothing written): a medicine's
+  // discount comes off its MRP, GST per rate after discount, rounding as billed.
+  // A test whose price is typed here but not yet saved cannot be priced by the
+  // server until collection saves it; that one case keeps the local figures.
+  const typedUnsaved = openTests.length > 0 && (missingPrice || Object.keys(typed).length > 0);
+  const priceChangesOut = [
+    ...(priceChanged ? [{ id: item.id, price: Number(newPrice), reason: reason.trim() }] : []),
+    ...Object.entries(medChanges).map(([lineId, c]) => ({ id: `${item.id}#${lineId}`, ...c })),
+  ];
+  const usePreview = open && !!item?.id && !!patientId && patientId !== "Walk-in" && !typedUnsaved && !(changing && !changeValid) && discountAmount >= 0;
+  const previewBody = JSON.stringify({ patientId, id: item?.id, discountAmount, priceChanges: priceChangesOut });
+  const settledBody = useDebouncedValue(previewBody, 300);
+  const previewCurrent = usePreview && settledBody === previewBody;
+  const { data: preview, error: previewErr, isFetching: previewFetching } = useQuery<InvoicePreview>({
+    queryKey: ["invoice-preview", "poc", settledBody],
+    queryFn: async () => {
+      const b = JSON.parse(settledBody) as { patientId: string; id: string; discountAmount: number; priceChanges: unknown[] };
+      return (await axiosInstance.post(`/billing/invoices/${b.patientId}/preview`, {
+        selectedItems: [{ id: b.id }],
+        discountAmount: b.discountAmount,
+        ...(b.priceChanges.length ? { priceChanges: b.priceChanges } : {}),
+      })).data.data;
+    },
+    enabled: previewCurrent,
+    retry: false,
+    staleTime: 0,
+  });
+  const previewReady = previewCurrent && !previewFetching && !!preview && !previewErr;
+  const previewRefused = previewCurrent && !previewFetching && previewErr ? (apiErrorText(previewErr) ?? "The bill could not be worked out - try again") : null;
+
+  const grossAmount = previewReady ? preview.grossAmount : grossEstimate;
+  const taxAmount = previewReady ? preview.taxAmount : taxEstimate;
+  // The bill's discount is before GST: a medicine's rupees off its MRP carry GST,
+  // so part of what is typed comes off the GST - the gross does not move.
+  const discountBeforeGst = previewReady ? preview.discountAmount : discountAmount;
+  const discountGstShare = previewReady ? preview.discountGstShare : 0;
+  const discountTooHigh = discountAmount < 0 || (usePreview ? !!previewRefused && /exceed/i.test(previewRefused) : discountAmount > grossEstimate);
   // Never shown below zero: a discount over the bill is refused, not netted off.
-  const netAmount = Math.max(0, taxableAmount + taxAmount);
+  const netAmount = previewReady ? preview.netAmount : Math.max(0, grossEstimate - discountAmount + taxEstimate);
 
   const handleProcessPayment = async () => {
     try {
@@ -239,13 +280,18 @@ export default function PointOfCarePOS({ open, onClose, onSuccess, onPaid, patie
         </Box>
 
         <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
-          <Typography variant="body2" color="text.secondary">Gross Total:</Typography>
+          <Typography variant="body2" color="text.secondary">Gross Total (before GST):</Typography>
           <Typography variant="body2">₹{grossAmount.toFixed(2)}</Typography>
         </Box>
-        <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
+        <Box sx={{ display: "flex", justifyContent: "space-between", mb: discountGstShare > 0 ? 0 : 1 }}>
           <Typography variant="body2" color="error.main">Discount:</Typography>
-          <Typography variant="body2" color="error.main">-₹{discountAmount.toFixed(2)}</Typography>
+          <Typography variant="body2" color="error.main">-₹{discountBeforeGst.toFixed(2)}</Typography>
         </Box>
+        {discountGstShare > 0 && (
+          <Typography variant="caption" color="text.secondary" sx={{ display: "block", textAlign: "right", mb: 1 }}>
+            ₹{discountAmount.toFixed(2)} off MRP, incl. GST ₹{discountGstShare.toFixed(2)}
+          </Typography>
+        )}
         <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
           <Typography variant="body2" color="text.secondary">GST (CGST + SGST):</Typography>
           <Typography variant="body2">₹{taxAmount.toFixed(2)}</Typography>
@@ -255,8 +301,14 @@ export default function PointOfCarePOS({ open, onClose, onSuccess, onPaid, patie
 
         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
           <Typography variant="h6" fontWeight="700">Net Payable:</Typography>
-          <Typography variant="h6" fontWeight="700" color="primary.main">₹{netAmount.toFixed(2)}</Typography>
+          <Typography variant="h6" fontWeight="700" color={usePreview && !previewReady ? "text.secondary" : "primary.main"}>₹{netAmount.toFixed(2)}</Typography>
         </Box>
+        {/* The server's bill; until it answers an estimate, and what it refuses is said here. */}
+        {previewRefused && !discountTooHigh ? (
+          <Alert severity="error" sx={{ mb: 2 }}>{previewRefused}</Alert>
+        ) : usePreview && !previewReady && !previewRefused ? (
+          <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: -2, mb: 2 }}>Working out the bill...</Typography>
+        ) : null}
 
         <TextField
           select
@@ -277,7 +329,7 @@ export default function PointOfCarePOS({ open, onClose, onSuccess, onPaid, patie
         <Button 
           variant="contained" 
           onClick={handleProcessPayment} 
-          disabled={loading || netAmount < 0 || discountTooHigh || missingPrice || (changing && !changeValid)}
+          disabled={loading || netAmount < 0 || discountTooHigh || missingPrice || (changing && !changeValid) || (usePreview && !previewReady)}
           startIcon={loading ? <HeartbeatLoader size={22} /> : <ReceiptLongRounded />}
         >
           Confirm & Collect ₹{netAmount.toFixed(2)}

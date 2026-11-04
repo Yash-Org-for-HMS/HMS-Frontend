@@ -78,6 +78,7 @@ export default function LabReceiptDialog({ open, serviceId, onClose }: Props) {
                   subtotal: Number(invoice.grossAmount || 0),
                   discount: Number(invoice.discountAmount || 0),
                   tax: Number(invoice.taxAmount || 0), taxLabel: "Tax (CGST+SGST)",
+                  roundOff: Number(invoice.roundOff || 0),
                   total: Number(invoice.netAmount || 0), paid: totalPaid, refunded: totalRefunded, balance,
                   balanceNote: refundedBalance > 0.005
                     ? (refundedBalance >= balance - 0.005

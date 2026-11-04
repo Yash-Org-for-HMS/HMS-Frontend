@@ -216,8 +216,10 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
           setPaymentAmount(remaining.toString());
         }
 
-        // Prefill the discount field with the invoice's existing discount.
-        const d = Number(currentInvoice.discountAmount || 0);
+        // Prefill the discount field with the invoice's existing discount, as it
+        // is typed: a medicine's rupees off its MRP with their GST (discountGiven),
+        // not the bill's discount before GST.
+        const d = Number(currentInvoice.discountGiven ?? currentInvoice.discountAmount ?? 0);
         setDiscountInput(d > 0 ? String(d) : "");
       }
 

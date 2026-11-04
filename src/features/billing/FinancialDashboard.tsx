@@ -209,7 +209,7 @@ export default function FinancialDashboard() {
               Revenue Source
             </Typography>
             <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 2 }}>
-              Billed value of settled invoices, by department
+              Billed value of issued bills to date (after discount, with GST), by department
             </Typography>
             <Box sx={{ flexGrow: 1, minHeight: 0 }}>
               <ResponsiveContainer width="100%" height="100%">

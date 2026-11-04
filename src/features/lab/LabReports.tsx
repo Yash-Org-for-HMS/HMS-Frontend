@@ -102,9 +102,9 @@ export function TestWise() {
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<ScienceRounded />} accent={SEMANTIC.success} label="Lab tests performed" info="Individual lab tests on orders from the selected dates (an order with 3 tests counts 3)." value={String(data.totals.labPerformed)} sub={`${data.totals.labTests} distinct`} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CurrencyRupeeRounded />} accent={SEMANTIC.success} label="Lab value by test" info="Value of those lab tests, added up test by test." value={inr(data.totals.labRevenue)} sub="Priced per test" /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CurrencyRupeeRounded />} accent={SEMANTIC.success} label="Lab billed value by test" info="What the bills charged for those lab orders: after any price change and the bill's discount share, before GST; cancelled bills left out. An order is billed as a whole, so its billed value is split over its tests in proportion to their list price. Tests inside a package count 0 (billed under the package). Orders not billed yet are counted apart, at their ordered value." value={inr(data.totals.labRevenue)} sub={`${data.totals.labNotBilledOrders ?? 0} ordered, not billed (${inr(data.totals.labNotBilledValue ?? 0)})`} /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<MonitorHeartRounded />} accent={BRAND.action} label="Radiology scans" info="Radiology scans ordered in the selected dates." value={String(data.totals.radScans)} sub={`${data.totals.radTypes} types`} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CurrencyRupeeRounded />} accent={SEMANTIC.info} label="Radiology value by scan" info="Value of those scans at their price." value={inr(data.totals.radRevenue)} sub="Priced per scan (est.)" /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<CurrencyRupeeRounded />} accent={SEMANTIC.info} label="Radiology billed value by scan" info="What the bills charged for those scans: after any price change and the bill's discount share, before GST; cancelled bills left out. Scans inside a package count 0. Scans not billed yet are counted apart, at their ordered value." value={inr(data.totals.radRevenue)} sub={`${data.totals.radNotBilledOrders ?? 0} ordered, not billed (${inr(data.totals.radNotBilledValue ?? 0)})`} /></Grid>
           </Grid>
 
           <Box sx={{ mb: 2.5 }}>
@@ -117,7 +117,7 @@ export function TestWise() {
                 num("completed", "Completed"),
                 num("critical", "Critical"),
                 { key: "avgTatHours", label: "Avg hours to result", align: "right", value: (r) => Number(r.avgTatHours) },
-                money("revenue", "Revenue"),
+                money("revenue", "Billed value"),
               ]}
               rows={labRows}
               truncated={data.labTruncated} totalRows={data.labTotalRows} shownRows={data.labShownRows}
@@ -133,7 +133,7 @@ export function TestWise() {
               num("ordered", "Ordered"),
               num("completed", "Reported"),
               { key: "avgTatHours", label: "Avg TAT (h)", align: "right", value: (r) => Number(r.avgTatHours) },
-              money("revenue", "Revenue (est.)"),
+              money("revenue", "Billed value"),
             ]}
             rows={radRows}
             truncated={data.radTruncated} totalRows={data.radTotalRows} shownRows={data.radShownRows}

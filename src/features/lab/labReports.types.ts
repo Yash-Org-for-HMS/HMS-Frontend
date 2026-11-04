@@ -95,6 +95,11 @@ export interface TestWiseResponse {
     radTypes: number;
     radScans: number;
     radRevenue: Money;
+    /** Orders not billed yet (or whose bill was cancelled), and their ordered value. */
+    labNotBilledOrders?: number;
+    labNotBilledValue?: Money;
+    radNotBilledOrders?: number;
+    radNotBilledValue?: Money;
   };
   labRows: LabTestWiseRow[];
   radRows: RadiologyTypeRow[];
