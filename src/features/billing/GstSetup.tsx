@@ -20,6 +20,8 @@ type Row = {
   taxPercent: number;
   hsnCode: string | null;
   needsAttention: boolean;
+  /** A Schedule of Charges package (saved as a charge item all the same). */
+  isPackage?: boolean;
 };
 
 type Config = { gstin: string | null; medicines: Row[]; chargeItems: Row[] };
@@ -69,10 +71,12 @@ export default function GstSetup() {
 
   // Memoised so the filter below does not see a new array identity on every
   // render - `?? []` creates a fresh one each time otherwise.
-  const all = useMemo(
-    () => (tab === 0 ? data?.medicines ?? [] : data?.chargeItems ?? []),
-    [tab, data],
-  );
+  const all = useMemo(() => {
+    if (tab === 0) return data?.medicines ?? [];
+    const items = data?.chargeItems ?? [];
+    return tab === 2 ? items.filter((r) => r.isPackage) : items.filter((r) => !r.isPackage);
+  }, [tab, data]);
+  const packageCount = data?.chargeItems.filter((r) => r.isPackage).length ?? 0;
 
   const rows = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -170,7 +174,8 @@ export default function GstSetup() {
       <Paper elevation={0} sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider", overflow: "hidden" }}>
         <Tabs value={tab} onChange={(_, v) => { setTab(v); setSearch(""); setPage(0); }} sx={{ borderBottom: 1, borderColor: "divider" }}>
           <Tab sx={{ textTransform: "none", fontWeight: 700 }} label={`Medicines (${data.medicines.length})`} />
-          <Tab sx={{ textTransform: "none", fontWeight: 700 }} label={`Charge items (${data.chargeItems.length})`} />
+          <Tab sx={{ textTransform: "none", fontWeight: 700 }} label={`Services (${data.chargeItems.length - packageCount})`} />
+          <Tab sx={{ textTransform: "none", fontWeight: 700 }} label={`Packages (${packageCount})`} />
         </Tabs>
 
         <Box sx={{ px: 2, py: 1.75, display: "flex", gap: 1.5, alignItems: "center", flexWrap: "wrap", borderBottom: "1px solid", borderColor: "divider" }}>
@@ -213,7 +218,7 @@ export default function GstSetup() {
               {rows.length === 0 ? (
                 <TableRow><TableCell colSpan={3}>
                   <Typography variant="body2" sx={{ color: "text.secondary", textAlign: "center", py: 4 }}>
-                    Nothing matches.
+                    {all.length ? "Nothing matches." : tab === 2 ? "No packages in the Schedule of Charges yet." : "Nothing here yet."}
                   </Typography>
                 </TableCell></TableRow>
               ) : pageRows.map((r) => {
@@ -314,7 +319,43 @@ export default function GstSetup() {
           </Box>
         </Box>
       </Paper>
+
+      <FixedRates />
     </Box>
+  );
+}
+
+/**
+ * The charges whose GST is set in the product, not here - listed so this page
+ * answers "what rate does X carry?" for everything on a bill.
+ */
+const FIXED_RATES: [string, string, string][] = [
+  ["Doctor consultations and visits", "Exempt (0%)", "Healthcare service by a doctor."],
+  ["Room rent and nursing", "Exempt (0%)",
+   "Every room is billed without GST. GST law charges 5% on a non-ICU room above ₹5,000 a day; that is not applied yet."],
+  ["Surgery implants", "Rate of the item",
+   "An implant picked from the Schedule of Charges carries that item's rate (Services tab); one typed in carries the rate entered with it."],
+];
+
+function FixedRates() {
+  return (
+    <Paper elevation={0} sx={{ mt: 3, borderRadius: 3, border: "1px solid", borderColor: "divider", overflow: "hidden" }}>
+      <Box sx={{ px: 2, py: 1.5, borderBottom: "1px solid", borderColor: "divider" }}>
+        <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>Fixed rates</Typography>
+        <Typography variant="caption" sx={{ color: "text.secondary" }}>Set by the product, not editable here.</Typography>
+      </Box>
+      <Table size="small">
+        <TableBody>
+          {FIXED_RATES.map(([what, rate, why]) => (
+            <TableRow key={what} sx={{ "& td": { verticalAlign: "top" } }}>
+              <TableCell sx={{ fontWeight: 600, width: 260 }}>{what}</TableCell>
+              <TableCell sx={{ width: 170 }}>{rate}</TableCell>
+              <TableCell sx={{ color: "text.secondary" }}>{why}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </Paper>
   );
 }
 
