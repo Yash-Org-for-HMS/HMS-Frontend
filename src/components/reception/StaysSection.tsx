@@ -26,7 +26,8 @@ const day = (d: string | null) => (d ? new Date(d).toLocaleDateString("en-IN", {
 /**
  * Every hospital stay the patient has had, at any branch - newest first, each
  * naming its branch, and a stay that moved to another branch linked to the one
- * it continued in. One history across the group, however the bills are split.
+ * it continued in (older transfers: a move between branches is now a discharge
+ * and a fresh admission). One history across the group, however the bills are split.
  *
  * Shows nothing for a patient who has never been admitted, or for a login that
  * cannot read in-patient records.

@@ -12,7 +12,7 @@ import {
 } from "@mui/material";
 import {
   LocalHotelRounded, SearchRounded, SwapHorizRounded, LogoutRounded, MoreVertRounded,
-  CancelRounded, SavingsRounded, UndoRounded, LocalShippingRounded, ReceiptLongRounded, Inventory2Rounded,
+  CancelRounded, SavingsRounded, UndoRounded, ReceiptLongRounded, Inventory2Rounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import ErrorState from "@/components/ErrorState";
@@ -24,7 +24,6 @@ import AdmitDialog from "@/components/ipd/AdmitDialog";
 import TransferDialog from "@/components/ipd/TransferDialog";
 import DischargeDialog from "@/components/ipd/DischargeDialog";
 import DepositDialog from "@/components/ipd/DepositDialog";
-import BranchTransferDialog from "@/components/ipd/BranchTransferDialog";
 import StayPackageDialog from "@/components/ipd/StayPackageDialog";
 import PageHeader from "@/components/layout/PageHeader";
 import PatientHistoryButton from "@/components/clinical/PatientHistoryButton";
@@ -114,16 +113,6 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
   const [admitOpen, setAdmitOpen] = useState(false);
   // Each dialog is opened for one admission row, so they all hold the same shape.
   const [transferFor, setTransferFor] = useState<AdmissionRow | null>(null);
-  // Moving the patient to another branch (only where there is another branch).
-  const [branchTransferFor, setBranchTransferFor] = useState<AdmissionRow | null>(null);
-  const { data: transferOptions } = useQuery<{ branches: { branchId: string }[] }>({
-    queryKey: ["ipd-transfer-options", ""],
-    queryFn: async () => (await axiosInstance.get("/ipd/transfer-options")).data.data,
-    staleTime: 5 * 60_000,
-    // Only the row menu offers it, and a read-only view has no row menu.
-    enabled: !readOnly,
-  });
-  const canTransferBranch = (transferOptions?.branches.length ?? 0) > 1;
   const { user } = useHospitalAuth();
   // What this login may do to a stay, by the server's own rules for its roles:
   // the admission desk starts a discharge but billing completes it, billing
@@ -454,11 +443,6 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
             <Inventory2Rounded fontSize="small" sx={{ mr: 1, color: "#7C3AED" }} /> Package…
           </MenuItem>
         )}
-        {may("POST", "transfer-branch") && menu.row?.status === "ADMITTED" && canTransferBranch && (
-          <MenuItem onClick={() => { const r = menu.row; setMenu({ anchor: null, row: null }); setBranchTransferFor(r); }}>
-            <LocalShippingRounded fontSize="small" sx={{ mr: 1, color: BRAND.action }} /> Transfer to another branch…
-          </MenuItem>
-        )}
         {menu.row?.status === "ADMITTED" && (
           may("POST", "cancel") && <MenuItem onClick={() => { if (menu.row) cancel(menu.row); }} sx={{ color: SEMANTIC.danger }}><CancelRounded fontSize="small" sx={{ mr: 1 }} /> Cancel admission</MenuItem>
         )}
@@ -470,7 +454,6 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
       )}
       {admitOpen && <AdmitDialog open={admitOpen} onClose={() => setAdmitOpen(false)} onAdmitted={() => { setAdmitOpen(false); refetch(); }} />}
       {transferFor && <TransferDialog open admission={transferFor} onClose={() => setTransferFor(null)} onDone={() => { setTransferFor(null); refetch(); }} />}
-      {branchTransferFor && <BranchTransferDialog admission={branchTransferFor} onClose={() => setBranchTransferFor(null)} onDone={() => { setBranchTransferFor(null); refetch(); }} />}
       {packageFor && <StayPackageDialog admissionId={packageFor.admissionId} patientName={packageFor.patientName} canManage={may("POST", "package")} onClose={() => setPackageFor(null)} />}
       {dischargeFor && <DischargeDialog open admissionId={dischargeFor.admissionId} onClose={() => setDischargeFor(null)} onDone={() => { setDischargeFor(null); refetch(); }} />}
       {applyFor && (

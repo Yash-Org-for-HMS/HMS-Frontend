@@ -37,9 +37,9 @@ export interface AdmissionRow {
   admissionDate?: string | null;
   dischargeDate?: string | null;
   dischargeSummary?: string | null;
-  /** "TRANSFERRED" when the stay went on at another branch. */
+  /** "TRANSFERRED" when the stay went on at another branch (history: none are made now). */
   dischargeDisposition?: string | null;
-  /** For a stay opened by a transfer: the stay at the branch it came from. */
+  /** For a stay opened by an older branch transfer: the stay it came from. */
   transferredFromAdmissionId?: string | null;
   /** Why a leftover advance was kept at discharge. Null = nobody said. */
   advanceHoldReason?: string | null;
