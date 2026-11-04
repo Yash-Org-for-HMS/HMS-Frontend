@@ -325,7 +325,9 @@ export default function HospitalSettings({ embedded = false }: { embedded?: bool
                 <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
                   A refund of this amount or more is held for an administrator to approve, and no
                   money goes back until they do. Smaller refunds are returned immediately by the
-                  desk. Set 0 to require approval for every refund.
+                  desk - except a refund of the IPD advance applied to a bill, and a void with a
+                  medicine not returned, which always wait for approval. Set 0 to require approval
+                  for every refund.
                 </Typography>
                 <TextField
                   type="number"

@@ -16,12 +16,15 @@ import { useToast } from "@/providers/ToastContext";
 import { SEMANTIC, BRAND } from "@/styles/accents";
 import RefundReceiptDialog from "@/components/billing/RefundReceiptDialog";
 import DepositRefundApprovals from "./DepositRefundApprovals";
+import VoidApprovals, { WriteOffList, type WriteOffLine } from "./VoidApprovals";
 
 /**
  * Refunds waiting on an administrator.
  *
  * A refund at or above the hospital's approval threshold returns no money when
- * the desk raises it - it lands here first. Until someone acts on this page the
+ * the desk raises it - it lands here first. So does any refund of the IPD
+ * advance applied to a bill, whatever the amount, and any refund that voids a
+ * bill with a medicine not returned (approving writes it off). Until someone acts on this page the
  * patient has not been paid, so an empty queue is the healthy state and a
  * growing one is a backlog of people owed money.
  *
@@ -43,6 +46,10 @@ interface PendingRefund {
   uhidNumber?: string | null;
   /** Approving this also voids the bill and frees its services to be re-billed. */
   voidInvoice?: boolean;
+  /** Money out of the IPD advance applied to the bill - always for approval. */
+  fromAdvance?: boolean;
+  /** Medicines not returned, written off when this is approved. */
+  writeOffs?: WriteOffLine[];
 }
 
 const inr = (v: unknown) =>
@@ -125,7 +132,7 @@ export default function RefundApprovals() {
     <Box>
       <PageHeader
         title="Refund Approvals"
-        subtitle="Refunds raised at or above the approval threshold. No money goes back until you approve them."
+        subtitle="Refunds at or above the approval threshold, refunds of the IPD advance, and voids with medicines not returned. No money goes back until you approve them."
       />
 
       {isError ? (
@@ -192,6 +199,9 @@ export default function RefundApprovals() {
                         {r.referenceNumber && (
                           <Typography variant="caption" sx={{ display: "block", color: "text.secondary" }}>{r.referenceNumber}</Typography>
                         )}
+                        {r.fromAdvance && (
+                          <Typography variant="caption" sx={{ display: "block", color: SEMANTIC.warningDark, fontWeight: 600 }}>From the IPD advance</Typography>
+                        )}
                       </TableCell>
                       <TableCell sx={{ maxWidth: 240 }}>
                         <Typography variant="body2" sx={{ color: "text.secondary" }}>{r.refundReason || "-"}</Typography>
@@ -210,6 +220,7 @@ export default function RefundApprovals() {
                             }}
                           />
                         )}
+                        <WriteOffList lines={r.writeOffs ?? []} />
                       </TableCell>
                       <TableCell>
                         <Typography variant="body2">{r.raisedBy || "-"}</Typography>
@@ -252,6 +263,8 @@ export default function RefundApprovals() {
           )}
         </>
       )}
+
+      <VoidApprovals />
 
       <DepositRefundApprovals />
 

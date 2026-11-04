@@ -3,6 +3,10 @@ import type { InvoiceDetail, InvoiceItem, UnbilledItem, PaymentMethodRef, Hospit
 import { useState, useEffect, useRef, type ReactNode } from "react";
 import { paidTotal, refundedTotal } from "@/utils/invoiceMoney";
 import RefundSection from "@/components/billing/RefundSection";
+import VoidMedicinesDeclaration from "@/components/billing/VoidMedicinesDeclaration";
+import {
+  useOutstandingMedicines, declarationReady, declarationPayload, writesOff, type MedicineChoices,
+} from "@/components/billing/voidMedicines";
 import { useNavigate } from "react-router-dom";
 import { getApiErrorMessage } from "@/utils/apiError";
 import {
@@ -139,6 +143,10 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
   // with it; a bill voided to be raised again for a visit that is happening
   // should not. The common case at the desk is the first.
   const [cancelVisit, setCancelVisit] = useState(true);
+  // A bill with medicines still out says what became of each one in the void.
+  const [voidChoices, setVoidChoices] = useState<MedicineChoices>({});
+  const { medicines: voidMeds, isLoading: voidMedsLoading } = useOutstandingMedicines(invoice?.invoiceId, showVoid);
+  const voidWritesOff = writesOff(voidMeds, voidChoices);
 
   // Which occasional action is expanded. Closed by default: the common visit is
   // "take the money and print", and nothing else should compete with that.
@@ -163,6 +171,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
       setOpenSection(null);
       setShowVoid(false);
       setVoidReason("");
+      setVoidChoices({});
       setCancelVisit(true);
     }
   }, [open, appointmentId]);
@@ -364,11 +373,16 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
     if (!invoice) return;
     try {
       setVoiding(true);
-      const res = await axiosInstance.post(`/reception/billing/invoices/${invoice.invoiceId}/cancel`, { reason: voidReason.trim(), cancelVisit: !!invoice.appointmentId && cancelVisit });
+      const res = await axiosInstance.post(`/reception/billing/invoices/${invoice.invoiceId}/cancel`, {
+        reason: voidReason.trim(), cancelVisit: !!invoice.appointmentId && cancelVisit,
+        ...(voidMeds.length ? { medicines: declarationPayload(voidMeds, voidChoices) } : {}),
+      });
       if (res.data.success) {
+        // The server says when the void only got RAISED (a medicine not returned).
         toast.success(res.data?.message || "Invoice voided");
         setShowVoid(false);
         setVoidReason("");
+        setVoidChoices({});
         await fetchBillingData();
       }
     } catch (err: unknown) {
@@ -804,6 +818,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
                             multiline rows={2}
                             sx={{ mb: invoice?.appointmentId ? 1 : 2 }}
                           />
+                          <VoidMedicinesDeclaration medicines={voidMeds} choices={voidChoices} onChange={setVoidChoices} />
                           {invoice?.appointmentId && (
                             <FormControlLabel
                               sx={{ mb: 1.5, alignItems: "flex-start" }}
@@ -819,14 +834,14 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
                             />
                           )}
                           <Box sx={{ display: "flex", gap: 1 }}>
-                            <Button fullWidth variant="outlined" onClick={() => { setShowVoid(false); setVoidReason(""); }} disabled={voiding}
+                            <Button fullWidth variant="outlined" onClick={() => { setShowVoid(false); setVoidReason(""); setVoidChoices({}); }} disabled={voiding}
                               sx={{ color: "text.secondary", borderColor: "divider", fontWeight: 600 }}>
                               Cancel
                             </Button>
                             <Button fullWidth variant="contained" onClick={handleVoid}
-                              disabled={voiding || voidReason.trim().length < 3}
+                              disabled={voiding || voidMedsLoading || voidReason.trim().length < 3 || !declarationReady(voidMeds, voidChoices)}
                               sx={{ bgcolor: SEMANTIC.danger, "&:hover": { bgcolor: SEMANTIC.dangerDark }, fontWeight: 700 }}>
-                              {voiding ? "Voiding..." : "Confirm void"}
+                              {voiding ? "Voiding..." : voidWritesOff ? "Raise for approval" : "Confirm void"}
                             </Button>
                           </Box>
                         </>

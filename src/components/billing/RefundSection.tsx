@@ -9,6 +9,10 @@ import {
 } from "@/utils/invoiceMoney";
 import { formatINR } from "@/utils/format";
 import RefundReceiptDialog from "@/components/billing/RefundReceiptDialog";
+import VoidMedicinesDeclaration from "@/components/billing/VoidMedicinesDeclaration";
+import {
+  declarationReady, declarationPayload, writesOff, type MedicineChoices,
+} from "@/components/billing/voidMedicines";
 import { SEMANTIC, alpha } from "@/styles/accents";
 import type { Invoice, Refund } from "@/types";
 
@@ -92,6 +96,8 @@ export default function RefundSection({
   const [receiptFor, setReceiptFor] = useState<string | null>(null);
   /** Units of each medicine physically handed back, keyed by medicineId. */
   const [returning, setReturning] = useState<Record<string, string>>({});
+  /** When the refund voids the bill: what became of each medicine still out on it. */
+  const [choices, setChoices] = useState<MedicineChoices>({});
 
   // Medicines from this bill that can still go back on the shelf. Server-derived
   // from the stock ledger (dispensed minus already returned), so a second refund
@@ -111,6 +117,9 @@ export default function RefundSection({
   const refunds = invoice?.Refund ?? [];
   const refundable = refundablePayments(invoice);
   const selectedMax = refundable.find((p) => p.paymentId === paymentId)?.refundable ?? 0;
+  // The IPD advance applied to this bill: refunding it always needs an
+  // administrator, whatever the amount (the server raises it pending).
+  const fromAdvance = refundable.find((p) => p.paymentId === paymentId)?.gatewayProvider === "DEPOSIT";
 
   // The position in one line, so nobody has to add up the rows below to work out
   // whether this invoice can be refunded again. Reading the individual refunds
@@ -146,6 +155,7 @@ export default function RefundSection({
     setOpen(false); setPaymentId(""); setAmount(""); setReason(""); setMethodId(""); setReference("");
     setVoidInvoice(false);
     setReduceBill(true);
+    setChoices({});
   };
 
   // Does this refund hand back everything the invoice is holding? Only then is
@@ -155,6 +165,9 @@ export default function RefundSection({
   const canVoid = clearsTheBill && !invoice?.admissionId;
   // Only a part refund on an out-patient bill asks; an IPD bill settles at discharge.
   const asksReduce = Number(amount) > 0 && !clearsTheBill && !invoice?.admissionId;
+  // Voiding a bill accounts for every medicine on it, in the same step.
+  const voiding = canVoid && voidInvoice;
+  const medicinesDeclared = !voiding || declarationReady(canReturn, choices);
 
   const submit = async () => {
     const amt = Number(amount);
@@ -166,14 +179,16 @@ export default function RefundSection({
         amount: amt,
         reason: reason.trim(),
         paymentMethodId: methodId === "" ? null : Number(methodId),
-        voidInvoice: canVoid && voidInvoice,
+        voidInvoice: voiding,
         reduceBill: asksReduce && reduceBill,
         referenceNumber: reference.trim() || null,
         // Only what was actually handed back. Money can come back without goods
         // (a billing error), so this is never inferred from the amount.
-        returnedItems: canReturn
+        // A void declares its medicines instead (returned or not), never both.
+        returnedItems: voiding ? [] : canReturn
           .map((r) => ({ medicineId: r.medicineId, quantity: Number(returning[r.medicineId] || 0) }))
           .filter((r) => r.quantity > 0),
+        ...(voiding && canReturn.length ? { medicines: declarationPayload(canReturn, choices) } : {}),
       });
       // The server's message differs when the refund only got RAISED - saying
       // "processed" for one awaiting approval would tell the desk the patient
@@ -345,10 +360,16 @@ export default function RefundSection({
             inputProps={{ min: 0, max: selectedMax, step: "0.01" }}
             error={Number(amount) > selectedMax + 0.005}
             helperText={`Max refundable: ${selectedMax.toFixed(2)} INR`}
-            sx={{ mb: 2 }}
+            sx={{ mb: fromAdvance ? 1 : 2 }}
           />
+          {fromAdvance && (
+            <Typography variant="caption" sx={{ display: "block", mb: 2, color: SEMANTIC.warningDark, fontWeight: 600 }}>
+              This is the advance applied to the bill. Refunding it always needs an administrator's approval,
+              whatever the amount - it is raised now and paid out once approved.
+            </Typography>
+          )}
 
-          {canReturn.length > 0 && (
+          {canReturn.length > 0 && !voiding && (
             <Box sx={{ mb: 2, p: 1.75, borderRadius: 1.5, border: "1px solid", borderColor: "divider" }}>
               <Typography variant="body2" sx={{ fontWeight: 700, mb: 0.25 }}>
                 Medicines handed back
@@ -434,6 +455,8 @@ export default function RefundSection({
             </Box>
           )}
 
+          {voiding && <VoidMedicinesDeclaration medicines={canReturn} choices={choices} onChange={setChoices} />}
+
           {asksReduce && (
             <Box sx={{ mb: 2, p: 1.75, borderRadius: 1.5, border: "1px solid", borderColor: "divider" }}>
               <RadioGroup value={reduceBill ? "reduce" : "owed"} onChange={(e) => setReduceBill(e.target.value === "reduce")}>
@@ -512,13 +535,15 @@ export default function RefundSection({
                 approved, and "Confirm refund" says nothing about how much. */}
             <Button
               fullWidth variant="contained" onClick={submit}
-              disabled={busy || !paymentId || !(Number(amount) > 0) || Number(amount) > selectedMax + 0.005 || reason.trim().length < 3}
+              disabled={busy || !paymentId || !(Number(amount) > 0) || Number(amount) > selectedMax + 0.005 || reason.trim().length < 3 || !medicinesDeclared}
               sx={{ bgcolor: SEMANTIC.danger, "&:hover": { bgcolor: SEMANTIC.dangerDark }, fontWeight: 700 }}
             >
               {busy
                 ? "Refunding…"
-                : canVoid && voidInvoice
-                  ? `Refund ${formatINR(Number(amount) || 0)} and void the bill`
+                : voiding
+                  ? (writesOff(canReturn, choices)
+                      ? `Raise refund of ${formatINR(Number(amount) || 0)} and void for approval`
+                      : `Refund ${formatINR(Number(amount) || 0)} and void the bill`)
                   : `Refund ${formatINR(Number(amount) || 0)}`}
             </Button>
           </Box>

@@ -13,6 +13,10 @@ import { axiosInstance } from "@/api/axios";
 import type { InvoiceDetail, BillingLookups, InvoiceItem, Payment } from "@/types";
 import BillDocument from "@/components/billing/BillDocument";
 import RefundSection from "@/components/billing/RefundSection";
+import VoidMedicinesDeclaration from "@/components/billing/VoidMedicinesDeclaration";
+import {
+  useOutstandingMedicines, declarationReady, declarationPayload, writesOff, type MedicineChoices,
+} from "@/components/billing/voidMedicines";
 import ChangePriceDialog, { type PriceChange } from "@/components/billing/ChangePriceDialog";
 import { priceableLines, medicineMrp, shownUnitPrice, discountNote } from "@/components/billing/priceableLines";
 import HeartbeatLoader from "../HeartbeatLoader";
@@ -70,6 +74,10 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
   // one, so every void returned 400 and the invoice never cancelled.
   const [voidOpen, setVoidOpen] = useState(false);
   const [voidReason, setVoidReason] = useState("");
+  // A bill with medicines still out says what became of each one in the void.
+  const [voidChoices, setVoidChoices] = useState<MedicineChoices>({});
+  const { medicines: voidMeds, isLoading: voidMedsLoading } = useOutstandingMedicines(invoiceId, voidOpen, basePath);
+  const voidWritesOff = writesOff(voidMeds, voidChoices);
 
   const { data: lookups } = useQuery<BillingLookups>({
     queryKey: ["billing-lookups", basePath],
@@ -139,10 +147,15 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
     if (reason.length < 3) return;
     setVoiding(true);
     try {
-      await axiosInstance.post(`${basePath}/invoices/${invoiceId}/cancel`, { reason });
-      toast.success("Invoice voided");
+      const res = await axiosInstance.post(`${basePath}/invoices/${invoiceId}/cancel`, {
+        reason,
+        ...(voidMeds.length ? { medicines: declarationPayload(voidMeds, voidChoices) } : {}),
+      });
+      // The server says when the void only got RAISED (a medicine not returned).
+      toast.success(res.data?.message || "Invoice voided");
       setVoidOpen(false);
       setVoidReason("");
+      setVoidChoices({});
       onChanged?.();
       onClose();
     } catch (err: unknown) {
@@ -415,7 +428,7 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
       </DialogActions>
     </Dialog>
 
-    <Dialog open={voidOpen} onClose={() => setVoidOpen(false)} maxWidth="xs" fullWidth>
+    <Dialog open={voidOpen} onClose={() => setVoidOpen(false)} maxWidth={voidMeds.length ? "sm" : "xs"} fullWidth>
       <DialogTitle>Void this invoice?</DialogTitle>
       <DialogContent>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -426,13 +439,15 @@ export default function InvoiceViewDialog({ open, invoiceId, onClose, onChanged,
           value={voidReason} onChange={(e) => setVoidReason(e.target.value)}
           placeholder="e.g. duplicate invoice raised in error"
           helperText="Recorded against the void in the audit trail."
+          sx={{ mb: voidMeds.length ? 2 : 0 }}
         />
+        <VoidMedicinesDeclaration medicines={voidMeds} choices={voidChoices} onChange={setVoidChoices} />
       </DialogContent>
       <DialogActions>
         <Button onClick={() => setVoidOpen(false)}>Cancel</Button>
         <Button color="error" variant="contained" onClick={voidInvoice}
-          disabled={voiding || voidReason.trim().length < 3}>
-          {voiding ? "Voiding…" : "Void invoice"}
+          disabled={voiding || voidMedsLoading || voidReason.trim().length < 3 || !declarationReady(voidMeds, voidChoices)}>
+          {voiding ? "Voiding…" : voidWritesOff ? "Raise void for approval" : "Void invoice"}
         </Button>
       </DialogActions>
     </Dialog>
