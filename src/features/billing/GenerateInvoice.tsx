@@ -20,6 +20,8 @@ import InvoiceViewDialog from "@/components/billing/InvoiceViewDialog";
 import TypeOrderPriceDialog from "@/components/billing/TypeOrderPriceDialog";
 import SellPackageDialog from "@/components/billing/SellPackageDialog";
 import ChangePriceDialog, { type PriceChange } from "@/components/billing/ChangePriceDialog";
+import OfflineCollectDialog from "@/components/billing/OfflineCollectDialog";
+import { useOfflineState } from "@/offline/offlineState";
 import { formatINR, formatDate } from "@/utils/format";
 import { SEMANTIC } from "@/styles/accents";
 
@@ -81,7 +83,9 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
     queryFn: async () => (await axiosInstance.get(`/billing/unbilled/${patientId}`)).data.data || [],
     enabled: !!patientId,
   });
-  const unbilledItems: UnbilledItem[] = unbilledData ?? [];
+  // Billed offline on this screen, so not offered again while it waits to be sent.
+  const [sentOffline, setSentOffline] = useState<Set<string>>(new Set());
+  const unbilledItems: UnbilledItem[] = (unbilledData ?? []).filter((i) => !sentOffline.has(i.id));
 
   // This patient's existing invoices (paid + pending) - so staff can see what's
   // already billed/outstanding right here, and collect a pending one, instead of
@@ -211,6 +215,28 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
   // netAmount above collapses to 0 - read the created invoice's own net instead.
   const payableNet = generatedInvoice ? Number(generatedInvoice.netAmount || 0) : netAmount;
 
+  // No network: the bill and its payment are one save, at the screen's own total
+  // (the server bills it when the network is back, if it comes within Rs 1).
+  const { online } = useOfflineState();
+  const [offlineCollect, setOfflineCollect] = useState(false);
+  const offlineTotal = Math.round(netAmount * 100) / 100;
+  const collectOffline = async (m: { value: string; id?: number }) => {
+    if (!selectedPatient) return false;
+    try {
+      await axiosInstance.post(`/billing/invoices/${selectedPatient.patientId}`, {
+        selectedItems: selectedItemsList, discountAmount, ...(priceChanges.length ? { priceChanges } : {}),
+        payment: { paymentMethod: m.value, paymentMethodId: m.id, expectedTotal: offlineTotal },
+      });
+      setSentOffline((s) => new Set([...s, ...selectedItemsList.map((i) => i.id)]));
+      setSelectedItemIds(new Set());
+      setDiscount("");
+      return true;
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, "Error generating invoice"));
+      return false;
+    }
+  };
+
   const handleGenerateInvoice = async () => {
     if (!selectedPatient || selectedItemIds.size === 0) return;
     try {
@@ -221,6 +247,14 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
         ...(priceChanges.length ? { priceChanges } : {}),
       };
       const res = await axiosInstance.post(`/billing/invoices/${selectedPatient.patientId}`, payload);
+      // The network dropped as it was sent: the bill waits on this computer, unpaid -
+      // take its payment once it is through.
+      if (res.data?.queued) {
+        setSentOffline((s) => new Set([...s, ...selectedItemsList.map((i) => i.id)]));
+        setSelectedItemIds(new Set());
+        setDiscount("");
+        return;
+      }
       setGeneratedInvoice(res.data.data);
       // Prefill from the created invoice's actual net (the refetch below clears
       // the selected items, so the derived netAmount would otherwise read 0).
@@ -469,17 +503,32 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
                 <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: -3, mb: 2 }}>Working out the bill...</Typography>
               ) : null}
 
-              <Button
-                variant="contained"
-                fullWidth
-                size="large"
-                startIcon={<ReceiptLongRounded />}
-                disabled={selectedItemIds.size === 0 || isGenerating || discountTooHigh || !previewReady}
-                onClick={handleGenerateInvoice}
-                sx={{ py: 1.5, borderRadius: 2, fontWeight: 700 }}
-              >
-                {isGenerating ? "Generating..." : "Generate Invoice"}
-              </Button>
+              {online ? (
+                <Button
+                  variant="contained"
+                  fullWidth
+                  size="large"
+                  startIcon={<ReceiptLongRounded />}
+                  disabled={selectedItemIds.size === 0 || isGenerating || discountTooHigh || !previewReady}
+                  onClick={handleGenerateInvoice}
+                  sx={{ py: 1.5, borderRadius: 2, fontWeight: 700 }}
+                >
+                  {isGenerating ? "Generating..." : "Generate Invoice"}
+                </Button>
+              ) : (
+                <Button
+                  variant="contained"
+                  color="warning"
+                  fullWidth
+                  size="large"
+                  startIcon={<ReceiptLongRounded />}
+                  disabled={selectedItemIds.size === 0 || discountAmount < 0 || !(offlineTotal > 0)}
+                  onClick={() => setOfflineCollect(true)}
+                  sx={{ py: 1.5, borderRadius: 2, fontWeight: 700 }}
+                >
+                  Bill and collect (no network)
+                </Button>
+              )}
             </Paper>
           </Grid>
         </Grid>
@@ -561,6 +610,18 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
             setChanges((c) => { const n = { ...c }; if (change) n[key] = change; else delete n[key]; return n; });
             setMedChange(null);
           }} />
+      )}
+      {offlineCollect && selectedPatient && (
+        <OfflineCollectDialog
+          open
+          onClose={() => setOfflineCollect(false)}
+          title="Bill without network"
+          patientName={`${selectedPatient.firstName ?? ""} ${selectedPatient.lastName ?? ""}`.trim() || "Patient"}
+          lines={selectedItemsList.map((i) => ({ name: i.description, amount: priceOf(i) }))}
+          total={offlineTotal}
+          methods={paymentMethods.filter((m) => !/insurance/i.test(m.methodName)).map((m) => ({ label: m.methodName, value: m.methodName, id: m.paymentMethodId }))}
+          onCollect={collectOffline}
+        />
       )}
       {changeItem && (
         <ChangePriceDialog itemName={changeItem.description} ratePrice={changeItem.amount} current={changes[changeItem.id]}

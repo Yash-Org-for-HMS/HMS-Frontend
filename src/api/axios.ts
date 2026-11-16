@@ -1,5 +1,8 @@
-import axios, { AxiosError, type InternalAxiosRequestConfig } from "axios";
+import axios, { AxiosError, type AxiosRequestConfig, type InternalAxiosRequestConfig } from "axios";
 import { noteFailedRequestId } from "@/utils/errorReporting";
+import { getOfflineState, isNetworkFailure, setOfflineState } from "@/offline/offlineState";
+import { keepRead, savedRead } from "@/offline/readCache";
+import { queueSave, sendWaiting, setSender } from "@/offline/outbox";
 
 // Access Vite env variable - the single source of truth for the backend's
 // base URL. Other modules that need it (asset URLs, the socket connection,
@@ -77,10 +80,25 @@ axiosInstance.interceptors.request.use(
         config.headers["X-Branch-Id"] = activeBranchId;
       }
     }
+    // Every hospital save carries its own key, kept across retries: the server
+    // runs the same key once (middleware/idempotency.ts), so a resend after a
+    // dropped network - or a save queued offline - can never be made twice.
+    const method = (config.method ?? "get").toLowerCase();
+    if (realm === "hospital" && method !== "get" && config.headers && !config.headers["Idempotency-Key"]) {
+      config.headers["Idempotency-Key"] = newRequestKey();
+    }
     return config;
   },
   (error) => Promise.reject(error)
 );
+
+function newRequestKey(): string {
+  try {
+    return crypto.randomUUID();
+  } catch {
+    return `${Date.now().toString(16)}-${Math.random().toString(16).slice(2)}-${Math.random().toString(16).slice(2)}`;
+  }
+}
 
 function clearRealm(realm: Realm) {
   const keys =
@@ -137,15 +155,33 @@ export function refreshHospitalToken(): Promise<string | null> {
 // clear the session and redirect to the correct login (instead of leaving the
 // page silently broken).
 axiosInstance.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // An answer: the network is there. Keep what a "works offline" page read,
+    // and send anything that waited for the network.
+    if (!getOfflineState().online) {
+      setOfflineState({ online: true });
+      void sendWaiting();
+    }
+    if ((response.config.method ?? "get").toLowerCase() === "get") void keepRead(response);
+    return response;
+  },
   async (error: AxiosError) => {
     const status = error.response?.status;
     // The join between a browser error report and the server log line for the
     // same request - recorded here because this is the one place every failed
     // call passes through.
     noteFailedRequestId(error.response?.headers?.["x-request-id"] as string | undefined);
-    const original = error.config as (InternalAxiosRequestConfig & { _retry?: boolean }) | undefined;
+    const original = error.config as (InternalAxiosRequestConfig & { _retry?: boolean; _offlineReplay?: boolean }) | undefined;
     const url = original?.url || "";
+
+    // No network: a "works offline" page reads what it last loaded, and its
+    // saves wait on this computer (offline/). A queued save being sent again
+    // just fails - the queue tries later.
+    if (original && !original._offlineReplay && isNetworkFailure(error)) {
+      setOfflineState({ online: false });
+      const fallback = (original.method ?? "get").toLowerCase() === "get" ? await savedRead(original) : await queueSave(original);
+      if (fallback) return fallback;
+    }
 
     // Don't intervene on a failed login/refresh itself (e.g. a 401 for wrong
     // credentials must surface to the login form, not trigger a redirect loop).
@@ -182,3 +218,11 @@ axiosInstance.interceptors.response.use(
     return axiosInstance(original);
   }
 );
+
+// How the offline queue sends a save: as made, with its key, branch and the
+// time it was queued, through this instance (so a token refresh still works).
+setSender((s) => axiosInstance.request({
+  method: s.method, url: s.url, data: s.data ?? undefined,
+  headers: { "Idempotency-Key": s.id, "X-Offline-Queued-At": new Date(s.queuedAt).toISOString(), ...(s.branchId ? { "X-Branch-Id": s.branchId } : {}) },
+  _offlineReplay: true,
+} as AxiosRequestConfig & { _offlineReplay: boolean }));

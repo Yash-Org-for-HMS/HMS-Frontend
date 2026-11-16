@@ -45,6 +45,15 @@ installGlobalErrorHandlers();
 // which no longer exist, so the next page it opens fails to load. Reload once
 // to pick up the new build; the timestamp stops a reload loop if the chunk is
 // genuinely broken.
+// The app kept in the browser (public/sw.js), so a desk can open or refresh it
+// while the network is down. Built app only: in development Vite serves the
+// files itself and a worker would get in its way.
+if (import.meta.env.PROD && "serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js").catch(() => { /* no offline app; everything else works */ });
+  });
+}
+
 window.addEventListener("vite:preloadError", (event) => {
   const KEY = "hms-chunk-reload-at";
   let last = 0;

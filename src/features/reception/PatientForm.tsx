@@ -214,6 +214,14 @@ export default function PatientForm({ isModal = false, onSuccess, onCancel }: Pa
         }
       } else {
         const res = await axiosInstance.post("/reception/patients", formData);
+        if (res.data?.queued) {
+          // No network: kept on this computer, registered when it is back (the
+          // top bar says so). There is no patient to open or book yet.
+          setDirty(false);
+          setLoading(false);
+          if (!isModal) setTimeout(() => navigate("/reception/patients"), 800);
+          return;
+        }
         const patientId = res.data.data.patientId;
         const mrn = res.data.data.uhidNumber;
         setDirty(false);

@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, useMemo, type ReactNode } from "react";
+import { currentUserId, forgetReads } from "@/offline/readCache";
 import { getApiErrorMessage } from "@/utils/apiError";
 import { axiosInstance } from "@/api/axios";
 import { useNavigate } from "react-router-dom";
@@ -214,6 +215,9 @@ export function HospitalAuthProvider({ children }: { children: ReactNode }) {
     } catch (err) {
       console.error("Error logging out from server", err);
     } finally {
+      // What "works offline" pages kept for this user leaves the computer with them
+      // (saves still waiting stay, to be sent when they next sign in here).
+      void forgetReads(currentUserId());
       sessionStorage.removeItem("hospitalAccessToken");
       sessionStorage.removeItem("hospitalRefreshToken");
       sessionStorage.removeItem("hospitalUser");

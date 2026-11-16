@@ -1,6 +1,44 @@
 import { defineConfig, type PluginOption } from "vite";
 import react from "@vitejs/plugin-react";
 import { fileURLToPath, URL } from "node:url";
+import { createHash } from "node:crypto";
+import { readdirSync, readFileSync, statSync, writeFileSync, existsSync } from "node:fs";
+import { join, relative } from "node:path";
+
+/**
+ * The offline app (public/sw.js): after a build, write the build's files and an
+ * id for them into dist/sw.js, so the worker keeps exactly this build and a
+ * new deploy replaces it. The large login art and animation are left to load
+ * when online - the desks do not need them to work.
+ */
+const SKIP_OFFLINE = /(^sw\.js$|\.map$|^stats\.html$|\.wasm$|\.lottie$|^login\.png$)/;
+function offlineApp(): PluginOption {
+  let outDir = "dist";
+  return {
+    name: "dolphin-offline-app",
+    apply: "build",
+    configResolved(c) { outDir = c.build.outDir; },
+    closeBundle() {
+      const sw = join(outDir, "sw.js");
+      if (!existsSync(sw)) return;
+      const files: string[] = [];
+      const walk = (dir: string) => {
+        for (const name of readdirSync(dir)) {
+          const p = join(dir, name);
+          if (statSync(p).isDirectory()) walk(p);
+          else {
+            const rel = relative(outDir, p).replace(/\\/g, "/");
+            if (!SKIP_OFFLINE.test(rel)) files.push(`/${rel}`);
+          }
+        }
+      };
+      walk(outDir);
+      files.sort();
+      const version = createHash("sha1").update(files.join("|")).digest("hex").slice(0, 12);
+      writeFileSync(sw, readFileSync(sw, "utf8").replace('"__OFFLINE_ASSETS__"', JSON.stringify(files)).replace('"__OFFLINE_VERSION__"', JSON.stringify(version)));
+    },
+  };
+}
 // jspdf's own dependencies (and canvg's) plus the barcode library: used only by
 // lazily loaded screens, so they must not land in a chunk index.html preloads.
 const LAZY_ONLY = [
@@ -15,7 +53,7 @@ export default defineConfig(async () => {
   // Bundle analyzer (Phase 0, opt-in): `ANALYZE=1 npm run build` writes
   // dist/stats.html. Dynamic import + gate means a normal build never touches
   // the plugin, so it can't affect or break regular builds.
-  const plugins: PluginOption[] = [react()];
+  const plugins: PluginOption[] = [react(), offlineApp()];
   if (process.env.ANALYZE) {
     const { visualizer } = await import("rollup-plugin-visualizer");
     plugins.push(

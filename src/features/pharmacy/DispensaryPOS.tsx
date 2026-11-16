@@ -19,6 +19,8 @@ import { axiosInstance } from "@/api/axios";
 import Mascot from "@/components/Mascot";
 import DashboardSkeleton from "@/components/skeletons/DashboardSkeleton";
 import PointOfCarePOS from "@/components/billing/PointOfCarePOS";
+import OfflineCollectDialog from "@/components/billing/OfflineCollectDialog";
+import { getOfflineState } from "@/offline/offlineState";
 import ReasonDialog from "@/components/ReasonDialog";
 import { useSocket } from "@/hooks/useSocket";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -134,6 +136,8 @@ export default function DispensaryPOS() {
   };
   const [selectedPrescriptionId, setSelectedPrescriptionId] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
+  // No network at checkout: the sale and its payment are one save, kept on this computer.
+  const [offlineCollect, setOfflineCollect] = useState(false);
   const [showPOS, setShowPOS] = useState(false);
   const [createdOrder, setCreatedOrder] = useState<PharmacyOrder | null>(null);
   
@@ -340,10 +344,35 @@ export default function DispensaryPOS() {
   }, 0);
   const cartTotal = cartGrandTotal - cartTax;
 
+  const salePayload = () => ({
+    patientId: patientId || null,
+    prescriptionId: selectedPrescriptionId,
+    totalAmount: cartGrandTotal,
+    items: cart.map(item => ({ medicineId: item.medicineId, quantity: item.quantity, unitPrice: item.unitPrice })),
+  });
+
+  // Offline: sell and collect in one save (POST /pharmacy/orders with its payment).
+  const collectOffline = async (m: { value: string }) => {
+    try {
+      await axiosInstance.post("/pharmacy/orders", { ...salePayload(), payment: { paymentMethod: m.value, expectedTotal: Math.round(cartGrandTotal * 100) / 100 } });
+      setCart([]);
+      choosePatient(null);
+      setSelectedPrescriptionId(null);
+      return true;
+    } catch (err: unknown) {
+      toast.error(getApiErrorMessage(err, "Failed to process sale"));
+      return false;
+    }
+  };
+
   const handleCheckout = async () => {
     if (cart.length === 0) return;
     if (!activeBranchId) {
       toast.error("Select a branch before processing a sale.");
+      return;
+    }
+    if (!getOfflineState().online) {
+      setOfflineCollect(true);
       return;
     }
     try {
@@ -359,6 +388,14 @@ export default function DispensaryPOS() {
         }))
       };
       const res = await axiosInstance.post("/pharmacy/orders", payload);
+      // The network dropped as it was sent: the sale waits on this computer with
+      // no payment - take payment from Today's Orders once it is through.
+      if (res.data?.queued) {
+        setCart([]);
+        choosePatient(null);
+        setSelectedPrescriptionId(null);
+        return;
+      }
       setCreatedOrder(res.data.data);
       setShowPOS(true);
     } catch (err: unknown) {
@@ -772,6 +809,19 @@ export default function DispensaryPOS() {
           }
         }}
       />
+
+      {offlineCollect && (
+        <OfflineCollectDialog
+          open
+          onClose={() => setOfflineCollect(false)}
+          title="Sell without network"
+          patientName={patientPick?.name ?? "Walk-in Patient"}
+          lines={cart.map((c: CartLine) => ({ name: `${c.medicineName} x ${c.quantity}`, amount: c.quantity * c.unitPrice }))}
+          total={Math.round(cartGrandTotal * 100) / 100}
+          methods={[{ label: "Cash", value: "Cash" }, { label: "Credit Card", value: "Credit Card" }, { label: "UPI / Mobile App", value: "UPI" }]}
+          onCollect={collectOffline}
+        />
+      )}
 
       {showPOS && createdOrder && (
         <PointOfCarePOS

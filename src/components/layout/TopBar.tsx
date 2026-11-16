@@ -14,10 +14,13 @@ import { PANEL_LABEL, panelHomeForUser, panelsForUser, type Panel } from "@/cons
 import { SEARCH_SHORTCUT } from "@/utils/shortcut";
 import { SEMANTIC } from "@/styles/accents";
 import { TOP_BAR_HEIGHT, FLOAT_GAP, CARD_RADIUS, CARD_SHADOW } from "./floatingShell";
+import OfflineStatus, { OfflineBanner, OFFLINE_BANNER_HEIGHT } from "./OfflineStatus";
+import { useOfflineState } from "@/offline/offlineState";
 
-/** Room under the fixed bar, at the top of a panel's content. */
+/** Room under the fixed bar, at the top of a panel's content (and its offline banner, while shown). */
 export function TopBarSpacer() {
-  return <Box aria-hidden sx={{ height: { xs: TOP_BAR_HEIGHT, md: TOP_BAR_HEIGHT + FLOAT_GAP }, flexShrink: 0 }} />;
+  const banner = useOfflineState().online ? 0 : OFFLINE_BANNER_HEIGHT;
+  return <Box aria-hidden sx={{ height: { xs: TOP_BAR_HEIGHT + banner, md: TOP_BAR_HEIGHT + FLOAT_GAP + banner }, flexShrink: 0 }} />;
 }
 
 interface TopBarProps {
@@ -119,6 +122,8 @@ export default function TopBar({ drawerWidth, onMenu, announcements }: TopBarPro
           <SearchRounded />
         </IconButton>
 
+        <OfflineStatus />
+
         <Tooltip title={announcements.count ? `${announcements.count} unread announcement${announcements.count === 1 ? "" : "s"}` : "Announcements"}>
           <IconButton onClick={announcements.onOpen} aria-label="Announcements" sx={{ color: "text.secondary", "&:hover": { color: "primary.main" } }}>
             <Badge badgeContent={announcements.count} color="error" max={99}>
@@ -171,6 +176,7 @@ export default function TopBar({ drawerWidth, onMenu, announcements }: TopBarPro
           </MenuItem>
         </Menu>
       </Toolbar>
+      <OfflineBanner />
     </AppBar>
   );
 }

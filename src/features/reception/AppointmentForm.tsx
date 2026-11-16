@@ -294,6 +294,13 @@ export default function AppointmentForm({ isEmbedded = false, prefilledPatientId
         await axiosInstance.put(`/reception/appointments/${id}`, payload);
       } else {
         const res = await axiosInstance.post("/reception/appointments", payload);
+        if (res.data?.queued) {
+          // No network: kept on this computer, booked when it is back; check-in and the bill follow then.
+          setDirty(false);
+          setSaving(false);
+          if (!isEmbedded) navigate("/reception/appointments");
+          return;
+        }
         apptId = res.data?.data?.appointmentId;
       }
       

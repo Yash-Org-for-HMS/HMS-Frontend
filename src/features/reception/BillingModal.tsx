@@ -279,6 +279,11 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
         paymentMethodId,
         transactionReference: transactionRef
       });
+      // No network: the payment waits on this computer and is recorded when it is back.
+      if (res.data?.queued) {
+        setPaymentAmount("");
+        return;
+      }
       
       if (res.data.success) {
         toast.success("Payment recorded successfully");
