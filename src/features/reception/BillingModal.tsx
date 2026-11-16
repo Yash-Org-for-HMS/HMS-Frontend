@@ -880,6 +880,7 @@ export default function BillingModal({ open, onClose, appointmentId, patientName
         onClose={() => setPriceLine(null)} onSave={(c) => changeLinePrice(priceLine, c)} />
     )}
     <SocChargePicker
+      side={invoice?.admissionId ? "IPD" : "OPD"}
       open={socPickerOpen}
       onClose={() => setSocPickerOpen(false)}
       onPick={(c) => handleAddSocCharge(c)}

@@ -542,6 +542,7 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
         onSaved={() => { setPriceCharge(null); refetchDetail(); }} />
     )}
     <SocChargePicker
+      side="IPD"
       open={socPickerOpen}
       onClose={() => setSocPickerOpen(false)}
       onPick={(c) => setExtras((x) => [...x, { description: c.itemName, amount: String(c.price), qty: "1", chargeItemId: c.chargeItemId, basePrice: c.basePrice, roomPrices: c.roomPrices, listPrices: c.listPrices, taxPercent: c.taxPercent, priceAtBilling: c.priceAtBilling }])}

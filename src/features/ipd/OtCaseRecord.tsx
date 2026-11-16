@@ -394,7 +394,7 @@ export default function OtCaseRecord() {
           <ChecklistTab id={id} data={checklistQ.data} onSaved={refreshAll} stages={["TIME_OUT"]} showCounts={false} />
           <AnaesthesiaTab id={id} record={recordQ.data?.record} onSaved={refreshAll} show="form" />
           <ProcedureTab id={id} record={recordQ.data?.record} onSaved={refreshAll} />
-          <ImplantsTab id={id} implants={recordQ.data?.implants ?? []} onSaved={refreshAll} />
+          <ImplantsTab id={id} implants={recordQ.data?.implants ?? []} onSaved={refreshAll} side={surgery?.admissionId ? "IPD" : "OPD"} />
           <ConsumablesTab id={id} consumables={recordQ.data?.consumables ?? []} onSaved={refreshAll} />
         </>
       )}
@@ -693,6 +693,7 @@ export function BillingTab({ id, onGoTo }: { id: string; onGoTo?: (tab: number) 
               </Grid>
             </Grid>
             <SocChargePicker
+              side={kase.admissionNumber ? "IPD" : "OPD"}
               open={socOpen}
               onClose={() => setSocOpen(false)}
               preferCategories={["procedure", "surgery", "operation", "theatre", "consumable"]}
@@ -1449,7 +1450,7 @@ function ProcedureTab({ id, record, onSaved }: { id: string; record: Record<stri
 
 // ── Implants ─────────────────────────────────────────────────────────────────
 
-function ImplantsTab({ id, implants, onSaved }: { id: string; implants: Record<string, string | number | null>[]; onSaved: () => void }) {
+function ImplantsTab({ id, implants, onSaved, side }: { id: string; implants: Record<string, string | number | null>[]; onSaved: () => void; side: "OPD" | "IPD" }) {
   const toast = useToast();
   const [f, setF] = useState({ implantName: "", manufacturer: "", batchNumber: "", serialNumber: "", quantity: "1", price: "", taxPercent: "0" });
   // Picked from the Schedule of Charges: the server prices it from the item, GST included.
@@ -1557,6 +1558,7 @@ function ImplantsTab({ id, implants, onSaved }: { id: string; implants: Record<s
           )}
         </Grid>
         <SocChargePicker
+          side={side}
           open={socOpen}
           onClose={() => setSocOpen(false)}
           preferCategories={["implant", "prosthe"]}

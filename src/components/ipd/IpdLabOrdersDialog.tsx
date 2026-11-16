@@ -223,6 +223,7 @@ export default function IpdLabOrdersDialog({ open, onClose, admission, orderOnly
         )}
       </DialogActions>
       <LabTestPicker
+        side="IPD"
         open={pickerOpen}
         onClose={() => setPickerOpen(false)}
         onToggle={toggleTest}

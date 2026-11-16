@@ -6,19 +6,22 @@ import {
 } from "@mui/material";
 import { SearchRounded, ScienceRounded, CheckCircleRounded, AddCircleOutlineRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
+import { sidedCharge, type BillingSide } from "@/components/billing/chargePrice";
 import { formatINRAuto } from "@/utils/format";
 
 const inr = formatINRAuto;
 
-type LabTest = { chargeItemId: string; testName: string; testCode: string | null; price: number | string; category?: string | null; priceAtBilling?: boolean };
+type LabTest = { chargeItemId: string; testName: string; testCode: string | null; price: number | string; category?: string | null; priceAtBilling?: boolean; ipdPrice?: number | string | null; ipdPriceAtBilling?: boolean };
 export type PickedLabTest = { chargeItemId: string; testName: string; price: number; priceAtBilling?: boolean };
 
 // Category-browse, MULTI-ADD picker for lab tests (mastered in the Schedule of
 // Charges, organized into categories). Unlike the radiology picker it stays open so
 // several tests can be added to the host's basket; `selectedIds` shows what's already
 // in the basket and clicking a row toggles it. Caller sends only chargeItemIds.
-export default function LabTestPicker({ open, onClose, onToggle, selectedIds, accent = "#10b981", catalogUrl }: {
+export default function LabTestPicker({ open, onClose, onToggle, selectedIds, accent = "#10b981", catalogUrl, side = "OPD" }: {
   open: boolean; onClose: () => void; onToggle: (t: PickedLabTest) => void; selectedIds: Set<string>; accent?: string; catalogUrl: string;
+  /** "IPD" for a test ordered on an in-patient's stay: its IPD price (or typed at billing) is shown. */
+  side?: BillingSide;
 }) {
   const [categoryFilter, setCategoryFilter] = useState("");
   const [search, setSearch] = useState("");
@@ -37,12 +40,12 @@ export default function LabTestPicker({ open, onClose, onToggle, selectedIds, ac
   );
   const filtered = useMemo(() => {
     const s = search.trim().toLowerCase();
-    return tests.filter((t) => {
+    return tests.map((t) => sidedCharge(t, side)).filter((t) => {
       if (categoryFilter && (t.category || "Laboratory") !== categoryFilter) return false;
       if (s && !t.testName.toLowerCase().includes(s) && !(t.testCode || "").toLowerCase().includes(s)) return false;
       return true;
     });
-  }, [tests, categoryFilter, search]);
+  }, [tests, categoryFilter, search, side]);
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>

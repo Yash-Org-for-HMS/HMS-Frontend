@@ -19,3 +19,19 @@ export function chargePriceFor(c: { price?: number | string; basePrice?: number;
   }
   return Number(c.basePrice ?? c.price);
 }
+
+/** Who the bill is for: an out-patient, or an in-patient's stay. */
+export type BillingSide = "OPD" | "IPD";
+
+/**
+ * A charge as one side bills it (the server's typedOn/priceAt): an in-patient
+ * pays its IPD price where it has one, and its price is typed at billing when
+ * the IPD side says so. With no IPD price set, IPD is the same as OPD. The
+ * IPD price sits under the room-class and rate-list prices, as on the server.
+ */
+export function sidedCharge<T extends { price: number | string; priceAtBilling?: boolean; ipdPrice?: number | string | null; ipdPriceAtBilling?: boolean }>(c: T, side: BillingSide = "OPD"): T {
+  if (side !== "IPD") return c;
+  if (c.ipdPriceAtBilling) return { ...c, priceAtBilling: true };
+  if (c.ipdPrice != null) return { ...c, priceAtBilling: false, price: c.ipdPrice };
+  return c;
+}

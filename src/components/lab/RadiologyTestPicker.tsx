@@ -6,19 +6,22 @@ import {
 } from "@mui/material";
 import { SearchRounded, CameraAltRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
+import { sidedCharge, type BillingSide } from "@/components/billing/chargePrice";
 import { formatINRAuto } from "@/utils/format";
 
 const inr = formatINRAuto;
 
-type RadTest = { chargeItemId: string; testName: string; testCode: string | null; price: number | string; category?: string | null; priceAtBilling?: boolean };
+type RadTest = { chargeItemId: string; testName: string; testCode: string | null; price: number | string; category?: string | null; priceAtBilling?: boolean; ipdPrice?: number | string | null; ipdPriceAtBilling?: boolean };
 export type PickedRadTest = { chargeItemId: string; testName: string; price: number; priceAtBilling?: boolean };
 
 // Category-browse picker for radiology tests (mastered in the Schedule of Charges,
 // organized into categories like X-Ray / CT / MRI). Each host panel passes the
 // catalogue endpoint it already uses, so no new backend and no auth surprises.
 // The caller sends only the chargeItemId - the server prices the order from the catalogue.
-export default function RadiologyTestPicker({ open, onClose, onPick, accent = "#7c3aed", catalogUrl }: {
+export default function RadiologyTestPicker({ open, onClose, onPick, accent = "#7c3aed", catalogUrl, side = "OPD" }: {
   open: boolean; onClose: () => void; onPick: (t: PickedRadTest) => void; accent?: string; catalogUrl: string;
+  /** "IPD" for a test ordered on an in-patient's stay: its IPD price (or typed at billing) is shown. */
+  side?: BillingSide;
 }) {
   const [categoryFilter, setCategoryFilter] = useState(""); // "" = all categories
   const [search, setSearch] = useState("");
@@ -38,12 +41,12 @@ export default function RadiologyTestPicker({ open, onClose, onPick, accent = "#
 
   const filtered = useMemo(() => {
     const s = search.trim().toLowerCase();
-    return tests.filter((t) => {
+    return tests.map((t) => sidedCharge(t, side)).filter((t) => {
       if (categoryFilter && (t.category || "Radiology") !== categoryFilter) return false;
       if (s && !t.testName.toLowerCase().includes(s) && !(t.testCode || "").toLowerCase().includes(s)) return false;
       return true;
     });
-  }, [tests, categoryFilter, search]);
+  }, [tests, categoryFilter, search, side]);
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>

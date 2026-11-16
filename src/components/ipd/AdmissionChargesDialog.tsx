@@ -248,6 +248,7 @@ export default function AdmissionChargesDialog({
       </DialogActions>
 
       <SocChargePicker
+        side="IPD"
         open={pickerOpen}
         onClose={() => setPickerOpen(false)}
         onPick={addToBasket}

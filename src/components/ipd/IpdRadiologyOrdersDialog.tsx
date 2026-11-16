@@ -237,6 +237,7 @@ export default function IpdRadiologyOrdersDialog({ open, onClose, admission, ord
         )}
       </DialogActions>
       <RadiologyTestPicker
+        side="IPD"
         open={pickerOpen}
         onClose={() => setPickerOpen(false)}
         onPick={(t) => setSelectedTest(t)}

@@ -5,7 +5,7 @@ import {
   Box, Typography, List, ListItemButton, ListItemText, InputAdornment, CircularProgress,
 } from "@mui/material";
 import { SearchRounded, ReceiptLongRounded } from "@mui/icons-material";
-import { chargePriceFor, type ListPrice } from "./chargePrice";
+import { chargePriceFor, sidedCharge, type BillingSide, type ListPrice } from "./chargePrice";
 import { axiosInstance } from "@/api/axios";
 import { formatINRAuto } from "@/utils/format";
 
@@ -13,7 +13,7 @@ const inr = formatINRAuto;
 
 type RoomPrice = { roomClassId: string; price: number | string };
 type Category = { chargeCategoryId: string; categoryName: string; isActive: boolean; _count?: { items: number } };
-type Item = { chargeItemId: string; itemName: string; itemCode: string | null; price: number | string; unit: string | null; isActive: boolean; taxPercent?: number | string; itemType?: string; roomPrices?: RoomPrice[]; listPrices?: ListPrice[]; priceAtBilling?: boolean };
+type Item = { chargeItemId: string; itemName: string; itemCode: string | null; price: number | string; unit: string | null; isActive: boolean; taxPercent?: number | string; itemType?: string; roomPrices?: RoomPrice[]; listPrices?: ListPrice[]; priceAtBilling?: boolean; ipdPrice?: number | string | null; ipdPriceAtBilling?: boolean };
 // `basePrice` + `roomPrices` are returned so a caller (e.g. discharge) can re-derive
 // the effective price if its room class changes after the pick; `price` is the
 // effective price at pick time. `taxPercent` lets the caller preview per-line GST.
@@ -28,8 +28,10 @@ export type PickedCharge = { chargeItemId: string; itemName: string; price: numb
 // When `roomClassId` is given, the displayed/returned price reflects that room
 // class's matrix price (falling back to base); the server re-prices authoritatively.
 // `roomClassName` (optional) is shown so the operator knows which class the prices reflect.
-export default function SocChargePicker({ open, onClose, onPick, accent = "#0C73B5", roomClassId, roomClassName, preferCategories, rateListId }: {
+export default function SocChargePicker({ open, onClose, onPick, accent = "#0C73B5", roomClassId, roomClassName, preferCategories, rateListId, side = "OPD" }: {
   open: boolean; onClose: () => void; onPick: (c: PickedCharge) => void; accent?: string; roomClassId?: string | null; roomClassName?: string | null;
+  /** "IPD" for a charge on an in-patient's stay: its IPD price (fixed or typed) is shown and picked. */
+  side?: BillingSide;
   /** An insured stay's payer rate list: its prices are shown, as they are billed. */
   rateListId?: string | null;
   /** Category names to open on, best match first; falls back to the first category. */
@@ -80,8 +82,9 @@ export default function SocChargePicker({ open, onClose, onPick, accent = "#0C73
     const s = search.trim().toLowerCase();
     // Exclude the "Room rent" item (itemType BED): the daily bed rent is billed
     // automatically per stay day, so it must never be pickable as an extra charge.
-    return items.filter((it) => it.isActive && it.itemType !== "BED" && (!s || it.itemName.toLowerCase().includes(s) || (it.itemCode || "").toLowerCase().includes(s)));
-  }, [items, search]);
+    return items.filter((it) => it.isActive && it.itemType !== "BED" && (!s || it.itemName.toLowerCase().includes(s) || (it.itemCode || "").toLowerCase().includes(s)))
+      .map((it) => sidedCharge(it, side));
+  }, [items, search, side]);
 
   // Effective price for the selected room class: the matrix price when a class is
   // set and a row exists, else the base price (matches the server's resolveChargeItem).

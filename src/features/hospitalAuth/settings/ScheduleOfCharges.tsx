@@ -57,6 +57,9 @@ type Item = { chargeItemId: string; chargeCategoryId: string; itemName: string; 
   listPrices?: { rateListId: string; roomClassId: string; price: number | string }[];
   /** No price of its own: one is typed on each bill. */
   priceAtBilling?: boolean;
+  /** The in-patient side: its own IPD price, or typed on the in-patient bill. Neither: IPD = OPD. */
+  ipdPrice?: number | string | null;
+  ipdPriceAtBilling?: boolean;
   /** Set when it is a package: its days of stay and how many things it includes. */
   packageContents?: { includedDays: number | null; _count: { items: number } } | null };
 type RoomClass = { roomClassId: string; name: string; code: string; sortOrder: number; isActive: boolean };
@@ -438,6 +441,11 @@ export default function ScheduleOfCharges() {
                               : listed
                                 ? (listed.has("") ? <Box component="span" sx={{ color: ACCENT }}>{inr(listed.get("")!)}</Box> : <Tooltip title="Standard - not on this list"><Box component="span" sx={{ color: "text.disabled", fontWeight: 400 }}>{inr(Number(it.price))}</Box></Tooltip>)
                                 : inr(Number(it.price))}
+                            {(it.ipdPriceAtBilling || it.ipdPrice != null) && (
+                              <Typography component="div" sx={{ fontSize: "0.6875rem", color: "text.secondary", fontWeight: 600 }}>
+                                {it.ipdPriceAtBilling ? "IPD at billing" : `IPD ${inr(Number(it.ipdPrice))}`}
+                              </Typography>
+                            )}
                           </TableCell>
                           {activeRoomClasses.map((rc, i) => {
                             if (listed && !it.priceAtBilling) {
@@ -879,6 +887,10 @@ function ItemDialog({ mode, item, categoryId, categoryCode, categoryName, roomCl
   const canAtBilling = ["GENERAL", "PROCEDURE", "OT", "LAB", "RADIOLOGY"].includes(itemType);
   const isTest = itemType === "LAB" || itemType === "RADIOLOGY";
   const typedAtBilling = atBilling && canAtBilling;
+  // The in-patient side: as OPD, its own IPD price, or typed on the in-patient bill.
+  const [ipdMode, setIpdMode] = useState<"SAME" | "FIXED" | "TYPED">(item?.ipdPriceAtBilling ? "TYPED" : item?.ipdPrice != null ? "FIXED" : "SAME");
+  const [ipdPrice, setIpdPrice] = useState(item?.ipdPrice != null ? String(item.ipdPrice) : "");
+  const ipdTyped = ipdMode === "TYPED" && canAtBilling;
   // Room rent is priced in Ward & bed setup → Bed tariffs; here only its name and code change.
   const roomRent = item?.itemType === "BED";
   // Per-room-class prices keyed by roomClassId (blank = use the base price).
@@ -893,6 +905,7 @@ function ItemDialog({ mode, item, categoryId, categoryCode, categoryName, roomCl
     if (!name.trim()) { toast.error("Charge name is required"); return; }
     if (!typedAtBilling && (price === "" || Number(price) < 0 || !Number.isFinite(Number(price)))) { toast.error("Enter a valid base price"); return; }
     if (!typedAtBilling && item?.priceAtBilling && !(Number(price) > 0)) { toast.error("Give the charge a price to stop pricing it at billing"); return; }
+    if (!roomRent && ipdMode === "FIXED" && !(Number(ipdPrice) > 0)) { toast.error("Enter the IPD price, or choose Same as OPD"); return; }
     setSaving(true);
     try {
       const roomPricesArr = Object.entries(roomPrices)
@@ -904,8 +917,10 @@ function ItemDialog({ mode, item, categoryId, categoryCode, categoryName, roomCl
           itemName: name.trim(), itemCode: code.trim() || undefined,
           price: typedAtBilling ? undefined : Number(price), taxPercent: tax === "" ? undefined : Number(tax),
           hsnCode: hsn.trim() || undefined,
-          unit: unit.trim() || undefined, isActive, itemType, roomPrices: typedAtBilling ? [] : roomPricesArr,
+          unit: unit.trim() || undefined, isActive, itemType, roomPrices: typedAtBilling || ipdTyped ? [] : roomPricesArr,
           priceAtBilling: typedAtBilling,
+          ipdPrice: ipdMode === "FIXED" ? Number(ipdPrice) : null,
+          ipdPriceAtBilling: ipdTyped,
         };
       if (mode === "add") {
         await axiosInstance.post("/hospital/soc/items", { chargeCategoryId: categoryId, ...body });
@@ -984,12 +999,29 @@ function ItemDialog({ mode, item, categoryId, categoryCode, categoryName, roomCl
             <TextField label="HSN/SAC (optional)" value={hsn} onChange={(e) => setHsn(e.target.value)} fullWidth
               inputProps={{ maxLength: 10 }} />
           </Stack>
+          {!roomRent && (
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+              <TextField select label="IPD price" value={ipdMode} onChange={(e) => setIpdMode(e.target.value as typeof ipdMode)} fullWidth
+                helperText={ipdMode === "SAME" ? (typedAtBilling ? "In-patients: typed at billing, as for OPD" : "In-patients pay the OPD price")
+                  : ipdMode === "FIXED" ? "What an admitted patient pays (a room-class price below still comes first)"
+                  : "In-patients: whoever bills it types the price"}>
+                <MenuItem value="SAME">Same as OPD</MenuItem>
+                <MenuItem value="FIXED">Its own IPD price</MenuItem>
+                {canAtBilling && <MenuItem value="TYPED">Typed at billing</MenuItem>}
+              </TextField>
+              {ipdMode === "FIXED" && (
+                <TextField label="IPD price (₹)" type="number" value={ipdPrice} onChange={(e) => setIpdPrice(e.target.value)} fullWidth
+                  inputProps={{ min: 0, step: "0.01" }}
+                  InputProps={{ startAdornment: <InputAdornment position="start">₹</InputAdornment> }} />
+              )}
+            </Stack>
+          )}
 
-          {roomClasses.length > 0 && !typedAtBilling && (
+          {roomClasses.length > 0 && !typedAtBilling && !ipdTyped && (
             <Box>
               <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 0.5 }}>IPD pricing - by room class (optional)</Typography>
               <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 1.5 }}>
-                Rate for admitted (IPD) patients, per room class. Leave blank to use the OPD (base) price.
+                Rate for admitted (IPD) patients, per room class, only where it differs by room. Leave blank to use the IPD price above.
               </Typography>
               <Stack spacing={1.5}>
                 {roomClasses.map((rc) => (

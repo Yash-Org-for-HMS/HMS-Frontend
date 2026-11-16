@@ -757,6 +757,7 @@ export function BookCaseDialog({ date, theatreId, admission, onClose, onDone }: 
             </Button>
           </Box>
           <SocChargePicker
+            side={dayCase ? "OPD" : "IPD"}
             open={socOpen}
             onClose={() => setSocOpen(false)}
             preferCategories={["procedure", "surgery", "operation", "package", "theatre"]}
