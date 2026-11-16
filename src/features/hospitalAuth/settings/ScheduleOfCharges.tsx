@@ -991,7 +991,7 @@ function ItemDialog({ mode, item, categoryId, categoryCode, categoryName, roomCl
           )}
           <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
             {!typedAtBilling && <TextField label="OPD price (₹)" type="number" value={price} onChange={(e) => setPrice(e.target.value)} fullWidth disabled={roomRent}
-              helperText="Outpatient rate · IPD fallback"
+              helperText={ipdMode === "SAME" ? "Outpatient rate · also the IPD rate" : "Outpatient rate"}
               InputProps={{ startAdornment: <InputAdornment position="start">₹</InputAdornment> }} />}
             <TextField label="Tax % (optional)" type="number" value={tax} onChange={(e) => setTax(e.target.value)} fullWidth disabled={roomRent}
               inputProps={{ min: 0, max: 100 }}
@@ -1029,7 +1029,7 @@ function ItemDialog({ mode, item, categoryId, categoryCode, categoryName, roomCl
                     key={rc.roomClassId} size="small" type="number" label={rc.name} fullWidth disabled={roomRent}
                     value={roomPrices[rc.roomClassId] ?? ""}
                     onChange={(e) => setRoomPrices((m) => ({ ...m, [rc.roomClassId]: e.target.value }))}
-                    placeholder={`OPD ₹${price || "0"}`}
+                    placeholder={ipdMode === "FIXED" && ipdPrice ? `IPD ₹${ipdPrice}` : `OPD ₹${price || "0"}`}
                     InputProps={{ startAdornment: <InputAdornment position="start">₹</InputAdornment> }}
                   />
                 ))}

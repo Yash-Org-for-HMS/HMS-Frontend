@@ -497,7 +497,9 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
                 <Typography variant="h5" fontWeight={800} color={previewReady ? "primary.main" : "text.secondary"}>{discountTooHigh ? "-" : `₹${netAmount.toFixed(2)}`}</Typography>
               </Box>
               {/* The figures are the server's bill; until it answers they are an estimate, and what it refuses is said here. */}
-              {previewRefused && !discountTooHigh ? (
+              {!online && selectedItemIds.size > 0 ? (
+                <Typography variant="caption" sx={{ display: "block", mt: -3, mb: 2, color: "text.secondary" }}>No network - the total is worked out on this computer. The bill is made at the server's figure when the network is back.</Typography>
+              ) : previewRefused && !discountTooHigh ? (
                 <Typography variant="caption" color="error" sx={{ display: "block", mt: -3, mb: 2 }}>{previewRefused}</Typography>
               ) : previewDue && !previewReady && !previewRefused ? (
                 <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: -3, mb: 2 }}>Working out the bill...</Typography>
@@ -617,7 +619,11 @@ export default function GenerateInvoice({ patientId: initialPatientId }: { patie
           onClose={() => setOfflineCollect(false)}
           title="Bill without network"
           patientName={`${selectedPatient.firstName ?? ""} ${selectedPatient.lastName ?? ""}`.trim() || "Patient"}
-          lines={selectedItemsList.map((i) => ({ name: i.description, amount: priceOf(i) }))}
+          lines={[
+            ...selectedItemsList.map((i) => ({ name: i.description, amount: priceOf(i) })),
+            ...(discountAmount > 0 ? [{ name: "Discount", amount: -discountAmount }] : []),
+            ...(taxAmount > 0 ? [{ name: "GST", amount: Math.round(taxAmount * 100) / 100 }] : []),
+          ]}
           total={offlineTotal}
           methods={paymentMethods.filter((m) => !/insurance/i.test(m.methodName)).map((m) => ({ label: m.methodName, value: m.methodName, id: m.paymentMethodId }))}
           onCollect={collectOffline}

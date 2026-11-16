@@ -29,13 +29,15 @@ export default function OfflineCollectDialog({ open, onClose, title, patientName
 }) {
   const [method, setMethod] = useState<CollectMethod | null>(methods[0] ?? null);
   const [saving, setSaving] = useState(false);
-  const [done, setDone] = useState<{ at: Date; method: CollectMethod } | null>(null);
+  // What was collected, kept as it was: the screen clears the bill behind this dialog.
+  const [done, setDone] = useState<{ at: Date; method: CollectMethod; total: number; lines: { name: string; amount: number }[] } | null>(null);
 
   const collect = async () => {
     if (!method) return;
     setSaving(true);
     try {
-      if (await onCollect(method)) setDone({ at: new Date(), method });
+      const kept = { total, lines };
+      if (await onCollect(method)) setDone({ at: new Date(), method, ...kept });
     } finally {
       setSaving(false);
     }
@@ -69,7 +71,7 @@ export default function OfflineCollectDialog({ open, onClose, title, patientName
           </Stack>
         ) : (
           <Stack spacing={1}>
-            <Typography sx={{ fontWeight: 700 }}>{inr(total)} collected by {done.method.label}</Typography>
+            <Typography sx={{ fontWeight: 700 }}>{inr(done.total)} collected by {done.method.label}</Typography>
             <Typography variant="body2" sx={{ color: "text.secondary" }}>
               Saved on this computer at {done.at.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}. The bill and receipt are made when the network is back.
             </Typography>
@@ -84,7 +86,7 @@ export default function OfflineCollectDialog({ open, onClose, title, patientName
           </>
         ) : (
           <>
-            <Button startIcon={<PrintRounded />} onClick={() => printSlip({ patientName, lines, total, method: done.method.label, at: done.at })}>Print slip</Button>
+            <Button startIcon={<PrintRounded />} onClick={() => printSlip({ patientName, lines: done.lines, total: done.total, method: done.method.label, at: done.at })}>Print slip</Button>
             <Button variant="contained" onClick={close}>Done</Button>
           </>
         )}

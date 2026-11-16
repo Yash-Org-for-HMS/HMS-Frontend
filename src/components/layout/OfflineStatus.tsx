@@ -6,7 +6,8 @@ import { CloudDoneOutlined, CloudOffRounded, SyncRounded, ErrorOutlineRounded } 
 import { useLocation } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/providers/ToastContext";
-import { useOfflineState } from "@/offline/offlineState";
+import { getOfflineState as getState, setOfflineState, useOfflineState } from "@/offline/offlineState";
+import { API_URL } from "@/api/axios";
 import { pageWorksOffline } from "@/offline/offlineScope";
 import { countSaves, discardSave, mySaves, retrySave, sendWaiting, type QueuedSave } from "@/offline/outbox";
 
@@ -41,7 +42,25 @@ export default function OfflineStatus() {
     window.addEventListener("offline-synced", synced);
     // Signed in: anything this user left waiting on this computer goes now.
     void countSaves().then(() => sendWaiting());
+    // An outage is noticed before a save fails: while a works-offline page is in
+    // view (or saves wait), ask the server's health check every 20 s.
+    const beat = window.setInterval(async () => {
+      if (document.visibilityState !== "visible") return;
+      const st = getState();
+      if (!pageWorksOffline(window.location.pathname) && !st.waiting) return;
+      const ctl = new AbortController();
+      const t = window.setTimeout(() => ctl.abort(), 5000);
+      try {
+        const r = await fetch(`${API_URL}/health`, { cache: "no-store", signal: ctl.signal });
+        if (r.ok) { setOfflineState({ online: true }); void sendWaiting(); } else if (r.status >= 502) setOfflineState({ online: false });
+      } catch {
+        setOfflineState({ online: false });
+      } finally {
+        window.clearTimeout(t);
+      }
+    }, 20_000);
     return () => {
+      window.clearInterval(beat);
       window.removeEventListener("offline-queued", queued);
       window.removeEventListener("offline-synced", synced);
     };
