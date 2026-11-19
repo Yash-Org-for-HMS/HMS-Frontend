@@ -12,7 +12,7 @@ import {
 } from "@mui/material";
 import {
   LocalHotelRounded, SearchRounded, SwapHorizRounded, LogoutRounded, MoreVertRounded,
-  CancelRounded, SavingsRounded, UndoRounded, ReceiptLongRounded, Inventory2Rounded,
+  CancelRounded, SavingsRounded, UndoRounded, ReceiptLongRounded, Inventory2Rounded, PrintRounded,
 } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import ErrorState from "@/components/ErrorState";
@@ -24,12 +24,14 @@ import AdmitDialog from "@/components/ipd/AdmitDialog";
 import TransferDialog from "@/components/ipd/TransferDialog";
 import DischargeDialog from "@/components/ipd/DischargeDialog";
 import DepositDialog from "@/components/ipd/DepositDialog";
+import InvoiceViewDialog from "@/components/billing/InvoiceViewDialog";
+import { usePrintWindow } from "@/utils/usePrintWindow";
 import StayPackageDialog from "@/components/ipd/StayPackageDialog";
 import PageHeader from "@/components/layout/PageHeader";
 import PatientHistoryButton from "@/components/clinical/PatientHistoryButton";
 import { usePanelBase } from "@/features/ipd/panelBase";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
-import { canWrite } from "@/constants/roles";
+import { canWrite, pageOpenFor } from "@/constants/roles";
 
 // Desks whose role covers the money or the papers of a stay, not moving the
 // patient (backend lib/roleCatalog fences): the server refuses them these.
@@ -120,6 +122,11 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
   const may = (method: string, action: string) => canWrite(user, method, `/api/ipd/admissions/x/${action}`);
   const movesPatients = may("POST", "initiate-discharge");
   const [dischargeFor, setDischargeFor] = useState<AdmissionRow | null>(null);
+  // The bill a discharge just made, opened straight away so it can be paid and
+  // printed here - by a login that also works the Billing page it comes from.
+  const [billFor, setBillFor] = useState<string | null>(null);
+  const takesMoney = pageOpenFor(user, "reception", "/reception/billing");
+  const openPrint = usePrintWindow();
   const [depositFor, setDepositFor] = useState<{ row: AdmissionRow; mode: "collect" | "refund" } | null>(null);
   const [menu, setMenu] = useState<{ anchor: HTMLElement | null; row: AdmissionRow | null }>({ anchor: null, row: null });
   const basePath = usePanelBase();
@@ -420,6 +427,13 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
             <SavingsRounded fontSize="small" sx={{ mr: 1, color: BRAND.action }} /> Collect deposit
           </MenuItem>
         )}
+        {/* The stay's charges so far. The final bill is made only at discharge;
+            money taken during the stay goes in as deposit. */}
+        {menu.row?.status === "ADMITTED" && (
+          <MenuItem onClick={() => { const r = menu.row; if (!r) return; setMenu({ anchor: null, row: null }); openPrint(`/reception/ipd/admissions/${r.admissionId}/interim-bill/print`); }}>
+            <PrintRounded fontSize="small" sx={{ mr: 1 }} /> Interim bill
+          </MenuItem>
+        )}
         {/* The first step of leaving (workbook bed lifecycle): the bed reads
             "discharge initiated" so the desk can plan the next patient, while
             billing and paperwork are finished. */}
@@ -455,7 +469,8 @@ export default function Admissions({ readOnly = false }: { readOnly?: boolean } 
       {admitOpen && <AdmitDialog open={admitOpen} onClose={() => setAdmitOpen(false)} onAdmitted={() => { setAdmitOpen(false); refetch(); }} />}
       {transferFor && <TransferDialog open admission={transferFor} onClose={() => setTransferFor(null)} onDone={() => { setTransferFor(null); refetch(); }} />}
       {packageFor && <StayPackageDialog admissionId={packageFor.admissionId} patientName={packageFor.patientName} canManage={may("POST", "package")} onClose={() => setPackageFor(null)} />}
-      {dischargeFor && <DischargeDialog open admissionId={dischargeFor.admissionId} onClose={() => setDischargeFor(null)} onDone={() => { setDischargeFor(null); refetch(); }} />}
+      {dischargeFor && <DischargeDialog open admissionId={dischargeFor.admissionId} onClose={() => setDischargeFor(null)} onDone={(invoiceId) => { setDischargeFor(null); refetch(); if (invoiceId && takesMoney) setBillFor(invoiceId); }} />}
+      {billFor && <InvoiceViewDialog open invoiceId={billFor} onClose={() => setBillFor(null)} onChanged={refetch} />}
       {applyFor && (
         <Dialog open onClose={applying ? undefined : () => setApplyFor(null)} maxWidth="xs" fullWidth>
           <DialogTitle>Use the deposit on the bill?</DialogTitle>

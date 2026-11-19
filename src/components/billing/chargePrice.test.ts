@@ -22,6 +22,14 @@ describe("a picked charge's preview price", () => {
     expect(chargePriceFor(icu, "PVT", null)).toBe(3600);
     expect(chargePriceFor(icu, "GEN", null)).toBe(3000);
   });
+
+  it("takes the bill's branch price where it has one, as the server does", () => {
+    const c = { ...icu, branchPrices: [{ branchId: "B1", roomClassId: "", price: 2800 }, { branchId: "B1", roomClassId: "PVT", price: 3400 }] };
+    expect(chargePriceFor(c, "PVT", null, "B1")).toBe(3400);
+    expect(chargePriceFor(c, "GEN", null, "B1")).toBe(2800);
+    expect(chargePriceFor(c, "GEN", null, "B2")).toBe(3000);
+    expect(chargePriceFor(c, "PVT", "PAR", "B1")).toBe(4500);
+  });
 });
 
 describe("a charge on each side (OP rate / IP rate)", () => {
@@ -40,5 +48,9 @@ describe("a charge on each side (OP rate / IP rate)", () => {
   it("a room-class price still beats the IPD price in the preview", () => {
     const c = sidedCharge({ ...base, ipdPrice: 1200, roomPrices: [{ roomClassId: "icu", price: 1500 }] }, "IPD");
     expect([chargePriceFor(c, "icu"), chargePriceFor(c, "gen")]).toEqual([1500, 1200]);
+  });
+  it("the IPD price beats a branch's base price, not its room-class price", () => {
+    const c = sidedCharge({ ...base, ipdPrice: 1200, branchPrices: [{ branchId: "B1", roomClassId: "", price: 900 }, { branchId: "B1", roomClassId: "icu", price: 1600 }] }, "IPD");
+    expect([chargePriceFor(c, "icu", null, "B1"), chargePriceFor(c, "gen", null, "B1")]).toEqual([1600, 1200]);
   });
 });

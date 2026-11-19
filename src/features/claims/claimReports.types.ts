@@ -22,6 +22,12 @@ export interface ClaimSummary {
   outstandingFromPayer: Money;
   /** Billed minus approved - what the patient is left carrying. */
   patientShortfall: Money;
+  /** Deducted by payers as TDS - settled on the bill, not cash, not patient dues. */
+  totalTds?: Money;
+  /** Written off by the hospital - settled on the bill, not cash, not patient dues. */
+  totalWriteOff?: Money;
+  /** Disallowed by payers and passed to patients (inside patientShortfall). */
+  totalDisallowed?: Money;
 }
 
 export interface ClaimStatusRow {

@@ -22,7 +22,8 @@ import ChangePriceDialog, { type PriceChange } from "@/components/billing/Change
 interface Props {
   open: boolean;
   onClose: () => void;
-  onDone: () => void;
+  /** Called with the new bill's id, so the caller can open it for payment. */
+  onDone: (invoiceId?: string) => void;
   admissionId: string;
 }
 
@@ -33,7 +34,7 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
   // A row is either a free-text charge (editable description + amount) or one picked
   // from the Schedule of Charges (carries chargeItemId + its base/room-class prices so
   // the preview can re-derive when the room class changes; the server prices it).
-  type Extra = { description: string; amount: string; qty: string; chargeItemId?: string; basePrice?: number; roomPrices?: { roomClassId: string; price: number | string }[]; listPrices?: PickedCharge["listPrices"]; taxPercent?: number; priceAtBilling?: boolean; priceChange?: PriceChange };
+  type Extra = { description: string; amount: string; qty: string; chargeItemId?: string; basePrice?: number; roomPrices?: { roomClassId: string; price: number | string }[]; listPrices?: PickedCharge["listPrices"]; branchPrices?: PickedCharge["branchPrices"]; taxPercent?: number; priceAtBilling?: boolean; priceChange?: PriceChange };
   const [extras, setExtras] = useState<Extra[]>([]);
   const [saving, setSaving] = useState(false);
   const [socPickerOpen, setSocPickerOpen] = useState(false);
@@ -78,7 +79,7 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
   const lineAmount = (e: Extra): number => {
     if (e.priceChange) return e.priceChange.price;
     if (!e.chargeItemId || e.priceAtBilling) return Number(e.amount) || 0;
-    return chargePriceFor({ ...e, basePrice: e.basePrice ?? (Number(e.amount) || 0) }, billRoomClassId, detail?.serviceRateListId) || 0;
+    return chargePriceFor({ ...e, basePrice: e.basePrice ?? (Number(e.amount) || 0) }, billRoomClassId, detail?.serviceRateListId, detail?.branchId) || 0;
   };
 
   // A package on the stay takes off what it covers: room rent & nursing (worked
@@ -208,7 +209,7 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
       } else if (advanceAction === "REFUND" && advanceLeft > 0) {
         toast.info(`${formatINR(advanceLeft)} advance is still held - use the refund action on this admission to return it.`);
       }
-      onDone();
+      onDone(inv?.invoiceId);
     } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to discharge"));
     } finally {
@@ -417,7 +418,7 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
                 {e.chargeItemId && !e.priceAtBilling && (
                   <IconButton size="small" aria-label="Change price" title={e.priceChange ? `Changed on this bill: ${e.priceChange.reason}` : "Change price on this bill"}
                     color={e.priceChange ? "warning" : "default"}
-                    onClick={() => setChanging({ name: e.description, ratePrice: chargePriceFor({ ...e, basePrice: e.basePrice ?? (Number(e.amount) || 0) }, billRoomClassId, detail?.serviceRateListId) || 0, extraIndex: i })}>
+                    onClick={() => setChanging({ name: e.description, ratePrice: chargePriceFor({ ...e, basePrice: e.basePrice ?? (Number(e.amount) || 0) }, billRoomClassId, detail?.serviceRateListId, detail?.branchId) || 0, extraIndex: i })}>
                     <EditRounded fontSize="small" />
                   </IconButton>
                 )}
@@ -545,10 +546,11 @@ export default function DischargeDialog({ open, onClose, onDone, admissionId }: 
       side="IPD"
       open={socPickerOpen}
       onClose={() => setSocPickerOpen(false)}
-      onPick={(c) => setExtras((x) => [...x, { description: c.itemName, amount: String(c.price), qty: "1", chargeItemId: c.chargeItemId, basePrice: c.basePrice, roomPrices: c.roomPrices, listPrices: c.listPrices, taxPercent: c.taxPercent, priceAtBilling: c.priceAtBilling }])}
+      onPick={(c) => setExtras((x) => [...x, { description: c.itemName, amount: String(c.price), qty: "1", chargeItemId: c.chargeItemId, basePrice: c.basePrice, roomPrices: c.roomPrices, listPrices: c.listPrices, branchPrices: c.branchPrices, taxPercent: c.taxPercent, priceAtBilling: c.priceAtBilling }])}
       accent={BRAND.action}
       roomClassId={billRoomClassId || undefined}
       rateListId={detail?.serviceRateListId}
+      branchId={detail?.branchId}
       roomClassName={billRoomClassName || undefined}
     />
     {changing && (

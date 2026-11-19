@@ -5,7 +5,7 @@ import {
   Box, Typography, List, ListItemButton, ListItemText, InputAdornment, CircularProgress,
 } from "@mui/material";
 import { SearchRounded, ReceiptLongRounded } from "@mui/icons-material";
-import { chargePriceFor, sidedCharge, type BillingSide, type ListPrice } from "./chargePrice";
+import { chargePriceFor, sidedCharge, type BillingSide, type ListPrice, type BranchPrice } from "./chargePrice";
 import { axiosInstance } from "@/api/axios";
 import { formatINRAuto } from "@/utils/format";
 
@@ -13,14 +13,14 @@ const inr = formatINRAuto;
 
 type RoomPrice = { roomClassId: string; price: number | string };
 type Category = { chargeCategoryId: string; categoryName: string; isActive: boolean; _count?: { items: number } };
-type Item = { chargeItemId: string; itemName: string; itemCode: string | null; price: number | string; unit: string | null; isActive: boolean; taxPercent?: number | string; itemType?: string; roomPrices?: RoomPrice[]; listPrices?: ListPrice[]; priceAtBilling?: boolean; ipdPrice?: number | string | null; ipdPriceAtBilling?: boolean };
+type Item = { chargeItemId: string; itemName: string; itemCode: string | null; price: number | string; unit: string | null; isActive: boolean; taxPercent?: number | string; itemType?: string; roomPrices?: RoomPrice[]; listPrices?: ListPrice[]; branchPrices?: BranchPrice[]; priceAtBilling?: boolean; ipdPrice?: number | string | null; ipdPriceAtBilling?: boolean };
 // `basePrice` + `roomPrices` are returned so a caller (e.g. discharge) can re-derive
 // the effective price if its room class changes after the pick; `price` is the
 // effective price at pick time. `taxPercent` lets the caller preview per-line GST.
 // The server always re-prices and re-taxes authoritatively.
 // `priceAtBilling`: the item has no fixed price; `price` is what was typed here,
 // and the caller must send it - the server refuses the charge without one.
-export type PickedCharge = { chargeItemId: string; itemName: string; price: number; basePrice: number; roomPrices: RoomPrice[]; listPrices?: ListPrice[]; taxPercent: number; priceAtBilling?: boolean };
+export type PickedCharge = { chargeItemId: string; itemName: string; price: number; basePrice: number; roomPrices: RoomPrice[]; listPrices?: ListPrice[]; branchPrices?: BranchPrice[]; taxPercent: number; priceAtBilling?: boolean };
 
 // Reusable picker for the hospital's Schedule of Charges. Lets billing screens
 // choose a rate-card charge; the caller sends only the chargeItemId - the server
@@ -28,10 +28,12 @@ export type PickedCharge = { chargeItemId: string; itemName: string; price: numb
 // When `roomClassId` is given, the displayed/returned price reflects that room
 // class's matrix price (falling back to base); the server re-prices authoritatively.
 // `roomClassName` (optional) is shown so the operator knows which class the prices reflect.
-export default function SocChargePicker({ open, onClose, onPick, accent = "#0C73B5", roomClassId, roomClassName, preferCategories, rateListId, side = "OPD" }: {
+export default function SocChargePicker({ open, onClose, onPick, accent = "#0C73B5", roomClassId, roomClassName, preferCategories, rateListId, side = "OPD", branchId }: {
   open: boolean; onClose: () => void; onPick: (c: PickedCharge) => void; accent?: string; roomClassId?: string | null; roomClassName?: string | null;
   /** "IPD" for a charge on an in-patient's stay: its IPD price (fixed or typed) is shown and picked. */
   side?: BillingSide;
+  /** The branch the bill is raised at: its own prices are shown, as they are billed. */
+  branchId?: string | null;
   /** An insured stay's payer rate list: its prices are shown, as they are billed. */
   rateListId?: string | null;
   /** Category names to open on, best match first; falls back to the first category. */
@@ -88,7 +90,7 @@ export default function SocChargePicker({ open, onClose, onPick, accent = "#0C73
 
   // Effective price for the selected room class: the matrix price when a class is
   // set and a row exists, else the base price (matches the server's resolveChargeItem).
-  const effPrice = (it: Item): number => chargePriceFor(it, roomClassId, rateListId);
+  const effPrice = (it: Item): number => chargePriceFor(it, roomClassId, rateListId, branchId);
 
   return (
     <Dialog open={open} onClose={close} maxWidth="sm" fullWidth>
@@ -143,7 +145,7 @@ export default function SocChargePicker({ open, onClose, onPick, accent = "#0C73
                 key={it.chargeItemId}
                 onClick={() => {
                   if (it.priceAtBilling) { setTyping(it); setTyped(""); return; }
-                  onPick({ chargeItemId: it.chargeItemId, itemName: it.itemName, price: effPrice(it), basePrice: Number(it.price), roomPrices: it.roomPrices ?? [], listPrices: it.listPrices ?? [], taxPercent: Number(it.taxPercent) || 0 }); close();
+                  onPick({ chargeItemId: it.chargeItemId, itemName: it.itemName, price: effPrice(it), basePrice: Number(it.price), roomPrices: it.roomPrices ?? [], listPrices: it.listPrices ?? [], branchPrices: it.branchPrices ?? [], taxPercent: Number(it.taxPercent) || 0 }); close();
                 }}
                 sx={{ borderRadius: 1.5, mb: 0.25 }}
               >

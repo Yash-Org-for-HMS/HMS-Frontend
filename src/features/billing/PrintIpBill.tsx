@@ -20,10 +20,10 @@ import { BillLetterhead, BillTitleBar, BillFooter } from "@/components/billing/B
  * line detail to category subtotals for a quick read.
  */
 
-const CATEGORY_ORDER = ["PACKAGE", "ADMISSION", "ROOM", "DOCTOR_VISIT", "PROCEDURE", "INVESTIGATION", "RADIOLOGY", "PHARMACY", "OTHER"];
+const CATEGORY_ORDER = ["PACKAGE", "ADMISSION", "ROOM", "DOCTOR_VISIT", "PROCEDURE", "IMPLANT", "INVESTIGATION", "RADIOLOGY", "PHARMACY", "OTHER"];
 const CATEGORY_LABEL: Record<string, string> = {
   ADMISSION: "Admission Charges", ROOM: "Room / Bed Charges", DOCTOR_VISIT: "Doctor Charges",
-  PROCEDURE: "Procedures", INVESTIGATION: "Laboratory", RADIOLOGY: "Radiology / Imaging",
+  PROCEDURE: "Procedures", IMPLANT: "Implants", INVESTIGATION: "Laboratory", RADIOLOGY: "Radiology / Imaging",
   PHARMACY: "Pharmacy & Medical Supplies", OTHER: "Other Charges", PACKAGE: "Package",
 };
 

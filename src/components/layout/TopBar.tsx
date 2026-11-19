@@ -4,13 +4,15 @@ import {
   Divider, Tooltip, Badge, Chip, ButtonBase,
 } from "@mui/material";
 import {
-  Menu as MenuIcon, SearchRounded, CampaignRounded, LogoutRounded, SwapHorizRounded, ExpandMoreRounded,
+  Menu as MenuIcon, SearchRounded, CampaignRounded, LogoutRounded, SwapHorizRounded, ExpandMoreRounded, GroupsRounded,
 } from "@mui/icons-material";
+import { useQuery } from "@tanstack/react-query";
 import { useLocation, useNavigate } from "react-router-dom";
+import { axiosInstance } from "@/api/axios";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import HospitalLogo from "@/components/HospitalLogo";
 import BranchSwitcher from "@/components/BranchSwitcher";
-import { PANEL_LABEL, panelHomeForUser, panelsForUser, type Panel } from "@/constants/roles";
+import { PANEL_LABEL, panelHomeForUser, panelsForUser, hasRole, type Panel } from "@/constants/roles";
 import { SEARCH_SHORTCUT } from "@/utils/shortcut";
 import { SEMANTIC } from "@/styles/accents";
 import { TOP_BAR_HEIGHT, FLOAT_GAP, CARD_RADIUS, CARD_SHADOW } from "./floatingShell";
@@ -53,6 +55,17 @@ export default function TopBar({ drawerWidth, onMenu, announcements }: TopBarPro
   // role); with one, there is nowhere to switch to.
   const panels = panelsForUser(user);
   const otherPanels = panels.length > 1 ? panels.filter((p) => p !== here) : [];
+  // "My team" for anyone with people reporting to them; the admins who keep the
+  // reporting lines can open anyone's. A failed check just leaves it out.
+  const teamAdmin = hasRole(user, "H_ADMIN", "HR_ADMIN");
+  const team = useQuery<{ hasTeam: boolean }>({
+    queryKey: ["my-team-summary", user?.id ?? null],
+    queryFn: async () => (await axiosInstance.get("/hospital/staff/my-team/summary")).data.data,
+    enabled: !!user && !teamAdmin,
+    staleTime: 10 * 60_000,
+    retry: false,
+  });
+  const showTeam = teamAdmin || !!team.data?.hasTeam;
   const search = () => window.dispatchEvent(new Event("open-command-palette"));
   const close = () => setAnchor(null);
 
@@ -162,6 +175,13 @@ export default function TopBar({ drawerWidth, onMenu, announcements }: TopBarPro
             {(user?.loginId || user?.email) && <Typography sx={{ color: "text.secondary", fontSize: "0.75rem", mt: 0.25 }}>{user.loginId || user.email}</Typography>}
             <Typography sx={{ color: "text.secondary", fontSize: "0.75rem", mt: 0.5 }}>{hospital?.name}</Typography>
           </Box>
+          {showTeam && <Divider />}
+          {showTeam && (
+            <MenuItem onClick={() => { close(); navigate(`/${here}/my-team`); }}>
+              <ListItemIcon><GroupsRounded fontSize="small" /></ListItemIcon>
+              <ListItemText primary="My team" />
+            </MenuItem>
+          )}
           {otherPanels.length > 0 && <Divider />}
           {otherPanels.map((p) => (
             <MenuItem key={p} onClick={() => { close(); navigate(panelHomeForUser(user, p)); }}>

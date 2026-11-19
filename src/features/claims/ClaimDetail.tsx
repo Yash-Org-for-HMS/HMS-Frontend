@@ -119,7 +119,8 @@ export default function ClaimDetail() {
               <Button size="small" onClick={() => setLinkOpen(true)} sx={{ textTransform: "none", color: ACCENT }}>
                 {claim.invoice ? `Bill: ${claim.invoice.invoiceNumber}` : "Link bill"}
               </Button>
-              <Button size="small" variant="outlined" startIcon={<PaymentsRounded fontSize="small" />} onClick={() => setSettleOpen(true)} sx={{ borderColor: "divider", color: "text.primary" }}>
+              {/* A settlement is booked against the bill, so it needs one linked (an IPD claim gets the discharge bill at discharge). */}
+              <Button size="small" variant="outlined" startIcon={<PaymentsRounded fontSize="small" />} onClick={() => setSettleOpen(true)} disabled={!claim.invoice} title={claim.invoice ? undefined : "Link the bill first"} sx={{ borderColor: "divider", color: "text.primary" }}>
                 Record settlement
               </Button>
             </Box>
@@ -135,6 +136,12 @@ export default function ClaimDetail() {
                 ["Settled", claim.reconciliation?.settled, SEMANTIC.success],
                 ["Patient pays", claim.reconciliation?.patientResponsibility, SEMANTIC.danger],
                 ["Payer balance", claim.reconciliation?.balanceFromPayer, SEMANTIC.warning],
+                // Insurer deductions - shown once any was recorded. TDS and write-offs
+                // are settled on the bill without being cash or patient dues; a
+                // disallowed amount passed to the patient is inside "Patient pays".
+                ...(Number(claim.reconciliation?.tds) > 0 ? [["TDS deducted", claim.reconciliation?.tds, SEMANTIC.info]] : []),
+                ...(Number(claim.reconciliation?.writeOff) > 0 ? [["Written off", claim.reconciliation?.writeOff, SEMANTIC.warning]] : []),
+                ...(Number(claim.reconciliation?.disallowed) > 0 ? [["Disallowed to patient", claim.reconciliation?.disallowed, SEMANTIC.danger]] : []),
               ].map(([label, val, color]) => (
                 <Grid size={{ xs: 6, sm: 4 }} key={label as string}>
                   <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>{label as string}</Typography>
@@ -353,6 +360,11 @@ function RecordSettlementDialog({ open, onClose, claimId, onDone }: { open: bool
   const [note, setNote] = useState("");
   const [methodId, setMethodId] = useState("");
   const [reference, setReference] = useState("");
+  // Insurer deductions, each with its reason.
+  const [tds, setTds] = useState(""); const [tdsReason, setTdsReason] = useState("");
+  const [writeOff, setWriteOff] = useState(""); const [writeOffReason, setWriteOffReason] = useState("");
+  const [disallowed, setDisallowed] = useState(""); const [disallowedReason, setDisallowedReason] = useState("");
+  const [disallowedTo, setDisallowedTo] = useState<"PATIENT" | "WRITE_OFF">("PATIENT");
   const [saving, setSaving] = useState(false);
   const { data: methods = [] } = useQuery<{ paymentMethodId: number; methodName: string }[]>({
     queryKey: ["billing-lookups-methods"],
@@ -360,22 +372,30 @@ function RecordSettlementDialog({ open, onClose, claimId, onDone }: { open: bool
     enabled: open,
   });
   const submit = async () => {
-    if (!amount || Number(amount) <= 0) { toast.error("Enter a settlement amount"); return; }
+    const n = (v: string) => (Number(v) > 0 ? Number(v) : 0);
+    if (n(amount) + n(tds) + n(writeOff) + n(disallowed) <= 0) { toast.error("Enter a settlement amount"); return; }
+    for (const [v, r, label] of [[tds, tdsReason, "TDS"], [writeOff, writeOffReason, "write-off"], [disallowed, disallowedReason, "disallowed amount"]]) {
+      if (n(v) > 0 && !r.trim()) { toast.error(`Give a reason for the ${label}`); return; }
+    }
     setSaving(true);
     try {
       await axiosInstance.post(`/claims/${claimId}/settlement`, {
-        amount: Number(amount), note: note || undefined,
+        amount: n(amount), note: note || undefined,
         paymentMethodId: methodId === "" ? null : Number(methodId), referenceNumber: reference.trim() || null,
+        tds: n(tds) > 0 ? { amount: n(tds), reason: tdsReason.trim() } : null,
+        writeOff: n(writeOff) > 0 ? { amount: n(writeOff), reason: writeOffReason.trim() } : null,
+        disallowed: n(disallowed) > 0 ? { amount: n(disallowed), reason: disallowedReason.trim(), to: disallowedTo } : null,
       });
       toast.success("Settlement recorded");
       setAmount(""); setNote(""); setMethodId(""); setReference("");
+      setTds(""); setTdsReason(""); setWriteOff(""); setWriteOffReason(""); setDisallowed(""); setDisallowedReason(""); setDisallowedTo("PATIENT");
       onDone();
     } catch (err: unknown) {
       toast.error(getApiErrorMessage(err, "Failed to record settlement"));
     } finally { setSaving(false); }
   };
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle>Record payer settlement</DialogTitle>
       <DialogContent>
         <Stack spacing={2} sx={{ pt: 1 }}>
@@ -385,8 +405,28 @@ function RecordSettlementDialog({ open, onClose, claimId, onDone }: { open: bool
             {methods.map((m) => <MenuItem key={m.paymentMethodId} value={String(m.paymentMethodId)}>{m.methodName}</MenuItem>)}
           </TextField>
           <TextField label="UTR / reference (optional)" value={reference} onChange={(e) => setReference(e.target.value)} fullWidth inputProps={{ maxLength: 80 }} />
-          <TextField label="Note (optional)" value={note} onChange={(e) => setNote(e.target.value)} fullWidth multiline rows={2} placeholder="e.g. part settlement, deductions" />
-          <Typography variant="caption" sx={{ color: "text.secondary" }}>Recorded as a payer payment against the linked bill; the claim moves to (Partially) Settled automatically.</Typography>
+          <Divider />
+          <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>Deductions by the payer (optional)</Typography>
+          <Stack direction="row" spacing={1}>
+            <TextField label="TDS deducted (₹)" type="number" value={tds} onChange={(e) => setTds(e.target.value)} sx={{ width: 150 }} />
+            <TextField label="Reason" value={tdsReason} onChange={(e) => setTdsReason(e.target.value)} fullWidth inputProps={{ maxLength: 200 }} placeholder="e.g. section 194J" />
+          </Stack>
+          <Stack direction="row" spacing={1}>
+            <TextField label="Disallowed (₹)" type="number" value={disallowed} onChange={(e) => setDisallowed(e.target.value)} sx={{ width: 150 }} />
+            <TextField label="Reason" value={disallowedReason} onChange={(e) => setDisallowedReason(e.target.value)} fullWidth inputProps={{ maxLength: 200 }} placeholder="e.g. consumables not payable" />
+          </Stack>
+          {Number(disallowed) > 0 && (
+            <TextField select label="Disallowed amount" value={disallowedTo} onChange={(e) => setDisallowedTo(e.target.value as "PATIENT" | "WRITE_OFF")} fullWidth>
+              <MenuItem value="PATIENT">Passed to the patient (stays on the bill to collect)</MenuItem>
+              <MenuItem value="WRITE_OFF">Written off by the hospital</MenuItem>
+            </TextField>
+          )}
+          <Stack direction="row" spacing={1}>
+            <TextField label="Write-off (₹)" type="number" value={writeOff} onChange={(e) => setWriteOff(e.target.value)} sx={{ width: 150 }} />
+            <TextField label="Reason" value={writeOffReason} onChange={(e) => setWriteOffReason(e.target.value)} fullWidth inputProps={{ maxLength: 200 }} />
+          </Stack>
+          <TextField label="Note (optional)" value={note} onChange={(e) => setNote(e.target.value)} fullWidth multiline rows={2} placeholder="e.g. part settlement" />
+          <Typography variant="caption" sx={{ color: "text.secondary" }}>Recorded against the linked bill. TDS and write-offs settle the bill but are not cash and not patient dues; a disallowed amount passed to the patient stays on the bill. The claim moves to (Partially) Settled automatically.</Typography>
         </Stack>
       </DialogContent>
       <DialogActions sx={{ p: 2 }}>

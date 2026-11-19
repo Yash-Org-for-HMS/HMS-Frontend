@@ -17,7 +17,17 @@ import { isNetworkFailure, setOfflineState } from "./offlineState";
  * person: another user's saves wait until they sign in on this computer.
  * One the server refuses (the bed was taken, the stock ran out) goes to the
  * "needs attention" tray - never dropped quietly.
+ *
+ * The server keeps a save's key for 30 days (middleware/idempotency.ts KEEP_DAYS);
+ * after that a resend would run again. So a save is sent by itself for
+ * SEND_FOR_DAYS, then goes to the tray for a person to check (it is dated the
+ * day it was made); from the tray it can be sent until LAST_SEND_DAYS, well
+ * inside the server's 30. Tabs share this queue: one sends at a time (a lock).
  */
+const DAY_MS = 86_400_000;
+const SEND_FOR_DAYS = 7;
+const LAST_SEND_DAYS = 25;
+
 export interface QueuedSave {
   /** The Idempotency-Key: the save's identity, on every attempt. */
   id: string;
@@ -31,6 +41,8 @@ export interface QueuedSave {
   queuedAt: number;
   state: "WAITING" | "FAILED";
   error?: string;
+  /** Sent again from the tray by a person: the SEND_FOR_DAYS limit no longer holds it back. */
+  confirmed?: boolean;
 }
 
 export const QUEUED_MESSAGE = "No network - saved on this computer. It will be sent when the network is back.";
@@ -79,6 +91,14 @@ let sending = false;
 /** Send what waits, in order. Stops at the first network failure; a refusal goes to the tray. */
 export async function sendWaiting(): Promise<void> {
   if (sending || !sender || !currentUserId()) return;
+  // Another tab of this computer may be sending the same queue: one at a time.
+  const locks = typeof navigator !== "undefined" ? navigator.locks : undefined;
+  if (locks) await locks.request("hms-outbox", { ifAvailable: true }, (lock) => (lock ? sendNow() : undefined));
+  else await sendNow();
+}
+
+async function sendNow(): Promise<void> {
+  if (sending || !sender) return;
   sending = true;
   const waiting = (await mySaves()).filter((x) => x.state === "WAITING");
   if (!waiting.length) { sending = false; return; }
@@ -86,6 +106,11 @@ export async function sendWaiting(): Promise<void> {
   let sent = 0;
   try {
     for (const s of waiting) {
+      // Waited too long to send by itself: a person checks it was not entered another way.
+      if (!s.confirmed && Date.now() - s.queuedAt > SEND_FOR_DAYS * DAY_MS) {
+        await idbPut(STORES.outbox, { ...s, state: "FAILED", error: `Not sent for over ${SEND_FOR_DAYS} days - check it was not entered another way, then send it again or remove it` } satisfies QueuedSave);
+        continue;
+      }
       try {
         await sender(s);
         await idbDelete(STORES.outbox, s.id);
@@ -108,7 +133,13 @@ export async function sendWaiting(): Promise<void> {
 
 /** The tray: send a refused one again (after fixing what was wrong), or let it go. */
 export async function retrySave(s: QueuedSave): Promise<void> {
-  await idbPut(STORES.outbox, { ...s, state: "WAITING", error: undefined } satisfies QueuedSave);
+  // Past this the server may have forgotten the save, and a resend could record it twice.
+  if (Date.now() - s.queuedAt > LAST_SEND_DAYS * DAY_MS) {
+    await idbPut(STORES.outbox, { ...s, state: "FAILED", error: `Too old to send safely (over ${LAST_SEND_DAYS} days) - check whether it was recorded; if not, enter it again and remove this one` } satisfies QueuedSave);
+    await countSaves();
+    return;
+  }
+  await idbPut(STORES.outbox, { ...s, state: "WAITING", error: undefined, confirmed: true } satisfies QueuedSave);
   await sendWaiting();
 }
 export async function discardSave(id: string): Promise<void> {

@@ -82,10 +82,10 @@ function OverviewReport({ data }: { data: ClaimReportsResponse }) {
           value={String(s.settled || 0)} current={s.settled} previous={p.settled} />
         <KpiCard icon={<CancelRounded />} accent={SEMANTIC.danger} label="Rejected" info="Of those, claims the payer rejected, at pre-auth or at the final claim."
           value={String(s.rejected || 0)} current={s.rejected} previous={p.rejected} higherIsBetter={false} />
-        <KpiCard icon={<AccountBalanceWalletRounded />} accent={SEMANTIC.info} label="Payer outstanding" info="For the open claims: what the payer is still expected to pay. That is the approved amount (or the claimed amount if nothing is approved yet) minus what they have already settled."
+        <KpiCard icon={<AccountBalanceWalletRounded />} accent={SEMANTIC.info} label="Payer outstanding" info="For the open claims: what the payer is still expected to pay. That is the approved amount (or the claimed amount if nothing is approved yet) minus what they have already settled, deducted as TDS, disallowed or had written off - and never more than the bill still owes."
           value={inr(s.outstandingFromPayer)} current={Number(s.outstandingFromPayer)} previous={Number(p.outstandingFromPayer)}
           higherIsBetter={false} />
-        <KpiCard icon={<GroupRounded />} accent={BRAND.actionDark} label="Patient shortfall" info="What falls back on patients: the whole claim when rejected, claimed minus settled when finished, and claimed minus approved while still open."
+        <KpiCard icon={<GroupRounded />} accent={BRAND.actionDark} label="Patient shortfall" info="What falls back on patients: the whole claim when rejected, claimed minus settled, TDS and write-offs when finished, and claimed minus approved while still open (at least any amount the payer disallowed to the patient). A claim never counts above its bill as the bill is now."
           value={inr(s.patientShortfall)} current={Number(s.patientShortfall)} previous={Number(p.patientShortfall)}
           higherIsBetter={false} />
       </Box>
@@ -94,9 +94,12 @@ function OverviewReport({ data }: { data: ClaimReportsResponse }) {
         <SimpleTable title="Amount summary" head={["Metric", "Amount"]} rows={[
           ["Claimed from payer", inr(s.totalBilled)],
           ["Total pre-auth approved", inr(s.totalApproved)],
-          ["Total settled by payers", inr(s.totalSettled)],
+          ["Total settled by payers (cash)", inr(s.totalSettled)],
+          ["TDS deducted by payers (not cash)", inr(s.totalTds)],
+          ["Written off (not cash)", inr(s.totalWriteOff)],
+          ["Disallowed, passed to patients", inr(s.totalDisallowed)],
           ["Outstanding from payers", inr(s.outstandingFromPayer)],
-          ["Patient shortfall (claimed − approved)", inr(s.patientShortfall)],
+          ["Patient shortfall", inr(s.patientShortfall)],
         ]} />
       </Box>
     </Box>

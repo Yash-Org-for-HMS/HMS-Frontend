@@ -21,6 +21,7 @@ const COVERS: { key: string; label: string }[] = [
   { key: "RADIOLOGY", label: "Radiology" },
   { key: "PHARMACY", label: "All medicines" },
   { key: "PROCEDURE", label: "OT & procedures" },
+  { key: "IMPLANT", label: "Implants" },
   { key: "CONSUMABLE", label: "Ward services & consumables" },
   { key: "OTHER", label: "Other charges" },
 ];

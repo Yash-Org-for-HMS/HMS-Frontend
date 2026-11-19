@@ -28,6 +28,9 @@ describe("a desk role sees and opens only its desk", () => {
     // A prefix is a whole segment: "/reception/billing" is not "/reception/billing-x".
     expect(pageOpenFor(billing, "reception", "/reception/billing-x")).toBe(false);
     expect(pageOpenFor(billing, "reception", "/reception/announcements")).toBe(true);
+    // Their own team, like announcements, opens for every role in every panel.
+    expect(pageOpenFor(billing, "reception", "/reception/my-team")).toBe(true);
+    expect(pageOpenFor(billing, "reception", "/reception/my-teammates")).toBe(false);
   });
 
   it("lands on its panel's dashboard, which is one of its pages", () => {

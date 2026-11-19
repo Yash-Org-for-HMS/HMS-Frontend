@@ -278,10 +278,10 @@ export function Occupancy() {
       {isLoading ? <ReportSkeleton /> : isError ? <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} /> : (
         <Box>
           <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<LocalHotelRounded />} accent={ACCENT} label="Avg occupancy" info="For each day in the selected dates: patients in census beds divided by the number of census beds. This is the average of those daily figures." value={`${data.totals.avgOccupancy}%`} sub={`${data.totals.totalBeds} beds`} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<LocalHotelRounded />} accent={ACCENT} label="Avg occupancy" info="For each day in the selected dates: census beds with a patient in them at midnight (now, for today), divided by the number of census beds. This is the average of those daily figures." value={`${data.totals.avgOccupancy}%`} sub={`${data.totals.totalBeds} beds`} /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<AccessTimeRounded />} accent={SEMANTIC.info} label="Avg stay (ALOS)" info="Average length of stay: for patients discharged in the selected dates, the average days from admission to discharge." value={`${data.totals.alos} d`} current={data.totals.alos} previous={prev?.alos} higherIsBetter={false} /></Grid>
             <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<SpeedRounded />} accent={SEMANTIC.success} label="Bed turnover" info="Discharges in the selected dates divided by the number of census beds: roughly how many patients each bed served." value={String(data.totals.turnover)} sub={`${data.totals.discharges} discharges`} /></Grid>
-            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<HeightRounded />} accent="#8b5cf6" label="Peak occupied" info="The highest number of patients in census beds on any single day in the selected dates." value={String(data.totals.peakOccupied)} sub={`of ${data.totals.totalBeds}`} /></Grid>
+            <Grid size={{ xs: 6, md: 3 }}><KpiCard icon={<HeightRounded />} accent="#8b5cf6" label="Peak occupied" info="The most census beds with a patient in them at midnight (now, for today) on any day in the selected dates. A bed freed and refilled the same day counts once." value={String(data.totals.peakOccupied)} sub={`of ${data.totals.totalBeds}`} /></Grid>
           </Grid>
           <ReportTable
             title="Daily occupancy"

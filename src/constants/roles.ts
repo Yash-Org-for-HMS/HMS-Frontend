@@ -210,6 +210,8 @@ export function pageOpenFor(user: RoleHolder | null | undefined, panel: Panel, p
   const path = pathname.replace(/\/+$/, "") || "/";
   const under = (p: string) => path === p || path.startsWith(`${p}/`);
   if (under(`/${panel}/announcements`)) return true;
+  // Anyone's own team (read-only; the server shows them their own reports only).
+  if (under(`/${panel}/my-team`)) return true;
   const pages = menuPathsFor(user, panel);
   return !pages || [...pages].some(under);
 }

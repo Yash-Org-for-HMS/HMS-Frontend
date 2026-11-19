@@ -68,6 +68,7 @@ const HospitalUsersList = lazy(() => import("@/features/hospitalAuth/users/Users
 const HospitalUserForm = lazy(() => import("@/features/hospitalAuth/users/UserForm"));
 const StaffDirectory = lazy(() => import("@/features/hospitalAuth/staff/StaffDirectory"));
 const Organogram = lazy(() => import("@/features/hospitalAuth/staff/Organogram"));
+const MyTeam = lazy(() => import("@/features/hospitalAuth/staff/MyTeam"));
 const SetupImport = lazy(() => import("@/features/hospitalAuth/settings/SetupImport"));
 const DoctorsList = lazy(() => import("@/features/hospitalAuth/doctors/DoctorsList"));
 const DoctorForm = lazy(() => import("@/features/hospitalAuth/doctors/DoctorForm"));
@@ -163,6 +164,7 @@ const RadiologyOrdersQueue = lazy(() => import("@/features/lab/RadiologyOrdersQu
 const LabTestCatalog = lazy(() => import("@/features/lab/LabTestCatalog"));
 const PrintLabReport = lazy(() => import("@/features/lab/PrintLabReport"));
 const PrintIpBill = lazy(() => import("@/features/billing/PrintIpBill"));
+const PrintInterimBill = lazy(() => import("@/features/ipd/PrintInterimBill"));
 const PrintConsentForm = lazy(() => import("@/features/reception/PrintConsentForm"));
 const RadiologyCatalog = lazy(() => import("@/features/lab/RadiologyCatalog"));
 const LabReports = lazy(() => import("@/features/lab/LabReports"));
@@ -306,6 +308,7 @@ function App() {
         <Route element={<HospitalProtectedRoute panel="hospital" />}>
           <Route element={el(HospitalLayout)}>
             <Route path="/hospital/announcements" element={el(Announcements)} />
+            <Route path="/hospital/my-team" element={el(MyTeam)} />
             <Route path="/hospital/dashboard" element={el(HospitalDashboard)} />
             <Route path="/hospital/profile" element={el(HospitalSetup)} />
             <Route path="/hospital/settings" element={el(HospitalSetup)} />
@@ -408,6 +411,7 @@ function App() {
         <Route element={<HospitalProtectedRoute panel="reception" />}>
           <Route element={el(ReceptionLayout)}>
             <Route path="/reception/announcements" element={el(Announcements)} />
+            <Route path="/reception/my-team" element={el(MyTeam)} />
             <Route path="/reception/dashboard" element={el(ReceptionDashboard)} />
             <Route path="/reception/desk" element={el(DeskHome)} />
             <Route path="/reception/console" element={el(FrontDeskConsole)} />
@@ -446,6 +450,7 @@ function App() {
           </Route>
           {/* Full-page printables, rendered outside the layout shell. */}
           <Route path="/reception/billing/invoices/:invoiceId/ip-bill/print" element={el(PrintIpBill)} />
+          <Route path="/reception/ipd/admissions/:admissionId/interim-bill/print" element={el(PrintInterimBill)} />
           <Route path="/reception/ipd/ot-cases/:id/bill/print" element={el(OtBillPrint)} />
           <Route path="/reception/consent-forms/:id/print" element={el(PrintConsentForm)} />
           <Route path="/reception/mrd/certificates/:id/print" element={el(PrintCertificate)} />
@@ -454,6 +459,7 @@ function App() {
         <Route element={<HospitalProtectedRoute panel="nurse" />}>
           <Route element={el(NurseLayout)}>
             <Route path="/nurse/announcements" element={el(Announcements)} />
+            <Route path="/nurse/my-team" element={el(MyTeam)} />
             <Route path="/nurse/dashboard" element={el(NurseDashboard)} />
             <Route path="/nurse/queue" element={el(NurseQueue)} />
             <Route path="/nurse/ward" element={elGated(NurseWard, "IPD", "Ward")} />
@@ -490,6 +496,7 @@ function App() {
         <Route element={<HospitalProtectedRoute panel="doctor" />}>
           <Route element={el(DoctorLayout)}>
             <Route path="/doctor/announcements" element={el(Announcements)} />
+            <Route path="/doctor/my-team" element={el(MyTeam)} />
             <Route path="/doctor/dashboard" element={el(DoctorDashboard)} />
             <Route path="/doctor/ward-round" element={el(WardRound)} />
             <Route path="/doctor/cosign" element={el(CosignPage)} />
@@ -511,6 +518,7 @@ function App() {
           <Route path="/lab/orders/:id/print" element={el(PrintLabReport)} />
           <Route element={el(LabLayout)}>
             <Route path="/lab/announcements" element={el(Announcements)} />
+            <Route path="/lab/my-team" element={el(MyTeam)} />
             <Route path="/lab/dashboard" element={el(LabDashboard)} />
             <Route path="/lab/orders" element={el(LabOrdersQueue)} />
             <Route path="/lab/orders/:id" element={el(UpdateLabOrder)} />
@@ -533,6 +541,7 @@ function App() {
           <Route element={el(HousekeepingLayout)}>
             <Route path="/housekeeping/beds" element={elGated(BedBoard, "IPD", "Bed Board", { housekeeping: true })} />
             <Route path="/housekeeping/announcements" element={el(Announcements)} />
+            <Route path="/housekeeping/my-team" element={el(MyTeam)} />
           </Route>
         </Route>
 
@@ -541,6 +550,7 @@ function App() {
           <Route element={el(StoreLayout)}>
             <Route path="/store" element={el(StoreRoomPage)} />
             <Route path="/store/announcements" element={el(Announcements)} />
+            <Route path="/store/my-team" element={el(MyTeam)} />
           </Route>
         </Route>
 
@@ -548,6 +558,7 @@ function App() {
         <Route element={<HospitalProtectedRoute panel="pharmacy" />}>
           <Route element={el(PharmacyLayout)}>
             <Route path="/pharmacy/announcements" element={el(Announcements)} />
+            <Route path="/pharmacy/my-team" element={el(MyTeam)} />
             <Route path="/pharmacy/dashboard" element={el(PharmacyDashboard)} />
             <Route path="/pharmacy/medicines" element={el(MedicineCatalog)} />
             <Route path="/pharmacy/suppliers" element={el(SupplierDirectory)} />

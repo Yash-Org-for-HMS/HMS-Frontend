@@ -75,7 +75,9 @@ export default function NurseDashboard() {
   // Sorting by wait is what makes this a worklist rather than a list.
   const waitedMs = (t: any) => Date.now() - new Date(t.createdAt).getTime();
   const pendingVitals = tokens.filter(needsVitals).sort((a, b) => waitedMs(b) - waitedMs(a));
-  const doneVitals = tokens.filter(hasVitals);
+  // Counted from the same patients as the total: a visit cancelled after its
+  // vitals were taken counted as done but not as a patient, past 100%.
+  const doneVitals = tokens.filter((t) => hasVitals(t) && t?.statusCode !== "CANCELLED");
   const vitalsPending = pendingVitals.length;
   const vitalsCompleted = doneVitals.length;
 

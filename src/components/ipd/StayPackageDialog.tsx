@@ -13,7 +13,7 @@ import DetailSkeleton from "@/components/skeletons/DetailSkeleton";
 
 const COVER_LABEL: Record<string, string> = {
   ROOM: "Room rent & nursing", DOCTOR_VISIT: "Doctor visits", INVESTIGATION: "Lab tests", RADIOLOGY: "Radiology",
-  PHARMACY: "All medicines", PROCEDURE: "OT & procedures", CONSUMABLE: "Ward services & consumables", OTHER: "Other charges",
+  PHARMACY: "All medicines", PROCEDURE: "OT & procedures", IMPLANT: "Implants", CONSUMABLE: "Ward services & consumables", OTHER: "Other charges",
 };
 const PURPLE = "#7C3AED";
 
