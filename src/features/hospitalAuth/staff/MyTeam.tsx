@@ -2,9 +2,9 @@ import { useState } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import {
   Box, Paper, Typography, Chip, Skeleton, Stack, ToggleButton, ToggleButtonGroup, MenuItem, TextField, Autocomplete,
-  Table, TableHead, TableRow, TableCell, TableBody, Grid,
+  Table, TableHead, TableRow, TableCell, TableBody, Grid, InputAdornment,
 } from "@mui/material";
-import { GroupsRounded, AccountTreeRounded, EventAvailableRounded, EventBusyRounded } from "@mui/icons-material";
+import { GroupsRounded, AccountTreeRounded, NoAccountsRounded, PhoneDisabledRounded, SearchRounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
 import PageHeader from "@/components/layout/PageHeader";
 import ErrorState from "@/components/ErrorState";
@@ -34,11 +34,12 @@ interface Member {
 interface Team {
   lead: { staffId: string; name: string; designation: string | null } | null;
   people: Member[];
-  summary: { total: number; direct: number; onDutyToday: number; onLeaveToday: number };
+  summary: { total: number; direct: number; noLogin: number; noPhone: number };
 }
 interface ChartPerson { staffId: string; name: string; designation: string | null }
 
 const DEPT_ROLE: Record<string, string> = { HOD: "Head", DEPUTY_HOD: "Deputy head", VISITING: "Visiting" };
+type Only = "noLogin" | "noPhone" | null;
 const VIA: Record<Member["via"], string> = { ADMINISTRATIVE: "Administrative", FUNCTIONAL: "Functional", BOTH: "Both lines" };
 
 export default function MyTeam() {
@@ -47,6 +48,8 @@ export default function MyTeam() {
   const [whole, setWhole] = useState(false);
   const [line, setLine] = useState<Line>("ANY");
   const [picked, setPicked] = useState<ChartPerson | null>(null);
+  const [search, setSearch] = useState("");
+  const [only, setOnly] = useState<Only>(null);
 
   const q = useQuery<Team>({
     queryKey: ["my-team", picked?.staffId ?? "me", whole, line],
@@ -66,6 +69,13 @@ export default function MyTeam() {
   const team = q.data;
   const s = team?.summary;
   const whose = picked ? `${picked.name}'s team` : "My team";
+  // The same rules as the backend's summary counts, so a card and its filter agree.
+  const needle = search.trim().toLowerCase();
+  const shown = (team?.people ?? []).filter((p) =>
+    (only !== "noLogin" || !p.login?.isActive) &&
+    (only !== "noPhone" || !p.phone?.trim()) &&
+    (!needle || p.name.toLowerCase().includes(needle) || (p.designation ?? "").toLowerCase().includes(needle)));
+  const toggle = (o: Only) => setOnly((cur) => (cur === o ? null : o));
 
   return (
     <Box>
@@ -94,6 +104,11 @@ export default function MyTeam() {
             renderInput={(params) => <TextField {...params} label="Whose team" placeholder="Mine" />}
           />
         )}
+        <TextField
+          size="small" placeholder="Search name or designation" value={search} onChange={(e) => setSearch(e.target.value)}
+          sx={{ minWidth: 240 }}
+          slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchRounded fontSize="small" /></InputAdornment> } }}
+        />
       </Stack>
 
       <Grid container spacing={2} sx={{ mb: 2 }}>
@@ -106,12 +121,14 @@ export default function MyTeam() {
             info="People whose administrative or functional manager (as chosen above) is you, in the Staff Directory." />
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
-          <StatCard icon={<EventAvailableRounded />} color={SEMANTIC.success} label="On duty today" value={s?.onDutyToday ?? "-"} loading={q.isLoading}
-            info="Team members with a shift on today's ward duty roster. Staff who are not on a ward roster do not show here." />
+          <StatCard icon={<NoAccountsRounded />} color={SEMANTIC.warning} label="No login" value={s?.noLogin ?? "-"} loading={q.isLoading}
+            onClick={() => toggle("noLogin")} sub={only === "noLogin" ? "Showing only these - click to show all" : undefined}
+            info="Team members who cannot sign in to Dolphin: no login at all, or a login that has been switched off. Logins are given in Logins & roles. Click to list only them." />
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
-          <StatCard icon={<EventBusyRounded />} color={SEMANTIC.warning} label="Doctors on leave today" value={s?.onLeaveToday ?? "-"} loading={q.isLoading}
-            info="Doctors in the team with leave recorded for today (whole day or part of it). Leave for other staff is not recorded in the system yet." />
+          <StatCard icon={<PhoneDisabledRounded />} color={SEMANTIC.danger} label="No phone on file" value={s?.noPhone ?? "-"} loading={q.isLoading}
+            onClick={() => toggle("noPhone")} sub={only === "noPhone" ? "Showing only these - click to show all" : undefined}
+            info="Team members with no phone number in the Staff Directory, so you cannot reach them from here. Click to list only them." />
         </Grid>
       </Grid>
 
@@ -128,6 +145,10 @@ export default function MyTeam() {
           <Typography variant="body2" sx={{ px: 2.5, py: 2, color: "text.secondary" }}>
             Nobody reports to {picked ? picked.name : "you"} on this reporting line. Reporting lines are set in the Staff Directory.
           </Typography>
+        ) : shown.length === 0 ? (
+          <Typography variant="body2" sx={{ px: 2.5, py: 2, color: "text.secondary" }}>
+            Nobody in the team matches the search or the card chosen above.
+          </Typography>
         ) : (
           <Table size="small">
             <TableHead>
@@ -142,7 +163,7 @@ export default function MyTeam() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {team.people.map((p) => (
+              {shown.map((p) => (
                 <TableRow key={p.staffId} hover>
                   <TableCell sx={{ pl: 2 + (p.depth - 1) * 3 }}>
                     <Typography variant="body2" sx={{ fontWeight: p.depth === 1 ? 700 : 600 }}>{p.name}</Typography>
