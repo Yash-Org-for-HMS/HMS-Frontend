@@ -9,7 +9,8 @@ import {
 } from "@mui/icons-material";
 import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import { axiosInstance } from "@/api/axios";
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
+import { homeForUser } from "@/constants/roles";
 import { useToast } from "@/providers/ToastContext";
 import { LoginShell, LoginSubmitButton } from "@/features/auth/LoginShell";
 import { loginFieldSx, LOGIN_ACCENT, isValidEmail } from "@/features/auth/loginDesign";
@@ -26,7 +27,7 @@ export default function HospitalLogin() {
   const [submitted, setSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const toast = useToast();
-  const { login } = useHospitalAuth();
+  const { login, user, loading } = useHospitalAuth();
   const navigate = useNavigate();
 
   // Blur only flags what has been typed and is wrong; submit flags anything
@@ -66,6 +67,9 @@ export default function HospitalLogin() {
       setIsLoading(false);
     }
   };
+
+  // Already signed in (a bookmark of the bare address): straight to their home.
+  if (!loading && user) return <Navigate to={homeForUser(user)} replace />;
 
   return (
     <LoginShell title="Hospital Staff Portal">

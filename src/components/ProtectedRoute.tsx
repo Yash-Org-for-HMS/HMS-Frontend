@@ -23,6 +23,8 @@ export function ProtectedRoute() {
   }
 
   if (!isAuthenticated) {
+    // The bare address belongs to hospital staff; the super admin signs in at /login.
+    if (location.pathname === "/") return <Navigate to="/hospital/login" replace />;
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
