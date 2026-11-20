@@ -21,7 +21,6 @@ const LabLayout = lazy(() => import("@/layouts/LabLayout"));
 const PharmacyLayout = lazy(() => import("@/layouts/PharmacyLayout"));
 const HousekeepingLayout = lazy(() => import("@/layouts/HousekeepingLayout"));
 const StoreLayout = lazy(() => import("@/layouts/StoreLayout"));
-import CommandPalette from "@/components/CommandPalette";
 import AdminCommandPalette from "@/components/AdminCommandPalette";
 import PageSkeleton from "@/components/PageSkeleton";
 import ModuleGate from "@/components/ModuleGate";
@@ -300,7 +299,6 @@ function App() {
     </AuthProvider>
 
     <HospitalAuthProvider>
-      <CommandPalette />
       <Routes>
         <Route path="/hospital/login" element={<HospitalLogin />} />
         <Route path="/hospital/change-password" element={el(HospitalChangePassword)} />

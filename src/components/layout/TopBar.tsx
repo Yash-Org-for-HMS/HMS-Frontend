@@ -1,10 +1,10 @@
 import { useState } from "react";
 import {
   AppBar, Toolbar, Box, Typography, IconButton, Avatar, Menu, MenuItem, ListItemIcon, ListItemText,
-  Divider, Tooltip, Badge, Chip, ButtonBase,
+  Divider, Tooltip, Badge, ButtonBase,
 } from "@mui/material";
 import {
-  Menu as MenuIcon, SearchRounded, CampaignRounded, LogoutRounded, SwapHorizRounded, ExpandMoreRounded, GroupsRounded,
+  Menu as MenuIcon, CampaignRounded, LogoutRounded, SwapHorizRounded, ExpandMoreRounded, GroupsRounded,
 } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -13,7 +13,6 @@ import { useHospitalAuth } from "@/providers/HospitalAuthContext";
 import HospitalLogo from "@/components/HospitalLogo";
 import BranchSwitcher from "@/components/BranchSwitcher";
 import { PANEL_LABEL, panelHomeForUser, panelsForUser, hasRole, type Panel } from "@/constants/roles";
-import { SEARCH_SHORTCUT } from "@/utils/shortcut";
 import { SEMANTIC } from "@/styles/accents";
 import { TOP_BAR_HEIGHT, FLOAT_GAP, CARD_RADIUS, CARD_SHADOW } from "./floatingShell";
 import OfflineStatus, { OfflineBanner, OFFLINE_BANNER_HEIGHT } from "./OfflineStatus";
@@ -39,7 +38,7 @@ interface TopBarProps {
  * shared desk computer were the smallest things on the screen - the hospital a
  * cut-off caption at the foot of the sidebar, the role not shown at all, the
  * branch picker scrolling out of sight - so they sit here, always in view.
- * Search, announcements, switching panel and signing out moved up with them;
+ * Announcements, switching panel and signing out moved up with them;
  * the sidebar is navigation only.
  */
 export default function TopBar({ drawerWidth, onMenu, announcements }: TopBarProps) {
@@ -66,7 +65,6 @@ export default function TopBar({ drawerWidth, onMenu, announcements }: TopBarPro
     retry: false,
   });
   const showTeam = teamAdmin || !!team.data?.hasTeam;
-  const search = () => window.dispatchEvent(new Event("open-command-palette"));
   const close = () => setAnchor(null);
 
   return (
@@ -112,28 +110,6 @@ export default function TopBar({ drawerWidth, onMenu, announcements }: TopBarPro
         <BranchSwitcher variant="bar" />
 
         <Box sx={{ flex: 1 }} />
-
-        {/* Search: the command palette (also Ctrl/⌘ K). */}
-        <Box
-          role="button"
-          tabIndex={0}
-          aria-label="Open search (Ctrl+K)"
-          onClick={search}
-          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); search(); } }}
-          sx={{
-            display: { xs: "none", md: "flex" }, alignItems: "center", gap: 1, px: 1.5, py: 0.75, width: 220,
-            borderRadius: 2, cursor: "pointer", border: "1px solid", borderColor: "divider",
-            bgcolor: "background.default", color: "text.secondary",
-            "&:hover": { borderColor: "primary.main", color: "text.primary" }, transition: "all 0.15s ease",
-          }}
-        >
-          <SearchRounded sx={{ fontSize: 18 }} />
-          <Typography variant="body2" sx={{ flex: 1 }}>Search…</Typography>
-          <Chip label={SEARCH_SHORTCUT} size="small" sx={{ height: 20, fontSize: "0.75rem", fontWeight: 700, bgcolor: "action.hover", color: "text.secondary" }} />
-        </Box>
-        <IconButton onClick={search} aria-label="Search" sx={{ display: { xs: "inline-flex", md: "none" }, color: "text.secondary" }}>
-          <SearchRounded />
-        </IconButton>
 
         <OfflineStatus />
 
