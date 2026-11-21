@@ -185,7 +185,13 @@ export default function IpdMedicinesDialog({ open, onClose, admission, orderOnly
             On the {stayPackage.name} - {kitLeft > 0 ? `${kitLeft} kit medicine${kitLeft === 1 ? "" : "s"} still to request from the pharmacy (not billed).` : "its kit has been requested."}
           </Alert>
         )}
-        {kitOpen && <StayPackageDialog admissionId={admission.admissionId} patientName={admission.patientName} canManage={false} onClose={() => setKitOpen(false)} />}
+        {stayPackage === null && (
+          <Box sx={{ mb: 2 }}>
+            <Button size="small" variant="outlined" onClick={() => setKitOpen(true)} sx={{ textTransform: "none" }}>Put on a package</Button>
+            <Typography variant="caption" sx={{ ml: 1, color: "text.secondary" }}>e.g. a dengue package - then send its kit to the pharmacy</Typography>
+          </Box>
+        )}
+        {kitOpen && <StayPackageDialog admissionId={admission.admissionId} patientName={admission.patientName} canManage={false} canAdd onClose={() => setKitOpen(false)} />}
 
         {view === "chart" ? (
           <MarChart admissionId={admission.admissionId} readOnly={orderOnly} />

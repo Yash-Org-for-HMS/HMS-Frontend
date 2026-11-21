@@ -26,12 +26,13 @@ type StayPackage = {
 type Option = { chargeItemId: string; name: string; price: number | null; includedDays: number | null; covers: string[]; includes: number };
 
 /**
- * The package on an admission. The billing desk chooses it (priced for the
- * stay's room and payer) or takes it off; anyone on the ward sends its medicine
- * kit to the pharmacy. What it covers is not billed at discharge.
+ * The package on an admission. The billing desk or the ward puts it on (priced
+ * for the stay's room and payer); only the billing desk takes it off. Anyone on
+ * the ward sends its medicine kit to the pharmacy. What it covers is not billed
+ * at discharge. `canManage` = put on and take off; `canAdd` = put on only.
  */
-export default function StayPackageDialog({ admissionId, patientName, canManage, onClose }: {
-  admissionId: string; patientName?: string; canManage: boolean; onClose: () => void;
+export default function StayPackageDialog({ admissionId, patientName, canManage, canAdd = canManage, onClose }: {
+  admissionId: string; patientName?: string; canManage: boolean; canAdd?: boolean; onClose: () => void;
 }) {
   const toast = useToast();
   const qc = useQueryClient();
@@ -54,7 +55,7 @@ export default function StayPackageDialog({ admissionId, patientName, canManage,
       <DialogContent>
         {isLoading ? <DetailSkeleton /> : error ? <Alert severity="error">{getApiErrorMessage(error, "Couldn't load the package")}</Alert>
           : pkg ? <CurrentPackage admissionId={admissionId} pkg={pkg} canManage={canManage} onChanged={changed} toast={toast} />
-            : canManage ? <AddPackage admissionId={admissionId} onAdded={changed} toast={toast} />
+            : canAdd ? <AddPackage admissionId={admissionId} onAdded={changed} toast={toast} />
               : <Typography variant="body2" sx={{ color: "text.secondary" }}>This stay has no package. The billing desk puts one on.</Typography>}
       </DialogContent>
       <DialogActions><Button onClick={onClose} sx={{ textTransform: "none" }}>Close</Button></DialogActions>
