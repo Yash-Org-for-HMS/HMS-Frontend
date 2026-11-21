@@ -140,7 +140,7 @@ export default function StoreIndents() {
 
   if (q.isError) return <ErrorState title="Couldn't load the indents" message={apiErrorText(q.error)} onRetry={() => q.refetch()} />;
   if (q.isLoading) return <ListSkeleton rows={3} />;
-  if (!q.data?.length) return <Paper variant="outlined" sx={{ p: 3 }}><Mascot pose="all-caught-up" title="No ward is waiting on an indent" /></Paper>;
+  if (!q.data?.length) return <Paper variant="outlined" sx={{ p: 3 }}><Mascot pose="all-caught-up" title="No ward has asked for anything right now" /></Paper>;
 
   return (
     <Box>

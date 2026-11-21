@@ -146,7 +146,7 @@ export default function NurseWard() {
         { key: "imaging", label: "Imaging", icon: <CameraAltRounded fontSize="small" />, open: setRadiologyFor, tone: BRAND.action },
         // Consumables reach the bill only if the ward records them - nothing
         // else in the system knows a dressing pack was opened.
-        { key: "charges", label: "Consumables", icon: <Inventory2Rounded fontSize="small" />, open: setChargesFor, tone: BRAND.action },
+        { key: "charges", label: "Record use", icon: <Inventory2Rounded fontSize="small" />, open: setChargesFor, tone: BRAND.action },
       ],
     },
     {

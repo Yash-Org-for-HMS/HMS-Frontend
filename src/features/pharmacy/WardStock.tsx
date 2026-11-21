@@ -155,6 +155,59 @@ function Empty({ children }: { children: React.ReactNode }) {
   );
 }
 
+/**
+ * The whole module in three steps, at the top of the page: where things come
+ * from, where they wait, and where they end up. Every tab below is one part of
+ * this, and says which.
+ */
+function HowItWorks({ isNurse, canAsk }: { isNurse: boolean; canAsk: boolean }) {
+  const steps = [
+    { n: 1, title: "Store", text: isNurse ? "The store keeps the hospital's gloves, syringes, dressings and ward medicines." : "Pick the items wards keep in the Items wards keep tab. Medicines use the pharmacy's stock." },
+    { n: 2, title: "Ward cupboard", text: isNurse ? `The store sends items to your ward's cupboard. Running low? ${canAsk ? "Press Ask for more." : "Tell your ward in-charge, who asks the store for more."}` : "You send items to each ward's cupboard: fill Ward requests, or top up Wards running low." },
+    { n: 3, title: "Used on a patient", text: isNurse ? "When you use something, press Record use. It comes off your cupboard." : "Nurses record what they use. It comes off the ward's cupboard." },
+  ];
+  return (
+    <Paper variant="outlined" sx={{ p: 1.5, mb: 2, borderRadius: 2 }}>
+      <Typography sx={{ fontSize: "0.75rem", fontWeight: 700, color: "text.secondary", mb: 1 }}>HOW WARD STOCK WORKS</Typography>
+      <Box sx={{ display: "grid", gap: 1, gridTemplateColumns: { xs: "1fr", md: "1fr auto 1fr auto 1fr" }, alignItems: "center" }}>
+        {steps.map((s, i) => (
+          <Box key={s.n} sx={{ display: "contents" }}>
+            {i > 0 && <ChevronRightRounded sx={{ color: "text.disabled", display: { xs: "none", md: "block" } }} />}
+            <Box sx={{ display: "flex", gap: 1, alignItems: "flex-start" }}>
+              <Box sx={{ width: 22, height: 22, borderRadius: "50%", bgcolor: "primary.main", color: "primary.contrastText", fontSize: "0.75rem", fontWeight: 700, display: "grid", placeItems: "center", flexShrink: 0 }}>{s.n}</Box>
+              <Box>
+                <Typography sx={{ fontSize: "0.85rem", fontWeight: 700 }}>{s.title}</Typography>
+                <Typography sx={{ fontSize: "0.75rem", color: "text.secondary" }}>{s.text}</Typography>
+              </Box>
+            </Box>
+          </Box>
+        ))}
+      </Box>
+      <Typography sx={{ fontSize: "0.72rem", color: "text.secondary", mt: 1 }}>
+        <b>Billed or not?</b> Items marked <b>Floor stock</b> (gloves, cotton, ward basics) are never billed. Other items go on the patient's bill when a nurse records using them. A medicine prescribed for a patient is ordered on the medication chart, not taken from here.
+      </Typography>
+    </Paper>
+  );
+}
+
+/** One line at the top of a tab: what it shows and what to do here. */
+function TabIntro({ what, todo }: { what: string; todo: string }) {
+  return (
+    <Alert severity="info" icon={false} sx={{ mb: 2, py: 0.5, "& .MuiAlert-message": { fontSize: "0.8rem" } }}>
+      <b>{what}</b> {todo}
+    </Alert>
+  );
+}
+
+/** A "Floor stock" tag that says what it means when pointed at. */
+function FloorStockChip({ sx }: { sx?: object }) {
+  return (
+    <Tooltip title="Used from the ward cupboard and never billed to the patient (gloves, cotton, ward basics).">
+      <Chip size="small" label="Floor stock" sx={{ height: 18, fontSize: 11, bgcolor: `${NEUTRAL.muted}1f`, color: NEUTRAL.muted, ...sx }} />
+    </Tooltip>
+  );
+}
+
 /* ── dialogs ────────────────────────────────────────────────────────────── */
 
 /**
@@ -170,6 +223,15 @@ function IssueDialog({ ward, onClose, onDone }: { ward: WardSummary; onClose: ()
   const [quantity, setQuantity] = useState("");
   const [sourceBatchId, setSourceBatchId] = useState("");
   const [notes, setNotes] = useState("");
+  const [keepAtLeast, setKeepAtLeast] = useState("");
+
+  // What this ward already holds - to know whether it has a "Keep at least" for
+  // the item yet. Nobody sets those as a separate chore, so the first issue of
+  // an item asks for it; without one, "Wards running low" can never list it.
+  const { data: wardStock } = useQuery({
+    queryKey: ["ward-stock-ward", ward.wardId],
+    queryFn: () => get<{ stock: WardStockRow[] }>(`/pharmacy/ward-stock/wards/${ward.wardId}`),
+  });
 
   const { data: items } = useQuery({
     queryKey: ["ward-stock-items"],
@@ -187,13 +249,20 @@ function IssueDialog({ ward, onClose, onDone }: { ward: WardSummary; onClose: ()
   // What can actually be sent to a ward. The default pick and the over-issue
   // guard both reason about these, not about every row on the shelf.
   const usable = batches.filter((x) => !x.expired);
+  const existingPar = wardStock?.stock.find((r) => r.stockItemId === stockItemId)?.parLevel ?? null;
+  const keepValid = keepAtLeast === "" || /^\d+$/.test(keepAtLeast);
 
   const save = useMutation({
-    mutationFn: () => axiosInstance.post("/pharmacy/ward-stock/issue", {
-      wardId: ward.wardId,
-      notes: notes.trim() || undefined,
-      lines: [{ stockItemId, quantity: Number(quantity), ...(sourceBatchId ? { sourceBatchId } : {}) }],
-    }),
+    mutationFn: async () => {
+      await axiosInstance.post("/pharmacy/ward-stock/issue", {
+        wardId: ward.wardId,
+        notes: notes.trim() || undefined,
+        lines: [{ stockItemId, quantity: Number(quantity), ...(sourceBatchId ? { sourceBatchId } : {}) }],
+      });
+      if (existingPar == null && keepAtLeast !== "") {
+        await axiosInstance.put(`/pharmacy/ward-stock/wards/${ward.wardId}/par`, { lines: [{ stockItemId, parLevel: Number(keepAtLeast) }] });
+      }
+    },
     onSuccess: () => { toast.success(`Issued to ${ward.wardName}`); onDone(); onClose(); },
     onError: (e) => toast.error(getApiErrorMessage(e)),
   });
@@ -273,6 +342,19 @@ function IssueDialog({ ward, onClose, onDone }: { ward: WardSummary; onClose: ()
           helperText={tooMany ? `That batch only has ${available}.` : chosen?.unit ? `Counted in ${chosen.unit}s.` : " "}
           InputProps={{ inputProps: { min: 1 } }}
         />
+        {stockItemId && (existingPar == null ? (
+          <TextField
+            fullWidth size="small" label="Keep at least this many in the ward (optional)" value={keepAtLeast}
+            onChange={(e) => setKeepAtLeast(e.target.value.replace(/\D/g, ""))}
+            error={!keepValid}
+            helperText="When the ward has fewer than this, the item shows in Wards running low with how many to send. You can change it later in the ward's cupboard list."
+            inputProps={{ inputMode: "numeric" }}
+          />
+        ) : (
+          <Typography variant="caption" sx={{ color: "text.secondary" }}>
+            This ward keeps at least {existingPar}. Change it in the ward's cupboard list.
+          </Typography>
+        ))}
         <TextField fullWidth size="small" label="Note (optional)" value={notes} onChange={(e) => setNotes(e.target.value)} />
 
         {/* The rule that trips people up, said before they hit it rather than
@@ -286,7 +368,7 @@ function IssueDialog({ ward, onClose, onDone }: { ward: WardSummary; onClose: ()
         <Button onClick={onClose} color="inherit" sx={{ textTransform: "none" }}>Cancel</Button>
         <Button
           variant="contained" startIcon={<LocalShippingRounded />}
-          disabled={!stockItemId || !(qty > 0) || tooMany || save.isPending}
+          disabled={!stockItemId || !(qty > 0) || tooMany || !keepValid || save.isPending}
           onClick={() => save.mutate()} sx={{ textTransform: "none" }}
         >
           {save.isPending ? "Issuing…" : "Issue"}
@@ -412,6 +494,8 @@ function AddItemDialog({ onClose, onDone }: { onClose: () => void; onDone: () =>
   const [q, setQ] = useState("");
   const search = useDebouncedValue(q, 300);
   const [unit, setUnit] = useState("");
+  // "12" saved as the unit made the cupboard read "5 12": it names what is counted, not how many.
+  const unitIsNumber = /^\s*\d+([.,]\d+)?\s*$/.test(unit);
   const [billsToPatient, setBillsToPatient] = useState(true);
   const [picked, setPicked] = useState<{ kind: "CHARGE" | "MED"; id: string; name: string } | null>(null);
 
@@ -439,7 +523,7 @@ function AddItemDialog({ onClose, onDone }: { onClose: () => void; onDone: () =>
 
   return (
     <Dialog open onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle sx={{ fontWeight: 700 }}>Stock something new</DialogTitle>
+      <DialogTitle sx={{ fontWeight: 700 }}>Add an item wards keep</DialogTitle>
       <DialogContent dividers sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 2.5 }}>
         <TextField
           fullWidth size="small" autoFocus placeholder="Search gloves, syringes, a medicine…"
@@ -485,8 +569,11 @@ function AddItemDialog({ onClose, onDone }: { onClose: () => void; onDone: () =>
             <Divider />
             <TextField
               fullWidth size="small" label="Counted in" value={unit} onChange={(e) => setUnit(e.target.value)}
-              placeholder="pair, pack, vial"
-              helperText="What the WARD counts - the catalogue unit is often something else entirely."
+              placeholder="e.g. pair, box, piece, vial"
+              error={unitIsNumber}
+              helperText={unitIsNumber
+                ? "This is the unit name, not a quantity - write pair, box or piece. Stock is added later with Receive."
+                : "The word the ward counts in (pair, box, piece). Not a quantity."}
             />
             {picked.kind === "MED" ? (
               <Typography variant="caption" sx={{ color: "text.secondary" }}>
@@ -503,7 +590,7 @@ function AddItemDialog({ onClose, onDone }: { onClose: () => void; onDone: () =>
       </DialogContent>
       <DialogActions sx={{ p: 2 }}>
         <Button onClick={onClose} color="inherit" sx={{ textTransform: "none" }}>Cancel</Button>
-        <Button variant="contained" disabled={!picked || save.isPending} onClick={() => save.mutate()} sx={{ textTransform: "none" }}>
+        <Button variant="contained" disabled={!picked || unitIsNumber || save.isPending} onClick={() => save.mutate()} sx={{ textTransform: "none" }}>
           {save.isPending ? "Adding…" : "Stock it"}
         </Button>
       </DialogActions>
@@ -518,6 +605,9 @@ function AddItemDialog({ onClose, onDone }: { onClose: () => void; onDone: () =>
  * posts to one service, so the bill and the cupboard cannot come to different
  * conclusions about it.
  */
+/** "Used on" choice for floor stock used on the ward rather than one patient. */
+const WARD_USE = "__ward_use__";
+
 function ConsumeDialog({ ward, stock, onClose, onDone }: {
   ward: WardSummary;
   stock: WardStockRow[];
@@ -551,14 +641,19 @@ function ConsumeDialog({ ward, stock, onClose, onDone }: {
     setQuantity("1");
   };
 
+  // Gloves through a shift are not one patient's. Floor stock can be recorded
+  // as ward use; anything billed still needs the patient it bills.
+  const wardUse = admissionId === WARD_USE;
+  const billedInWardUse = wardUse ? basket.filter((b) => b.billsToPatient) : [];
+
   const save = useMutation({
     mutationFn: () => axiosInstance.post("/pharmacy/ward-stock/consume", {
-      admissionId, notes: notes.trim() || undefined,
+      ...(wardUse ? { wardId: ward.wardId } : { admissionId }), notes: notes.trim() || undefined,
       lines: basket.map((b) => ({ stockItemId: b.stockItemId, quantity: b.quantity })),
     }),
     onSuccess: (res) => {
       const used = res.data?.data?.used ?? [];
-      toast.success(`Recorded against ${patients?.patients.find((p) => p.admissionId === admissionId)?.name ?? "the patient"}`);
+      toast.success(wardUse ? `Recorded as ward use in ${ward.wardName}` : `Recorded against ${patients?.patients.find((p) => p.admissionId === admissionId)?.name ?? "the patient"}`);
       // A cupboard that has run out does not block the record, so the screen
       // has to say which lines did not actually come off the shelf.
       for (const u of used as Array<{ itemName: string; stockNote: string | null }>) {
@@ -579,15 +674,20 @@ function ConsumeDialog({ ward, stock, onClose, onDone }: {
         <SearchableSelect
           label="Used on" name="admissionId" size="small"
           value={admissionId} onChange={(e) => setAdmissionId(e.target.value)}
-          placeholder={patientsLoading ? "Loading…" : "Pick the patient"}
+          placeholder={patientsLoading ? "Loading…" : "Pick the patient, or Ward use"}
           searchPlaceholder="Search by name, UHID or bed…"
-          options={(patients?.patients ?? []).map((p) => ({
-            value: p.admissionId,
-            label: p.name,
-            secondary: [p.uhid, p.bed ? `bed ${p.bed}` : null].filter(Boolean).join(" · ") || undefined,
-            keywords: `${p.uhid ?? ""} ${p.bed ?? ""}`,
-          }))}
-          helperText={!patientsLoading && !(patients?.patients ?? []).length ? "Nobody is admitted in this ward" : undefined}
+          options={[
+            { value: WARD_USE, label: "Ward use - no patient", secondary: "Floor stock only, e.g. gloves used through a shift", keywords: "ward floor general" },
+            ...(patients?.patients ?? []).map((p) => ({
+              value: p.admissionId,
+              label: p.name,
+              secondary: [p.uhid, p.bed ? `bed ${p.bed}` : null].filter(Boolean).join(" · ") || undefined,
+              keywords: `${p.uhid ?? ""} ${p.bed ?? ""}`,
+            })),
+          ]}
+          helperText={wardUse
+            ? "Comes off the cupboard with no patient and no bill. Only floor stock can be recorded this way."
+            : !patientsLoading && !(patients?.patients ?? []).length ? "Nobody is admitted in this ward - floor stock can still be recorded as Ward use." : undefined}
         />
 
         <Divider />
@@ -654,11 +754,17 @@ function ConsumeDialog({ ward, stock, onClose, onDone }: {
                 </IconButton>
               </Box>
             ))}
-            <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 1 }}>
-              {billable === 0
-                ? "None of this bills the patient - it is all floor stock."
-                : `${billable} of ${basket.length} will be added to the patient's bill.`}
-            </Typography>
+            {billedInWardUse.length > 0 ? (
+              <Alert severity="warning" sx={{ mt: 1, py: 0.5 }}>
+                {billedInWardUse.map((b) => b.name).join(", ")} {billedInWardUse.length === 1 ? "is" : "are"} billed to the patient who uses {billedInWardUse.length === 1 ? "it" : "them"}. Pick the patient, or take {billedInWardUse.length === 1 ? "it" : "them"} off the list.
+              </Alert>
+            ) : (
+              <Typography variant="caption" sx={{ color: "text.secondary", display: "block", mt: 1 }}>
+                {billable === 0
+                  ? "None of this bills the patient - it is all floor stock."
+                  : `${billable} of ${basket.length} will be added to the patient's bill.`}
+              </Typography>
+            )}
           </Box>
         )}
 
@@ -668,7 +774,7 @@ function ConsumeDialog({ ward, stock, onClose, onDone }: {
       <DialogActions sx={{ p: 2 }}>
         <Button onClick={onClose} color="inherit" sx={{ textTransform: "none" }}>Cancel</Button>
         <Button
-          variant="contained" disabled={!admissionId || !basket.length || save.isPending}
+          variant="contained" disabled={!admissionId || !basket.length || billedInWardUse.length > 0 || save.isPending}
           onClick={() => save.mutate()} sx={{ textTransform: "none" }}
         >
           {save.isPending ? "Recording…" : "Record"}
@@ -778,7 +884,7 @@ function ParCell({ wardId, row, editable, onSaved }: {
     const next = value.trim() === "" ? null : Number(value);
     if (next === (row.parLevel ?? null)) return;
     if (next !== null && (!Number.isInteger(next) || next < 0)) {
-      toast.error("A par level must be a whole number, or blank");
+      toast.error("'Keep at least' must be a whole number, or blank");
       setValue(row.parLevel == null ? "" : String(row.parLevel));
       return;
     }
@@ -804,7 +910,7 @@ function ParCell({ wardId, row, editable, onSaved }: {
       onBlur={commit}
       onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLElement).blur(); }}
       sx={{ width: 64, "& input": { textAlign: "right", fontSize: 13 } }}
-      InputProps={{ inputProps: { min: 0, "aria-label": `Par level for ${row.name}` } }}
+      InputProps={{ inputProps: { min: 0, "aria-label": `Keep at least, for ${row.name}` } }}
     />
   );
 }
@@ -859,7 +965,7 @@ function CountDialog({ ward, stock, onClose, onDone }: {
         <DialogTitle sx={{ fontWeight: 700 }}>Counted {ward.wardName}</DialogTitle>
         <DialogContent dividers sx={{ pt: 2.5 }}>
           <Box sx={{ display: "flex", gap: 1.5, mb: 2.5, flexWrap: "wrap" }}>
-            <Stat label="Lines counted" value={result.summary.counted} />
+            <Stat label="Items counted" value={result.summary.counted} />
             <Stat label="Agreed" value={result.summary.agreed} color={SEMANTIC.success} />
             {result.summary.short > 0 && <Stat label="Units short" value={result.summary.short} color={SEMANTIC.danger} />}
             {result.summary.over > 0 && <Stat label="Units over" value={result.summary.over} color={SEMANTIC.warning} />}
@@ -996,17 +1102,17 @@ function ReorderTab() {
   if (isError) return <ErrorState message={apiErrorText(error)} onRetry={() => refetch()} />;
   if (isLoading || !data) return <ListSkeleton rows={4} />;
   if (!data.lines.length) {
-    return <Empty>Every ward with a par level is at or above it.</Empty>;
+    return <Empty>No ward is running low. Only items with a "Keep at least" number are checked.</Empty>;
   }
 
   return (
     <Box>
       <Box sx={{ display: "flex", gap: 1.5, mb: 2.5, flexWrap: "wrap" }}>
-        <Stat label="Lines to fill" value={data.summary.lines} />
+        <Stat label="Items to top up" value={data.summary.lines} />
         <Stat label="Wards waiting" value={data.summary.wards} />
-        <Stat label="Units short" value={data.summary.unitsShort} color={SEMANTIC.warning} />
+        <Stat label="Total short" value={data.summary.unitsShort} color={SEMANTIC.warning} />
         {data.summary.cannotCover > 0 && (
-          <Stat label="Store cannot cover" value={data.summary.cannotCover} color={SEMANTIC.danger} />
+          <Stat label="Not enough in store" value={data.summary.cannotCover} color={SEMANTIC.danger} />
         )}
       </Box>
 
@@ -1016,9 +1122,9 @@ function ReorderTab() {
             <TableRow>
               <TableCell sx={{ fontWeight: 700 }}>Ward</TableCell>
               <TableCell sx={{ fontWeight: 700 }}>Item</TableCell>
-              <TableCell sx={{ fontWeight: 700 }} align="right">On hand</TableCell>
-              <TableCell sx={{ fontWeight: 700 }} align="right">Par</TableCell>
-              <TableCell sx={{ fontWeight: 700 }} align="right">Send</TableCell>
+              <TableCell sx={{ fontWeight: 700 }} align="right">In cupboard</TableCell>
+              <TableCell sx={{ fontWeight: 700 }} align="right">Keep at least</TableCell>
+              <TableCell sx={{ fontWeight: 700 }} align="right">Send to top up</TableCell>
               <TableCell sx={{ fontWeight: 700 }} align="right">In store</TableCell>
             </TableRow>
           </TableHead>
@@ -1102,26 +1208,33 @@ function WardDetail({ ward, onBack, canIssue, onIndent }: { ward: WardSummary; o
         </Box>
         <Typography variant="subtitle2" sx={{ fontWeight: 700, color: "text.secondary", mb: 1 }}>What do you need to do?</Typography>
         <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", lg: "repeat(4, 1fr)" } }}>
-          {/* The nursing action, and the one this whole module exists to make
-              possible: it bills the patient and empties the cupboard at once. */}
-          <TaskCard
-            primary icon={<HealingRounded />} title="Record use" onClick={() => setConsuming(true)}
-            hint="Used something on a patient. Takes it off the shelf and bills the patient."
-          />
-          {/* Counting is the ward's own work: the people who can see the shelf are
-              the ones who know what is on it. */}
-          <TaskCard
-            icon={<FactCheckRounded />} title="Count stock" onClick={() => setCounting(true)}
-            hint="Counted the cupboard. Enter what is really there; any difference is recorded."
-          />
-          <TaskCard
-            icon={<AssignmentReturnRounded />} title="Send back" onClick={() => setView("holding")}
-            hint="Not needed, damaged or expired? Press Send back on that item in the list below."
-          />
+          {/* Using, counting and sending back are the ward's work, done by the
+              nurses at the shelf - the store looks at the cupboard and issues
+              to it, nothing more (the server refuses the store these too). */}
+          {!canIssue && (
+            <>
+              {/* The nursing action, and the one this whole module exists to make
+                  possible: it bills the patient and empties the cupboard at once. */}
+              <TaskCard
+                primary icon={<HealingRounded />} title="Record use" onClick={() => setConsuming(true)}
+                hint="Used something on a patient, or gloves for the ward? Record it. It comes off the cupboard; billable items go on the patient's bill. (Same as Record use on a patient in Ward.)"
+              />
+              {/* Counting is the ward's own work: the people who can see the shelf are
+                  the ones who know what is on it. */}
+              <TaskCard
+                icon={<FactCheckRounded />} title="Count stock" onClick={() => setCounting(true)}
+                hint="Counted the shelf? Enter how many are really there. Any difference is saved for the store to see."
+              />
+              <TaskCard
+                icon={<AssignmentReturnRounded />} title="Send back" onClick={() => setView("holding")}
+                hint="Not needed, damaged or expired? Press Send back on that item in the list below."
+              />
+            </>
+          )}
           {canIssue ? (
             <TaskCard
               icon={<LocalShippingRounded />} title="Issue to this ward" onClick={() => setIssuing(true)}
-              hint="Send items from the central store to this ward's cupboard."
+              hint="Send items from the store to this ward's cupboard."
             />
           ) : onIndent ? (
             <TaskCard
@@ -1169,12 +1282,12 @@ function WardDetail({ ward, onBack, canIssue, onIndent }: { ward: WardSummary; o
                     <TableCell sx={{ fontWeight: 700 }}>Batch</TableCell>
                     <TableCell sx={{ fontWeight: 700 }} align="right">In cupboard</TableCell>
                     <TableCell sx={{ fontWeight: 700 }} align="right">
-                      <Tooltip title="The least this ward should hold (par level). Below it, the item shows as running low and goes on the store's reorder list.">
+                      <Tooltip title="The least this ward should hold. Below it, the item shows as running low and appears in the store's 'Wards running low' list. Leave blank to not track it.">
                         <span>Keep at least</span>
                       </Tooltip>
                     </TableCell>
                     <TableCell sx={{ fontWeight: 700 }} align="right">Last moved</TableCell>
-                    <TableCell />
+                    {!canIssue && <TableCell />}
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -1183,7 +1296,7 @@ function WardDetail({ ward, onBack, canIssue, onIndent }: { ward: WardSummary; o
                       <TableCell>
                         <Typography variant="body2" sx={{ fontWeight: 600 }}>{r.name}</Typography>
                         {!r.billsToPatient && (
-                          <Chip size="small" label="Floor stock" sx={{ height: 18, fontSize: 11, mt: 0.3, bgcolor: `${NEUTRAL.muted}1f`, color: NEUTRAL.muted }} />
+                          <FloorStockChip sx={{ mt: 0.3 }} />
                         )}
                       </TableCell>
                       <TableCell>
@@ -1219,15 +1332,17 @@ function WardDetail({ ward, onBack, canIssue, onIndent }: { ward: WardSummary; o
                       <TableCell align="right">
                         <Typography variant="caption" sx={{ color: "text.secondary" }}>{formatDate(r.updatedAt)}</Typography>
                       </TableCell>
-                      <TableCell align="right">
-                        <Button
-                          size="small" startIcon={<AssignmentReturnRounded fontSize="small" />}
-                          disabled={r.quantityOnHand === 0} onClick={() => setReturning(r)}
-                          sx={{ textTransform: "none", whiteSpace: "nowrap" }}
-                        >
-                          Send back
-                        </Button>
-                      </TableCell>
+                      {!canIssue && (
+                        <TableCell align="right">
+                          <Button
+                            size="small" startIcon={<AssignmentReturnRounded fontSize="small" />}
+                            disabled={r.quantityOnHand === 0} onClick={() => setReturning(r)}
+                            sx={{ textTransform: "none", whiteSpace: "nowrap" }}
+                          >
+                            Send back
+                          </Button>
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))}
                 </TableBody>
@@ -1289,7 +1404,7 @@ function WardsTab({ canIssue, onIndent }: { canIssue: boolean; onIndent?: () => 
         </Box>
       )}
       <Typography variant="body2" sx={{ color: "text.secondary", mb: 1.5 }}>
-        Choose a ward to see its cupboard{canIssue ? ", issue to it" : ""}, record use, count or send back. Wards that need attention come first.
+        {canIssue ? "Choose a ward to see its cupboard and send it items. Nurses record use, count and send back from their side." : "Choose your ward to record use, count the shelf or send items back."} Wards that need attention come first.
       </Typography>
 
       <Box sx={{ display: "grid", gap: 1.5, gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", lg: "1fr 1fr 1fr" } }}>
@@ -1385,7 +1500,7 @@ function StoreTab() {
           InputProps={{ startAdornment: <InputAdornment position="start"><SearchRounded fontSize="small" /></InputAdornment> }}
         />
         <Button variant="contained" startIcon={<AddRounded />} onClick={() => setAdding(true)} sx={{ textTransform: "none" }}>
-          Stock something new
+          Add item
         </Button>
       </Box>
 
@@ -1414,7 +1529,7 @@ function StoreTab() {
                     <Typography variant="body2" sx={{ fontWeight: 600 }}>{i.name}</Typography>
                     <Box sx={{ display: "flex", gap: 0.5, mt: 0.3, flexWrap: "wrap" }}>
                       {!i.billsToPatient && (
-                        <Chip size="small" label="Floor stock" sx={{ height: 18, fontSize: 11, bgcolor: `${NEUTRAL.muted}1f`, color: NEUTRAL.muted }} />
+                        <FloorStockChip />
                       )}
                       {/* Worth saying plainly: it looks fine until somebody
                           tries to issue it. */}
@@ -1444,13 +1559,17 @@ function StoreTab() {
                     <Box sx={{ display: "flex", gap: 0.5, justifyContent: "flex-end" }}>
                       {/* A drug is received through pharmacy inventory, which
                           records cost and supplier. No second door here. */}
-                      <Tooltip title={i.source === "MEDICINE" ? "Medicines are received in Pharmacy > Inventory" : "Receive stock into the store"}>
-                        <span>
-                          <IconButton size="small" disabled={i.source === "MEDICINE"} onClick={() => setReceiving(i)}>
-                            <InventoryRounded fontSize="small" />
-                          </IconButton>
-                        </span>
-                      </Tooltip>
+                      {i.source === "MEDICINE" ? (
+                        <Tooltip title="This item is in the medicine catalogue, so its stock is the pharmacy's. Receive deliveries in Pharmacy > Inventory; the store here already shows that stock.">
+                          <Chip size="small" label="Stock comes from Pharmacy" sx={{ height: 22, fontSize: 11, bgcolor: `${NEUTRAL.muted}1f`, color: NEUTRAL.textSecondary }} />
+                        </Tooltip>
+                      ) : (
+                        <Tooltip title="Receive a delivery into the store">
+                          <Button size="small" variant="outlined" startIcon={<InventoryRounded fontSize="small" />} onClick={() => setReceiving(i)} sx={{ textTransform: "none", whiteSpace: "nowrap" }}>
+                            Receive
+                          </Button>
+                        </Tooltip>
+                      )}
                       <Tooltip title={i.heldInWards > 0 ? "Wards still hold some of these" : "Stop stocking it"}>
                         <span>
                           <IconButton size="small" disabled={i.heldInWards > 0 || remove.isPending} onClick={() => remove.mutate(i.stockItemId)}>
@@ -1861,17 +1980,20 @@ export default function WardStock() {
   // A nurse looks after her own cupboard and sends things back; deciding what
   // the hospital stocks and receiving deliveries belong to the store.
   const tabs = isNurse
-    ? [{ label: "Ward cupboard", node: <WardsTab canIssue={false} onIndent={onIndent} /> }, { label: "History", node: <LogTab /> }]
+    ? [
+      { label: "Ward cupboard", what: "Your ward's cupboard.", todo: "Open your ward, then press Record use whenever you use something on a patient. Running low? " + (onIndent ? "Press Ask for more." : "Tell your ward in-charge, who asks the store for more."), node: <WardsTab canIssue={false} onIndent={onIndent} /> },
+      { label: "History", what: "Everything that moved in or out of your ward's cupboard.", todo: "Nothing to do here - it is the record.", node: <LogTab /> },
+    ]
     : [
       // In the order the store works: what the wards asked for (their
       // in-charges' indents), what they are short of, then the cupboards and
       // the store itself; history and reports last.
-      { label: "Ward requests", node: <StoreIndents /> },
-      { label: "Wards running low", node: <ReorderTab /> },
-      { label: "Ward cupboards", node: <WardsTab canIssue /> },
-      { label: "Central store", node: <StoreTab /> },
-      { label: "History", node: <LogTab /> },
-      { label: "Reports", node: <ReportsTab /> },
+      { label: "Ward requests", what: "Items ward in-charges have asked for.", todo: "Open a request and press Issue to send what you can. It goes straight into that ward's cupboard.", node: <StoreIndents /> },
+      { label: "Wards running low", what: "Items a ward holds less of than its \"Keep at least\" number.", todo: "Send the \"Send to top up\" amount to fill it back up. Only items with a \"Keep at least\" number show here.", node: <ReorderTab /> },
+      { label: "Ward cupboards", what: "What each ward has on its shelf right now.", todo: "Open a ward to send it items or set how much it should keep. Using, counting and sending back are done by the ward nurses.", node: <WardsTab canIssue /> },
+      { label: "Items wards keep", what: "The items wards are allowed to keep in their cupboards.", todo: "Press Add item to choose one (gloves, syringes, cotton). Items marked \"Stock comes from Pharmacy\" use the pharmacy's stock; for the others, press Receive when a delivery arrives. You set this up once - day to day the work is in Ward requests and Wards running low.", node: <StoreTab /> },
+      { label: "History", what: "Every movement: sent to wards, used on patients, sent back, counted.", todo: "Nothing to do here - it is the record.", node: <LogTab /> },
+      { label: "Reports", what: "Totals for a date range.", todo: "See what is in the cupboards, what was used, and what was found missing when a ward counted its shelf.", node: <ReportsTab /> },
     ];
 
   return (
@@ -1884,9 +2006,10 @@ export default function WardStock() {
         title="Ward Stock"
         subtitle={isNurse
           ? "Record what you used on a patient, count the cupboard, and send back what the ward does not need."
-          : "Gloves, syringes and floor-stock drugs: fill the wards' requests, top up wards running low, and keep the central store stocked."}
+          : "Gloves, syringes and floor-stock drugs: fill the wards' requests, top up wards running low, and choose which items wards keep."}
       />
 
+      <HowItWorks isNurse={isNurse} canAsk={!!onIndent} />
       <Tabs
         value={tab} onChange={(_, v) => setTab(v)} variant="scrollable" scrollButtons="auto"
         sx={{ mb: 2.5, borderBottom: "1px solid", borderColor: "divider" }}
@@ -1894,6 +2017,7 @@ export default function WardStock() {
         {tabs.map((t) => <Tab key={t.label} label={t.label} sx={{ textTransform: "none", fontWeight: 700 }} />)}
       </Tabs>
 
+      {tabs[tab] && <TabIntro what={tabs[tab].what} todo={tabs[tab].todo} />}
       {tabs[tab]?.node}
     </Box>
   );

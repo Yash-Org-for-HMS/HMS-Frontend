@@ -141,9 +141,13 @@ export default function AdmissionChargesDialog({
       <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
         <Inventory2Rounded sx={{ color: BRAND.action }} />
         <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1.2 }}>Consumables &amp; equipment</Typography>
+          <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1.2 }}>Record use - consumables &amp; equipment</Typography>
           <Typography variant="caption" sx={{ color: "text.secondary" }}>
             {admission.patientName}{admission.uhid ? ` · ${admission.uhid}` : ""}{admission.bed?.label ? ` · ${admission.bed.label}` : ""}
+          </Typography>
+          {/* The same record as Record use in Ward Stock, reached from the patient. */}
+          <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>
+            Same as Record use in Ward Stock: items from the ward cupboard come off it, billable ones go on this patient's bill.
           </Typography>
         </Box>
         <IconButton onClick={onClose} size="small" disabled={saving}><CloseRounded /></IconButton>
