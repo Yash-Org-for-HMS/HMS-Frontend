@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  Box, Typography, Button, TextField, Autocomplete, Dialog, DialogTitle, DialogContent, DialogActions, Stack, Alert, Chip, Divider,
+  Box, Typography, Button, TextField, Autocomplete, Dialog, DialogTitle, DialogContent, DialogActions, Stack, Alert, Chip, Divider, MenuItem,
 } from "@mui/material";
 import { Inventory2Rounded } from "@mui/icons-material";
 import { axiosInstance } from "@/api/axios";
@@ -16,6 +16,13 @@ const COVER_LABEL: Record<string, string> = {
   PHARMACY: "All medicines", PROCEDURE: "OT & procedures", IMPLANT: "Implants", CONSUMABLE: "Ward services & consumables", OTHER: "Other charges",
 };
 const PURPLE = "#7C3AED";
+// The same codes as a ward medicine order (backend DOSES_PER_DAY).
+const KIT_FREQUENCIES = [
+  { value: "", label: "As needed" }, { value: "OD", label: "OD - once daily" }, { value: "BD", label: "BD - twice daily" },
+  { value: "TDS", label: "TDS - thrice daily" }, { value: "QID", label: "QID - four times daily" }, { value: "HS", label: "HS - at bedtime" },
+  { value: "STAT", label: "STAT - once, now" }, { value: "SOS", label: "SOS - as needed" },
+];
+const DOSES_PER_DAY: Record<string, number> = { OD: 1, BD: 2, TDS: 3, QID: 4, HS: 1 };
 
 type Content = { chargeItemId?: string | null; medicineId?: string | null; name: string; quantity: number };
 type StayPackage = {
@@ -142,7 +149,34 @@ function CurrentPackage({ admissionId, pkg, canManage, onChanged, toast }: { adm
   const [removing, setRemoving] = useState(false);
   const [reason, setReason] = useState("");
 
-  const lines = pkg.kit.filter((k) => k.left > 0 && Number(qty[k.medicineId]) > 0).map((k) => ({ medicineId: k.medicineId, quantity: Number(qty[k.medicineId]) }));
+  // How each kit medicine is given - the frequency sets the doses a day the
+  // chart counts, and with the days it works out how many to send.
+  type Dosing = { dosage: string; frequency: string; durationDays: string; route: string };
+  const [dosing, setDosing] = useState<Record<string, Dosing>>({});
+  const dose = (id: string): Dosing => dosing[id] ?? { dosage: "", frequency: "", durationDays: "", route: "" };
+  // Frequency × days fills "Send" (capped at what is left in the kit); with
+  // either left blank, "Send" goes back to the whole of what is left.
+  const autoCount = (d: Dosing): number | null => {
+    if (d.frequency === "STAT") return 1;
+    const perDay = DOSES_PER_DAY[d.frequency];
+    return perDay && Number(d.durationDays) > 0 ? perDay * Number(d.durationDays) : null;
+  };
+  const setDose = (id: string, patch: Partial<Dosing>) => {
+    const next = { ...dose(id), ...patch };
+    setDosing((d) => ({ ...d, [id]: next }));
+    if (!("frequency" in patch) && !("durationDays" in patch)) return;
+    const left = pkg.kit.find((k) => k.medicineId === id)?.left ?? 0;
+    const n = autoCount(next);
+    setQty((q) => ({ ...q, [id]: String(n == null ? left : Math.min(n, left)) }));
+  };
+  const lines = pkg.kit.filter((k) => k.left > 0 && Number(qty[k.medicineId]) > 0).map((k) => {
+    const d = dose(k.medicineId);
+    return {
+      medicineId: k.medicineId, quantity: Number(qty[k.medicineId]),
+      dosage: d.dosage.trim() || undefined, frequency: d.frequency || undefined, route: d.route.trim() || undefined,
+      durationDays: d.frequency && d.frequency !== "STAT" && Number(d.durationDays) > 0 ? Number(d.durationDays) : undefined,
+    };
+  });
   const badQty = pkg.kit.some((k) => qty[k.medicineId] !== "" && (!/^\d+$/.test(qty[k.medicineId] ?? "") || Number(qty[k.medicineId]) > k.left));
   const requestKit = async () => {
     setBusy(true);
@@ -194,17 +228,42 @@ function CurrentPackage({ admissionId, pkg, canManage, onChanged, toast }: { adm
         <Box>
           <Typography sx={{ fontWeight: 700, mb: 0.5 }}>Medicine kit</Typography>
           {pkg.kit.map((k) => (
-            <Box key={k.medicineId} sx={{ display: "flex", alignItems: "center", gap: 1.5, py: 0.5 }}>
-              <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Typography sx={{ fontSize: "0.875rem", fontWeight: 600 }} noWrap>{k.name}</Typography>
-                <Typography sx={{ fontSize: "0.72rem", color: "text.secondary" }}>{k.included} in the kit · {k.requested} requested · {k.left} left</Typography>
+            <Box key={k.medicineId} sx={{ py: 0.75 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Typography sx={{ fontSize: "0.875rem", fontWeight: 600 }} noWrap>{k.name}</Typography>
+                  <Typography sx={{ fontSize: "0.72rem", color: "text.secondary" }}>{k.included} in the kit · {k.requested} requested · {k.left} left</Typography>
+                </Box>
+                {k.left > 0 && applies && (
+                  <TextField size="small" label="Send" value={qty[k.medicineId] ?? ""} onChange={(e) => setQty((q) => ({ ...q, [k.medicineId]: e.target.value.replace(/\D/g, "") }))}
+                    error={Number(qty[k.medicineId]) > k.left} sx={{ width: 80 }} inputProps={{ inputMode: "numeric" }} />
+                )}
               </Box>
-              {k.left > 0 && applies && (
-                <TextField size="small" label="Send" value={qty[k.medicineId] ?? ""} onChange={(e) => setQty((q) => ({ ...q, [k.medicineId]: e.target.value.replace(/\D/g, "") }))}
-                  error={Number(qty[k.medicineId]) > k.left} sx={{ width: 80 }} inputProps={{ inputMode: "numeric" }} />
+              {k.left > 0 && applies && Number(qty[k.medicineId]) > 0 && (
+                <Box sx={{ display: "flex", gap: 1, mt: 1 }}>
+                  <TextField size="small" label="Dose" placeholder="e.g. 650mg" value={dose(k.medicineId).dosage} onChange={(e) => setDose(k.medicineId, { dosage: e.target.value })} sx={{ flex: 1 }} />
+                  <TextField size="small" select label="Frequency" value={dose(k.medicineId).frequency} onChange={(e) => setDose(k.medicineId, { frequency: e.target.value })} sx={{ flex: 1.3 }}>
+                    {KIT_FREQUENCIES.map((f) => <MenuItem key={f.value} value={f.value}>{f.label}</MenuItem>)}
+                  </TextField>
+                  <TextField size="small" label="Days" value={dose(k.medicineId).durationDays} disabled={!dose(k.medicineId).frequency || dose(k.medicineId).frequency === "STAT" || dose(k.medicineId).frequency === "SOS"}
+                    onChange={(e) => setDose(k.medicineId, { durationDays: e.target.value.replace(/\D/g, "") })} sx={{ width: 70 }} inputProps={{ inputMode: "numeric" }} />
+                  <TextField size="small" label="Route" placeholder="e.g. Oral" value={dose(k.medicineId).route} onChange={(e) => setDose(k.medicineId, { route: e.target.value })} sx={{ flex: 1 }} />
+                </Box>
               )}
+              {k.left > 0 && applies && (() => {
+                const n = autoCount(dose(k.medicineId));
+                if (n == null) return null;
+                const d = dose(k.medicineId);
+                const how = d.frequency === "STAT" ? "One dose now" : `${DOSES_PER_DAY[d.frequency]} a day × ${d.durationDays} days = ${n}`;
+                return (
+                  <Typography sx={{ fontSize: "0.72rem", color: n > k.left ? "warning.main" : "text.secondary", mt: 0.5 }}>
+                    {how}{n > k.left ? ` - only ${k.left} left in the kit, so ${k.left} are sent; order the rest as a ward medicine` : ""}
+                  </Typography>
+                );
+              })()}
             </Box>
           ))}
+          {lines.length > 0 && <Typography variant="caption" sx={{ display: "block", color: "text.secondary", mt: 0.5 }}>The kit shows on the medication chart once the pharmacy gives it; the nurse records each dose as it is given, counted against the frequency.</Typography>}
           {allergy && (
             <Alert severity="warning" sx={{ mt: 1 }}>
               {allergy}

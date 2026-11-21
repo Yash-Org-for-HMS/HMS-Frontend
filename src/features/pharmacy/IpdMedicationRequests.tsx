@@ -110,15 +110,17 @@ export default function IpdMedicationRequests() {
                   <TableCell align="center">{r.quantity}</TableCell>
                   <TableCell align="right">{formatINR(r.totalPrice)}</TableCell>
                   <TableCell sx={{ color: "text.secondary" }}>{r.orderedAt ? dayjs(r.orderedAt).format("DD MMM, HH:mm") : "-"}</TableCell>
-                  <TableCell align="right">
-                    <Button size="small" variant="contained" color="success" startIcon={busyId === r.ipMedOrderId ? <HeartbeatLoader size={18} /> : <CheckCircleRounded />}
-                      disabled={busyId === r.ipMedOrderId} onClick={() => confirm(r)} sx={{ mr: 1, textTransform: "none" }}>
-                      Confirm
-                    </Button>
-                    <Button size="small" variant="outlined" color="error" startIcon={<CancelRounded />}
-                      disabled={busyId === r.ipMedOrderId} onClick={() => { setRejecting(r); setReason(""); }} sx={{ textTransform: "none" }}>
-                      Reject
-                    </Button>
+                  <TableCell align="right" sx={{ whiteSpace: "nowrap" }}>
+                    <Box sx={{ display: "inline-flex", alignItems: "center", gap: 1 }}>
+                      <Button size="small" variant="contained" color="success" startIcon={busyId === r.ipMedOrderId ? <HeartbeatLoader size={18} /> : <CheckCircleRounded />}
+                        disabled={busyId === r.ipMedOrderId} onClick={() => confirm(r)} sx={{ textTransform: "none", minWidth: 96 }}>
+                        Confirm
+                      </Button>
+                      <Button size="small" variant="outlined" color="error" startIcon={<CancelRounded />}
+                        disabled={busyId === r.ipMedOrderId} onClick={() => { setRejecting(r); setReason(""); }} sx={{ textTransform: "none", minWidth: 96 }}>
+                        Reject
+                      </Button>
+                    </Box>
                   </TableCell>
                 </TableRow>
               ))}

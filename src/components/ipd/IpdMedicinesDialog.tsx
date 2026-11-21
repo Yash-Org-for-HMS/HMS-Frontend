@@ -22,8 +22,8 @@ import StayPackageDialog from "./StayPackageDialog";
 import SoftChip from "../SoftChip";
 import MarChart from "./MarChart";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
-
-// Standard frequency codes drive the MAR dose schedule (see backend
+// Standard frequency codes set how many doses a day the chart counts (backend
+// DOSES_PER_DAY) AND how many units the stay will need in total.
 // buildDoseSchedule) AND how many units the stay will need in total.
 // SOS/PRN and blank have no fixed schedule - quantity stays a manual entry.
 const FREQUENCY_OPTIONS = [
@@ -36,7 +36,7 @@ const FREQUENCY_OPTIONS = [
   { value: "STAT", label: "STAT - immediately (once)" },
   { value: "SOS", label: "SOS - as needed" },
 ];
-// Doses per day per frequency - mirrors the backend's buildDoseSchedule times.
+// Doses per day per frequency - mirrors the backend's DOSES_PER_DAY.
 const TIMES_PER_DAY: Record<string, number> = { OD: 1, BD: 2, TDS: 3, QID: 4, HS: 1 };
 const isScheduledFrequency = (f: string) => !!f && f !== "SOS";
 
@@ -287,7 +287,7 @@ export default function IpdMedicinesDialog({ open, onClose, admission, orderOnly
             renderInput={(params) => <TextField {...params} required label="Medicine" placeholder="Search by name or generic…" />}
           />
           <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr 1fr", sm: "repeat(4, 1fr)" }, gap: 2 }}>
-            <TextField select label="Frequency" value={form.frequency} onChange={(e) => setForm({ ...form, frequency: e.target.value })} helperText="Drives the dose chart & quantity">
+            <TextField select label="Frequency" value={form.frequency} onChange={(e) => setForm({ ...form, frequency: e.target.value })} helperText="Sets doses a day on the chart & quantity">
               {FREQUENCY_OPTIONS.map((o) => <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>)}
             </TextField>
             <TextField
